@@ -101,7 +101,6 @@ const translations = {
         switch_to_student: "Ir a Alumno",
         auth_title: "Bailadmin",
         auth_subtitle: "Eleva tu baile.",
-        auth_title: "Eleva tu Baile",
         student_signup: "Nuevo Alumno",
         admin_login: "Admin login",
         enter_name: "¿Cómo te llamas?",
