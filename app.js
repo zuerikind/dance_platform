@@ -159,7 +159,17 @@ async function fetchAllData() {
 
         if (classesRes.data) state.classes = classesRes.data;
         if (subsRes.data) state.subscriptions = subsRes.data;
-        if (studentsRes.data) state.students = studentsRes.data;
+        if (studentsRes.data) {
+            state.students = studentsRes.data;
+            // SYNC: Update currentUser if they are a student to show latest balance
+            if (state.currentUser && !state.isAdmin) {
+                const updatedMe = state.students.find(s => s.id === state.currentUser.id);
+                if (updatedMe) {
+                    state.currentUser = { ...updatedMe, role: 'student' };
+                    saveState();
+                }
+            }
+        }
         if (requestsRes.data) state.paymentRequests = requestsRes.data;
         if (settingsRes.data) {
             state.adminSettings = settingsRes.data.reduce((acc, item) => {
@@ -1026,6 +1036,9 @@ window.handleScan = async (id) => {
             }
             student.balance = newBalance;
             saveState();
+
+            // Refresh global state to ensure sync across devices
+            fetchAllData();
         }
 
         resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1)">
@@ -1103,4 +1116,9 @@ document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(l
 
     // Fetch live data from Supabase
     fetchAllData();
+
+    // Background Sync: Refresh every 20 seconds to catch QR scans from other devices
+    setInterval(() => {
+        if (state.currentUser) fetchAllData();
+    }, 20000);
 })();
