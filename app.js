@@ -4,7 +4,8 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 // --- TRANSLATIONS ---
-const translations = {
+// --- TRANSLATIONS (DANCE_LOCALES) ---
+const DANCE_LOCALES = {
     en: {
         nav_schedule: "Schedule",
         nav_shop: "Shop",
@@ -78,7 +79,45 @@ const translations = {
         confirm_attendance: "Confirm Attendance",
         admin_user_placeholder: "Admin Username",
         admin_pass_placeholder: "Admin Password",
-        admin_login_btn: "Admin Login"
+        admin_login_btn: "Admin Login",
+        admin_access_trigger: "• ADMIN ACCESS •",
+        add_student: "+ Student",
+        add_admin: "+ Admin",
+        status_active: "Active",
+        status_unpaid: "Unpaid",
+        balance_label: "Balance",
+        plan_label: "Plan",
+        none_label: "None",
+        mark_paid: "Mark Paid",
+        mark_unpaid: "Mark Unpaid",
+        history_label: "History",
+        scan_cta_desc: "Verify student entrance precision.",
+        initiate_scan_btn: "Initiate Portal Scan",
+        classes_label: "Classes",
+        add_label: "Add",
+        plans_label: "Plans",
+        limit_classes_label: "Class Limit",
+        price_mxd_label: "Price MXD",
+        transfer_details_label: "Transfer Details",
+        bank_name_label: "Bank Name",
+        holder_name_label: "Holder Name",
+        save_bank_btn: "Save Bank Details",
+        saved_success_msg: "Saved Successfully!",
+        balance_manual_label: "Balance Manual",
+        no_classes_msg: "No classes",
+        select_plan_msg: "Select your preferred membership plan.",
+        delete_student_confirm: "Are you sure you want to remove this student? All their progress will be lost.",
+        not_found_msg: "Not Found",
+        not_enough_balance: "Not enough classes remaining!",
+        enter_admin_user: "Enter new admin username:",
+        enter_admin_pass: "Enter new admin password:",
+        admin_created: "Admin created!",
+        enter_student_name: "Enter student name:",
+        enter_student_phone: "Enter student phone:",
+        enter_student_pass: "Enter student password:",
+        student_created: "Student created!",
+        unknown_student: "Unknown Student",
+        delete_payment_confirm: "Delete this payment record forever?"
     },
     es: {
         nav_schedule: "Horario",
@@ -105,14 +144,14 @@ const translations = {
         auth_title: "Bailadmin",
         auth_subtitle: "Eleva tu baile.",
         student_signup: "Nuevo Alumno",
-        admin_login: "Admin login",
+        admin_login: "Acceso Admin",
         enter_name: "¿Cómo te llamas?",
         signup_btn: "Unirme Ahora",
         logout: "Cerrar Sesión",
         admin_subtitle: "Gestiona tu academia",
         classes_subtitle: "Próximas sesiones y talleres",
         username: "Usuario",
-        password: "Password",
+        password: "Contraseña",
         login_btn: "Entrar",
         invalid_login: "Credenciales inválidas",
         remaining_classes: "Clases Restantes",
@@ -152,7 +191,48 @@ const translations = {
         cancel: "Cancelar",
         confirm_attendance: "Confirmar Asistencia",
         attendance_success: "¡Asistencia confirmada!",
-        attendance_error: "Error en la asistencia"
+        attendance_error: "Error en la asistencia",
+        admin_user_placeholder: "Usuario Admin",
+        admin_pass_placeholder: "Contraseña Admin",
+        admin_login_btn: "Inicia Sesión Admin",
+        admin_access_trigger: "• ACCESO ADMIN •",
+        add_student: "+ Alumno",
+        add_admin: "+ Administrador",
+        status_active: "Activo",
+        status_unpaid: "Impago",
+        balance_label: "Saldo",
+        plan_label: "Plan",
+        none_label: "Ninguno",
+        mark_paid: "Marcar como Pagado",
+        mark_unpaid: "Marcar como Impago",
+        history_label: "Historial",
+        scan_cta_desc: "Verifica la precisión de la entrada.",
+        initiate_scan_btn: "Iniciar Escaneo",
+        classes_label: "Clases",
+        add_label: "Añadir",
+        plans_label: "Planes",
+        limit_classes_label: "Límite de Clases",
+        price_mxd_label: "Precio MXD",
+        transfer_details_label: "Detalles de Transferencia",
+        bank_name_label: "Nombre del Banco",
+        holder_name_label: "Nombre des Titular",
+        save_bank_btn: "Guardar Detalles",
+        saved_success_msg: "¡Guardado con éxito!",
+        balance_manual_label: "Saldo Manual",
+        no_classes_msg: "Sin clases",
+        select_plan_msg: "Selecciona tu plan de membresía.",
+        delete_student_confirm: "¿Estás seguro de eliminar a este alumno? Se perderá todo su progreso.",
+        not_found_msg: "No Encontrado",
+        not_enough_balance: "¡No hay suficientes clases disponibles!",
+        enter_admin_user: "Ingresa el nombre de usuario del admin:",
+        enter_admin_pass: "Ingresa la contraseña del admin:",
+        admin_created: "¡Admin creado!",
+        enter_student_name: "Ingresa el nombre del alumno:",
+        enter_student_phone: "Ingresa el teléfono del alumno:",
+        enter_student_pass: "Ingresa la contraseña del alumno:",
+        student_created: "¡Alumno creado!",
+        unknown_student: "Alumno Desconocido",
+        delete_payment_confirm: "¿Eliminar este registro de pago permanentemente?"
     }
 };
 
@@ -228,18 +308,35 @@ function saveState() {
     }));
 }
 
+// Bulletproof translation helper
+window.t = function (key) {
+    const lang = state.language || 'en';
+    const dict = DANCE_LOCALES[lang] || DANCE_LOCALES.en;
+    const val = dict[key] || DANCE_LOCALES.en[key] || `[${key}]`;
+    console.log(`[T] ${key} (${lang}) => ${val}`);
+    if (!dict[key]) console.warn(`Translation missing: ${key} for lang: ${lang}`);
+    return val;
+};
+
+// Standard static update
 function updateI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        el.textContent = translations[state.language][key];
+        el.textContent = window.t(key);
     });
-    document.getElementById('lang-text').textContent = state.language.toUpperCase();
+    const langIndicator = document.getElementById('lang-text');
+    if (langIndicator) langIndicator.textContent = (state.language || 'EN').toUpperCase();
 }
 
 function renderView() {
     const root = document.getElementById('app-root');
     const view = state.currentView;
-    const t = translations[state.language];
+    const isSignup = state.authMode === 'signup';
+
+    // Magic Proxy: supports both t.key and t('key')
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
 
     let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} slide-in">`;
 
@@ -247,6 +344,7 @@ function renderView() {
         const isSignup = state.authMode === 'signup';
         html += `
             <div class="auth-page-container">
+                <div style="position: fixed; bottom: 10px; right: 10px; font-size: 10px; color: rgba(255,255,255,0.1); z-index: 9999;">V2.1-REBUILT</div>
                 <div class="landing-grid">
                     <!-- LEFT / TOP: HERO SECTION -->
                     <div class="hero-section">
@@ -255,8 +353,8 @@ function renderView() {
                         </div>
                         
                         <div class="text-center" style="margin-bottom: 2rem; width: 100%;">
-                            <h1 class="auth-title">${t.auth_title}</h1>
-                            <p class="auth-subtitle">${t.auth_subtitle}</p>
+                            <h1 class="auth-title">${window.t('auth_title')}</h1>
+                            <p class="auth-subtitle">${window.t('auth_subtitle')}</p>
                         </div>
                     </div>
 
@@ -264,38 +362,40 @@ function renderView() {
                     <div class="auth-card-container">
                         <div class="auth-card">
                             <div style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; text-align: center;">
-                            ${isSignup ? 'Nuevo Alumno' : 'Acceso Alumno'}
+                            ${isSignup ? window.t('student_signup') : window.t('student_login')}
                             </div>
 
                             <div class="auth-input-group">
                                 ${isSignup ? `
-                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${t.enter_name}">
-                                    <input type="text" id="auth-phone" class="minimal-input" placeholder="${t.phone}">
+                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('enter_name')}">
+                                    <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}">
                                 ` : `
-                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${t.username}">
+                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('username')}">
                                 `}
-                                <input type="password" id="auth-pass" class="minimal-input" placeholder="${t.password}">
+                                <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                             </div>
 
                             <div class="auth-actions">
                                 <button class="btn-auth-primary" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}">
-                                    ${isSignup ? 'Registrarse' : 'Entrar'}
+                                    ${isSignup ? window.t('sign_up') : window.t('sign_in')}
                                 </button>
                                 
                                 <p class="text-muted text-center" style="font-size: 0.85rem; margin-top: 1rem;">
-                                    ${isSignup ? t.already_account : t.no_account}
+                                    ${isSignup ? window.t('already_account') : window.t('no_account')}
                                     <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--border);">
-                                        ${isSignup ? t.sign_in : t.sign_up}
+                                        ${isSignup ? window.t('sign_in') : window.t('sign_up')}
                                     </a>
                                 </p>
                             </div>
                             
                             <div class="admin-trigger-container" style="margin-top: 2.5rem; text-align: center;">
-                                <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">• ADMIN ACCESS •</button>
+                                <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">${window.t('admin_access_trigger')}</button>
                                 <div id="admin-fields" class="hidden slide-in" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                                    <input type="text" id="admin-user" class="minimal-input" placeholder="${t.admin_user_placeholder}" style="margin-bottom: 0.8rem;">
-                                    <input type="password" id="admin-pass" class="minimal-input" placeholder="${t.admin_pass_placeholder}" style="margin-bottom: 1rem;">
-                                    <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">${t.admin_login_btn}</button>
+                                    <input type="text" id="admin-user-input" class="minimal-input" placeholder="${window.t('admin_user_placeholder')}" style="margin-bottom: 0.8rem;">
+                                    <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${window.t('admin_pass_placeholder')}" style="margin-bottom: 1rem;">
+                                    <button id="admin-login-button" class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">
+                                        ${window.t('admin_login_btn')}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -360,7 +460,7 @@ function renderView() {
                                     <div class="tile-class-desc">${c.name}</div>
                                     <div class="tile-class-time">${c.time}</div>
                                 </div>
-                            `).join('') : '<div class="text-muted" style="font-size:0.6rem; font-style:italic;">No classes</div>'}
+                            `).join('') : `<div class="text-muted" style="font-size:0.6rem; font-style:italic;">${t.no_classes_msg}</div>`}
                         </div>
                     </div>
                 `;
@@ -369,7 +469,7 @@ function renderView() {
         }
     } else if (view === 'shop') {
         html += `<h1>${t.shop_title}</h1>`;
-        html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">Select your preferred membership plan.</p>`;
+        html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
         html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">`;
         state.subscriptions.forEach(s => {
             const isPackage = s.name.includes("4") || s.name.includes("8");
@@ -417,8 +517,8 @@ function renderView() {
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
                 <h1 style="margin:0;">${t.admin_title}</h1>
                 <div style="display:flex; gap:0.5rem;">
-                    <button class="btn-primary" onclick="createNewStudent()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">+ Student</button>
-                    <button class="btn-secondary" onclick="createNewAdmin()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">+ Admin</button>
+                    <button class="btn-primary" onclick="createNewStudent()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">${t.add_student}</button>
+                    <button class="btn-secondary" onclick="createNewAdmin()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">${t.add_admin}</button>
                 </div>
             </div>
         `;
@@ -430,9 +530,9 @@ function renderView() {
                             <div>
                                 <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.2rem;">${s.name}</h3>
                                 <div style="display:flex; gap:0.5rem; align-items:center;">
-                                    <span style="background: ${s.paid ? 'rgba(45, 212, 191, 0.1)' : 'rgba(251, 113, 133, 0.1)'}; color: ${s.paid ? 'var(--secondary)' : 'var(--danger)'}; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">${s.paid ? 'Active' : 'Unpaid'}</span>
+                                    <span style="background: ${s.paid ? 'rgba(45, 212, 191, 0.1)' : 'rgba(251, 113, 133, 0.1)'}; color: ${s.paid ? 'var(--secondary)' : 'var(--danger)'}; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">${s.paid ? t.status_active : t.status_unpaid}</span>
                                     <span style="font-size: 0.75rem; font-weight: 700; color: var(--secondary);">
-                                        Balance: ${s.balance === null ? '∞' : s.balance}
+                                        ${t.balance_label}: ${s.balance === null ? '∞' : s.balance}
                                     </span>
                                 </div>
                             </div>
@@ -443,20 +543,20 @@ function renderView() {
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
                             <div style="display:flex; flex-direction:column; gap:0.4rem;">
-                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Plan</span>
+                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">${t.plan_label}</span>
                                 <select class="glass-input" onchange="activatePackage('${s.id}', this.value)" style="padding: 0.6rem; border-radius: 10px; font-size: 0.85rem;">
-                                    <option value="">None</option>
+                                    <option value="">${t.none_label}</option>
                                     ${state.subscriptions.map(sub => `<option value="${sub.name}" ${s.package === sub.name ? 'selected' : ''}>${sub.name}</option>`).join('')}
                                 </select>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.4rem;">
-                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Balance Manual</span>
+                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">${t.balance_manual_label}</span>
                                 <input type="number" value="${s.balance === null ? '' : s.balance}" placeholder="∞" onchange="updateBalance('${s.id}', this.value)" class="glass-input" style="padding: 0.6rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700;">
                             </div>
                         </div>
 
                         <button class="btn-secondary w-full" onclick="togglePayment('${s.id}')" style="padding: 0.6rem; font-size: 0.8rem;">
-                            ${s.paid ? 'Mark Unpaid' : 'Mark Paid'}
+                            ${s.paid ? t.mark_unpaid : t.mark_paid}
                         </button>
                     </div>
                 </div>
@@ -468,7 +568,7 @@ function renderView() {
             html += `<p class="text-muted">${t.no_subs}</p>`;
         } else {
             state.paymentRequests.forEach(req => {
-                const studentName = req.students ? req.students.name : 'Unknown';
+                const studentName = req.students ? req.students.name : t.unknown_student;
                 const isPending = req.status === 'pending';
                 html += `
                     <div class="card slide-in" style="margin-bottom: 1rem; border-left: 4px solid ${req.status === 'approved' ? 'var(--secondary)' : (req.status === 'rejected' ? 'var(--danger)' : 'var(--primary)')}">
@@ -522,7 +622,7 @@ function renderView() {
                 </div>
                 
                 <div class="card" style="padding: 1.5rem; border-radius: 24px;">
-                    <div class="text-muted" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">${t.total_earned} (History)</div>
+                    <div class="text-muted" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">${t.total_earned}</div>
                     <div style="font-size: 1.5rem; font-weight: 700;">MXD ${totalHistorical.toLocaleString()}</div>
                 </div>
             </div>
@@ -530,7 +630,7 @@ function renderView() {
             <h2 style="margin-bottom: 1.5rem; font-size: 1.2rem;">${t.all_payments}</h2>
             <div style="display:flex; flex-direction:column; gap:0.8rem;">
                 ${state.paymentRequests.map(req => {
-            const studentName = req.students ? req.students.name : 'Unknown';
+            const studentName = req.students ? req.students.name : t.unknown_student;
             const date = new Date(req.created_at).toLocaleDateString();
             const statusColor = req.status === 'approved' ? 'var(--secondary)' : (req.status === 'rejected' ? 'var(--danger)' : 'var(--primary)');
             return `
@@ -561,13 +661,13 @@ function renderView() {
         html += `
             <div class="text-center">
                 <h1>${t.nav_scan}</h1>
-                <p class="text-muted" style="margin-bottom: 4rem;">Verify student entrance precision.</p>
+                <p class="text-muted" style="margin-bottom: 4rem;">${t.scan_cta_desc}</p>
                 <div class="card" style="max-width: 440px; margin: 0 auto; border-radius: 30px;">
                     <div style="width: 120px; height: 120px; background: var(--background); border-radius: 30px; margin: 0 auto 2rem; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
                          <i data-lucide="camera" size="48"></i>
                     </div>
                     <button class="btn-primary w-full" onclick="startScanner()" style="justify-content:center; padding: 1.5rem; font-size: 1.1rem;">
-                        Initiate Portal Scan
+                        ${t.initiate_scan_btn}
                     </button>
                 </div>
                 <div id="scan-result" class="mt-4"></div>
@@ -579,9 +679,9 @@ function renderView() {
         html += `
             <div class="card" style="border-radius: 24px;">
                 <div class="settings-header" style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.4rem;">Classes</h3>
+                    <h3 style="font-size: 1.4rem;">${t.classes_label}</h3>
                     <button class="btn-primary" onclick="addClass()" style="padding: 0.5rem 1.2rem; font-size: 0.8rem;">
-                        <i data-lucide="plus" size="14"></i> Add
+                        <i data-lucide="plus" size="14"></i> ${t.add_label}
                     </button>
                 </div>
                 <div class="mt-4">
@@ -615,9 +715,9 @@ function renderView() {
         html += `
             <div class="card" style="border-radius: 24px; margin-top: 2rem; padding: 1.5rem;">
                 <div class="settings-header" style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="font-size: 1.3rem;">Plans</h3>
+                    <h3 style="font-size: 1.3rem;">${t.plans_label}</h3>
                     <button class="btn-primary" onclick="addSubscription()" style="padding: 0.5rem 1rem; font-size: 0.8rem; min-height: 36px;">
-                        <i data-lucide="plus" size="14"></i> Add
+                        <i data-lucide="plus" size="14"></i> ${t.add_label}
                     </button>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:1rem;">
@@ -630,11 +730,11 @@ function renderView() {
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:0.8rem; align-items:center;">
                             <div style="display:flex; flex-direction:column; gap:0.3rem;">
-                                <span class="text-muted" style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase;">Límite Clases</span>
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase;">${t.limit_classes_label}</span>
                                 <input type="number" class="glass-input" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="∞" style="padding: 0.7rem; font-size: 0.9rem; font-weight: 700;">
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.3rem;">
-                                <span class="text-muted" style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase;">Precio MXD</span>
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase;">${t.price_mxd_label}</span>
                                 <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" placeholder="MXD" style="padding: 0.7rem; font-size: 0.9rem; font-weight: 700;">
                             </div>
                             <button class="btn-icon" onclick="removeSubscription('${s.id}')" style="color: var(--danger); margin-top: 1rem;"><i data-lucide="trash-2" size="20"></i></button>
@@ -648,10 +748,10 @@ function renderView() {
         // Transfer Settings
         html += `
             <div class="card" style="border-radius: 24px; margin-top: 2rem; padding: 1.5rem;">
-                <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem;">Transfer Details</h3>
+                <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem;">${t.transfer_details_label}</h3>
                 <div style="display:flex; flex-direction:column; gap:1rem;">
                     <div>
-                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Bank Name</span>
+                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">${t.bank_name_label}</span>
                         <input type="text" id="set-bank-name" class="glass-input" value="${state.adminSettings.bank_name || ''}" style="padding: 0.8rem; width: 100%;">
                     </div>
                     <div>
@@ -663,14 +763,14 @@ function renderView() {
                         <input type="text" id="set-bank-alias" class="glass-input" value="${state.adminSettings.bank_alias || ''}" style="padding: 0.8rem; width: 100%;">
                     </div>
                     <div>
-                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Holder Name</span>
+                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">${t.holder_name_label}</span>
                         <input type="text" id="set-bank-holder" class="glass-input" value="${state.adminSettings.bank_holder || ''}" style="padding: 0.8rem; width: 100%;">
                     </div>
                     <button class="btn-primary w-full" onclick="saveBankSettings(this)" style="margin-top: 1rem; padding: 1rem;">
-                        <i data-lucide="save" size="16"></i> Save Bank Details
+                        <i data-lucide="save" size="16"></i> ${t.save_bank_btn}
                     </button>
                     <div id="save-status" class="text-center hidden slide-in" style="font-size: 0.8rem; color: var(--secondary); font-weight: 700;">
-                        <i data-lucide="check" size="14"></i> Saved Successfully!
+                        <i data-lucide="check" size="14"></i> ${t.saved_success_msg}
                     </div>
                 </div>
             </div>
@@ -750,7 +850,9 @@ window.signUpStudent = async () => {
 window.loginStudent = async () => {
     const nameInput = document.getElementById('auth-name').value.trim();
     const passInput = document.getElementById('auth-pass').value.trim();
-    const t = translations[state.language];
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
 
     let student;
     if (supabaseClient) {
@@ -762,7 +864,7 @@ window.loginStudent = async () => {
             .single();
 
         if (error) {
-            alert(t.invalid_login);
+            alert(t('invalid_login'));
             return;
         }
         student = data;
@@ -779,7 +881,7 @@ window.loginStudent = async () => {
         saveState();
         renderView();
     } else {
-        alert(t.invalid_login);
+        alert(t('invalid_login'));
     }
 };
 
@@ -798,7 +900,10 @@ window.buySubscription = async (id) => {
 };
 
 window.deleteStudent = async (id) => {
-    if (confirm("Are you sure you want to remove this student? All their progress will be lost.")) {
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    if (confirm(t('delete_student_confirm'))) {
         if (supabaseClient) {
             const { error } = await supabaseClient.from('students').delete().eq('id', id);
             if (error) { alert("Error deleting: " + error.message); return; }
@@ -810,9 +915,11 @@ window.deleteStudent = async (id) => {
 };
 
 window.loginAdminWithCreds = async () => {
-    const user = document.getElementById('admin-user').value.trim();
-    const pass = document.getElementById('admin-pass').value.trim();
-    const t = translations[state.language];
+    const user = document.getElementById('admin-user-input').value.trim();
+    const pass = document.getElementById('admin-pass-input').value.trim();
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
 
     if (supabaseClient) {
         const { data, error } = await supabaseClient
@@ -840,27 +947,33 @@ window.loginAdminWithCreds = async () => {
         saveState();
         renderView();
     } else {
-        alert(t.invalid_login);
+        alert(t('invalid_login'));
     }
 };
 
 window.createNewAdmin = async () => {
-    const name = prompt("Enter new admin username:");
-    const pass = prompt("Enter new admin password:");
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    const name = prompt(t('enter_admin_user'));
+    const pass = prompt(t('enter_admin_pass'));
     if (!name || !pass) return;
 
     const newId = "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase();
     if (supabaseClient) {
         const { error } = await supabaseClient.from('admins').insert([{ id: newId, username: name, password: pass }]);
         if (error) { alert("Error: " + error.message); return; }
-        alert("Admin created!");
+        alert(t('admin_created'));
     }
 };
 
 window.createNewStudent = async () => {
-    const name = prompt("Enter student name:");
-    const phone = prompt("Enter student phone:");
-    const pass = prompt("Enter student password:");
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    const name = prompt(t('enter_student_name'));
+    const phone = prompt(t('enter_student_phone'));
+    const pass = prompt(t('enter_student_pass'));
     if (!name || !pass) return;
 
     const newStudent = {
@@ -879,7 +992,7 @@ window.createNewStudent = async () => {
     }
     state.students.push(newStudent);
     renderView();
-    alert("Student created!");
+    alert(t('student_created'));
 };
 
 window.logout = () => {
@@ -945,24 +1058,26 @@ window.activatePackage = async (studentId, packageName) => {
 window.openPaymentModal = (subId) => {
     const sub = state.subscriptions.find(s => s.id === subId);
     if (!sub) return;
-    const t = translations[state.language];
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
     const modal = document.getElementById('payment-modal');
     const content = document.getElementById('payment-modal-content');
 
     content.innerHTML = `
-        <h2 style="margin-bottom: 1.5rem;">${t.payment_instructions}</h2>
+        <h2 style="margin-bottom: 1.5rem;">${t('payment_instructions')}</h2>
         <div class="card" style="margin-bottom: 1.5rem; text-align: left;">
             <p><strong>${sub.name}</strong> - MXD ${sub.price}</p>
             <hr style="margin: 1rem 0; opacity: 0.1;">
             <p style="font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>${state.adminSettings.bank_name || 'Bank'}</strong></p>
             <p style="font-size: 0.8rem;">CBU: ${state.adminSettings.bank_cbu || 'N/A'}</p>
             <p style="font-size: 0.8rem;">Alias: ${state.adminSettings.bank_alias || 'N/A'}</p>
-            <p style="font-size: 0.8rem;">Titular: ${state.adminSettings.bank_holder || 'N/A'}</p>
+            <p style="font-size: 0.8rem;">${t('holder_name_label')}: ${state.adminSettings.bank_holder || 'N/A'}</p>
         </div>
         <div style="display:flex; flex-direction:column; gap:0.8rem;">
-            <button class="btn-primary w-full" onclick="submitPaymentRequest('${sub.id}', 'transfer')">${t.i_have_paid} (Transfer)</button>
-            <button class="btn-secondary w-full" onclick="submitPaymentRequest('${sub.id}', 'cash')">${t.pay_cash}</button>
-            <button class="btn-icon w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t.close}</button>
+            <button class="btn-primary w-full" onclick="submitPaymentRequest('${sub.id}', 'transfer')">${t('i_have_paid')} (${t('transfer')})</button>
+            <button class="btn-secondary w-full" onclick="submitPaymentRequest('${sub.id}', 'cash')">${t('pay_cash')}</button>
+            <button class="btn-icon w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t('close')}</button>
         </div>
     `;
     modal.classList.remove('hidden');
@@ -973,7 +1088,9 @@ window.submitPaymentRequest = async (subId, method) => {
     if (!state.currentUser) return;
     const sub = state.subscriptions.find(s => s.id === subId);
     if (!sub) { alert("Error: Plan not found"); return; }
-    const t = translations[state.language];
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
 
     const newRequest = {
         student_id: state.currentUser.id,
@@ -996,9 +1113,9 @@ window.submitPaymentRequest = async (subId, method) => {
     const content = document.getElementById('payment-modal-content');
     content.innerHTML = `
         <i data-lucide="check-circle" size="48" style="color: var(--secondary); margin-bottom: 1rem;"></i>
-        <h2>${t.request_sent_title}</h2>
-        <p class="text-muted" style="margin: 1rem 0;">${t.request_sent_msg}</p>
-        <button class="btn-primary w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t.close}</button>
+        <h2>${t('request_sent_title')}</h2>
+        <p class="text-muted" style="margin: 1rem 0;">${t('request_sent_msg')}</p>
+        <button class="btn-primary w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t('close')}</button>
     `;
     if (window.lucide) lucide.createIcons();
 };
@@ -1020,7 +1137,10 @@ window.processPaymentRequest = async (id, status) => {
 };
 
 window.removePaymentRequest = async (id) => {
-    if (confirm("Delete this payment record forever?")) {
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    if (confirm(t('delete_payment_confirm'))) {
         if (supabaseClient) {
             const { error } = await supabaseClient.from('payment_requests').delete().eq('id', id);
             if (error) { alert("Error deleting: " + error.message); return; }
@@ -1246,14 +1366,16 @@ window.handleScan = async (scannedId) => {
 
     const student = state.students.find(s => s.id === id);
     const resultEl = document.getElementById('inline-scan-result'); // TARGET INLINE
-    const t = translations[state.language];
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
 
     if (!student) {
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <h2 style="color: var(--danger); font-size: 1rem;">${t.scan_fail}</h2>
-                <p style="margin-top:0.3rem">Not Found: [${id.substring(0, 8)}...]</p>
-                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">Try Again</button>
+                <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
+                <p style="margin-top:0.3rem">${t('not_found_msg')}: [${id.substring(0, 8)}...]</p>
+                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
             </div>
         `;
         return;
@@ -1268,32 +1390,32 @@ window.handleScan = async (scannedId) => {
                     <div>
                         <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
                         <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">
-                            ${t.remaining_classes}: ${student.balance === null ? t.unlimited : student.balance}
+                            ${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}
                         </div>
                     </div>
                 </div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
                     <button class="btn-primary" onclick="confirmAttendance('${student.id}', 1)" style="padding: 0.8rem; font-size: 0.85rem;">
-                        ${t.one_class}
+                        ${t('one_class')}
                     </button>
                     <button class="btn-secondary" onclick="confirmAttendance('${student.id}', 2)" style="padding: 0.8rem; font-size: 0.85rem;">
-                        ${t.two_classes}
+                        ${t('two_classes')}
                     </button>
                 </div>
                 
                 <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.5rem; opacity:0.5;">
-                    ${t.cancel}
+                    ${t('cancel')}
                 </button>
             </div>
         `;
     } else {
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <h2 style="color: var(--danger); font-size: 1rem;">${t.scan_fail}</h2>
+                <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
                 <p style="margin-top:0.3rem">${student.name}</p>
-                <p style="font-size:0.75rem; color:var(--danger)">No classes remaining or unpaid</p>
-                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">Try Again</button>
+                <p style="font-size:0.75rem; color:var(--danger)">${t('inactive')}</p>
+                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
             </div>
         `;
     }
@@ -1315,11 +1437,13 @@ window.cancelAttendance = () => {
 window.confirmAttendance = async (studentId, count) => {
     const student = state.students.find(s => s.id === studentId);
     if (!student) return;
-    const t = translations[state.language];
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
     const resultEl = document.getElementById('inline-scan-result');
 
     if (student.balance !== null && student.balance < count) {
-        alert("Not enough classes remaining!");
+        alert(t('not_enough_balance'));
         return;
     }
 
@@ -1337,7 +1461,7 @@ window.confirmAttendance = async (studentId, count) => {
     resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
-             <div style="font-weight:700; color:var(--secondary)">${t.attendance_success}</div>
+             <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
              <div style="font-size:0.8rem">${student.name} (-${count})</div>
         </div>
     `;

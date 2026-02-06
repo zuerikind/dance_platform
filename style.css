@@ -363,8 +363,8 @@ h1 {
     .hero-section {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
+        align-items: center;
+        text-align: center;
     }
 
     .auth-logo-container {
@@ -415,6 +415,9 @@ h1 {
     margin-bottom: 3.5rem;
     z-index: 1;
     position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }
 
 @media (max-width: 600px) {
@@ -863,7 +866,7 @@ h1 {
 
 /* FOOTER - Professional & Minimal */
 .site-footer {
-    padding: 2.5rem 1.5rem 6rem;
+    padding: 1.5rem 1rem 5rem;
     text-align: center;
     border-top: 1px solid var(--border);
     background: var(--background);
@@ -881,7 +884,7 @@ h1 {
 .footer-logo {
     font-family: var(--font-main);
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text);
@@ -889,7 +892,7 @@ h1 {
 }
 
 .footer-tagline {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--text-muted);
     font-weight: 400;
     letter-spacing: 0.03em;
