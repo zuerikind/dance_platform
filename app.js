@@ -27,7 +27,8 @@ const translations = {
         scan_fail: "Membership Inactive",
         switch_to_admin: "Go to Admin",
         switch_to_student: "Go to Student",
-        auth_title: "Elevate Your Dance",
+        auth_title: "Bailadmin",
+        auth_subtitle: "Precision in every step.",
         student_signup: "New Student",
         admin_login: "Admin login",
         enter_name: "How should we call you?",
@@ -98,6 +99,8 @@ const translations = {
         scan_fail: "Membresía Inactiva",
         switch_to_admin: "Ir a Admin",
         switch_to_student: "Ir a Alumno",
+        auth_title: "Bailadmin",
+        auth_subtitle: "Eleva tu baile.",
         auth_title: "Eleva tu Baile",
         student_signup: "Nuevo Alumno",
         admin_login: "Admin login",
@@ -250,7 +253,7 @@ function renderView() {
                         
                         <div class="text-center" style="margin-bottom: 2rem; width: 100%;">
                             <h1 class="auth-title">${t.auth_title}</h1>
-                            <p class="auth-subtitle">Precision in every step.</p>
+                            <p class="auth-subtitle">${t.auth_subtitle}</p>
                         </div>
                     </div>
 
@@ -671,7 +674,6 @@ function renderView() {
         `;
     }
 
-    html += `<div class="text-center" style="font-size: 0.75rem; color: var(--text-muted); padding: 4rem 0; letter-spacing: 0.1em; opacity: 0.5;">BAILADMIN INDUSTRIAL v${APP_VERSION}</div>`;
     html += `</div>`;
     root.innerHTML = html;
     if (window.lucide) lucide.createIcons();
