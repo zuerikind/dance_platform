@@ -69,7 +69,12 @@ const translations = {
         total_earned: 'Total Earned',
         approved: 'Approved',
         rejected: 'Not Approved',
-        pending: 'Pending'
+        pending: 'Pending',
+        check_in_title: "Check-In Attendance",
+        one_class: "1 Class",
+        two_classes: "2 Classes",
+        cancel: "Cancel",
+        confirm_attendance: "Confirm Attendance"
     },
     es: {
         nav_schedule: "Horario",
@@ -133,9 +138,15 @@ const translations = {
         payment_instructions: "Instrucciones de Pago",
         i_have_paid: "Ya transferí",
         pay_cash: "Pagaré en efectivo",
-        request_sent_title: "¡Pedido Enviado!",
         request_sent_msg: "Tu acceso será activado una vez que validemos el pago.",
-        close: "Cerrar"
+        close: "Cerrar",
+        check_in_title: "Confirmar Asistencia",
+        one_class: "1 Clase",
+        two_classes: "2 Clases",
+        cancel: "Cancelar",
+        confirm_attendance: "Confirmar Asistencia",
+        attendance_success: "¡Asistencia confirmada!",
+        attendance_error: "Error en la asistencia"
     }
 };
 
@@ -1208,44 +1219,99 @@ window.handleScan = async (scannedId) => {
     console.log(`Processing scan for ID: [${id}]`);
 
     const student = state.students.find(s => s.id === id);
-    if (student) console.log(`Found student: ${student.name}`, student);
-    else console.warn(`Student not found for ID: [${id}]`);
-
     const resultEl = document.getElementById('scan-result');
     const t = translations[state.language];
 
-    // Check if student has valid pass (unlimited OR balance > 0)
-    const hasValidPass = student && student.paid && (student.balance === null || student.balance > 0);
+    if (!student) {
+        resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1)">
+            <h2 style="color: var(--danger)">${t.scan_fail}</h2>
+            <p style="margin-top:0.5rem">Student Not Found</p>
+        </div>`;
+        return;
+    }
+
+    const hasValidPass = student.paid && (student.balance === null || student.balance > 0);
 
     if (hasValidPass) {
-        // Decrement balance if it's a limited pass
-        if (student.balance !== null) {
-            const newBalance = student.balance - 1;
-            if (supabaseClient) {
-                const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', id);
-                if (error) { alert("Error updating balance: " + error.message); return; }
-            }
-            student.balance = newBalance;
-            saveState();
-
-            // Refresh global state immediately to ensure sync across devices
-            await fetchAllData();
-        }
-
-        resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1)">
-            <h2 style="color: var(--secondary)">${t.scan_success}</h2>
-            <p style="margin-top:0.5rem">${student.name}</p>
-            <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem;">
-                ${t.remaining_classes}: ${student.balance === null ? t.unlimited : student.balance}
-            </p>
-        </div>`;
+        // Show Confirmation UI instead of auto-deducting
+        resultEl.innerHTML = `
+            <div class="card slide-in" style="border-radius: 24px; padding: 1.5rem; text-align: left; border: 2px solid var(--secondary);">
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 0.2rem;">${student.name}</h3>
+                    <div style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 0.5rem;">ID: ${student.id}</div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">
+                        ${t.remaining_classes}: ${student.balance === null ? t.unlimited : student.balance}
+                    </div>
+                </div>
+                
+                <p style="font-size: 0.85rem; margin-bottom: 1rem; opacity: 0.8;">${t.confirm_attendance}:</p>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
+                    <button class="btn-primary" onclick="confirmAttendance('${student.id}', 1)" style="padding: 1rem; font-size: 0.9rem;">
+                        ${t.one_class}
+                    </button>
+                    <button class="btn-secondary" onclick="confirmAttendance('${student.id}', 2)" style="padding: 1rem; font-size: 0.9rem;">
+                        ${t.two_classes}
+                    </button>
+                </div>
+                
+                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.6rem; font-size: 0.8rem; opacity: 0.5;">
+                    ${t.cancel}
+                </button>
+            </div>
+        `;
+        if (window.lucide) lucide.createIcons();
     } else {
         resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1)">
             <h2 style="color: var(--danger)">${t.scan_fail}</h2>
-            <p style="margin-top:0.5rem">${student ? student.name : 'Not Found'}</p>
-            ${student && student.package ? `<p style="font-size:0.8rem; color:var(--danger)">No classes remaining</p>` : ''}
+            <p style="margin-top:0.5rem">${student.name}</p>
+            <p style="font-size:0.8rem; color:var(--danger)">No classes remaining or unpaid</p>
         </div>`;
     }
+};
+
+window.cancelAttendance = () => {
+    document.getElementById('scan-result').innerHTML = '';
+};
+
+window.confirmAttendance = async (studentId, count) => {
+    const student = state.students.find(s => s.id === studentId);
+    if (!student) return;
+    const t = translations[state.language];
+    const resultEl = document.getElementById('scan-result');
+
+    // If balanced, check if enough
+    if (student.balance !== null && student.balance < count) {
+        alert("Not enough classes remaining!");
+        return;
+    }
+
+    if (student.balance !== null) {
+        const newBalance = student.balance - count;
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
+            if (error) { alert("Error updating balance: " + error.message); return; }
+        }
+        student.balance = newBalance;
+        saveState();
+        await fetchAllData();
+    }
+
+    resultEl.innerHTML = `
+        <div class="card slide-in" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 2rem;">
+            <i data-lucide="check-circle" size="48" style="color: var(--secondary); margin-bottom: 1rem;"></i>
+            <h2 style="color: var(--secondary)">${t.attendance_success}</h2>
+            <p style="margin-top:0.5rem"><strong>${student.name}</strong> - ${count} ${count > 1 ? 'Classes' : 'Class'}</p>
+        </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+
+    // Auto-clear after 3 seconds
+    setTimeout(() => {
+        if (resultEl.innerHTML.includes(t.attendance_success)) {
+            resultEl.innerHTML = '';
+        }
+    }, 3000);
 };
 
 // --- INIT ---
