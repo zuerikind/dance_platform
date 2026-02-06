@@ -261,6 +261,94 @@ h1 {
     margin: 2rem 0;
 }
 
+/* SEGMENT CONTROL */
+.segment-control {
+    display: flex;
+    background: var(--border);
+    padding: 0.3rem;
+    border-radius: 40px;
+    margin-bottom: 2rem;
+    gap: 0.2rem;
+}
+
+.segment-item {
+    flex: 1;
+    border: none;
+    padding: 0.6rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: none;
+    color: var(--text-muted);
+    transition: all 0.2s var(--transition);
+}
+
+.segment-item.active {
+    background: var(--surface-solid);
+    color: var(--text);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.weekly-day-group {
+    margin-bottom: 2rem;
+}
+
+.weekly-day-header {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--primary);
+    letter-spacing: 0.1em;
+    padding-left: 0.5rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.weekly-day-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.weekly-class-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 0.6rem;
+    border: 1px solid var(--border);
+}
+
+.weekly-time {
+    font-size: 0.9rem;
+    font-weight: 700;
+    min-width: 60px;
+    color: var(--text);
+}
+
+.weekly-info {
+    flex: 1;
+}
+
+.weekly-name {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.1rem;
+}
+
+.weekly-tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
 /* ANIMATIONS */
 .slide-in {
     animation: fadeIn 0.8s var(--transition);

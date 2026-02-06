@@ -46,7 +46,10 @@ const translations = {
         sign_in: "Sign In",
         sign_up: "Sign Up",
         student_login: "Student Login",
-        phone: "Phone Number"
+        phone: "Phone Number",
+        list_view: "List View",
+        weekly_view: "Weekly Plan",
+        mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday"
     },
     es: {
         nav_schedule: "Horario",
@@ -89,7 +92,10 @@ const translations = {
         sign_in: "Entrar",
         sign_up: "Registrarse",
         student_login: "Acceso Alumno",
-        phone: "Teléfono"
+        phone: "Teléfono",
+        list_view: "Lista",
+        weekly_view: "Plan Semanal",
+        mon: "Lunes", tue: "Martes", wed: "Miércoles", thu: "Jueves", fri: "Viernes", sat: "Sábado", sun: "Domingo"
     }
 };
 
@@ -104,6 +110,7 @@ let state = {
     students: [],
     language: 'en',
     currentView: 'auth',
+    scheduleView: 'list', // 'list' or 'weekly'
     authMode: 'login',
     theme: 'dark',
     isAdmin: false
@@ -137,7 +144,8 @@ function saveState() {
         theme: state.theme,
         currentUser: state.currentUser,
         isAdmin: state.isAdmin,
-        currentView: state.currentView
+        currentView: state.currentView,
+        scheduleView: state.scheduleView
     }));
 }
 
@@ -201,23 +209,56 @@ function renderView() {
         `;
     } else if (view === 'schedule') {
         html += `<h1 style="margin-bottom: 0.5rem;">${t.schedule_title}</h1>`;
-        html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">${t.classes_subtitle}</p>`;
-        html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">`;
-        state.classes.forEach(c => {
-            html += `
-                <div class="card" style="padding: 1.2rem; border-radius: 20px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
-                        <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
-                        <span style="font-weight: 700; font-size: 1rem;">$${c.price}</span>
+        html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.classes_subtitle}</p>`;
+
+        // View Toggle
+        html += `
+            <div class="segment-control">
+                <button class="segment-item ${state.scheduleView === 'list' ? 'active' : ''}" onclick="setScheduleView('list')">${t.list_view}</button>
+                <button class="segment-item ${state.scheduleView === 'weekly' ? 'active' : ''}" onclick="setScheduleView('weekly')">${t.weekly_view}</button>
+            </div>
+        `;
+
+        if (state.scheduleView === 'list') {
+            html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">`;
+            state.classes.forEach(c => {
+                html += `
+                    <div class="card" style="padding: 1.2rem; border-radius: 20px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
+                            <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
+                            <span style="font-weight: 700; font-size: 1rem;">$${c.price}</span>
+                        </div>
+                        <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
+                        <div class="text-muted" style="display:flex; align-items:center; gap:0.4rem; font-size: 0.9rem;">
+                            <i data-lucide="calendar" size="14"></i> ${c.day} • <i data-lucide="clock" size="14"></i> ${c.time}
+                        </div>
                     </div>
-                    <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
-                    <div class="text-muted" style="display:flex; align-items:center; gap:0.4rem; font-size: 0.9rem;">
-                        <i data-lucide="calendar" size="14"></i> ${c.day} • <i data-lucide="clock" size="14"></i> ${c.time}
-                    </div>
-                </div>
-            `;
-        });
-        html += `</div>`;
+                `;
+            });
+            html += `</div>`;
+        } else {
+            const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            daysOrder.forEach(dayKey => {
+                const dayClasses = state.classes.filter(c => c.day === dayKey);
+                if (dayClasses.length > 0) {
+                    html += `
+                        <div class="weekly-day-group">
+                            <div class="weekly-day-header">${t[dayKey.toLowerCase()]}</div>
+                            ${dayClasses.sort((a, b) => a.time.localeCompare(b.time)).map(c => `
+                                <div class="weekly-class-item">
+                                    <div class="weekly-time">${c.time}</div>
+                                    <div class="weekly-info">
+                                        <div class="weekly-name">${c.name}</div>
+                                        <div class="weekly-tag">${c.tag || 'Class'}</div>
+                                    </div>
+                                    <div style="font-weight: 700; font-size: 0.9rem;">$${c.price}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            });
+        }
     } else if (view === 'shop') {
         html += `<h1>${t.shop_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">Select your preferred membership plan.</p>`;
@@ -334,13 +375,26 @@ function renderView() {
                 </div>
                 <div class="mt-4">
         `;
+        const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         state.classes.forEach(c => {
             html += `
-                <div class="settings-group" style="margin-bottom: 1rem;">
-                    <input type="text" class="glass-input" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" placeholder="Name">
-                    <input type="text" class="glass-input" value="${c.day || ''}" onchange="updateClass(${c.id}, 'day', this.value)" placeholder="Day">
-                    <input type="text" class="glass-input" value="${c.time || ''}" onchange="updateClass(${c.id}, 'time', this.value)" placeholder="Time">
-                    <button class="btn-icon" onclick="removeClass(${c.id})" style="color: var(--danger)"><i data-lucide="trash-2" size="18"></i></button>
+                <div class="card" style="margin-bottom: 1.5rem; padding: 1.5rem; border-radius: 20px;">
+                    <div style="display:flex; flex-direction:column; gap:1rem;">
+                        <input type="text" class="glass-input" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" placeholder="Class Name" style="padding: 0.8rem;">
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem;">
+                            <select class="glass-input" onchange="updateClass(${c.id}, 'day', this.value)" style="padding: 0.8rem;">
+                                ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
+                            </select>
+                            <input type="time" class="glass-input" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="padding: 0.8rem;">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1.5fr 1fr auto; gap: 0.8rem; align-items: center;">
+                            <input type="text" class="glass-input" value="${c.tag || ''}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Tag (e.g. Beginner)" style="padding: 0.8rem;">
+                            <input type="number" class="glass-input" value="${c.price}" onchange="updateClass(${c.id}, 'price', this.value)" placeholder="$" style="padding: 0.8rem;">
+                            <button class="btn-icon" onclick="removeClass(${c.id})" style="color: var(--danger); width:44px; height:44px;"><i data-lucide="trash-2" size="20"></i></button>
+                        </div>
+                    </div>
                 </div>
             `;
         });
@@ -393,6 +447,12 @@ window.switchAuthMode = () => {
 window.showAdminFields = () => {
     document.getElementById('admin-fields').classList.toggle('hidden');
     document.getElementById('admin-show-btn').classList.toggle('hidden');
+};
+
+window.setScheduleView = (v) => {
+    state.scheduleView = v;
+    saveState();
+    renderView();
 };
 
 window.signUpStudent = async () => {
@@ -834,6 +894,7 @@ document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(l
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
         if (saved.currentView) state.currentView = saved.currentView;
+        if (saved.scheduleView) state.scheduleView = saved.scheduleView;
     }
 
     updateI18n();
