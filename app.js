@@ -245,14 +245,14 @@ function renderView() {
                     <img src="logo.png" class="auth-logo">
                 </div>
                 
-                <div class="text-center" style="margin-bottom: 3rem; padding: 0 2rem;">
+                <div class="text-center" style="margin-bottom: 2rem;">
                     <h1 class="auth-title">${t.auth_title}</h1>
                     <p class="auth-subtitle">Precision in every step.</p>
                 </div>
 
                 <div class="auth-card">
-                    <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.04em;">
-                       ${isSignup ? 'Registro de Alumno' : 'Acceso Alumno'}
+                    <div style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; text-align: center;">
+                       ${isSignup ? 'Nuevo Alumno' : 'Acceso Alumno'}
                     </div>
 
                     <div class="auth-input-group">
@@ -270,20 +270,20 @@ function renderView() {
                             ${isSignup ? 'Registrarse' : 'Entrar'}
                         </button>
                         
-                        <p class="text-muted" style="font-size: 0.95rem; margin-top: 1.5rem;">
+                        <p class="text-muted text-center" style="font-size: 0.85rem; margin-top: 1rem;">
                             ${isSignup ? t.already_account : t.no_account}
-                            <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--text);">
+                            <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--border);">
                                 ${isSignup ? t.sign_in : t.sign_up}
                             </a>
                         </p>
                     </div>
                     
-                    <div class="admin-trigger-container" style="margin-top: 6rem; padding-bottom: 4rem;">
-                        <button id="admin-show-btn" style="opacity: 0.4; font-size: 0.75rem; letter-spacing: 0.1em; background: none; border: none; color: var(--text);" onclick="showAdminFields()">Admin login</button>
-                        <div id="admin-fields" class="hidden slide-in" style="margin-top: 2rem;">
-                            <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 1rem; max-width: 260px; margin-left: auto; margin-right: auto;">
-                            <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1.5rem; max-width: 260px; margin-left: auto; margin-right: auto;">
-                            <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="max-width: 260px; margin: 0 auto; padding: 1rem;">Admin login</button>
+                    <div class="admin-trigger-container" style="margin-top: 2.5rem; text-align: center;">
+                        <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">• ADMIN ACCESS •</button>
+                        <div id="admin-fields" class="hidden slide-in" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                            <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 0.8rem;">
+                            <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1rem;">
+                            <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">Admin Login</button>
                         </div>
                     </div>
                 </div>
