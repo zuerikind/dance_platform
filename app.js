@@ -860,20 +860,27 @@ window.activatePackage = async (studentId, packageName) => {
     const student = state.students.find(s => s.id === studentId);
     const pkg = state.subscriptions.find(p => p.name === packageName);
     if (student) {
+        // Ensure limit_count is a number, default to 0 if missing. 
+        // We use 0 if no package is selected, but finite number if package has one.
+        const limitCount = pkg ? parseInt(pkg.limit_count || 0) : 0;
+
         const updates = {
             package: packageName,
-            balance: pkg ? pkg.limit_count : 0,
+            balance: limitCount,
             paid: !!pkg
         };
+
         if (supabaseClient) {
             const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
             if (error) { alert("Error updating: " + error.message); return; }
         }
+
         student.package = updates.package;
         student.balance = updates.balance;
         student.paid = updates.paid;
+
         saveState();
-        renderView();
+        await fetchAllData(); // Pull fresh data to be 100% sure
     }
 };
 
@@ -1167,8 +1174,8 @@ window.handleScan = async (id) => {
             student.balance = newBalance;
             saveState();
 
-            // Refresh global state to ensure sync across devices
-            fetchAllData();
+            // Refresh global state immediately to ensure sync across devices
+            await fetchAllData();
         }
 
         resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1)">
@@ -1247,8 +1254,8 @@ document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(l
     // Fetch live data from Supabase
     fetchAllData();
 
-    // Background Sync: Refresh every 20 seconds to catch QR scans from other devices
+    // Background Sync: Refresh every 10 seconds to catch QR scans from other devices
     setInterval(() => {
         if (state.currentUser) fetchAllData();
-    }, 20000);
+    }, 10000);
 })();
