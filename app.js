@@ -534,19 +534,25 @@ function renderView() {
                 <div style="display:flex; flex-direction:column; gap:1rem;">
                     <div>
                         <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Bank Name</span>
-                        <input type="text" class="glass-input" value="${state.adminSettings.bank_name || ''}" onchange="updateAdminSetting('bank_name', this.value)" style="padding: 0.8rem; width: 100%;">
+                        <input type="text" id="set-bank-name" class="glass-input" value="${state.adminSettings.bank_name || ''}" style="padding: 0.8rem; width: 100%;">
                     </div>
                     <div>
                         <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">CBU</span>
-                        <input type="text" class="glass-input" value="${state.adminSettings.bank_cbu || ''}" onchange="updateAdminSetting('bank_cbu', this.value)" style="padding: 0.8rem; width: 100%;">
+                        <input type="text" id="set-bank-cbu" class="glass-input" value="${state.adminSettings.bank_cbu || ''}" style="padding: 0.8rem; width: 100%;">
                     </div>
                     <div>
                         <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Alias</span>
-                        <input type="text" class="glass-input" value="${state.adminSettings.bank_alias || ''}" onchange="updateAdminSetting('bank_alias', this.value)" style="padding: 0.8rem; width: 100%;">
+                        <input type="text" id="set-bank-alias" class="glass-input" value="${state.adminSettings.bank_alias || ''}" style="padding: 0.8rem; width: 100%;">
                     </div>
                     <div>
                         <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Holder Name</span>
-                        <input type="text" class="glass-input" value="${state.adminSettings.bank_holder || ''}" onchange="updateAdminSetting('bank_holder', this.value)" style="padding: 0.8rem; width: 100%;">
+                        <input type="text" id="set-bank-holder" class="glass-input" value="${state.adminSettings.bank_holder || ''}" style="padding: 0.8rem; width: 100%;">
+                    </div>
+                    <button class="btn-primary w-full" onclick="saveBankSettings()" style="margin-top: 1rem; padding: 1rem;">
+                        <i data-lucide="save" size="16"></i> Save Bank Details
+                    </button>
+                    <div id="save-status" class="text-center hidden slide-in" style="font-size: 0.8rem; color: var(--secondary); font-weight: 700;">
+                        <i data-lucide="check" size="14"></i> Saved Successfully!
                     </div>
                 </div>
             </div>
@@ -877,6 +883,37 @@ window.processPaymentRequest = async (id, status) => {
     }
 
     await fetchAllData();
+};
+
+window.saveBankSettings = async () => {
+    const name = document.getElementById('set-bank-name').value;
+    const cbu = document.getElementById('set-bank-cbu').value;
+    const alias = document.getElementById('set-bank-alias').value;
+    const holder = document.getElementById('set-bank-holder').value;
+
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="spin" size="16"></i> Saving...`;
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        await Promise.all([
+            window.updateAdminSetting('bank_name', name),
+            window.updateAdminSetting('bank_cbu', cbu),
+            window.updateAdminSetting('bank_alias', alias),
+            window.updateAdminSetting('bank_holder', holder)
+        ]);
+
+        const status = document.getElementById('save-status');
+        status.classList.remove('hidden');
+        setTimeout(() => status.classList.add('hidden'), 3000);
+    } catch (err) {
+        alert("Error saving settings: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="save" size="16"></i> Save Bank Details`;
+        if (window.lucide) lucide.createIcons();
+    }
 };
 
 window.updateAdminSetting = async (key, value) => {
