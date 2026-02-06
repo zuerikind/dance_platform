@@ -59,7 +59,6 @@ body {
     transition: background 0.4s var(--transition);
     overflow-x: hidden;
     position: relative;
-    /* For pseudo-element background */
     display: flex;
     flex-direction: column;
 }
@@ -70,7 +69,7 @@ main#app-root {
     flex-direction: column;
 }
 
-/* Global Ambient Background - Pure Neutral */
+/* Global Background - Pure Neutral */
 body::before {
     content: '';
     position: fixed;
@@ -125,12 +124,10 @@ body::before {
     object-fit: contain;
     transition: transform 0.3s ease;
     mix-blend-mode: multiply;
-    /* Ensures transparent look on white */
 }
 
 .dark-mode .logo-img {
     filter: invert(1);
-    /* Flip black lines to white */
     mix-blend-mode: normal;
 }
 
@@ -205,7 +202,6 @@ body::before {
     width: 28px;
     padding: 0;
 }
-
 
 /* CARDS - High Precision */
 .card {
@@ -371,7 +367,6 @@ h1 {
 
     .auth-logo {
         width: 180px;
-        /* Larger logo on desktop */
     }
 
     .auth-title {
@@ -401,7 +396,6 @@ h1 {
 
     .hero-section {
         display: contents;
-        /*Flatten structure for mobile flow*/
     }
 
     .auth-card-container {
@@ -409,11 +403,6 @@ h1 {
         display: flex;
         justify-content: center;
     }
-}
-
-/* Sophisticated ambient background gradients */
-.auth-page-container::before {
-    display: none;
 }
 
 .auth-logo-container {
@@ -487,11 +476,8 @@ h1 {
 
 .minimal-input {
     background: var(--surface-solid);
-    /* Neutral gray/black */
     border: 1px solid transparent;
-    /* Cleaner look */
     border-radius: 12px;
-    /* Apple radius */
     padding: 1rem 1.2rem;
     font-size: 1rem;
     font-weight: 400;
@@ -505,10 +491,8 @@ h1 {
     outline: none;
     background: var(--background);
     border-color: var(--primary);
-    /* Monochrome focus */
     box-shadow: 0 0 0 4px var(--primary-soft);
     transform: none;
-    /* No movement on focus for stability */
 }
 
 .auth-actions {
@@ -735,7 +719,6 @@ h1 {
     width: 100%;
     border-collapse: collapse;
     min-width: 600px;
-    /* Force scroll on small screens */
     table-layout: fixed;
 }
 
@@ -862,38 +845,35 @@ h1 {
     background: var(--background);
 }
 
-.dark-mode .site-footer {
-    background: rgba(0, 0, 0, 0.3);
-}
-
 .footer-content {
-    max-width: 600px;
+    max-width: 1000px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
     align-items: center;
 }
 
 .footer-logo {
     font-family: var(--font-main);
     font-weight: 700;
-    font-size: 1.2rem;
-    letter-spacing: -0.02em;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--text);
-    opacity: 0.9;
+    opacity: 0.8;
 }
 
 .footer-tagline {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 400;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.05em;
 }
 
 .footer-links {
     display: flex;
-    gap: 1.5rem;
+    gap: 2rem;
     justify-content: center;
     flex-wrap: wrap;
 }
@@ -901,18 +881,18 @@ h1 {
 .footer-link {
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 500;
     transition: color 0.2s;
 }
 
 .footer-link:hover {
-    color: var(--primary);
+    color: var(--text);
 }
 
 .footer-copyright {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
-    opacity: 0.7;
+    opacity: 0.5;
     margin-top: 1rem;
 }
