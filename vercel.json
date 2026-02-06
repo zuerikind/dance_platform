@@ -1,0 +1,7 @@
+{
+  "name": "dance-school-app",
+  "alias": "dance.mathetogo.xyz",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

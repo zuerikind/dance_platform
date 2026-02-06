@@ -1,0 +1,8 @@
+{
+    "name": "dance-school-management",
+    "version": "1.6.0",
+    "description": "Premium Dance School Management Platform",
+    "scripts": {
+        "start": "serve ."
+    }
+}

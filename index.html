@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DanceStep - School Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="dark-mode">
+    <nav class="navbar">
+        <div class="logo">
+            <i data-lucide="sparkles" class="logo-icon"></i>
+            <span>Dance<span>Step</span></span>
+        </div>
+        <div class="nav-controls">
+            <button id="logout-btn" class="btn-icon hidden" title="Logout">
+                <i data-lucide="log-out"></i>
+            </button>
+            <button id="lang-toggle" class="btn-secondary">
+                <i data-lucide="languages"></i>
+                <span id="lang-text">ES</span>
+            </button>
+            <button id="theme-toggle" class="btn-icon">
+                <i data-lucide="moon" id="theme-icon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main id="app-root">
+        <!-- Content will be injected here by app.js -->
+        <div class="loader-container">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <nav class="bottom-nav" id="student-nav">
+        <button class="nav-item active" data-view="schedule">
+            <i data-lucide="calendar"></i>
+            <span data-i18n="nav_schedule">Schedule</span>
+        </button>
+        <button class="nav-item" data-view="shop">
+            <i data-lucide="shopping-bag"></i>
+            <span data-i18n="nav_shop">Shop</span>
+        </button>
+        <button class="nav-item" data-view="qr">
+            <i data-lucide="qr-code"></i>
+            <span data-i18n="nav_qr">My QR</span>
+        </button>
+    </nav>
+
+    <nav class="bottom-nav hidden" id="admin-nav">
+        <button class="nav-item active" data-view="admin-students">
+            <i data-lucide="users"></i>
+            <span data-i18n="nav_students">Students</span>
+        </button>
+        <button class="nav-item" data-view="admin-scanner">
+            <i data-lucide="scan"></i>
+            <span data-i18n="nav_scan">Scan</span>
+        </button>
+        <button class="nav-item" data-view="admin-settings">
+            <i data-lucide="settings"></i>
+            <span data-i18n="nav_settings">Settings</span>
+        </button>
+    </nav>
+
+    <div id="scanner-modal" class="modal hidden">
+        <div class="modal-content">
+            <div id="reader" style="width: 100%"></div>
+            <p class="text-muted" style="font-size: 0.8rem; margin-top: 1rem;">Align QR code within the frame</p>
+            <button id="close-scanner" class="btn-primary mt-4">Close</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

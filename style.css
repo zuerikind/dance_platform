@@ -1,0 +1,325 @@
+:root {
+    /* Tesla/Apple Inspired Palette */
+    --primary: #5e17eb;
+    /* Modern purple accent */
+    --accent: #0071e3;
+    /* Apple Blue */
+    --background: #f5f5f7;
+    /* Apple light gray */
+    --surface: rgba(255, 255, 255, 0.8);
+    --surface-solid: #ffffff;
+    --text: #1d1d1f;
+    --text-muted: #86868b;
+    --border: rgba(0, 0, 0, 0.1);
+    --danger: #ff3b30;
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --transition: cubic-bezier(0.28, 0.11, 0.32, 1);
+}
+
+[data-theme="dark"],
+.dark-mode {
+    --background: #000000;
+    --surface: rgba(22, 22, 23, 0.8);
+    --surface-solid: #1d1d1f;
+    --text: #f5f5f7;
+    --text-muted: #a1a1a6;
+    --border: rgba(255, 255, 255, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background: var(--background);
+    color: var(--text);
+    font-family: var(--font-main);
+    line-height: 1.47059;
+    font-weight: 400;
+    letter-spacing: -0.022em;
+    min-height: 100vh;
+    padding-bottom: 120px;
+    transition: background 0.5s var(--transition), color 0.5s var(--transition);
+    overflow-x: hidden;
+}
+
+/* NAVBAR - Apple Style */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    height: 48px;
+    background: rgba(var(--background-rgb), 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.dark-mode .navbar {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.logo:hover {
+    opacity: 0.8;
+}
+
+.logo-icon {
+    color: var(--primary);
+}
+
+.nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* BUTTONS - Tesla Style Minimal */
+.btn-primary,
+.btn-secondary,
+.btn-icon {
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 40px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    outline: none;
+}
+
+.btn-primary {
+    background: var(--text);
+    color: var(--background);
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+.btn-secondary {
+    background: var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background: rgba(var(--text-rgb), 0.1);
+}
+
+.btn-icon {
+    padding: 0.5rem;
+    background: none;
+    color: var(--text);
+    opacity: 0.8;
+}
+
+.btn-icon:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* CARDS - High Precision */
+.card {
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.5s var(--transition);
+}
+
+.card:hover {
+    border-color: var(--text-muted);
+}
+
+/* TYPOGRAPHY */
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.container {
+    padding: 4rem 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* AUTH RADIUS & INPUTS */
+.glass-input {
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 1.2rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    width: 100%;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.glass-input:focus {
+    border-color: var(--accent);
+}
+
+/* BOTTOM NAV - Minimal Floating */
+.bottom-nav {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(var(--surface-rgb), 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    display: flex;
+    padding: 0.4rem;
+    z-index: 1000;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.8rem 1.4rem;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.3s var(--transition);
+    font-weight: 500;
+}
+
+.nav-item.active {
+    background: var(--surface-solid);
+    color: var(--text);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .nav-item.active {
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+}
+
+/* QR VIEW */
+.qr-outer {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    display: inline-block;
+    border: 1px solid #e5e5e7;
+    margin: 2rem 0;
+}
+
+/* ANIMATIONS */
+.slide-in {
+    animation: fadeIn 0.8s var(--transition);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* UTILS */
+.hidden {
+    display: none !important;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.w-full {
+    width: 100%;
+}
+
+/* MODAL */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.4s var(--transition);
+}
+
+.modal-content {
+    background: var(--surface-solid);
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 440px;
+    padding: 2.5rem;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+#reader {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: black;
+}
+
+/* RESPONSIVENESS */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 2.2rem;
+    }
+
+    .container {
+        padding: 2rem 1rem;
+    }
+
+    .bottom-nav {
+        width: calc(100% - 2rem);
+    }
+}
