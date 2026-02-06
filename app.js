@@ -260,7 +260,15 @@ function renderView() {
             });
         }, 50);
     } else if (view === 'admin-students') {
-        html += `<h1 style="margin-bottom: 4rem; text-align: center;">${t.admin_title}</h1>`;
+        html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                <h1 style="margin:0;">${t.admin_title}</h1>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn-primary" onclick="createNewStudent()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">+ Student</button>
+                    <button class="btn-secondary" onclick="createNewAdmin()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">+ Admin</button>
+                </div>
+            </div>
+        `;
         state.students.forEach(s => {
             html += `
                 <div class="card" style="padding: 2.5rem; border-radius: 30px;">
@@ -367,7 +375,7 @@ function renderView() {
     html += `<div class="text-center" style="font-size: 0.75rem; color: var(--text-muted); padding: 4rem 0; letter-spacing: 0.1em; opacity: 0.5;">DANCESTEP INDUSTRIAL v${APP_VERSION}</div>`;
     html += `</div>`;
     root.innerHTML = html;
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 
     // Global UI Updates
     document.getElementById('logout-btn').classList.toggle('hidden', state.currentUser === null);
@@ -460,6 +468,20 @@ window.loginStudent = async () => {
     }
 };
 
+window.buySubscription = async (id) => {
+    if (!state.currentUser || state.isAdmin) {
+        alert("Please log in as a student to purchase a plan.");
+        return;
+    }
+    const sub = state.subscriptions.find(s => s.id === id);
+    if (confirm(`Purchase ${sub.name} for $${sub.price}?`)) {
+        await window.activatePackage(state.currentUser.id, sub.name);
+        alert("Plan activated!");
+        state.currentView = 'qr';
+        renderView();
+    }
+};
+
 window.deleteStudent = async (id) => {
     if (confirm("Are you sure you want to remove this student? All their progress will be lost.")) {
         if (supabase) {
@@ -472,11 +494,30 @@ window.deleteStudent = async (id) => {
     }
 };
 
-window.loginAdminWithCreds = () => {
-    const user = document.getElementById('admin-user').value;
-    const pass = document.getElementById('admin-pass').value;
+window.loginAdminWithCreds = async () => {
+    const user = document.getElementById('admin-user').value.trim();
+    const pass = document.getElementById('admin-pass').value.trim();
     const t = translations[state.language];
 
+    if (supabase) {
+        const { data, error } = await supabase
+            .from('admins')
+            .select('*')
+            .eq('username', user)
+            .eq('password', pass)
+            .single();
+
+        if (data) {
+            state.currentUser = { name: data.username + " (Admin)", role: "admin" };
+            state.isAdmin = true;
+            state.currentView = 'admin-students';
+            saveState();
+            renderView();
+            return;
+        }
+    }
+
+    // Fallback to hardcoded for safety during migration
     if (user === "Omid" && pass === "royal") {
         state.currentUser = { name: "Omid (Admin)", role: "admin" };
         state.isAdmin = true;
@@ -486,6 +527,44 @@ window.loginAdminWithCreds = () => {
     } else {
         alert(t.invalid_login);
     }
+};
+
+window.createNewAdmin = async () => {
+    const name = prompt("Enter new admin username:");
+    const pass = prompt("Enter new admin password:");
+    if (!name || !pass) return;
+
+    const newId = "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase();
+    if (supabase) {
+        const { error } = await supabase.from('admins').insert([{ id: newId, username: name, password: pass }]);
+        if (error) { alert("Error: " + error.message); return; }
+        alert("Admin created!");
+    }
+};
+
+window.createNewStudent = async () => {
+    const name = prompt("Enter student name:");
+    const phone = prompt("Enter student phone:");
+    const pass = prompt("Enter student password:");
+    if (!name || !pass) return;
+
+    const newStudent = {
+        id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
+        name: name,
+        phone: phone,
+        password: pass,
+        paid: false,
+        package: null,
+        balance: 0
+    };
+
+    if (supabase) {
+        const { error } = await supabase.from('students').insert([newStudent]);
+        if (error) { alert("Error: " + error.message); return; }
+    }
+    state.students.push(newStudent);
+    renderView();
+    alert("Student created!");
 };
 
 window.logout = () => {
