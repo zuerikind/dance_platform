@@ -755,3 +755,13 @@ h1 {
         width: calc(100% - 2rem);
     }
 }
+/* FOOTER */
+.site-footer { padding: 3rem 1.5rem 6rem; text-align: center; border-top: 1px solid var(--border); margin-top: 4rem; background: rgba(255,255,255,0.3); backdrop-filter: blur(20px); }
+.dark-mode .site-footer { background: rgba(0,0,0,0.3); }
+.footer-content { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; }
+.footer-logo { font-family: var(--font-main); font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; color: var(--text); opacity: 0.9; }
+.footer-tagline { font-size: 0.9rem; color: var(--text-muted); font-weight: 400; letter-spacing: 0.02em; }
+.footer-links { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+.footer-link { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; transition: color 0.2s; }
+.footer-link:hover { color: var(--primary); }
+.footer-copyright { font-size: 0.75rem; color: var(--text-muted); opacity: 0.7; margin-top: 1rem; }
