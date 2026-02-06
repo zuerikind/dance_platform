@@ -193,16 +193,19 @@ function renderView() {
                     </div>
                 </div>
 
-                <div style="margin-top: 4rem;">
-                    <button class="btn-icon" onclick="showAdminFields()" id="admin-show-btn" style="margin: 0 auto; color: var(--text-muted);">
-                        Staff Access
+                <div class="admin-trigger-container">
+                    <button class="btn-icon" onclick="showAdminFields()" id="admin-show-btn" style="margin: 0 auto; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                        — Staff Entrance —
                     </button>
-                    <div id="admin-fields" class="hidden" style="margin-top:1rem; display:flex; flex-direction:column; gap:1rem; max-width: 320px; margin-left: auto; margin-right: auto;">
-                        <input type="text" id="admin-user" class="glass-input" placeholder="${t.username}" style="padding: 0.8rem;">
-                        <input type="password" id="admin-pass" class="glass-input" placeholder="${t.password}" style="padding: 0.8rem;">
-                        <button class="btn-primary w-full" onclick="loginAdminWithCreds()" style="justify-content:center; padding:0.8rem;">
-                            ${t.login_btn}
-                        </button>
+                    <div id="admin-fields" class="hidden admin-login-card slide-in">
+                        <h4 style="margin-bottom: 1.5rem; font-size: 1.1rem; opacity: 0.8;">Secure Staff Access</h4>
+                        <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                            <input type="text" id="admin-user" class="glass-input" placeholder="${t.username}" style="padding: 0.8rem; font-size:0.9rem;">
+                            <input type="password" id="admin-pass" class="glass-input" placeholder="${t.password}" style="padding: 0.8rem; font-size:0.9rem;">
+                            <button class="btn-primary w-full" onclick="loginAdminWithCreds()" style="justify-content:center; padding:1rem; font-weight: 800; margin-top: 0.5rem;">
+                                ${t.login_btn}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -240,27 +243,36 @@ function renderView() {
             const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
 
-            daysOrder.forEach(dayKey => {
+            html += `
+                <div class="table-container shadow-sm">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                ${daysOrder.map(d => `<th>${t[d.toLowerCase()]}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                ${daysOrder.map(dayKey => {
                 const aliases = dayAliases[dayKey];
-                const dayClasses = state.classes.filter(c => aliases.includes(c.day));
-                if (dayClasses.length > 0) {
-                    html += `
-                        <div class="weekly-day-group">
-                            <div class="weekly-day-header">${t[dayKey.toLowerCase()]}</div>
-                            ${dayClasses.sort((a, b) => a.time.localeCompare(b.time)).map(c => `
-                                <div class="weekly-class-item">
-                                    <div class="weekly-time">${c.time}</div>
-                                    <div class="weekly-info">
-                                        <div class="weekly-name">${c.name}</div>
-                                        <div class="weekly-tag">${c.tag || 'Class'}</div>
-                                    </div>
-                                    <div style="font-weight: 700; font-size: 0.9rem;">$${c.price}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
-            });
+                const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
+                return `
+                                        <td>
+                                            ${dayClasses.map(c => `
+                                                <div class="table-class-box">
+                                                    <div class="table-class-time">${c.time}</div>
+                                                    <div class="table-class-name">${c.name}</div>
+                                                </div>
+                                            `).join('')}
+                                        </td>
+                                    `;
+            }).join('')}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted text-center mt-4" style="font-size: 0.8rem;">Swipe horizontally to view full week</p>
+            `;
         }
     } else if (view === 'shop') {
         html += `<h1>${t.shop_title}</h1>`;
