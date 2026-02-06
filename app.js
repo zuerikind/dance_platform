@@ -168,18 +168,18 @@ function renderView() {
                 <h1 style="margin-bottom: 0.5rem; letter-spacing: -0.04em;">${t.auth_title}</h1>
                 <p class="text-muted" style="margin-bottom: 3rem; font-size: 1.1rem;">Precision in every step.</p>
                 
-                <div class="card" style="max-width: 440px; margin: 0 auto; border-radius: 30px; border: 1px solid var(--border);">
+                <div class="card" style="max-width: 440px; margin: 0 auto; border-radius: 30px; border: 1px solid var(--border); padding: 2rem;">
                     <h3 style="margin-bottom: 2rem; font-weight: 600; font-size: 1.5rem;">${isSignup ? t.student_signup : t.student_login}</h3>
-                    <div style="display:flex; flex-direction:column; gap:1rem;">
-                        <input type="text" id="auth-name" class="glass-input" placeholder="${t.username}">
-                        ${isSignup ? `<input type="text" id="auth-phone" class="glass-input" placeholder="${t.phone}">` : ''}
-                        <input type="password" id="auth-pass" class="glass-input" placeholder="${t.password}">
+                    <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                        <input type="text" id="auth-name" class="glass-input" placeholder="${t.username}" style="padding: 1rem; border-radius: 12px; font-size: 1rem;">
+                        ${isSignup ? `<input type="text" id="auth-phone" class="glass-input" placeholder="${t.phone}" style="padding: 1rem; border-radius: 12px; font-size: 1rem;">` : ''}
+                        <input type="password" id="auth-pass" class="glass-input" placeholder="${t.password}" style="padding: 1rem; border-radius: 12px; font-size: 1rem;">
                         
-                        <button class="btn-primary w-full" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}" style="justify-content:center; padding: 1.2rem; font-size: 1rem; margin-top: 0.5rem;">
+                        <button class="btn-primary w-full" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}" style="padding: 1rem; font-size: 1.1rem; margin-top: 1rem;">
                             ${isSignup ? t.signup_btn : t.sign_in}
                         </button>
 
-                        <button class="btn-icon w-full" onclick="switchAuthMode()" style="justify-content:center; font-size:0.9rem; color:var(--accent); font-weight: 500;">
+                        <button class="btn-icon w-full" onclick="switchAuthMode()" style="font-size:0.9rem; color:var(--accent); font-weight: 600; background:none; border:none; height:auto; min-height:auto;">
                             ${isSignup ? t.already_account : t.no_account} ${isSignup ? t.sign_in : t.sign_up}
                         </button>
                     </div>
@@ -205,14 +205,14 @@ function renderView() {
         html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">`;
         state.classes.forEach(c => {
             html += `
-                <div class="card" style="padding: 2rem; border-radius: 24px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom: 1.5rem;">
-                        <span style="background: var(--text); color: var(--background); padding: 0.4rem 1rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">${c.tag || 'Class'}</span>
-                        <span style="font-weight: 600; font-size: 1.1rem;">$${c.price}</span>
+                <div class="card" style="padding: 1.2rem; border-radius: 20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
+                        <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
+                        <span style="font-weight: 700; font-size: 1rem;">$${c.price}</span>
                     </div>
-                    <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem; letter-spacing: -0.02em;">${c.name}</h3>
-                    <div class="text-muted" style="display:flex; align-items:center; gap:0.5rem; font-size: 1rem;">
-                        <i data-lucide="calendar" size="16"></i> ${c.day} • <i data-lucide="clock" size="16"></i> ${c.time}
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
+                    <div class="text-muted" style="display:flex; align-items:center; gap:0.4rem; font-size: 0.9rem;">
+                        <i data-lucide="calendar" size="14"></i> ${c.day} • <i data-lucide="clock" size="14"></i> ${c.time}
                     </div>
                 </div>
             `;
@@ -224,13 +224,13 @@ function renderView() {
         html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">`;
         state.subscriptions.forEach(s => {
             html += `
-                <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px;">
+                <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.8rem;">
                     <div>
-                        <h3 style="font-size: 1.6rem; margin-bottom: 1rem;">${s.name}</h3>
-                        <p class="text-muted" style="margin-bottom: 2rem; min-height: 40px;">${s.duration}</p>
-                        <div style="font-size: 3rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.04em;">$${s.price}</div>
+                        <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">${s.name}</h3>
+                        <p class="text-muted" style="margin-bottom: 1.2rem; font-size: 0.9rem;">${s.duration}</p>
+                        <div style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.04em;">$${s.price}</div>
                     </div>
-                    <button class="btn-primary w-full" onclick="buySubscription('${s.id}')" style="justify-content:center; padding: 1.2rem; font-size: 1rem;">${t.buy}</button>
+                    <button class="btn-primary w-full" onclick="buySubscription('${s.id}')" style="padding: 1rem;">${t.buy}</button>
                 </div>
             `;
         });
@@ -240,14 +240,14 @@ function renderView() {
             <div class="text-center">
                 <h1 style="margin-bottom: 0.5rem;">${t.qr_title}</h1>
                 <p class="text-muted" style="margin-bottom: 2rem;">${t.qr_subtitle}</p>
-                <div class="qr-outer"><div id="qr-code"></div></div>
-                <div style="margin-top: 2rem;">
-                    <div class="card" style="display:inline-block; padding: 1rem 2rem; border-radius: 50px; margin-bottom: 1rem;">
-                        <span class="text-muted">${t.student_id}:</span> <strong>${state.currentUser.id}</strong>
+                <div class="qr-outer" style="margin: 0 auto 1.5rem;"><div id="qr-code"></div></div>
+                <div>
+                    <div style="font-size: 0.8rem; margin-bottom: 1rem; letter-spacing: 0.05em; font-weight: 600;">
+                        ${t.student_id}: <span style="color: var(--primary);">${state.currentUser.id}</span>
                     </div>
-                    <div class="card" style="max-width: 320px; margin: 0 auto; padding: 1.5rem; border-radius: 24px;">
-                        <div class="text-muted" style="font-size: 0.9rem; margin-bottom: 0.5rem;">${t.remaining_classes}</div>
-                        <div style="font-size: 2.5rem; font-weight: 700; letter-spacing: -0.04em; color: var(--primary);">
+                    <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
+                        <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">${t.remaining_classes}</div>
+                        <div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">
                             ${state.currentUser.balance === null ? t.unlimited : state.currentUser.balance}
                         </div>
                     </div>
@@ -272,40 +272,35 @@ function renderView() {
         `;
         state.students.forEach(s => {
             html += `
-                <div class="card" style="padding: 2.5rem; border-radius: 30px;">
-                    <div style="display:grid; grid-template-columns: 1fr auto; align-items: start; gap: 2rem;">
-                        <div>
-                            <div style="display:flex; align-items:center; gap:1rem; margin-bottom: 0.5rem;">
-                                <h3 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em;">${s.name}</h3>
-                                <span style="background: ${s.paid ? 'rgba(45, 212, 191, 0.1)' : 'rgba(251, 113, 133, 0.1)'}; color: ${s.paid ? 'var(--secondary)' : 'var(--danger)'}; padding: 0.2rem 0.8rem; border-radius: 40px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">${s.paid ? 'Active' : 'Unpaid'}</span>
+                <div class="card" style="padding: 1.5rem; border-radius: 24px;">
+                    <div style="display:flex; flex-direction: column; gap: 1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items: center;">
+                            <div>
+                                <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.2rem;">${s.name}</h3>
+                                <span style="background: ${s.paid ? 'rgba(45, 212, 191, 0.1)' : 'rgba(251, 113, 133, 0.1)'}; color: ${s.paid ? 'var(--secondary)' : 'var(--danger)'}; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">${s.paid ? 'Active' : 'Unpaid'}</span>
                             </div>
-                            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 0.5rem;">${s.id}</p>
-                            <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.5rem;"><i data-lucide="phone" size="14"></i> ${s.phone || 'No Phone'}</p>
-                            
-                            <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem;">
-                                <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                                    <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">Membership Plan</span>
-                                    <select class="glass-input" onchange="activatePackage('${s.id}', this.value)" style="padding: 0.8rem 1.2rem; border-radius: 12px;">
-                                        <option value="">No Active Plan</option>
-                                        ${state.subscriptions.map(sub => `<option value="${sub.name}" ${s.package === sub.name ? 'selected' : ''}>${sub.name}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                                    <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">Classes Left</span>
-                                    <div style="display:flex; align-items:center; background: var(--background); padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--border);">
-                                        <input type="number" value="${s.balance === null ? '' : s.balance}" placeholder="∞" onchange="updateBalance('${s.id}', this.value)" style="width: 100%; border:none; background:transparent; color: var(--primary); font-size:1.2rem; font-weight: 700; text-align: left; outline:none;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 1rem; align-items: flex-end;">
-                            <button class="btn-primary" onclick="togglePayment('${s.id}')" style="justify-content: center; font-size: 0.8rem; padding: 0.6rem 1.5rem;">
-                                ${s.paid ? 'Mark Unpaid' : 'Mark Paid'}
-                            </button>
-                            <button class="btn-icon" onclick="deleteStudent('${s.id}')" style="color: var(--danger); opacity: 0.3; margin-top: auto;">
-                                <i data-lucide="trash-2" size="20"></i>
+                            <button class="btn-icon" onclick="deleteStudent('${s.id}')" style="color: var(--danger); opacity: 0.4;">
+                                <i data-lucide="trash-2" size="18"></i>
                             </button>
                         </div>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                            <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Plan</span>
+                                <select class="glass-input" onchange="activatePackage('${s.id}', this.value)" style="padding: 0.6rem; border-radius: 10px; font-size: 0.85rem;">
+                                    <option value="">None</option>
+                                    ${state.subscriptions.map(sub => `<option value="${sub.name}" ${s.package === sub.name ? 'selected' : ''}>${sub.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Balance</span>
+                                <input type="number" value="${s.balance === null ? '' : s.balance}" placeholder="∞" onchange="updateBalance('${s.id}', this.value)" class="glass-input" style="padding: 0.6rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700;">
+                            </div>
+                        </div>
+
+                        <button class="btn-secondary w-full" onclick="togglePayment('${s.id}')" style="padding: 0.6rem; font-size: 0.8rem;">
+                            ${s.paid ? 'Mark Unpaid' : 'Mark Paid'}
+                        </button>
                     </div>
                 </div>
             `;
@@ -352,21 +347,21 @@ function renderView() {
         html += `</div></div>`;
 
         html += `
-            <div class="card" style="border-radius: 24px; margin-top: 2rem;">
-                <div class="settings-header" style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.4rem;">Plans</h3>
-                    <button class="btn-primary" onclick="addSubscription()" style="padding: 0.5rem 1.2rem; font-size: 0.8rem;">
+            <div class="card" style="border-radius: 24px; margin-top: 2rem; padding: 1.5rem;">
+                <div class="settings-header" style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size: 1.3rem;">Plans</h3>
+                    <button class="btn-primary" onclick="addSubscription()" style="padding: 0.5rem 1rem; font-size: 0.8rem; min-height: 36px;">
                         <i data-lucide="plus" size="14"></i> Add
                     </button>
                 </div>
-                <div class="mt-4">
+                <div style="display:flex; flex-direction:column; gap:1rem;">
         `;
         state.subscriptions.forEach(s => {
             html += `
-                <div class="settings-group" style="grid-template-columns: 2fr 1fr auto; margin-bottom: 1rem;">
-                    <input type="text" class="glass-input" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" placeholder="Plan Name">
-                    <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" placeholder="$">
-                    <button class="btn-icon" onclick="removeSubscription('${s.id}')" style="color: var(--danger)"><i data-lucide="trash-2" size="18"></i></button>
+                <div style="display:grid; grid-template-columns: 2fr 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="text" class="glass-input" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" placeholder="Plan Name" style="padding: 0.6rem; font-size: 0.85rem;">
+                    <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" placeholder="$" style="padding: 0.6rem; font-size: 0.85rem;">
+                    <button class="btn-icon" onclick="removeSubscription('${s.id}')" style="color: var(--danger); width:36px; height:36px; min-height:36px;"><i data-lucide="trash-2" size="16"></i></button>
                 </div>
             `;
         });
