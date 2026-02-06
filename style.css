@@ -55,6 +55,14 @@ body {
     overflow-x: hidden;
     position: relative;
     /* For pseudo-element background */
+    display: flex;
+    flex-direction: column;
+}
+
+main#app-root {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Premium Global Ambient Background */
@@ -306,17 +314,84 @@ h1 {
     gap: 0.2rem;
 }
 
-/* AUTH SCREEN - World Class Minimalist */
+/* AUTH SCREEN - World Class Minimalist & Responsive */
 .auth-page-container {
     background: var(--background);
-    min-height: 100vh;
+    min-height: calc(100vh - 8rem);
+    /* Leave space for footer */
     padding: 2rem 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+}
+
+/* DESKTOP SPLIT LAYOUT */
+@media (min-width: 1024px) {
+    .landing-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        align-items: center;
+        gap: 4rem;
+        height: 100%;
+        padding: 4rem 0;
+    }
+
+    .hero-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .auth-logo-container {
+        margin-bottom: 2rem;
+    }
+
+    .auth-logo {
+        width: 180px;
+        /* Larger logo on desktop */
+    }
+
+    .auth-title {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-subtitle {
+        font-size: 1.5rem;
+        margin-bottom: 0;
+    }
+
+    .auth-card-container {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+/* MOBILE STACK LAYOUT */
+@media (max-width: 1023px) {
+    .landing-grid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .hero-section {
+        display: contents;
+        /*Flatten structure for mobile flow*/
+    }
+
+    .auth-card-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
 }
 
 /* Sophisticated ambient background gradients */
@@ -755,13 +830,68 @@ h1 {
         width: calc(100% - 2rem);
     }
 }
+
 /* FOOTER */
-.site-footer { padding: 3rem 1.5rem 6rem; text-align: center; border-top: 1px solid var(--border); margin-top: 4rem; background: rgba(255,255,255,0.3); backdrop-filter: blur(20px); }
-.dark-mode .site-footer { background: rgba(0,0,0,0.3); }
-.footer-content { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; }
-.footer-logo { font-family: var(--font-main); font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; color: var(--text); opacity: 0.9; }
-.footer-tagline { font-size: 0.9rem; color: var(--text-muted); font-weight: 400; letter-spacing: 0.02em; }
-.footer-links { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
-.footer-link { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; transition: color 0.2s; }
-.footer-link:hover { color: var(--primary); }
-.footer-copyright { font-size: 0.75rem; color: var(--text-muted); opacity: 0.7; margin-top: 1rem; }
+.site-footer {
+    padding: 3rem 1.5rem 6rem;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    margin-top: 4rem;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(20px);
+}
+
+.dark-mode .site-footer {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.footer-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.footer-logo {
+    font-family: var(--font-main);
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    opacity: 0.9;
+}
+
+.footer-tagline {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.footer-links {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.footer-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.footer-link:hover {
+    color: var(--primary);
+}
+
+.footer-copyright {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+    margin-top: 1rem;
+}

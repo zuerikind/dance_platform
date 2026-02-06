@@ -241,49 +241,57 @@ function renderView() {
         const isSignup = state.authMode === 'signup';
         html += `
             <div class="auth-page-container">
-                <div class="auth-logo-container">
-                    <img src="logo.png" class="auth-logo">
-                </div>
-                
-                <div class="text-center" style="margin-bottom: 2rem;">
-                    <h1 class="auth-title">${t.auth_title}</h1>
-                    <p class="auth-subtitle">Precision in every step.</p>
-                </div>
-
-                <div class="auth-card">
-                    <div style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; text-align: center;">
-                       ${isSignup ? 'Nuevo Alumno' : 'Acceso Alumno'}
-                    </div>
-
-                    <div class="auth-input-group">
-                        ${isSignup ? `
-                            <input type="text" id="auth-name" class="minimal-input" placeholder="${t.enter_name}">
-                            <input type="text" id="auth-phone" class="minimal-input" placeholder="${t.phone}">
-                        ` : `
-                            <input type="text" id="auth-name" class="minimal-input" placeholder="${t.username}">
-                        `}
-                        <input type="password" id="auth-pass" class="minimal-input" placeholder="${t.password}">
-                    </div>
-
-                    <div class="auth-actions">
-                        <button class="btn-auth-primary" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}">
-                            ${isSignup ? 'Registrarse' : 'Entrar'}
-                        </button>
+                <div class="landing-grid">
+                    <!-- LEFT / TOP: HERO SECTION -->
+                    <div class="hero-section">
+                        <div class="auth-logo-container">
+                            <img src="logo.png" class="auth-logo">
+                        </div>
                         
-                        <p class="text-muted text-center" style="font-size: 0.85rem; margin-top: 1rem;">
-                            ${isSignup ? t.already_account : t.no_account}
-                            <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--border);">
-                                ${isSignup ? t.sign_in : t.sign_up}
-                            </a>
-                        </p>
+                        <div class="text-center" style="margin-bottom: 2rem; width: 100%;">
+                            <h1 class="auth-title">${t.auth_title}</h1>
+                            <p class="auth-subtitle">Precision in every step.</p>
+                        </div>
                     </div>
-                    
-                    <div class="admin-trigger-container" style="margin-top: 2.5rem; text-align: center;">
-                        <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">• ADMIN ACCESS •</button>
-                        <div id="admin-fields" class="hidden slide-in" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                            <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 0.8rem;">
-                            <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1rem;">
-                            <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">Admin Login</button>
+
+                    <!-- RIGHT / BOTTOM: AUTH CARD -->
+                    <div class="auth-card-container">
+                        <div class="auth-card">
+                            <div style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; text-align: center;">
+                            ${isSignup ? 'Nuevo Alumno' : 'Acceso Alumno'}
+                            </div>
+
+                            <div class="auth-input-group">
+                                ${isSignup ? `
+                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${t.enter_name}">
+                                    <input type="text" id="auth-phone" class="minimal-input" placeholder="${t.phone}">
+                                ` : `
+                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${t.username}">
+                                `}
+                                <input type="password" id="auth-pass" class="minimal-input" placeholder="${t.password}">
+                            </div>
+
+                            <div class="auth-actions">
+                                <button class="btn-auth-primary" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}">
+                                    ${isSignup ? 'Registrarse' : 'Entrar'}
+                                </button>
+                                
+                                <p class="text-muted text-center" style="font-size: 0.85rem; margin-top: 1rem;">
+                                    ${isSignup ? t.already_account : t.no_account}
+                                    <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--border);">
+                                        ${isSignup ? t.sign_in : t.sign_up}
+                                    </a>
+                                </p>
+                            </div>
+                            
+                            <div class="admin-trigger-container" style="margin-top: 2.5rem; text-align: center;">
+                                <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">• ADMIN ACCESS •</button>
+                                <div id="admin-fields" class="hidden slide-in" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                                    <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 0.8rem;">
+                                    <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1rem;">
+                                    <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">Admin Login</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
