@@ -511,13 +511,20 @@ function renderView() {
             return `
                         <div class="card" style="padding: 1rem; border-radius: 16px; border-left: 4px solid ${statusColor}; font-size: 0.9rem;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <div style="font-weight: 700;">${studentName}</div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">${req.sub_name} • ${date}</div>
+                                <div style="display:flex; align-items:center; gap:0.8rem; flex:1;">
+                                    <div>
+                                        <div style="font-weight: 700;">${studentName}</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">${req.sub_name} • ${date}</div>
+                                    </div>
                                 </div>
-                                <div style="text-align:right;">
-                                    <div style="font-weight: 800;">MXD ${req.price}</div>
-                                    <div style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: ${statusColor}">${t[req.status] || req.status}</div>
+                                <div style="display:flex; align-items:center; gap:1rem;">
+                                    <div style="text-align:right;">
+                                        <div style="font-weight: 800;">MXD ${req.price}</div>
+                                        <div style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: ${statusColor}">${t[req.status] || req.status}</div>
+                                    </div>
+                                    <button class="btn-icon" onclick="removePaymentRequest('${req.id}')" style="color: var(--danger); opacity:0.3; width:36px; height:36px;">
+                                        <i data-lucide="trash-2" size="16"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
