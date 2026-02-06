@@ -548,7 +548,7 @@ function renderView() {
                         <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Holder Name</span>
                         <input type="text" id="set-bank-holder" class="glass-input" value="${state.adminSettings.bank_holder || ''}" style="padding: 0.8rem; width: 100%;">
                     </div>
-                    <button class="btn-primary w-full" onclick="saveBankSettings()" style="margin-top: 1rem; padding: 1rem;">
+                    <button class="btn-primary w-full" onclick="saveBankSettings(this)" style="margin-top: 1rem; padding: 1rem;">
                         <i data-lucide="save" size="16"></i> Save Bank Details
                     </button>
                     <div id="save-status" class="text-center hidden slide-in" style="font-size: 0.8rem; color: var(--secondary); font-weight: 700;">
