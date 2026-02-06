@@ -238,8 +238,11 @@ function renderView() {
             html += `</div>`;
         } else {
             const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
+
             daysOrder.forEach(dayKey => {
-                const dayClasses = state.classes.filter(c => c.day === dayKey);
+                const aliases = dayAliases[dayKey];
+                const dayClasses = state.classes.filter(c => aliases.includes(c.day));
                 if (dayClasses.length > 0) {
                     html += `
                         <div class="weekly-day-group">
@@ -384,6 +387,7 @@ function renderView() {
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem;">
                             <select class="glass-input" onchange="updateClass(${c.id}, 'day', this.value)" style="padding: 0.8rem;">
+                                <option value="">Select Day</option>
                                 ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
                             </select>
                             <input type="time" class="glass-input" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="padding: 0.8rem;">
@@ -422,7 +426,7 @@ function renderView() {
         html += `</div></div>`;
     }
 
-    html += `<div class="text-center" style="font-size: 0.75rem; color: var(--text-muted); padding: 4rem 0; letter-spacing: 0.1em; opacity: 0.5;">DANCESTEP INDUSTRIAL v${APP_VERSION}</div>`;
+    html += `<div class="text-center" style="font-size: 0.75rem; color: var(--text-muted); padding: 4rem 0; letter-spacing: 0.1em; opacity: 0.5;">BAILADMIN INDUSTRIAL v${APP_VERSION}</div>`;
     html += `</div>`;
     root.innerHTML = html;
     if (window.lucide) lucide.createIcons();
