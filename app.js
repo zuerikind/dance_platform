@@ -204,43 +204,45 @@ function renderView() {
     if (view === 'auth') {
         const isSignup = state.authMode === 'signup';
         html += `
-            <div class="text-center slide-in" style="padding-top: 4rem;">
-                <div style="margin-bottom: 3rem;">
-                    <img src="logo.png" style="width: 100px; height: 100px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <div class="text-center" style="padding: 6rem 1rem 2rem;">
+                <div class="auth-logo-container">
+                    <img src="logo.png" class="auth-logo">
                 </div>
-                <h1 style="margin-bottom: 0.5rem; letter-spacing: -0.04em;">${t.auth_title}</h1>
-                <p class="text-muted" style="margin-bottom: 3rem; font-size: 1.1rem;">Precision in every step.</p>
                 
-                <div class="card" style="max-width: 440px; margin: 0 auto; border-radius: 30px; border: 1px solid var(--border); padding: 2rem;">
-                    <h3 style="margin-bottom: 2rem; font-weight: 600; font-size: 1.5rem;">${isSignup ? t.student_signup : t.student_login}</h3>
-                    <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                        <input type="text" id="auth-name" class="glass-input" placeholder="${t.username}" style="padding: 1rem; border-radius: 12px; font-size: 1rem;">
-                        ${isSignup ? `<input type="text" id="auth-phone" class="glass-input" placeholder="${t.phone}" style="padding: 1rem; border-radius: 12px; font-size: 1rem;">` : ''}
-                        <input type="password" id="auth-pass" class="glass-input" placeholder="${t.password}" style="padding: 1rem; border-radius: 12px; font-size: 1rem;">
-                        
-                        <button class="btn-primary w-full" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}" style="padding: 1rem; font-size: 1.1rem; margin-top: 1rem;">
-                            ${isSignup ? t.signup_btn : t.sign_in}
-                        </button>
+                <h1 class="auth-title">${t.auth_title}</h1>
+                <p class="text-muted" style="font-size: 1rem; font-weight: 300;">Precision in every step.</p>
 
-                        <button class="btn-icon w-full" onclick="switchAuthMode()" style="font-size:0.9rem; color:var(--accent); font-weight: 600; background:none; border:none; height:auto; min-height:auto;">
-                            ${isSignup ? t.already_account : t.no_account} ${isSignup ? t.sign_in : t.sign_up}
+                <div class="auth-card">
+                    <div class="auth-input-group">
+                        ${isSignup ? `
+                            <input type="text" id="auth-name" class="minimal-input" placeholder="${t.enter_name}">
+                            <input type="text" id="auth-phone" class="minimal-input" placeholder="${t.phone}">
+                        ` : `
+                            <input type="text" id="auth-name" class="minimal-input" placeholder="${t.username}">
+                        `}
+                        <input type="password" id="auth-pass" class="minimal-input" placeholder="${t.password}">
+                    </div>
+
+                    <div class="auth-actions">
+                        <button class="btn-auth-primary" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}">
+                            ${isSignup ? t.signup_btn : t.login_btn}
                         </button>
+                        
+                        <p class="text-muted" style="font-size: 0.9rem; margin-top: 1rem;">
+                            ${isSignup ? t.already_account : t.no_account}
+                            <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 600; text-decoration: none;">
+                                ${isSignup ? t.sign_in : t.sign_up}
+                            </a>
+                        </p>
                     </div>
                 </div>
 
-                <div class="admin-trigger-container">
-                    <button class="btn-icon" onclick="showAdminFields()" id="admin-show-btn" style="margin: 0 auto; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase;">
-                        — Staff Entrance —
-                    </button>
-                    <div id="admin-fields" class="hidden admin-login-card slide-in">
-                        <h4 style="margin-bottom: 1.5rem; font-size: 1.1rem; opacity: 0.8;">Secure Staff Access</h4>
-                        <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                            <input type="text" id="admin-user" class="glass-input" placeholder="${t.username}" style="padding: 0.8rem; font-size:0.9rem;">
-                            <input type="password" id="admin-pass" class="glass-input" placeholder="${t.password}" style="padding: 0.8rem; font-size:0.9rem;">
-                            <button class="btn-primary w-full" onclick="loginAdminWithCreds()" style="justify-content:center; padding:1rem; font-weight: 800; margin-top: 0.5rem;">
-                                ${t.login_btn}
-                            </button>
-                        </div>
+                <div class="admin-trigger-container" style="margin-top: 8rem;">
+                    <button id="admin-show-btn" onclick="showAdminFields()">${t.admin_login}</button>
+                    <div id="admin-fields" class="hidden slide-in" style="margin-top: 2rem;">
+                        <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 1rem; width: 240px; margin-left: auto; margin-right: auto;">
+                        <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1.5rem; width: 240px; margin-left: auto; margin-right: auto;">
+                        <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="width: 240px; margin: 0 auto;">Enter Vault</button>
                     </div>
                 </div>
             </div>

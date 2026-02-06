@@ -281,6 +281,117 @@ h1 {
     gap: 0.2rem;
 }
 
+/* AUTH SCREEN - Minimalist Redesign */
+.auth-logo-container {
+    perspective: 1000px;
+    margin-bottom: 3.5rem;
+}
+
+.auth-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    animation: floatingLogo 6s ease-in-out infinite, fadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes floatingLogo {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(2deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auth-card {
+    background: transparent;
+    padding: 0;
+    max-width: 320px;
+    margin: 0 auto;
+    border: none;
+    box-shadow: none;
+}
+
+.auth-title {
+    font-size: 2.2rem;
+    font-weight: 300;
+    letter-spacing: -0.05em;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.auth-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 3rem;
+    animation: fadeIn 1s ease-out 0.3s backwards;
+}
+
+.minimal-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding: 1rem 0;
+    font-size: 1.1rem;
+    color: var(--text);
+    transition: border-color 0.3s ease;
+}
+
+.minimal-input:focus {
+    outline: none;
+    border-bottom-color: var(--primary);
+}
+
+.minimal-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.auth-actions {
+    margin-top: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeIn 1s ease-out 0.6s backwards;
+}
+
+.btn-auth-primary {
+    background: var(--text);
+    color: var(--background);
+    border-radius: 12px;
+    padding: 1.2rem;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    border: none;
+    width: 100%;
+}
+
+.btn-auth-primary:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
 .segment-item {
     flex: 1;
     border: none;
