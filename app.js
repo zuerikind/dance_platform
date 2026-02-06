@@ -1,4 +1,9 @@
 
+// --- SUPABASE CONFIG ---
+const SUPABASE_URL = 'https://fziyybqhecfxhkagknvg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs';
+const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
 // --- TRANSLATIONS ---
 const translations = {
     en: {
@@ -91,60 +96,48 @@ const translations = {
 
 const APP_VERSION = '1.6';
 
-// --- MOCK DATA ---
-const initialState = {
+// --- STATE ---
+let state = {
     version: APP_VERSION,
     currentUser: null,
-    classes: [
-        { id: 1, name: "Contemporary Flow", day: "Mon", time: "18:00", price: 15, tag: "Level 1" },
-        { id: 2, name: "Urban Hip Hop", day: "Tue", time: "19:30", price: 20, tag: "Level 2" },
-        { id: 3, name: "Salsa & Bachata", day: "Thu", time: "20:00", price: 18, tag: "All Levels" }
-    ],
-    subscriptions: [
-        { id: "S1", name: "10 Class Pass", price: 120, duration: "Valid for 3 months", limit: 10 },
-        { id: "S2", name: "Unlimited Access", price: 180, duration: "Billed monthly", limit: null }
-    ],
-    students: [
-        { id: "STUD-A1B2", name: "Elena Martinez", phone: "+1 234 567 890", password: "password123", paid: true, package: "Unlimited Access", balance: null },
-        { id: "STUD-C3D4", name: "Marcus Stone", phone: "+1 987 654 321", password: "password123", paid: false, package: null, balance: 0 }
-    ],
+    classes: [],
+    subscriptions: [],
+    students: [],
     language: 'en',
     currentView: 'auth',
-    authMode: 'login', // 'login' or 'signup'
+    authMode: 'login',
     theme: 'dark',
     isAdmin: false
 };
 
-let localData = localStorage.getItem('dance_app_state');
-let state;
+// --- DATA FETCHING ---
+async function fetchAllData() {
+    if (!supabase) return;
 
-if (localData) {
-    state = JSON.parse(localData);
-    if (state.version !== APP_VERSION) {
-        // Migration: Preserve all studio data (students, classes, subscriptions)
-        const preservedStudents = (state.students || []).map(s => ({
-            ...s,
-            password: s.password || "password123",
-            phone: s.phone || "No Phone"
-        }));
+    try {
+        const [classesRes, subsRes, studentsRes] = await Promise.all([
+            supabase.from('classes').select('*').order('id'),
+            supabase.from('subscriptions').select('*').order('name'),
+            supabase.from('students').select('*').order('name')
+        ]);
 
-        state = {
-            ...initialState,
-            students: preservedStudents.length > 0 ? preservedStudents : initialState.students,
-            classes: (state.classes && state.classes.length > 0) ? state.classes : initialState.classes,
-            subscriptions: (state.subscriptions && state.subscriptions.length > 0) ? state.subscriptions : initialState.subscriptions,
-            language: state.language || 'en',
-            theme: state.theme || 'dark'
-        };
-        saveState();
+        if (classesRes.data) state.classes = classesRes.data;
+        if (subsRes.data) state.subscriptions = subsRes.data;
+        if (studentsRes.data) state.students = studentsRes.data;
+
+        renderView();
+    } catch (err) {
+        console.error("Error fetching data:", err);
     }
-} else {
-    state = initialState;
 }
 
 // --- LOGIC ---
 function saveState() {
-    localStorage.setItem('dance_app_state', JSON.stringify(state));
+    // Optional: Keep localStorage as a local cache/backup
+    localStorage.setItem('dance_app_state', JSON.stringify({
+        language: state.language,
+        theme: state.theme
+    }));
 }
 
 function updateI18n() {
@@ -393,11 +386,10 @@ window.showAdminFields = () => {
     document.getElementById('admin-show-btn').classList.toggle('hidden');
 };
 
-window.signUpStudent = () => {
+window.signUpStudent = async () => {
     const name = document.getElementById('auth-name').value.trim();
     const phone = document.getElementById('auth-phone').value.trim();
     const pass = document.getElementById('auth-pass').value.trim();
-    const t = translations[state.language];
 
     if (!name || !pass || !phone) {
         alert("Please enter name, phone number and password");
@@ -418,6 +410,12 @@ window.signUpStudent = () => {
         package: null,
         balance: 0
     };
+
+    if (supabase) {
+        const { error } = await supabase.from('students').insert([newStudent]);
+        if (error) { alert("Error signing up: " + error.message); return; }
+    }
+
     state.students.push(newStudent);
     state.currentUser = { ...newStudent, role: 'student' };
     state.isAdmin = false;
@@ -426,14 +424,30 @@ window.signUpStudent = () => {
     renderView();
 };
 
-window.loginStudent = () => {
-    const name = document.getElementById('auth-name').value.trim();
-    const pass = document.getElementById('auth-pass').value.trim();
+window.loginStudent = async () => {
+    const nameInput = document.getElementById('auth-name').value.trim();
+    const passInput = document.getElementById('auth-pass').value.trim();
     const t = translations[state.language];
 
-    const student = state.students.find(s =>
-        s.name.toLowerCase() === name.toLowerCase() && s.password === pass
-    );
+    let student;
+    if (supabase) {
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('name', nameInput)
+            .eq('password', passInput)
+            .single();
+
+        if (error) {
+            alert(t.invalid_login);
+            return;
+        }
+        student = data;
+    } else {
+        student = state.students.find(s =>
+            s.name.toLowerCase() === nameInput.toLowerCase() && s.password === passInput
+        );
+    }
 
     if (student) {
         state.currentUser = { ...student, role: 'student' };
@@ -446,8 +460,12 @@ window.loginStudent = () => {
     }
 };
 
-window.deleteStudent = (id) => {
+window.deleteStudent = async (id) => {
     if (confirm("Are you sure you want to remove this student? All their progress will be lost.")) {
+        if (supabase) {
+            const { error } = await supabase.from('students').delete().eq('id', id);
+            if (error) { alert("Error deleting: " + error.message); return; }
+        }
         state.students = state.students.filter(s => s.id !== id);
         saveState();
         renderView();
@@ -478,67 +496,121 @@ window.logout = () => {
     renderView();
 };
 
-window.togglePayment = (id) => {
+window.togglePayment = async (id) => {
     const student = state.students.find(s => s.id === id);
     if (student) {
-        student.paid = !student.paid;
+        const newPaidStatus = !student.paid;
+        if (supabase) {
+            const { error } = await supabase.from('students').update({ paid: newPaidStatus }).eq('id', id);
+            if (error) { alert("Error updating: " + error.message); return; }
+        }
+        student.paid = newPaidStatus;
         saveState();
         renderView();
     }
 };
 
-window.activatePackage = (studentId, packageName) => {
+window.activatePackage = async (studentId, packageName) => {
     const student = state.students.find(s => s.id === studentId);
     const pkg = state.subscriptions.find(p => p.name === packageName);
     if (student) {
-        student.package = packageName;
-        student.balance = pkg ? pkg.limit : 0;
-        student.paid = !!pkg;
+        const updates = {
+            package: packageName,
+            balance: pkg ? pkg.limit_count : 0,
+            paid: !!pkg
+        };
+        if (supabase) {
+            const { error } = await supabase.from('students').update(updates).eq('id', studentId);
+            if (error) { alert("Error updating: " + error.message); return; }
+        }
+        student.package = updates.package;
+        student.balance = updates.balance;
+        student.paid = updates.paid;
         saveState();
         renderView();
     }
 };
 
-window.updateBalance = (studentId, value) => {
+window.updateBalance = async (studentId, value) => {
     const student = state.students.find(s => s.id === studentId);
     if (student) {
-        student.balance = value === "" ? null : parseInt(value);
+        const newBalance = value === "" ? null : parseInt(value);
+        if (supabase) {
+            const { error } = await supabase.from('students').update({ balance: newBalance }).eq('id', studentId);
+            if (error) { alert("Error updating: " + error.message); return; }
+        }
+        student.balance = newBalance;
         saveState();
         renderView();
     }
 };
 
-window.updateClass = (id, field, value) => {
+window.updateClass = async (id, field, value) => {
     const cls = state.classes.find(c => c.id === id);
-    if (cls) { cls[field] = field === 'price' ? parseFloat(value) : value; saveState(); }
+    if (cls) {
+        const val = (field === 'price' ? parseFloat(value) : value);
+        if (supabase) {
+            const { error } = await supabase.from('classes').update({ [field]: val }).eq('id', id);
+            if (error) { console.error(error); return; }
+        }
+        cls[field] = val;
+        saveState();
+    }
 };
 
-window.addClass = () => {
-    const newId = state.classes.length ? Math.max(...state.classes.map(c => c.id)) + 1 : 1;
-    state.classes.push({ id: newId, name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner" });
+window.addClass = async () => {
+    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner" };
+    if (supabase) {
+        const { data, error } = await supabase.from('classes').insert([newClass]).select();
+        if (error) { alert("Error adding class: " + error.message); return; }
+        state.classes.push(data[0]);
+    } else {
+        const newId = state.classes.length ? Math.max(...state.classes.map(c => c.id)) + 1 : 1;
+        state.classes.push({ id: newId, ...newClass });
+    }
     saveState();
     renderView();
 };
 
-window.removeClass = (id) => {
+window.removeClass = async (id) => {
+    if (supabase) {
+        const { error } = await supabase.from('classes').delete().eq('id', id);
+        if (error) { alert("Error removing class: " + error.message); return; }
+    }
     state.classes = state.classes.filter(c => c.id !== id);
     saveState();
     renderView();
 };
 
-window.updateSub = (id, field, value) => {
+window.updateSub = async (id, field, value) => {
     const sub = state.subscriptions.find(s => s.id === id);
-    if (sub) { sub[field] = field === 'price' ? parseFloat(value) : value; saveState(); }
+    if (sub) {
+        const val = (field === 'price' ? parseFloat(value) : (field === 'limit_count' ? parseInt(value) : value));
+        if (supabase) {
+            const { error } = await supabase.from('subscriptions').update({ [field]: val }).eq('id', id);
+            if (error) { console.error(error); return; }
+        }
+        sub[field] = val;
+        saveState();
+    }
 };
 
-window.addSubscription = () => {
-    const newId = "S" + (state.subscriptions.length + 1);
-    state.subscriptions.push({ id: newId, name: "New Plan", price: 50, duration: "30 days" });
+window.addSubscription = async () => {
+    const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10 };
+    if (supabase) {
+        const { error } = await supabase.from('subscriptions').insert([newSub]);
+        if (error) { alert("Error adding plan: " + error.message); return; }
+    }
+    state.subscriptions.push(newSub);
     saveState();
     renderView();
 };
 
-window.removeSubscription = (id) => {
+window.removeSubscription = async (id) => {
+    if (supabase) {
+        const { error } = await supabase.from('subscriptions').delete().eq('id', id);
+        if (error) { alert("Error removing plan: " + error.message); return; }
+    }
     state.subscriptions = state.subscriptions.filter(s => s.id !== id);
     saveState();
     renderView();
@@ -598,7 +670,7 @@ window.stopScanner = async () => {
     }
 };
 
-window.handleScan = (id) => {
+window.handleScan = async (id) => {
     const student = state.students.find(s => s.id === id);
     const resultEl = document.getElementById('scan-result');
     const t = translations[state.language];
@@ -609,23 +681,28 @@ window.handleScan = (id) => {
     if (hasValidPass) {
         // Decrement balance if it's a limited pass
         if (student.balance !== null) {
-            student.balance -= 1;
+            const newBalance = student.balance - 1;
+            if (supabase) {
+                const { error } = await supabase.from('students').update({ balance: newBalance }).eq('id', id);
+                if (error) { alert("Error updating balance: " + error.message); return; }
+            }
+            student.balance = newBalance;
             saveState();
         }
 
-        resultEl.innerHTML = `< div class="card slide-in" style = "border-color: var(--secondary); background: rgba(45, 212, 191, 0.1)" >
+        resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1)">
             <h2 style="color: var(--secondary)">${t.scan_success}</h2>
             <p style="margin-top:0.5rem">${student.name}</p>
             <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem;">
                 ${t.remaining_classes}: ${student.balance === null ? t.unlimited : student.balance}
             </p>
-        </div > `;
+        </div>`;
     } else {
-        resultEl.innerHTML = `< div class="card slide-in" style = "border-color: var(--danger); background: rgba(251, 113, 133, 0.1)" >
+        resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1)">
             <h2 style="color: var(--danger)">${t.scan_fail}</h2>
             <p style="margin-top:0.5rem">${student ? student.name : 'Not Found'}</p>
             ${student && student.package ? `<p style="font-size:0.8rem; color:var(--danger)">No classes remaining</p>` : ''}
-        </div > `;
+        </div>`;
     }
 };
 
@@ -668,8 +745,21 @@ document.querySelector('.logo').addEventListener('mousedown', () => {
 });
 document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(logoPressTimer));
 
-updateI18n();
-document.body.setAttribute('data-theme', state.theme);
-document.body.classList.toggle('dark-mode', state.theme === 'dark');
-renderView();
-if (window.lucide) lucide.createIcons();
+// Initial Load
+(function init() {
+    const local = localStorage.getItem('dance_app_state');
+    if (local) {
+        const saved = JSON.parse(local);
+        state.language = saved.language || 'en';
+        state.theme = saved.theme || 'dark';
+    }
+
+    updateI18n();
+    document.body.setAttribute('data-theme', state.theme);
+    document.body.classList.toggle('dark-mode', state.theme === 'dark');
+    renderView();
+    if (window.lucide) lucide.createIcons();
+
+    // Fetch live data from Supabase
+    fetchAllData();
+})();
