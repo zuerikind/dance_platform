@@ -1164,10 +1164,17 @@ window.startScanner = async () => {
     try {
         const modal = document.getElementById('scanner-modal');
         modal.classList.remove('hidden');
+        document.getElementById('inline-scan-result').innerHTML = '';
 
-        // Stop any existing instance
+        // If instance exists but isn't scanning, try to start it.
+        // If it MUST be recreated, we stop it first.
         if (html5QrCode) {
-            await html5QrCode.stop().catch(() => { });
+            try {
+                await html5QrCode.stop();
+            } catch (e) {
+                console.warn("Error stopping existing scanner:", e);
+            }
+            html5QrCode = null;
         }
 
         html5QrCode = new Html5Qrcode("reader");
@@ -1178,25 +1185,26 @@ window.startScanner = async () => {
             aspectRatio: 1.0
         };
 
+        const scanSuccess = (id) => {
+            console.log("QR Scanned successfully. ID:", id);
+            // PAUSE so we don't scan 50 times a second while choosing
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.pause(true);
+            }
+            window.handleScan(id);
+        };
+
         await html5QrCode.start(
             { facingMode: "environment" },
             config,
-            (id) => {
-                console.log("QR Scanned successfully. ID:", id);
-                window.handleScan(id);
-                stopScanner();
-            },
-            (errorMessage) => {
-                // Ignore frequent "No QR code detected" logs
-            }
+            scanSuccess,
+            () => { }
         ).catch(err => {
             console.error("Scanner start error (environment):", err);
-            // Fallback to any available camera if environment fails
-            html5QrCode.start({ facingMode: "user" }, config, (id) => {
-                console.log("QR Scanned successfully (User Cam). ID:", id);
-                window.handleScan(id);
-                stopScanner();
-            }).catch(e => console.error("Scanner fallback error:", e));
+            return html5QrCode.start({ facingMode: "user" }, config, scanSuccess, () => { });
+        }).catch(e => {
+            console.error("Scanner setup error:", e);
+            alert("Camera error: " + e);
         });
     } catch (err) {
         console.error("Scanner setup error:", err);
@@ -1205,12 +1213,17 @@ window.startScanner = async () => {
 };
 
 window.stopScanner = async () => {
-    if (html5QrCode && html5QrCode.isScanning) {
-        await html5QrCode.stop().then(() => {
-            document.getElementById('scanner-modal').classList.add('hidden');
-        }).catch(err => console.error(err));
-    } else {
-        document.getElementById('scanner-modal').classList.add('hidden');
+    document.getElementById('scanner-modal').classList.add('hidden');
+    if (html5QrCode) {
+        try {
+            if (html5QrCode.isScanning) {
+                await html5QrCode.stop();
+            }
+        } catch (err) {
+            console.error("Error stopping scanner:", err);
+        } finally {
+            html5QrCode = null; // FORCE CLEAR for next init
+        }
     }
 };
 
@@ -1219,68 +1232,74 @@ window.handleScan = async (scannedId) => {
     console.log(`Processing scan for ID: [${id}]`);
 
     const student = state.students.find(s => s.id === id);
-    const resultEl = document.getElementById('scan-result');
+    const resultEl = document.getElementById('inline-scan-result'); // TARGET INLINE
     const t = translations[state.language];
 
     if (!student) {
-        resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1)">
-            <h2 style="color: var(--danger)">${t.scan_fail}</h2>
-            <p style="margin-top:0.5rem">Student Not Found</p>
-        </div>`;
+        resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <h2 style="color: var(--danger); font-size: 1rem;">${t.scan_fail}</h2>
+                <p style="margin-top:0.3rem">Not Found: [${id.substring(0, 8)}...]</p>
+                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">Try Again</button>
+            </div>
+        `;
         return;
     }
 
     const hasValidPass = student.paid && (student.balance === null || student.balance > 0);
 
     if (hasValidPass) {
-        // Show Confirmation UI instead of auto-deducting
         resultEl.innerHTML = `
-            <div class="card slide-in" style="border-radius: 24px; padding: 1.5rem; text-align: left; border: 2px solid var(--secondary);">
-                <div style="margin-bottom: 1.5rem;">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 0.2rem;">${student.name}</h3>
-                    <div style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 0.5rem;">ID: ${student.id}</div>
-                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">
-                        ${t.remaining_classes}: ${student.balance === null ? t.unlimited : student.balance}
+            <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">
+                            ${t.remaining_classes}: ${student.balance === null ? t.unlimited : student.balance}
+                        </div>
                     </div>
                 </div>
                 
-                <p style="font-size: 0.85rem; margin-bottom: 1rem; opacity: 0.8;">${t.confirm_attendance}:</p>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
-                    <button class="btn-primary" onclick="confirmAttendance('${student.id}', 1)" style="padding: 1rem; font-size: 0.9rem;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn-primary" onclick="confirmAttendance('${student.id}', 1)" style="padding: 0.8rem; font-size: 0.85rem;">
                         ${t.one_class}
                     </button>
-                    <button class="btn-secondary" onclick="confirmAttendance('${student.id}', 2)" style="padding: 1rem; font-size: 0.9rem;">
+                    <button class="btn-secondary" onclick="confirmAttendance('${student.id}', 2)" style="padding: 0.8rem; font-size: 0.85rem;">
                         ${t.two_classes}
                     </button>
                 </div>
                 
-                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.6rem; font-size: 0.8rem; opacity: 0.5;">
+                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.5rem; opacity:0.5;">
                     ${t.cancel}
                 </button>
             </div>
         `;
-        if (window.lucide) lucide.createIcons();
     } else {
-        resultEl.innerHTML = `<div class="card slide-in" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1)">
-            <h2 style="color: var(--danger)">${t.scan_fail}</h2>
-            <p style="margin-top:0.5rem">${student.name}</p>
-            <p style="font-size:0.8rem; color:var(--danger)">No classes remaining or unpaid</p>
-        </div>`;
+        resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <h2 style="color: var(--danger); font-size: 1rem;">${t.scan_fail}</h2>
+                <p style="margin-top:0.3rem">${student.name}</p>
+                <p style="font-size:0.75rem; color:var(--danger)">No classes remaining or unpaid</p>
+                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">Try Again</button>
+            </div>
+        `;
     }
+    if (window.lucide) lucide.createIcons();
 };
 
 window.cancelAttendance = () => {
-    document.getElementById('scan-result').innerHTML = '';
+    document.getElementById('inline-scan-result').innerHTML = '';
+    if (html5QrCode && html5QrCode.isPaused()) {
+        html5QrCode.resume();
+    }
 };
 
 window.confirmAttendance = async (studentId, count) => {
     const student = state.students.find(s => s.id === studentId);
     if (!student) return;
     const t = translations[state.language];
-    const resultEl = document.getElementById('scan-result');
+    const resultEl = document.getElementById('inline-scan-result');
 
-    // If balanced, check if enough
     if (student.balance !== null && student.balance < count) {
         alert("Not enough classes remaining!");
         return;
@@ -1298,20 +1317,20 @@ window.confirmAttendance = async (studentId, count) => {
     }
 
     resultEl.innerHTML = `
-        <div class="card slide-in" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 2rem;">
-            <i data-lucide="check-circle" size="48" style="color: var(--secondary); margin-bottom: 1rem;"></i>
-            <h2 style="color: var(--secondary)">${t.attendance_success}</h2>
-            <p style="margin-top:0.5rem"><strong>${student.name}</strong> - ${count} ${count > 1 ? 'Classes' : 'Class'}</p>
+        <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
+             <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
+             <div style="font-weight:700; color:var(--secondary)">${t.attendance_success}</div>
+             <div style="font-size:0.8rem">${student.name} (-${count})</div>
         </div>
     `;
     if (window.lucide) lucide.createIcons();
 
-    // Auto-clear after 3 seconds
     setTimeout(() => {
-        if (resultEl.innerHTML.includes(t.attendance_success)) {
-            resultEl.innerHTML = '';
+        resultEl.innerHTML = '';
+        if (html5QrCode && html5QrCode.isPaused()) {
+            html5QrCode.resume();
         }
-    }, 3000);
+    }, 2000);
 };
 
 // --- INIT ---
