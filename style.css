@@ -854,14 +854,12 @@ h1 {
     }
 }
 
-/* FOOTER */
+/* FOOTER - Professional & Minimal */
 .site-footer {
-    padding: 3rem 1.5rem 6rem;
+    padding: 4rem 1.5rem 8rem;
     text-align: center;
     border-top: 1px solid var(--border);
-    margin-top: 4rem;
-    background: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(20px);
+    background: var(--background);
 }
 
 .dark-mode .site-footer {
