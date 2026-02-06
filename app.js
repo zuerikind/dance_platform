@@ -29,7 +29,7 @@ const translations = {
         switch_to_student: "Go to Student",
         auth_title: "Elevate Your Dance",
         student_signup: "New Student",
-        admin_login: "Staff Login",
+        admin_login: "Admin login",
         enter_name: "How should we call you?",
         signup_btn: "Join Now",
         logout: "Sign Out",
@@ -62,7 +62,14 @@ const translations = {
         pay_cash: "I will pay cash",
         request_sent_title: "Request Sent!",
         request_sent_msg: "Your access will be activated once the payment is verified by our staff.",
-        close: "Close"
+        close: "Close",
+        nav_revenue: 'Revenue',
+        monthly_total: 'This Month Total',
+        all_payments: 'Payment History',
+        total_earned: 'Total Earned',
+        approved: 'Approved',
+        rejected: 'Not Approved',
+        pending: 'Pending'
     },
     es: {
         nav_schedule: "Horario",
@@ -88,7 +95,7 @@ const translations = {
         switch_to_student: "Ir a Alumno",
         auth_title: "Eleva tu Baile",
         student_signup: "Nuevo Alumno",
-        admin_login: "Personal",
+        admin_login: "Admin login",
         enter_name: "¿Cómo te llamas?",
         signup_btn: "Unirme Ahora",
         logout: "Cerrar Sesión",
@@ -114,6 +121,13 @@ const translations = {
         pending_payments: "Pagos Pendientes",
         approve: "Aprobar",
         reject: "Rechazar",
+        nav_revenue: 'Ganancias',
+        monthly_total: 'Total este mes',
+        all_payments: 'Historial de pagos',
+        total_earned: 'Total ganado',
+        approved: 'Aprobado',
+        rejected: 'No Aprobado',
+        pending: 'Pendiente',
         transfer: "Transferencia",
         cash: "Efectivo",
         payment_instructions: "Instrucciones de Pago",
@@ -254,11 +268,11 @@ function renderView() {
                     </div>
                     
                     <div class="admin-trigger-container" style="margin-top: 6rem; padding-bottom: 4rem;">
-                        <button id="admin-show-btn" style="opacity: 0.4; font-size: 0.75rem; letter-spacing: 0.1em; background: none; border: none; color: var(--text);" onclick="showAdminFields()">STAFF ENTRANCE</button>
+                        <button id="admin-show-btn" style="opacity: 0.4; font-size: 0.75rem; letter-spacing: 0.1em; background: none; border: none; color: var(--text);" onclick="showAdminFields()">Admin login</button>
                         <div id="admin-fields" class="hidden slide-in" style="margin-top: 2rem;">
                             <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 1rem; max-width: 260px; margin-left: auto; margin-right: auto;">
                             <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1.5rem; max-width: 260px; margin-left: auto; margin-right: auto;">
-                            <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="max-width: 260px; margin: 0 auto; padding: 1rem;">Vault Login</button>
+                            <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="max-width: 260px; margin: 0 auto; padding: 1rem;">Admin login</button>
                         </div>
                     </div>
                 </div>
@@ -451,6 +465,61 @@ function renderView() {
                 `;
             });
         }
+    } else if (view === 'admin-revenue') {
+        // Calculate Revenue
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+
+        const approvedPayments = state.paymentRequests.filter(r => r.status === 'approved');
+
+        const currentMonthEarnings = approvedPayments
+            .filter(r => {
+                const date = new Date(r.created_at);
+                return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+            })
+            .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+
+        const totalHistorical = approvedPayments.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+
+        html += `
+            <h1 style="margin-bottom: 2rem;">${t.nav_revenue}</h1>
+            
+            <div style="display:grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 3rem;">
+                <div class="card" style="padding: 2rem; border-radius: 30px; background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), transparent); border-color: var(--secondary);">
+                    <div class="text-muted" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">${t.monthly_total}</div>
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--secondary);">MXD ${currentMonthEarnings.toLocaleString()}</div>
+                </div>
+                
+                <div class="card" style="padding: 1.5rem; border-radius: 24px;">
+                    <div class="text-muted" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">${t.total_earned} (History)</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">MXD ${totalHistorical.toLocaleString()}</div>
+                </div>
+            </div>
+
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.2rem;">${t.all_payments}</h2>
+            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                ${state.paymentRequests.map(req => {
+            const studentName = req.students ? req.students.name : 'Unknown';
+            const date = new Date(req.created_at).toLocaleDateString();
+            const statusColor = req.status === 'approved' ? 'var(--secondary)' : (req.status === 'rejected' ? 'var(--danger)' : 'var(--primary)');
+            return `
+                        <div class="card" style="padding: 1rem; border-radius: 16px; border-left: 4px solid ${statusColor}; font-size: 0.9rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight: 700;">${studentName}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">${req.sub_name} • ${date}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight: 800;">MXD ${req.price}</div>
+                                    <div style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: ${statusColor}">${t[req.status] || req.status}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+        }).join('')}
+            </div>
+        `;
     } else if (view === 'admin-scanner') {
         html += `
             <div class="text-center">
