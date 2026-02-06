@@ -167,7 +167,7 @@ let state = {
     students: [],
     language: 'en',
     currentView: 'auth',
-    scheduleView: 'list', // 'list' or 'weekly'
+    scheduleView: 'weekly', // 'list' or 'weekly'
     authMode: 'login',
     theme: 'dark',
     isAdmin: false,
@@ -775,7 +775,7 @@ window.loginStudent = async () => {
     if (student) {
         state.currentUser = { ...student, role: 'student' };
         state.isAdmin = false;
-        state.currentView = 'schedule';
+        state.currentView = 'qr';
         saveState();
         renderView();
     } else {
