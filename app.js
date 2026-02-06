@@ -592,10 +592,22 @@ function renderView() {
         `;
         state.subscriptions.forEach(s => {
             html += `
-                <div style="display:grid; grid-template-columns: 2fr 1fr auto; gap: 0.5rem; align-items: center;">
-                    <input type="text" class="glass-input" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" placeholder="Plan Name" style="padding: 0.6rem; font-size: 0.85rem;">
-                    <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" placeholder="MXD" style="padding: 0.6rem; font-size: 0.85rem;">
-                    <button class="btn-icon" onclick="removeSubscription('${s.id}')" style="color: var(--danger); width:36px; height:36px; min-height:36px;"><i data-lucide="trash-2" size="16"></i></button>
+                <div class="card" style="margin-bottom: 1rem; padding: 1.2rem; border-radius: 20px;">
+                    <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                        <input type="text" class="glass-input" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" placeholder="Plan Name" style="padding: 0.8rem; font-weight: 700;">
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:0.8rem; align-items:center;">
+                            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase;">Límite Clases</span>
+                                <input type="number" class="glass-input" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="∞" style="padding: 0.7rem; font-size: 0.9rem; font-weight: 700;">
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase;">Precio MXD</span>
+                                <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" placeholder="MXD" style="padding: 0.7rem; font-size: 0.9rem; font-weight: 700;">
+                            </div>
+                            <button class="btn-icon" onclick="removeSubscription('${s.id}')" style="color: var(--danger); margin-top: 1rem;"><i data-lucide="trash-2" size="20"></i></button>
+                        </div>
+                    </div>
                 </div>
             `;
         });
