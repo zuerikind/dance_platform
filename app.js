@@ -907,7 +907,11 @@ window.saveBankSettings = async () => {
         const status = document.getElementById('save-status');
         status.classList.remove('hidden');
         setTimeout(() => status.classList.add('hidden'), 3000);
+
+        // Final sync
+        await fetchAllData();
     } catch (err) {
+        console.error("Save Error:", err);
         alert("Error saving settings: " + err.message);
     } finally {
         btn.disabled = false;
@@ -918,8 +922,14 @@ window.saveBankSettings = async () => {
 
 window.updateAdminSetting = async (key, value) => {
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('admin_settings').upsert({ key, value, updated_at: new Date() });
-        if (error) { console.error("Error updating setting:", error); return; }
+        const { error } = await supabaseClient
+            .from('admin_settings')
+            .upsert({ key: String(key), value: String(value) }, { onConflict: 'key' });
+
+        if (error) {
+            console.error(`Error updating setting [${key}]:`, error);
+            throw error;
+        }
     }
     state.adminSettings[key] = value;
     saveState();
