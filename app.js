@@ -885,38 +885,43 @@ window.processPaymentRequest = async (id, status) => {
     await fetchAllData();
 };
 
-window.saveBankSettings = async () => {
+window.saveBankSettings = async (btn) => {
     const name = document.getElementById('set-bank-name').value;
     const cbu = document.getElementById('set-bank-cbu').value;
     const alias = document.getElementById('set-bank-alias').value;
     const holder = document.getElementById('set-bank-holder').value;
 
-    const btn = event.currentTarget;
-    btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="spin" size="16"></i> Saving...`;
-    if (window.lucide) lucide.createIcons();
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="spin" size="16"></i> Saving to Vault...`;
+        if (window.lucide) lucide.createIcons();
+    }
 
     try {
-        await Promise.all([
-            window.updateAdminSetting('bank_name', name),
-            window.updateAdminSetting('bank_cbu', cbu),
-            window.updateAdminSetting('bank_alias', alias),
-            window.updateAdminSetting('bank_holder', holder)
-        ]);
+        // Serial awaits for maximum reliability
+        await window.updateAdminSetting('bank_name', name);
+        await window.updateAdminSetting('bank_cbu', cbu);
+        await window.updateAdminSetting('bank_alias', alias);
+        await window.updateAdminSetting('bank_holder', holder);
 
         const status = document.getElementById('save-status');
-        status.classList.remove('hidden');
-        setTimeout(() => status.classList.add('hidden'), 3000);
+        if (status) {
+            status.innerHTML = `<i data-lucide="check" size="14"></i> Database Updated!`;
+            status.classList.remove('hidden');
+            setTimeout(() => status.classList.add('hidden'), 4000);
+        }
 
-        // Final sync
         await fetchAllData();
+        alert("Settings saved successfully!");
     } catch (err) {
         console.error("Save Error:", err);
-        alert("Error saving settings: " + err.message);
+        alert("CRITICAL ERROR: Could not save settings. Info: " + err.message);
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="save" size="16"></i> Save Bank Details`;
-        if (window.lucide) lucide.createIcons();
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="save" size="16"></i> Save Bank Details`;
+            if (window.lucide) lucide.createIcons();
+        }
     }
 };
 
