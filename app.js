@@ -172,10 +172,11 @@ async function fetchAllData() {
         }
         if (requestsRes.data) state.paymentRequests = requestsRes.data;
         if (settingsRes.data) {
-            state.adminSettings = settingsRes.data.reduce((acc, item) => {
-                acc[item.key] = item.value;
-                return acc;
-            }, {});
+            const settingsObj = {};
+            settingsRes.data.forEach(item => {
+                settingsObj[item.key] = item.value;
+            });
+            state.adminSettings = settingsObj;
         }
 
         renderView();
@@ -824,11 +825,12 @@ window.openPaymentModal = (subId) => {
 window.submitPaymentRequest = async (subId, method) => {
     if (!state.currentUser) return;
     const sub = state.subscriptions.find(s => s.id === subId);
+    if (!sub) { alert("Error: Plan not found"); return; }
     const t = translations[state.language];
 
     const newRequest = {
         student_id: state.currentUser.id,
-        sub_id: sub.id,
+        sub_id: String(sub.id),
         sub_name: sub.name,
         price: sub.price,
         payment_method: method,
