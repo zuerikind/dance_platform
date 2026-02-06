@@ -53,6 +53,22 @@ body {
     min-height: 100vh;
     transition: background 0.4s var(--transition);
     overflow-x: hidden;
+    position: relative;
+    /* For pseudo-element background */
+}
+
+/* Premium Global Ambient Background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at 70% 20%, rgba(94, 23, 235, 0.04), transparent 50%),
+        radial-gradient(circle at 10% 80%, rgba(0, 113, 227, 0.04), transparent 50%);
+    z-index: -1;
+    pointer-events: none;
 }
 
 /* NAVBAR - Apple Style */
@@ -96,8 +112,7 @@ body {
     width: 36px;
     object-fit: contain;
     transition: transform 0.3s ease;
-    mix-blend-mode: multiply;
-    /* Removes white background */
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
 }
 
 .dark-mode .logo-img {
@@ -306,13 +321,7 @@ h1 {
 
 /* Sophisticated ambient background gradients */
 .auth-page-container::before {
-    content: '';
-    position: absolute;
-    width: 150%;
-    height: 150%;
-    background: radial-gradient(circle at 70% 20%, rgba(94, 23, 235, 0.05), transparent 40%),
-        radial-gradient(circle at 20% 80%, rgba(0, 113, 227, 0.05), transparent 40%);
-    z-index: 0;
+    display: none;
 }
 
 .auth-logo-container {
@@ -326,14 +335,11 @@ h1 {
     width: 120px;
     height: auto;
     object-fit: contain;
-    mix-blend-mode: multiply;
-    /* Removes white background on light bg */
     filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.05));
     animation: floatingLogo 6s ease-in-out infinite;
 }
 
 .dark-mode .auth-logo {
-    mix-blend-mode: normal;
     filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
 }
 
