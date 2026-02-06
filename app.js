@@ -132,10 +132,12 @@ async function fetchAllData() {
 
 // --- LOGIC ---
 function saveState() {
-    // Optional: Keep localStorage as a local cache/backup
     localStorage.setItem('dance_app_state', JSON.stringify({
         language: state.language,
-        theme: state.theme
+        theme: state.theme,
+        currentUser: state.currentUser,
+        isAdmin: state.isAdmin,
+        currentView: state.currentView
     }));
 }
 
@@ -380,6 +382,11 @@ function renderView() {
     document.getElementById('logout-btn').classList.toggle('hidden', state.currentUser === null);
     document.getElementById('student-nav').classList.toggle('hidden', state.currentUser === null || state.isAdmin);
     document.getElementById('admin-nav').classList.toggle('hidden', state.currentUser === null || !state.isAdmin);
+
+    // Sync active nav items
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+    });
 }
 
 // --- ACTIONS ---
@@ -796,9 +803,8 @@ document.getElementById('close-scanner').addEventListener('click', stopScanner);
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
         state.currentView = btn.getAttribute('data-view');
+        saveState();
         renderView();
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
     });
 });
 
@@ -830,6 +836,9 @@ document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(l
         const saved = JSON.parse(local);
         state.language = saved.language || 'en';
         state.theme = saved.theme || 'dark';
+        if (saved.currentUser) state.currentUser = saved.currentUser;
+        if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
+        if (saved.currentView) state.currentView = saved.currentView;
     }
 
     updateI18n();
