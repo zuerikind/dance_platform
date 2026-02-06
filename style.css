@@ -393,6 +393,72 @@ h1 {
     width: 100%;
 }
 
+/* WEEKLY GRID - Native Mobile Feel */
+.weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.day-tile {
+    background: var(--surface);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transition: transform 0.2s ease;
+}
+
+.day-tile:active {
+    transform: scale(0.97);
+}
+
+.day-tile-header {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--primary);
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+}
+
+.tile-class-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.tile-class-time {
+    font-size: 0.6rem;
+    font-weight: 700;
+    opacity: 0.6;
+}
+
+.tile-class-level {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text);
+    text-transform: uppercase;
+}
+
+.tile-class-desc {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.8;
+    line-height: 1.1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 /* SCHEDULE TABLE - Mobile Optimized */
 .table-container {
     width: 100%;
@@ -448,32 +514,34 @@ h1 {
     line-height: 1.2;
 }
 
-/* ADMIN LOGIN POLISH */
+/* ADMIN LOGIN POLISH - Minimalist */
 .admin-trigger-container {
-    margin-top: 5rem;
-    padding-top: 2rem;
+    margin-top: 6rem;
+    padding: 2rem 0;
     text-align: center;
 }
 
 #admin-show-btn {
-    opacity: 0.6;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    padding: 1rem;
+    opacity: 0.4;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0.8rem 1.5rem;
     border: 1px solid var(--border);
     border-radius: 40px;
-    width: auto;
-    display: inline-block;
+    background: transparent;
+    color: var(--text-muted);
 }
 
 .admin-login-card {
     background: var(--surface-solid);
     border: 1px solid var(--border);
-    padding: 2.5rem;
-    border-radius: 30px;
-    max-width: 400px;
+    padding: 2rem;
+    border-radius: 28px;
+    max-width: 340px;
     margin: 2rem auto;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 /* MODAL */

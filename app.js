@@ -253,37 +253,27 @@ function renderView() {
             const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
 
-            html += `
-                <div class="table-container shadow-sm">
-                    <table class="schedule-table">
-                        <thead>
-                            <tr>
-                                ${daysOrder.map(d => `<th>${t[d.toLowerCase()]}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                ${daysOrder.map(dayKey => {
+            html += `<div class="weekly-grid">`;
+            daysOrder.forEach(dayKey => {
                 const aliases = dayAliases[dayKey];
                 const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
-                return `
-                                        <td>
-                                            ${dayClasses.map(c => `
-                                                <div class="table-class-box">
-                                                    <div class="table-class-time">${c.time}</div>
-                                                    <div class="table-class-tag" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 800; color: var(--primary); margin-bottom: 0.2rem;">${c.tag || ''}</div>
-                                                    <div class="table-class-name" style="font-size: 0.8rem; opacity: 0.8;">${c.name}</div>
-                                                </div>
-                                            `).join('')}
-                                        </td>
-                                    `;
-            }).join('')}
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p class="text-muted text-center mt-4" style="font-size: 0.8rem;">Swipe horizontally to view full week</p>
-            `;
+
+                html += `
+                    <div class="day-tile">
+                        <div class="day-tile-header">${t[dayKey.toLowerCase()]}</div>
+                        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                            ${dayClasses.length > 0 ? dayClasses.map(c => `
+                                <div class="tile-class-item">
+                                    <div class="tile-class-level">${c.tag || 'Open'}</div>
+                                    <div class="tile-class-desc">${c.name}</div>
+                                    <div class="tile-class-time">${c.time}</div>
+                                </div>
+                            `).join('') : '<div class="text-muted" style="font-size:0.6rem; font-style:italic;">No classes</div>'}
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
         }
     } else if (view === 'shop') {
         html += `<h1>${t.shop_title}</h1>`;
