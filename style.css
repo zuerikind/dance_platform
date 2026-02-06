@@ -340,6 +340,12 @@ h1 {
     overflow-x: hidden;
 }
 
+@media (max-width: 600px) {
+    .auth-page-container {
+        padding: 2rem 1.5rem;
+    }
+}
+
 /* DESKTOP SPLIT LAYOUT */
 @media (min-width: 1024px) {
     .landing-grid {
@@ -411,6 +417,12 @@ h1 {
     position: relative;
 }
 
+@media (max-width: 600px) {
+    .auth-logo-container {
+        margin-bottom: 1.5rem;
+    }
+}
+
 /* Transparent Logo Magic */
 .auth-logo {
     width: 140px;
@@ -418,6 +430,12 @@ h1 {
     object-fit: contain;
     mix-blend-mode: multiply;
     animation: floatingLogo 6s ease-in-out infinite;
+}
+
+@media (max-width: 600px) {
+    .auth-logo {
+        width: 80px;
+    }
 }
 
 .dark-mode .auth-logo {
@@ -453,6 +471,12 @@ h1 {
     letter-spacing: 0.05em;
     margin-bottom: 4rem;
     text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+    .auth-subtitle {
+        margin-bottom: 2rem;
+    }
 }
 
 .auth-card {

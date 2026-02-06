@@ -75,7 +75,10 @@ const translations = {
         one_class: "1 Class",
         two_classes: "2 Classes",
         cancel: "Cancel",
-        confirm_attendance: "Confirm Attendance"
+        confirm_attendance: "Confirm Attendance",
+        admin_user_placeholder: "Admin Username",
+        admin_pass_placeholder: "Admin Password",
+        admin_login_btn: "Admin Login"
     },
     es: {
         nav_schedule: "Horario",
@@ -289,9 +292,9 @@ function renderView() {
                             <div class="admin-trigger-container" style="margin-top: 2.5rem; text-align: center;">
                                 <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">• ADMIN ACCESS •</button>
                                 <div id="admin-fields" class="hidden slide-in" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                                    <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 0.8rem;">
-                                    <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1rem;">
-                                    <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">Admin Login</button>
+                                    <input type="text" id="admin-user" class="minimal-input" placeholder="${t.admin_user_placeholder}" style="margin-bottom: 0.8rem;">
+                                    <input type="password" id="admin-pass" class="minimal-input" placeholder="${t.admin_pass_placeholder}" style="margin-bottom: 1rem;">
+                                    <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">${t.admin_login_btn}</button>
                                 </div>
                             </div>
                         </div>
