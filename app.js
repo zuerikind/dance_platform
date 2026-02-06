@@ -1171,19 +1171,21 @@ window.startScanner = async () => {
             { facingMode: "environment" },
             config,
             (id) => {
-                handleScan(id);
+                console.log("QR Scanned successfully. ID:", id);
+                window.handleScan(id);
                 stopScanner();
             },
             (errorMessage) => {
                 // Ignore frequent "No QR code detected" logs
             }
         ).catch(err => {
-            console.error("Scanner start error:", err);
+            console.error("Scanner start error (environment):", err);
             // Fallback to any available camera if environment fails
             html5QrCode.start({ facingMode: "user" }, config, (id) => {
-                handleScan(id);
+                console.log("QR Scanned successfully (User Cam). ID:", id);
+                window.handleScan(id);
                 stopScanner();
-            });
+            }).catch(e => console.error("Scanner fallback error:", e));
         });
     } catch (err) {
         console.error("Scanner setup error:", err);
@@ -1201,8 +1203,14 @@ window.stopScanner = async () => {
     }
 };
 
-window.handleScan = async (id) => {
+window.handleScan = async (scannedId) => {
+    const id = (scannedId || '').trim();
+    console.log(`Processing scan for ID: [${id}]`);
+
     const student = state.students.find(s => s.id === id);
+    if (student) console.log(`Found student: ${student.name}`, student);
+    else console.warn(`Student not found for ID: [${id}]`);
+
     const resultEl = document.getElementById('scan-result');
     const t = translations[state.language];
 
