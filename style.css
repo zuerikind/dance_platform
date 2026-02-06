@@ -863,7 +863,7 @@ h1 {
 
 /* FOOTER - Professional & Minimal */
 .site-footer {
-    padding: 4rem 1.5rem 8rem;
+    padding: 2.5rem 1.5rem 6rem;
     text-align: center;
     border-top: 1px solid var(--border);
     background: var(--background);
@@ -874,38 +874,39 @@ h1 {
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
     align-items: center;
 }
 
 .footer-logo {
     font-family: var(--font-main);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.85rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text);
-    opacity: 0.8;
+    opacity: 0.7;
 }
 
 .footer-tagline {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
     font-weight: 400;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
 }
 
 .footer-links {
     display: flex;
-    gap: 2rem;
+    gap: 1.25rem;
     justify-content: center;
     flex-wrap: wrap;
+    margin: 0.5rem 0;
 }
 
 .footer-link {
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     transition: color 0.2s;
 }
