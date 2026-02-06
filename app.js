@@ -404,7 +404,12 @@ function renderView() {
                         <div style="display:flex; justify-content:space-between; align-items: center;">
                             <div>
                                 <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.2rem;">${s.name}</h3>
-                                <span style="background: ${s.paid ? 'rgba(45, 212, 191, 0.1)' : 'rgba(251, 113, 133, 0.1)'}; color: ${s.paid ? 'var(--secondary)' : 'var(--danger)'}; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">${s.paid ? 'Active' : 'Unpaid'}</span>
+                                <div style="display:flex; gap:0.5rem; align-items:center;">
+                                    <span style="background: ${s.paid ? 'rgba(45, 212, 191, 0.1)' : 'rgba(251, 113, 133, 0.1)'}; color: ${s.paid ? 'var(--secondary)' : 'var(--danger)'}; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">${s.paid ? 'Active' : 'Unpaid'}</span>
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--secondary);">
+                                        Balance: ${s.balance === null ? '∞' : s.balance}
+                                    </span>
+                                </div>
                             </div>
                             <button class="btn-icon" onclick="deleteStudent('${s.id}')" style="color: var(--danger); opacity: 0.4;">
                                 <i data-lucide="trash-2" size="18"></i>
@@ -420,7 +425,7 @@ function renderView() {
                                 </select>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.4rem;">
-                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Balance</span>
+                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Balance Manual</span>
                                 <input type="number" value="${s.balance === null ? '' : s.balance}" placeholder="∞" onchange="updateBalance('${s.id}', this.value)" class="glass-input" style="padding: 0.6rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700;">
                             </div>
                         </div>
@@ -858,21 +863,31 @@ window.togglePayment = async (id) => {
 
 window.activatePackage = async (studentId, packageName) => {
     const student = state.students.find(s => s.id === studentId);
-    const pkg = state.subscriptions.find(p => p.name === packageName);
+    // Robust case-insensitive search
+    const pkg = state.subscriptions.find(p => p.name.trim().toLowerCase() === String(packageName).trim().toLowerCase());
+
+    console.log(`Activating package [${packageName}] for student [${studentId}]...`);
+    if (pkg) console.log(`Matched subscription:`, pkg);
+
     if (student) {
-        // Ensure limit_count is a number, default to 0 if missing. 
-        // We use 0 if no package is selected, but finite number if package has one.
-        const limitCount = pkg ? parseInt(pkg.limit_count || 0) : 0;
+        // Ensure limit_count is a number. 
+        const limitCount = pkg ? parseInt(pkg.limit_count) : 0;
 
         const updates = {
-            package: packageName,
-            balance: limitCount,
+            package: pkg ? pkg.name : null, // Use the canonical name from the subscription
+            balance: isNaN(limitCount) ? 0 : limitCount,
             paid: !!pkg
         };
 
+        console.log(`Update payload:`, updates);
+
         if (supabaseClient) {
             const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
-            if (error) { alert("Error updating: " + error.message); return; }
+            if (error) {
+                console.error("Supabase update error:", error);
+                alert("Error updating: " + error.message);
+                return;
+            }
         }
 
         student.package = updates.package;
@@ -880,7 +895,7 @@ window.activatePackage = async (studentId, packageName) => {
         student.paid = updates.paid;
 
         saveState();
-        await fetchAllData(); // Pull fresh data to be 100% sure
+        await fetchAllData(); // Pull fresh data to be 100% sure everything is synced
     }
 };
 
