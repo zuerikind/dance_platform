@@ -995,6 +995,18 @@ window.processPaymentRequest = async (id, status) => {
     await fetchAllData();
 };
 
+window.removePaymentRequest = async (id) => {
+    if (confirm("Delete this payment record forever?")) {
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('payment_requests').delete().eq('id', id);
+            if (error) { alert("Error deleting: " + error.message); return; }
+        }
+        state.paymentRequests = state.paymentRequests.filter(r => r.id !== id);
+        saveState();
+        renderView();
+    }
+};
+
 window.saveBankSettings = async (btn) => {
     const name = document.getElementById('set-bank-name').value;
     const cbu = document.getElementById('set-bank-cbu').value;
