@@ -1189,7 +1189,7 @@ window.startScanner = async () => {
             console.log("QR Scanned successfully. ID:", id);
             // PAUSE so we don't scan 50 times a second while choosing
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.pause(true);
+                html5QrCode.pause(false);
             }
             window.handleScan(id);
         };
