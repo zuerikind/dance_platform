@@ -210,20 +210,26 @@ function renderView() {
     const view = state.currentView;
     const t = translations[state.language];
 
-    let html = `<div class="container slide-in">`;
+    let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} slide-in">`;
 
     if (view === 'auth') {
         const isSignup = state.authMode === 'signup';
         html += `
-            <div class="text-center" style="padding: 6rem 1rem 2rem;">
+            <div class="auth-page-container">
                 <div class="auth-logo-container">
                     <img src="logo.png" class="auth-logo">
                 </div>
                 
-                <h1 class="auth-title">${t.auth_title}</h1>
-                <p class="text-muted" style="font-size: 1rem; font-weight: 300;">Precision in every step.</p>
+                <div class="text-center" style="margin-bottom: 3rem; padding: 0 2rem;">
+                    <h1 class="auth-title">${t.auth_title}</h1>
+                    <p class="auth-subtitle">Precision in every step.</p>
+                </div>
 
                 <div class="auth-card">
+                    <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.04em;">
+                       ${isSignup ? 'Registro de Alumno' : 'Acceso Alumno'}
+                    </div>
+
                     <div class="auth-input-group">
                         ${isSignup ? `
                             <input type="text" id="auth-name" class="minimal-input" placeholder="${t.enter_name}">
@@ -236,29 +242,30 @@ function renderView() {
 
                     <div class="auth-actions">
                         <button class="btn-auth-primary" onclick="${isSignup ? 'signUpStudent()' : 'loginStudent()'}">
-                            ${isSignup ? t.signup_btn : t.login_btn}
+                            ${isSignup ? 'Registrarse' : 'Entrar'}
                         </button>
                         
-                        <p class="text-muted" style="font-size: 0.9rem; margin-top: 1rem;">
+                        <p class="text-muted" style="font-size: 0.95rem; margin-top: 1.5rem;">
                             ${isSignup ? t.already_account : t.no_account}
-                            <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 600; text-decoration: none;">
+                            <a href="#" onclick="switchAuthMode(); return false;" style="color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--text);">
                                 ${isSignup ? t.sign_in : t.sign_up}
                             </a>
                         </p>
                     </div>
-                </div>
-
-                <div class="admin-trigger-container" style="margin-top: 8rem;">
-                    <button id="admin-show-btn" onclick="showAdminFields()">${t.admin_login}</button>
-                    <div id="admin-fields" class="hidden slide-in" style="margin-top: 2rem;">
-                        <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 1rem; width: 240px; margin-left: auto; margin-right: auto;">
-                        <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1.5rem; width: 240px; margin-left: auto; margin-right: auto;">
-                        <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="width: 240px; margin: 0 auto;">Enter Vault</button>
+                    
+                    <div class="admin-trigger-container" style="margin-top: 6rem; padding-bottom: 4rem;">
+                        <button id="admin-show-btn" style="opacity: 0.4; font-size: 0.75rem; letter-spacing: 0.1em; background: none; border: none; color: var(--text);" onclick="showAdminFields()">STAFF ENTRANCE</button>
+                        <div id="admin-fields" class="hidden slide-in" style="margin-top: 2rem;">
+                            <input type="text" id="admin-user" class="minimal-input" placeholder="Admin Username" style="margin-bottom: 1rem; max-width: 260px; margin-left: auto; margin-right: auto;">
+                            <input type="password" id="admin-pass" class="minimal-input" placeholder="Admin Password" style="margin-bottom: 1.5rem; max-width: 260px; margin-left: auto; margin-right: auto;">
+                            <button class="btn-auth-primary" onclick="loginAdminWithCreds()" style="max-width: 260px; margin: 0 auto; padding: 1rem;">Vault Login</button>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
-    } else if (view === 'schedule') {
+    }
+    else if (view === 'schedule') {
         html += `<h1 style="margin-bottom: 0.5rem;">${t.schedule_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.classes_subtitle}</p>`;
 
