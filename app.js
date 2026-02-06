@@ -143,6 +143,7 @@ const translations = {
         payment_instructions: "Instrucciones de Pago",
         i_have_paid: "Ya transferí",
         pay_cash: "Pagaré en efectivo",
+        request_sent_title: "¡Gracias por tu pago!",
         request_sent_msg: "Tu acceso será activado una vez que validemos el pago.",
         close: "Cerrar",
         check_in_title: "Confirmar Asistencia",
