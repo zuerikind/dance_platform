@@ -49,7 +49,8 @@ const translations = {
         phone: "Phone Number",
         list_view: "List View",
         weekly_view: "Weekly Plan",
-        mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday"
+        mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday",
+        valid_month: "Valid for one month"
     },
     es: {
         nav_schedule: "Horario",
@@ -95,7 +96,8 @@ const translations = {
         phone: "Teléfono",
         list_view: "Lista",
         weekly_view: "Plan Semanal",
-        mon: "Lunes", tue: "Martes", wed: "Miércoles", thu: "Jueves", fri: "Viernes", sat: "Sábado", sun: "Domingo"
+        mon: "Lunes", tue: "Martes", wed: "Miércoles", thu: "Jueves", fri: "Viernes", sat: "Sábado", sun: "Domingo",
+        valid_month: "Válido por un mes"
     }
 };
 
@@ -224,7 +226,15 @@ function renderView() {
 
         if (state.scheduleView === 'list') {
             html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">`;
-            state.classes.forEach(c => {
+
+            const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const sortedClasses = [...state.classes].sort((a, b) => {
+                const dayDiff = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
+                if (dayDiff !== 0) return dayDiff;
+                return a.time.localeCompare(b.time);
+            });
+
+            sortedClasses.forEach(c => {
                 html += `
                     <div class="card" style="padding: 1.2rem; border-radius: 20px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
@@ -261,7 +271,8 @@ function renderView() {
                                             ${dayClasses.map(c => `
                                                 <div class="table-class-box">
                                                     <div class="table-class-time">${c.time}</div>
-                                                    <div class="table-class-name">${c.name}</div>
+                                                    <div class="table-class-tag" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 800; color: var(--primary); margin-bottom: 0.2rem;">${c.tag || ''}</div>
+                                                    <div class="table-class-name" style="font-size: 0.8rem; opacity: 0.8;">${c.name}</div>
                                                 </div>
                                             `).join('')}
                                         </td>
@@ -279,11 +290,14 @@ function renderView() {
         html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">Select your preferred membership plan.</p>`;
         html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">`;
         state.subscriptions.forEach(s => {
+            const isPackage = s.name.includes("4") || s.name.includes("8");
             html += `
                 <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.8rem;">
                     <div>
                         <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">${s.name}</h3>
-                        <p class="text-muted" style="margin-bottom: 1.2rem; font-size: 0.9rem;">${s.duration}</p>
+                        <p class="text-muted" style="margin-bottom: 1.2rem; font-size: 0.9rem;">
+                            ${isPackage ? t.valid_month : s.duration}
+                        </p>
                         <div style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.04em;">MXD ${s.price}</div>
                     </div>
                     <button class="btn-primary w-full" onclick="buySubscription('${s.id}')" style="padding: 1rem;">${t.buy}</button>
