@@ -229,7 +229,7 @@ function renderView() {
                     <div class="card" style="padding: 1.2rem; border-radius: 20px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
                             <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
-                            <span style="font-weight: 700; font-size: 1rem;">$${c.price}</span>
+                            <span style="font-weight: 700; font-size: 1rem;">MXD ${c.price}</span>
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
                         <div class="text-muted" style="display:flex; align-items:center; gap:0.4rem; font-size: 0.9rem;">
@@ -284,7 +284,7 @@ function renderView() {
                     <div>
                         <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">${s.name}</h3>
                         <p class="text-muted" style="margin-bottom: 1.2rem; font-size: 0.9rem;">${s.duration}</p>
-                        <div style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.04em;">$${s.price}</div>
+                        <div style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.04em;">MXD ${s.price}</div>
                     </div>
                     <button class="btn-primary w-full" onclick="buySubscription('${s.id}')" style="padding: 1rem;">${t.buy}</button>
                 </div>
@@ -407,7 +407,7 @@ function renderView() {
 
                         <div style="display:grid; grid-template-columns: 1.5fr 1fr auto; gap: 0.8rem; align-items: center;">
                             <input type="text" class="glass-input" value="${c.tag || ''}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Tag (e.g. Beginner)" style="padding: 0.8rem;">
-                            <input type="number" class="glass-input" value="${c.price}" onchange="updateClass(${c.id}, 'price', this.value)" placeholder="$" style="padding: 0.8rem;">
+                            <input type="number" class="glass-input" value="${c.price}" onchange="updateClass(${c.id}, 'price', this.value)" placeholder="MXD" style="padding: 0.8rem;">
                             <button class="btn-icon" onclick="removeClass(${c.id})" style="color: var(--danger); width:44px; height:44px;"><i data-lucide="trash-2" size="20"></i></button>
                         </div>
                     </div>
@@ -430,7 +430,7 @@ function renderView() {
             html += `
                 <div style="display:grid; grid-template-columns: 2fr 1fr auto; gap: 0.5rem; align-items: center;">
                     <input type="text" class="glass-input" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" placeholder="Plan Name" style="padding: 0.6rem; font-size: 0.85rem;">
-                    <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" placeholder="$" style="padding: 0.6rem; font-size: 0.85rem;">
+                    <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" placeholder="MXD" style="padding: 0.6rem; font-size: 0.85rem;">
                     <button class="btn-icon" onclick="removeSubscription('${s.id}')" style="color: var(--danger); width:36px; height:36px; min-height:36px;"><i data-lucide="trash-2" size="16"></i></button>
                 </div>
             `;
