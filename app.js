@@ -1289,8 +1289,13 @@ window.handleScan = async (scannedId) => {
 
 window.cancelAttendance = () => {
     document.getElementById('inline-scan-result').innerHTML = '';
-    if (html5QrCode && html5QrCode.isPaused()) {
-        html5QrCode.resume();
+    if (html5QrCode) {
+        try {
+            html5QrCode.resume();
+            console.log("Scanner resumed after cancel.");
+        } catch (e) {
+            console.warn("Could not resume scanner:", e);
+        }
     }
 };
 
@@ -1327,8 +1332,13 @@ window.confirmAttendance = async (studentId, count) => {
 
     setTimeout(() => {
         resultEl.innerHTML = '';
-        if (html5QrCode && html5QrCode.isPaused()) {
-            html5QrCode.resume();
+        if (html5QrCode) {
+            try {
+                html5QrCode.resume();
+                console.log("Scanner resumed after confirmation.");
+            } catch (e) {
+                console.warn("Could not resume scanner:", e);
+            }
         }
     }, 2000);
 };
