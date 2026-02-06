@@ -65,6 +65,10 @@
             <i data-lucide="scan"></i>
             <span data-i18n="nav_scan">Scan</span>
         </button>
+        <button class="nav-item" data-view="admin-memberships">
+            <i data-lucide="credit-card"></i>
+            <span data-i18n="nav_memberships">Membresías</span>
+        </button>
         <button class="nav-item" data-view="admin-settings">
             <i data-lucide="settings"></i>
             <span data-i18n="nav_settings">Settings</span>
@@ -76,6 +80,12 @@
             <div id="reader" style="width: 100%"></div>
             <p class="text-muted" style="font-size: 0.8rem; margin-top: 1rem;">Align QR code within the frame</p>
             <button id="close-scanner" class="btn-primary mt-4">Close</button>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="modal hidden">
+        <div class="modal-content" id="payment-modal-content">
+            <!-- Content injected via app.js -->
         </div>
     </div>
 

@@ -50,7 +50,19 @@ const translations = {
         list_view: "List View",
         weekly_view: "Weekly Plan",
         mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday",
-        valid_month: "Valid for one month"
+        valid_month: "Valid for one month",
+        nav_memberships: "Memberships",
+        pending_payments: "Pending Payments",
+        approve: "Approve",
+        reject: "Reject",
+        transfer: "Transfer",
+        cash: "Cash",
+        payment_instructions: "Payment Instructions",
+        i_have_paid: "I have transferred",
+        pay_cash: "I will pay cash",
+        request_sent_title: "Request Sent!",
+        request_sent_msg: "Your access will be activated once the payment is verified by our staff.",
+        close: "Close"
     },
     es: {
         nav_schedule: "Horario",
@@ -97,7 +109,19 @@ const translations = {
         list_view: "Lista",
         weekly_view: "Plan Semanal",
         mon: "Lunes", tue: "Martes", wed: "Miércoles", thu: "Jueves", fri: "Viernes", sat: "Sábado", sun: "Domingo",
-        valid_month: "Válido por un mes"
+        valid_month: "Válido por un mes",
+        nav_memberships: "Membresías",
+        pending_payments: "Pagos Pendientes",
+        approve: "Aprobar",
+        reject: "Rechazar",
+        transfer: "Transferencia",
+        cash: "Efectivo",
+        payment_instructions: "Instrucciones de Pago",
+        i_have_paid: "Ya transferí",
+        pay_cash: "Pagaré en efectivo",
+        request_sent_title: "¡Pedido Enviado!",
+        request_sent_msg: "Tu acceso será activado una vez que validemos el pago.",
+        close: "Cerrar"
     }
 };
 
@@ -115,23 +139,34 @@ let state = {
     scheduleView: 'list', // 'list' or 'weekly'
     authMode: 'login',
     theme: 'dark',
-    isAdmin: false
+    isAdmin: false,
+    paymentRequests: [],
+    adminSettings: {}
 };
 
 // --- DATA FETCHING ---
 async function fetchAllData() {
-    if (!supabase) return;
+    if (!window.supabase) return;
 
     try {
-        const [classesRes, subsRes, studentsRes] = await Promise.all([
+        const [classesRes, subsRes, studentsRes, requestsRes, settingsRes] = await Promise.all([
             supabaseClient.from('classes').select('*').order('id'),
             supabaseClient.from('subscriptions').select('*').order('name'),
-            supabaseClient.from('students').select('*').order('name')
+            supabaseClient.from('students').select('*').order('name'),
+            supabaseClient.from('payment_requests').select('*, students(name)').order('created_at', { ascending: false }),
+            supabaseClient.from('admin_settings').select('*')
         ]);
 
         if (classesRes.data) state.classes = classesRes.data;
         if (subsRes.data) state.subscriptions = subsRes.data;
         if (studentsRes.data) state.students = studentsRes.data;
+        if (requestsRes.data) state.paymentRequests = requestsRes.data;
+        if (settingsRes.data) {
+            state.adminSettings = settingsRes.data.reduce((acc, item) => {
+                acc[item.key] = item.value;
+                return acc;
+            }, {});
+        }
 
         renderView();
     } catch (err) {
@@ -171,9 +206,7 @@ function renderView() {
         html += `
             <div class="text-center slide-in" style="padding-top: 4rem;">
                 <div style="margin-bottom: 3rem;">
-                    <div style="width: 80px; height: 80px; background: var(--text); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
-                        <i data-lucide="sparkles" size="40" style="color: var(--background)"></i>
-                    </div>
+                    <img src="logo.png" style="width: 100px; height: 100px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                 </div>
                 <h1 style="margin-bottom: 0.5rem; letter-spacing: -0.04em;">${t.auth_title}</h1>
                 <p class="text-muted" style="margin-bottom: 3rem; font-size: 1.1rem;">Precision in every step.</p>
@@ -290,7 +323,7 @@ function renderView() {
                         </p>
                         <div style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.04em;">MXD ${s.price}</div>
                     </div>
-                    <button class="btn-primary w-full" onclick="buySubscription('${s.id}')" style="padding: 1rem;">${t.buy}</button>
+                    <button class="btn-primary w-full" onclick="openPaymentModal('${s.id}')" style="padding: 1rem;">${t.buy}</button>
                 </div>
             `;
         });
@@ -365,6 +398,39 @@ function renderView() {
                 </div>
             `;
         });
+    } else if (view === 'admin-memberships') {
+        html += `<h1 style="margin-bottom: 2rem;">${t.pending_payments}</h1>`;
+        if (state.paymentRequests.length === 0) {
+            html += `<p class="text-muted">${t.no_subs}</p>`;
+        } else {
+            state.paymentRequests.forEach(req => {
+                const studentName = req.students ? req.students.name : 'Unknown';
+                const isPending = req.status === 'pending';
+                html += `
+                    <div class="card slide-in" style="margin-bottom: 1rem; border-left: 4px solid ${req.status === 'approved' ? 'var(--secondary)' : (req.status === 'rejected' ? 'var(--danger)' : 'var(--primary)')}">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">${studentName}</h3>
+                                <div class="text-muted" style="font-size: 0.8rem;">
+                                    ${req.sub_name} • MXD ${req.price} • ${req.payment_method.toUpperCase()}
+                                </div>
+                                <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 0.4rem;">${new Date(req.created_at).toLocaleString()}</div>
+                            </div>
+                            ${isPending ? `
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="btn-secondary" onclick="processPaymentRequest(${req.id}, 'approved')" style="padding: 0.5rem 0.8rem; font-size: 0.75rem;">${t.approve}</button>
+                                    <button class="btn-icon" onclick="processPaymentRequest(${req.id}, 'rejected')" style="color: var(--danger);"><i data-lucide="x-circle"></i></button>
+                                </div>
+                            ` : `
+                                <span style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: ${req.status === 'approved' ? 'var(--secondary)' : 'var(--danger)'}">
+                                    ${req.status}
+                                </span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+        }
     } else if (view === 'admin-scanner') {
         html += `
             <div class="text-center">
@@ -440,6 +506,31 @@ function renderView() {
             `;
         });
         html += `</div></div>`;
+
+        // Transfer Settings
+        html += `
+            <div class="card" style="border-radius: 24px; margin-top: 2rem; padding: 1.5rem;">
+                <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem;">Transfer Details</h3>
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <div>
+                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Bank Name</span>
+                        <input type="text" class="glass-input" value="${state.adminSettings.bank_name || ''}" onchange="updateAdminSetting('bank_name', this.value)" style="padding: 0.8rem; width: 100%;">
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">CBU</span>
+                        <input type="text" class="glass-input" value="${state.adminSettings.bank_cbu || ''}" onchange="updateAdminSetting('bank_cbu', this.value)" style="padding: 0.8rem; width: 100%;">
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Alias</span>
+                        <input type="text" class="glass-input" value="${state.adminSettings.bank_alias || ''}" onchange="updateAdminSetting('bank_alias', this.value)" style="padding: 0.8rem; width: 100%;">
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Holder Name</span>
+                        <input type="text" class="glass-input" value="${state.adminSettings.bank_holder || ''}" onchange="updateAdminSetting('bank_holder', this.value)" style="padding: 0.8rem; width: 100%;">
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     html += `<div class="text-center" style="font-size: 0.75rem; color: var(--text-muted); padding: 4rem 0; letter-spacing: 0.1em; opacity: 0.5;">BAILADMIN INDUSTRIAL v${APP_VERSION}</div>`;
@@ -689,6 +780,91 @@ window.activatePackage = async (studentId, packageName) => {
         saveState();
         renderView();
     }
+};
+
+window.openPaymentModal = (subId) => {
+    const sub = state.subscriptions.find(s => s.id === subId);
+    if (!sub) return;
+    const t = translations[state.language];
+    const modal = document.getElementById('payment-modal');
+    const content = document.getElementById('payment-modal-content');
+
+    content.innerHTML = `
+        <h2 style="margin-bottom: 1.5rem;">${t.payment_instructions}</h2>
+        <div class="card" style="margin-bottom: 1.5rem; text-align: left;">
+            <p><strong>${sub.name}</strong> - MXD ${sub.price}</p>
+            <hr style="margin: 1rem 0; opacity: 0.1;">
+            <p style="font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>${state.adminSettings.bank_name || 'Bank'}</strong></p>
+            <p style="font-size: 0.8rem;">CBU: ${state.adminSettings.bank_cbu || 'N/A'}</p>
+            <p style="font-size: 0.8rem;">Alias: ${state.adminSettings.bank_alias || 'N/A'}</p>
+            <p style="font-size: 0.8rem;">Titular: ${state.adminSettings.bank_holder || 'N/A'}</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.8rem;">
+            <button class="btn-primary w-full" onclick="submitPaymentRequest('${sub.id}', 'transfer')">${t.i_have_paid} (Transfer)</button>
+            <button class="btn-secondary w-full" onclick="submitPaymentRequest('${sub.id}', 'cash')">${t.pay_cash}</button>
+            <button class="btn-icon w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t.close}</button>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+};
+
+window.submitPaymentRequest = async (subId, method) => {
+    if (!state.currentUser) return;
+    const sub = state.subscriptions.find(s => s.id === subId);
+    const t = translations[state.language];
+
+    const newRequest = {
+        student_id: state.currentUser.id,
+        sub_id: sub.id,
+        sub_name: sub.name,
+        price: sub.price,
+        payment_method: method,
+        status: 'pending'
+    };
+
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('payment_requests').insert([newRequest]);
+        if (error) { alert("Error sending request: " + error.message); return; }
+    }
+
+    // Refresh local list
+    await fetchAllData();
+
+    // Show success message
+    const content = document.getElementById('payment-modal-content');
+    content.innerHTML = `
+        <i data-lucide="check-circle" size="48" style="color: var(--secondary); margin-bottom: 1rem;"></i>
+        <h2>${t.request_sent_title}</h2>
+        <p class="text-muted" style="margin: 1rem 0;">${t.request_sent_msg}</p>
+        <button class="btn-primary w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t.close}</button>
+    `;
+    if (window.lucide) lucide.createIcons();
+};
+
+window.processPaymentRequest = async (id, status) => {
+    const req = state.paymentRequests.find(r => r.id === id);
+    if (!req) return;
+
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
+        if (error) { alert("Error processing: " + error.message); return; }
+
+        if (status === 'approved') {
+            await window.activatePackage(req.student_id, req.sub_name);
+        }
+    }
+
+    await fetchAllData();
+};
+
+window.updateAdminSetting = async (key, value) => {
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('admin_settings').upsert({ key, value, updated_at: new Date() });
+        if (error) { console.error("Error updating setting:", error); return; }
+    }
+    state.adminSettings[key] = value;
+    saveState();
 };
 
 window.updateBalance = async (studentId, value) => {
