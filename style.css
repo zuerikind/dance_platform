@@ -70,7 +70,7 @@ main#app-root {
     flex-direction: column;
 }
 
-/* Premium Global Ambient Background */
+/* Global Ambient Background - Pure Neutral */
 body::before {
     content: '';
     position: fixed;
@@ -78,8 +78,7 @@ body::before {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at 70% 20%, rgba(94, 23, 235, 0.04), transparent 50%),
-        radial-gradient(circle at 10% 80%, rgba(0, 113, 227, 0.04), transparent 50%);
+    background: var(--background);
     z-index: -1;
     pointer-events: none;
 }
@@ -121,16 +120,18 @@ body::before {
 }
 
 .logo-img {
-    height: 36px;
-    width: 36px;
+    height: 32px;
+    width: 32px;
     object-fit: contain;
     transition: transform 0.3s ease;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
+    mix-blend-mode: multiply;
+    /* Ensures transparent look on white */
 }
 
 .dark-mode .logo-img {
+    filter: invert(1);
+    /* Flip black lines to white */
     mix-blend-mode: normal;
-    filter: brightness(0) invert(1);
 }
 
 .auth-view .navbar,
@@ -179,31 +180,30 @@ body::before {
     transform: scale(0.96);
 }
 
-/* HEADER BUTTONS - Minimalist Pills */
+/* HEADER BUTTONS - Ultra Minimalist */
 .nav-controls .btn-secondary,
 .nav-controls .btn-icon {
     background: transparent;
-    border: 1px solid transparent;
-    padding: 0.4rem 0.8rem;
-    height: 32px;
-    min-height: 32px;
-    font-size: 0.8rem;
+    border: none;
+    padding: 0.2rem 0.5rem;
+    height: 28px;
+    min-height: 28px;
+    font-size: 0.75rem;
     color: var(--text);
-    border-radius: 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    opacity: 0.6;
 }
 
 .nav-controls .btn-secondary:hover,
 .nav-controls .btn-icon:hover {
     background: var(--surface-solid);
-    border-color: var(--border);
+    opacity: 1;
 }
 
 .btn-icon {
-    width: 32px;
+    width: 28px;
     padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 
@@ -331,12 +331,12 @@ h1 {
     gap: 0.2rem;
 }
 
-/* AUTH SCREEN - World Class Minimalist & Responsive */
+/* AUTH SCREEN - High Contrast & Depth */
 .auth-page-container {
     background: var(--background);
-    min-height: calc(100vh - 8rem);
-    /* Leave space for footer */
-    padding: 2rem 1.5rem;
+    flex: 1;
+    /* Allow content to grow/shrink */
+    padding: 4rem 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -422,17 +422,18 @@ h1 {
     position: relative;
 }
 
-/* Transparent Logo Magic: Handle white background if present */
+/* Transparent Logo Magic */
 .auth-logo {
-    width: 120px;
+    width: 140px;
     height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.05));
+    mix-blend-mode: multiply;
     animation: floatingLogo 6s ease-in-out infinite;
 }
 
 .dark-mode .auth-logo {
-    filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+    filter: invert(1);
+    mix-blend-mode: normal;
 }
 
 @keyframes floatingLogo {
