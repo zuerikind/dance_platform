@@ -1,8 +1,7 @@
-
 // --- SUPABASE CONFIG ---
 const SUPABASE_URL = 'https://fziyybqhecfxhkagknvg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs';
-const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -116,9 +115,9 @@ async function fetchAllData() {
 
     try {
         const [classesRes, subsRes, studentsRes] = await Promise.all([
-            supabase.from('classes').select('*').order('id'),
-            supabase.from('subscriptions').select('*').order('name'),
-            supabase.from('students').select('*').order('name')
+            supabaseClient.from('classes').select('*').order('id'),
+            supabaseClient.from('subscriptions').select('*').order('name'),
+            supabaseClient.from('students').select('*').order('name')
         ]);
 
         if (classesRes.data) state.classes = classesRes.data;
@@ -419,8 +418,8 @@ window.signUpStudent = async () => {
         balance: 0
     };
 
-    if (supabase) {
-        const { error } = await supabase.from('students').insert([newStudent]);
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('students').insert([newStudent]);
         if (error) { alert("Error signing up: " + error.message); return; }
     }
 
@@ -438,8 +437,8 @@ window.loginStudent = async () => {
     const t = translations[state.language];
 
     let student;
-    if (supabase) {
-        const { data, error } = await supabase
+    if (supabaseClient) {
+        const { data, error } = await supabaseClient
             .from('students')
             .select('*')
             .eq('name', nameInput)
@@ -484,8 +483,8 @@ window.buySubscription = async (id) => {
 
 window.deleteStudent = async (id) => {
     if (confirm("Are you sure you want to remove this student? All their progress will be lost.")) {
-        if (supabase) {
-            const { error } = await supabase.from('students').delete().eq('id', id);
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('students').delete().eq('id', id);
             if (error) { alert("Error deleting: " + error.message); return; }
         }
         state.students = state.students.filter(s => s.id !== id);
@@ -499,8 +498,8 @@ window.loginAdminWithCreds = async () => {
     const pass = document.getElementById('admin-pass').value.trim();
     const t = translations[state.language];
 
-    if (supabase) {
-        const { data, error } = await supabase
+    if (supabaseClient) {
+        const { data, error } = await supabaseClient
             .from('admins')
             .select('*')
             .eq('username', user)
@@ -535,8 +534,8 @@ window.createNewAdmin = async () => {
     if (!name || !pass) return;
 
     const newId = "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase();
-    if (supabase) {
-        const { error } = await supabase.from('admins').insert([{ id: newId, username: name, password: pass }]);
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('admins').insert([{ id: newId, username: name, password: pass }]);
         if (error) { alert("Error: " + error.message); return; }
         alert("Admin created!");
     }
@@ -558,8 +557,8 @@ window.createNewStudent = async () => {
         balance: 0
     };
 
-    if (supabase) {
-        const { error } = await supabase.from('students').insert([newStudent]);
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('students').insert([newStudent]);
         if (error) { alert("Error: " + error.message); return; }
     }
     state.students.push(newStudent);
@@ -579,8 +578,8 @@ window.togglePayment = async (id) => {
     const student = state.students.find(s => s.id === id);
     if (student) {
         const newPaidStatus = !student.paid;
-        if (supabase) {
-            const { error } = await supabase.from('students').update({ paid: newPaidStatus }).eq('id', id);
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('students').update({ paid: newPaidStatus }).eq('id', id);
             if (error) { alert("Error updating: " + error.message); return; }
         }
         student.paid = newPaidStatus;
@@ -598,8 +597,8 @@ window.activatePackage = async (studentId, packageName) => {
             balance: pkg ? pkg.limit_count : 0,
             paid: !!pkg
         };
-        if (supabase) {
-            const { error } = await supabase.from('students').update(updates).eq('id', studentId);
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
             if (error) { alert("Error updating: " + error.message); return; }
         }
         student.package = updates.package;
@@ -614,8 +613,8 @@ window.updateBalance = async (studentId, value) => {
     const student = state.students.find(s => s.id === studentId);
     if (student) {
         const newBalance = value === "" ? null : parseInt(value);
-        if (supabase) {
-            const { error } = await supabase.from('students').update({ balance: newBalance }).eq('id', studentId);
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
             if (error) { alert("Error updating: " + error.message); return; }
         }
         student.balance = newBalance;
@@ -628,8 +627,8 @@ window.updateClass = async (id, field, value) => {
     const cls = state.classes.find(c => c.id === id);
     if (cls) {
         const val = (field === 'price' ? parseFloat(value) : value);
-        if (supabase) {
-            const { error } = await supabase.from('classes').update({ [field]: val }).eq('id', id);
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('classes').update({ [field]: val }).eq('id', id);
             if (error) { console.error(error); return; }
         }
         cls[field] = val;
@@ -639,8 +638,8 @@ window.updateClass = async (id, field, value) => {
 
 window.addClass = async () => {
     const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner" };
-    if (supabase) {
-        const { data, error } = await supabase.from('classes').insert([newClass]).select();
+    if (supabaseClient) {
+        const { data, error } = await supabaseClient.from('classes').insert([newClass]).select();
         if (error) { alert("Error adding class: " + error.message); return; }
         state.classes.push(data[0]);
     } else {
@@ -652,8 +651,8 @@ window.addClass = async () => {
 };
 
 window.removeClass = async (id) => {
-    if (supabase) {
-        const { error } = await supabase.from('classes').delete().eq('id', id);
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('classes').delete().eq('id', id);
         if (error) { alert("Error removing class: " + error.message); return; }
     }
     state.classes = state.classes.filter(c => c.id !== id);
@@ -665,8 +664,8 @@ window.updateSub = async (id, field, value) => {
     const sub = state.subscriptions.find(s => s.id === id);
     if (sub) {
         const val = (field === 'price' ? parseFloat(value) : (field === 'limit_count' ? parseInt(value) : value));
-        if (supabase) {
-            const { error } = await supabase.from('subscriptions').update({ [field]: val }).eq('id', id);
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('subscriptions').update({ [field]: val }).eq('id', id);
             if (error) { console.error(error); return; }
         }
         sub[field] = val;
@@ -676,8 +675,8 @@ window.updateSub = async (id, field, value) => {
 
 window.addSubscription = async () => {
     const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10 };
-    if (supabase) {
-        const { error } = await supabase.from('subscriptions').insert([newSub]);
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('subscriptions').insert([newSub]);
         if (error) { alert("Error adding plan: " + error.message); return; }
     }
     state.subscriptions.push(newSub);
@@ -686,8 +685,8 @@ window.addSubscription = async () => {
 };
 
 window.removeSubscription = async (id) => {
-    if (supabase) {
-        const { error } = await supabase.from('subscriptions').delete().eq('id', id);
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('subscriptions').delete().eq('id', id);
         if (error) { alert("Error removing plan: " + error.message); return; }
     }
     state.subscriptions = state.subscriptions.filter(s => s.id !== id);
@@ -761,8 +760,8 @@ window.handleScan = async (id) => {
         // Decrement balance if it's a limited pass
         if (student.balance !== null) {
             const newBalance = student.balance - 1;
-            if (supabase) {
-                const { error } = await supabase.from('students').update({ balance: newBalance }).eq('id', id);
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', id);
                 if (error) { alert("Error updating balance: " + error.message); return; }
             }
             student.balance = newBalance;
