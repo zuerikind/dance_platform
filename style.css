@@ -423,18 +423,20 @@ h1 {
     position: fixed;
     bottom: 1.5rem;
     bottom: calc(1.5rem + var(--safe-bottom));
-    left: 1.2rem;
-    right: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    min-width: 280px;
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(25px) saturate(200%);
     -webkit-backdrop-filter: blur(25px) saturate(200%);
     border: 1px solid var(--border);
-    border-radius: 40px;
+    border-radius: 20px;
     display: flex;
     justify-content: space-around;
-    padding: 0.5rem;
+    padding: 0.4rem;
     z-index: 1000;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
 .dark-mode .bottom-nav {
@@ -1139,70 +1141,45 @@ h1 {
     }
 
     .bottom-nav {
-        width: calc(100% - 2rem);
+        width: auto;
+        min-width: 280px;
     }
 }
 
 /* FOOTER - Ultra Minimal */
 .site-footer {
-    padding: 1rem 1rem 2rem;
-    text-align: center;
-    border-top: 1px solid var(--border-color);
-    background: transparent;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+    opacity: 0.6;
 }
 
 .footer-content {
-    max-width: 500px;
-    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
     align-items: center;
+    gap: 0.5rem;
 }
 
 .footer-logo {
-    font-family: var(--font-main);
+    font-size: 0.7rem;
     font-weight: 700;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--text);
-    opacity: 0.7;
 }
 
 .footer-tagline {
-    font-size: 0.6rem;
-    color: var(--text-muted);
-    font-weight: 400;
-    letter-spacing: 0.02em;
-    opacity: 0.6;
+    display: none;
 }
 
 .footer-links {
     display: flex;
-    gap: 1.25rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin: 0.5rem 0;
-}
-
-.footer-link {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 0.7rem;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-.footer-link:hover {
-    color: var(--text);
+    gap: 1rem;
+    font-size: 10px;
 }
 
 .footer-copyright {
-    font-size: 0.6rem;
-    color: var(--text-muted);
-    opacity: 0.4;
-    margin-top: 0.5rem;
+    font-size: 8px;
+    margin-top: 0.2rem;
 }
 
 /* --- PREMIUM DROPDOWN REFINED --- */
