@@ -423,21 +423,24 @@ h1 {
     position: fixed;
     bottom: 1.5rem;
     bottom: calc(1.5rem + var(--safe-bottom));
-    left: 50%;
-    transform: translateX(-50%);
-    width: fit-content;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: max-content;
     max-width: 90vw;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(25px) saturate(200%);
-    -webkit-backdrop-filter: blur(25px) saturate(200%);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(30px) saturate(210%);
+    -webkit-backdrop-filter: blur(30px) saturate(210%);
     border: 1px solid var(--border);
-    border-radius: 24px;
+    border-radius: 26px;
     display: flex;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
+    gap: 4px;
+    padding: 6px;
     z-index: 1000;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.12),
+        0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
 .dark-mode .bottom-nav {
@@ -449,18 +452,18 @@ h1 {
     background: none;
     border: none;
     color: var(--text-secondary);
-    padding: 0.6rem 1rem;
-    border-radius: 16px;
+    padding: 8px 16px;
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.3rem;
+    gap: 4px;
     cursor: pointer;
-    transition: all 0.3s var(--transition);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 600;
     font-size: 10px;
-    min-width: 60px;
+    min-width: 64px;
 }
 
 @media (max-width: 768px) {
@@ -486,12 +489,15 @@ h1 {
 }
 
 .nav-item.active {
-    color: #000000;
-    transform: translateY(-2px);
+    color: #FFFFFF;
+    background: #000000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .dark-mode .nav-item.active {
-    color: #FFFFFF;
+    color: #000000;
+    background: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
 }
 
 /* QR VIEW */
@@ -1149,9 +1155,9 @@ h1 {
 
 /* FOOTER - Ultra Minimal */
 .site-footer {
-    padding: 0.1rem 0;
-    border-top: 1px solid var(--border);
-    opacity: 0.3;
+    padding: 0.05rem 0;
+    border-top: none;
+    opacity: 0.25;
 }
 
 .footer-content {
@@ -1162,7 +1168,7 @@ h1 {
 }
 
 .footer-logo {
-    font-size: 0.5rem;
+    font-size: 0.45rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
