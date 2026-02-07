@@ -1193,3 +1193,100 @@ h1 {
     opacity: 0.5;
     margin-top: 1rem;
 }
+
+/* --- PREMIUM DROPDOWN --- */
+.custom-dropdown-trigger {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    margin: 0 auto;
+}
+
+.custom-dropdown-trigger:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.custom-dropdown-trigger span {
+    font-size: 17px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.custom-dropdown-trigger i {
+    color: rgba(255, 255, 255, 0.5);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-dropdown-list {
+    position: absolute;
+    top: 110%;
+    left: 0;
+    right: 0;
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 10px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    max-height: 280px;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(-15px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+}
+
+.custom-dropdown-list.open {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.dropdown-item {
+    padding: 14px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item span {
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.dropdown-item i {
+    color: var(--system-blue);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dropdown-item.selected i {
+    opacity: 1;
+    transform: scale(1);
+}

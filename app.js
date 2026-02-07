@@ -397,30 +397,28 @@ function renderView() {
     if (view === 'school-selection') {
         html += `
             <div class="immersive-bg-glow"></div>
-            <div class="auth-page-container" style="justify-content: flex-start; padding-top: 4rem;">
-                <div class="landing-branding slide-in" style="margin-bottom: 2rem;">
-                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 60px; height: 60px; margin-bottom: 1rem;">
-                    <h1 style="font-size: 2.5rem;">Bailadmin</h1>
-                    <p class="text-muted" style="font-size: 1rem;">${t.select_school_subtitle}</p>
+            <div class="auth-page-container" style="justify-content: center; align-items: center;">
+                <div class="landing-branding slide-in" style="margin-bottom: 3rem;">
+                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 80px; height: 80px; margin-bottom: 1rem;">
+                    <h1 style="font-size: 2.5rem; letter-spacing: -1px;">Bailadmin</h1>
+                    <p class="text-muted" style="font-size: 1.1rem;">Selecciona tu academia</p>
                 </div>
                 
-                <div style="width: 100%; max-width: 400px; padding: 0 1rem;">
-                    <div style="position: relative; margin-bottom: 1rem;">
-                        <input type="text" class="ios-search-bar" placeholder="Buscar academia..." oninput="filterSchools(this.value)" style="margin: 0; width: 100%; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.1);">
+                <div style="width: 100%; max-width: 340px; position: relative; z-index: 50;">
+                    <!-- Custom Dropdown Trigger -->
+                    <div id="school-dropdown-trigger" class="custom-dropdown-trigger" onclick="toggleSchoolDropdown()">
+                        <span>Seleccionar Academia...</span>
+                        <i data-lucide="chevron-down"></i>
                     </div>
 
-                    <div class="ios-list" id="school-list-container" style="margin: 0; max-height: 60vh; overflow-y: auto; background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);">
+                    <!-- Custom Dropdown List -->
+                    <div id="school-dropdown-list" class="custom-dropdown-list">
                         ${state.schools.map(s => `
-                            <div class="ios-list-item" onclick="selectSchool('${s.id}')" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; padding: 1.2rem 1rem;">
-                                <div style="flex: 1;">
-                                    <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: var(--text-primary);">${s.name}</h3>
-                                </div>
-                                <i data-lucide="chevron-right" size="20" style="color: var(--text-muted);"></i>
+                            <div class="dropdown-item ${state.currentSchool?.id === s.id ? 'selected' : ''}" onclick="selectSchool('${s.id}')">
+                                <span>${s.name}</span>
+                                <i data-lucide="check" size="16"></i>
                             </div>
                         `).join('')}
-                    </div>
-                    <div style="margin-top: 1rem; text-align: center;">
-                         <button class="btn-text" onclick="alert('Contact support to register a new school.')" style="color: var(--text-muted); font-size: 0.8rem;">¿No encuentras tu academia?</button>
                     </div>
                 </div>
             </div>
@@ -1373,27 +1371,6 @@ window.updateSub = async (id, field, value) => {
     }
 };
 
-window.filterSchools = (query) => {
-    const q = query.toLowerCase();
-    const list = document.getElementById('school-list-container');
-    if (!list) return;
-
-    const filtered = state.schools.filter(s => s.name.toLowerCase().includes(q));
-    list.innerHTML = filtered.map(s => `
-        <div class="ios-list-item" onclick="selectSchool('${s.id}')" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; padding: 1.2rem 1rem;">
-            <div style="flex: 1;">
-                <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: var(--text-primary);">${s.name}</h3>
-            </div>
-            <i data-lucide="chevron-right" size="20" style="color: var(--text-muted);"></i>
-        </div>
-    `).join('');
-
-    if (filtered.length === 0) {
-        list.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">No se encontraron academias.</div>`;
-    }
-
-    if (window.lucide) lucide.createIcons();
-};
 
 window.addSubscription = async () => {
     const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10, school_id: state.currentSchool.id };
@@ -1418,6 +1395,34 @@ window.removeSubscription = async (id) => {
 
 // --- MOBILE UI HELPERS ---
 // --- MOBILE UI HELPERS ---
+window.toggleSchoolDropdown = () => {
+    const list = document.getElementById('school-dropdown-list');
+    const triggerIcon = document.querySelector('#school-dropdown-trigger i');
+    if (!list) return;
+
+    const isOpen = list.classList.contains('open');
+
+    if (!isOpen) {
+        list.classList.add('open');
+        if (triggerIcon) triggerIcon.style.transform = 'rotate(180deg)';
+
+        // Auto-close when clicking outside
+        setTimeout(() => {
+            const closeHandler = (e) => {
+                if (!e.target.closest('#school-dropdown-trigger') && !e.target.closest('#school-dropdown-list')) {
+                    list.classList.remove('open');
+                    if (triggerIcon) triggerIcon.style.transform = 'rotate(0deg)';
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            document.addEventListener('click', closeHandler);
+        }, 10);
+    } else {
+        list.classList.remove('open');
+        if (triggerIcon) triggerIcon.style.transform = 'rotate(0deg)';
+    }
+};
+
 window.renderAdminStudentCard = (s) => {
     // FIX: Use window.t as a function, not a proxy object
     const t = (key) => window.t(key);
@@ -1445,15 +1450,6 @@ window.filterStudents = (query) => {
 
     const filtered = state.students.filter(s => s.name.toLowerCase().includes(q));
     // Wrap in ios-list container if not present, but here we just render items
-    list.innerHTML = filtered.map(s => renderAdminStudentCard(s)).join('');
-    if (window.lucide) lucide.createIcons();
-};
-window.filterStudents = (query) => {
-    const q = query.toLowerCase();
-    const list = document.getElementById('admin-student-list');
-    if (!list) return;
-
-    const filtered = state.students.filter(s => s.name.toLowerCase().includes(q));
     list.innerHTML = filtered.map(s => renderAdminStudentCard(s)).join('');
     if (window.lucide) lucide.createIcons();
 };
@@ -1725,6 +1721,9 @@ document.querySelector('.logo').addEventListener('mouseup', () => {
 });
 
 // Initial Load
+// --- SEED DATA (Temporary) ---
+
+
 (function init() {
     const local = localStorage.getItem('dance_app_state');
     if (local) {
