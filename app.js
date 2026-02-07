@@ -267,12 +267,15 @@ let state = {
     adminSettings: {},
     lastActivity: Date.now(),
     schools: [],
-    currentSchool: null
+    currentSchool: null,
+    loading: false
 };
 
 // --- DATA FETCHING ---
 async function fetchAllData() {
     if (!window.supabase) return;
+    state.loading = true;
+    renderView(); // Show loading state if needed
 
     try {
         // First, always fetch schools
@@ -288,6 +291,7 @@ async function fetchAllData() {
         // If no school is selected, we can't fetch tenant-specific data
         if (!state.currentSchool) {
             state.currentView = 'school-selection';
+            state.loading = false;
             renderView();
             return;
         }
@@ -324,9 +328,12 @@ async function fetchAllData() {
             state.adminSettings = settingsObj;
         }
 
+        state.loading = false;
         renderView();
     } catch (err) {
+        state.loading = false;
         console.error("Error fetching data:", err);
+        renderView();
     }
 }
 
@@ -635,7 +642,12 @@ function renderView() {
                 <input type="text" class="ios-search-bar" placeholder="Buscar alumnos..." oninput="filterStudents(this.value)" style="margin-bottom: 1.5rem;">
             </div>
             <div class="ios-list" id="admin-student-list" style="margin-top: 0;">
-                ${state.students.map(s => renderAdminStudentCard(s)).join('')}
+                ${state.loading && state.students.length === 0 ? `
+                    <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                        <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
+                        <p style="font-size: 15px; font-weight: 500;">Cargando alumnos...</p>
+                    </div>
+                ` : state.students.map(s => renderAdminStudentCard(s)).join('')}
             </div>
         `;
     } else if (view === 'admin-memberships') {
@@ -714,7 +726,12 @@ function renderView() {
                 ${t.all_payments}
             </div>
             <div class="ios-list">
-                ${state.paymentRequests.length > 0 ? state.paymentRequests.map(req => {
+                ${state.loading && state.paymentRequests.length === 0 ? `
+                    <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                        <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
+                        <p style="font-size: 15px; font-weight: 500;">Cargando pagos...</p>
+                    </div>
+                ` : (state.paymentRequests.length > 0 ? state.paymentRequests.map(req => {
             const studentName = req.students ? req.students.name : t.unknown_student;
             const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
             return `
@@ -729,7 +746,7 @@ function renderView() {
                             </div>
                         </div>
                     `;
-        }).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">No data yet</div>`}
+        }).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">No data yet</div>`)}
             </div>
         `;
     } else if (view === 'admin-scanner') {
@@ -738,20 +755,20 @@ function renderView() {
                 <div class="ios-large-title">${t.nav_scan}</div>
             </div>
             <div style="padding: 2rem; text-align: center;">
-                 <p style="font-size: 17px; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.5;">${t.scan_cta_desc}</p>
-                 
-                 <div style="width: 200px; height: 200px; margin: 0 auto 3rem; position: relative; display: flex; align-items: center; justify-content: center;">
-                    <div style="position: absolute; inset: 0; border: 2px solid var(--system-gray4); border-radius: 30px;"></div>
-                    <div style="position: absolute; inset: -4px; border: 4px solid var(--system-blue); border-radius: 34px; clip-path: polygon(0% 20%, 0% 0%, 20% 0%, 80% 0%, 100% 0%, 100% 20%, 100% 80%, 100% 100%, 80% 100%, 20% 100%, 0% 100%, 0% 80%);"></div>
-                    <i data-lucide="qr-code" size="64" style="color: var(--system-gray);"></i>
-                 </div>
+                <p style="font-size: 17px; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.5;">${t.scan_cta_desc}</p>
 
-                 <button class="btn-primary" onclick="startScanner()" style="width: 100%; border-radius: 14px; height: 50px; font-size: 17px; font-weight: 600;">
-                    ${t.initiate_scan_btn}
-                 </button>
-                 <div id="scan-result" style="margin-top: 1.5rem; font-weight: 600; font-size: 17px;"></div>
+            <div style="width: 200px; height: 200px; margin: 0 auto 3rem; position: relative; display: flex; align-items: center; justify-content: center;">
+                <div style="position: absolute; inset: 0; border: 2px solid var(--system-gray4); border-radius: 30px;"></div>
+                <div style="position: absolute; inset: -4px; border: 4px solid var(--system-blue); border-radius: 34px; clip-path: polygon(0% 20%, 0% 0%, 20% 0%, 80% 0%, 100% 0%, 100% 20%, 100% 80%, 100% 100%, 80% 100%, 20% 100%, 0% 100%, 0% 80%);"></div>
+                <i data-lucide="qr-code" size="64" style="color: var(--system-gray);"></i>
             </div>
-        `;
+
+            <button class="btn-primary" onclick="startScanner()" style="width: 100%; border-radius: 14px; height: 50px; font-size: 17px; font-weight: 600;">
+                ${t.initiate_scan_btn}
+            </button>
+            <div id="scan-result" style="margin-top: 1.5rem; font-weight: 600; font-size: 17px;"></div>
+        </div>
+    `;
     } else if (view === 'admin-settings') {
         const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -836,10 +853,10 @@ function renderView() {
                     <i data-lucide="save" size="18"></i> ${t.save_bank_btn}
                 </div>
             </div>
-        `;
+    `;
     }
 
-    html += `</div>`;
+    html += `</div > `;
     root.innerHTML = html;
     if (window.lucide) lucide.createIcons();
 
@@ -955,7 +972,7 @@ window.buySubscription = async (id) => {
         return;
     }
     const sub = state.subscriptions.find(s => s.id === id);
-    if (confirm(`Purchase ${sub.name} for $${sub.price}?`)) {
+    if (confirm(`Purchase ${sub.name} for $${sub.price} ? `)) {
         await window.activatePackage(state.currentUser.id, sub.name);
         alert("Plan activated!");
         state.currentView = 'qr';
@@ -999,7 +1016,7 @@ window.loginAdminWithCreds = async () => {
             state.isAdmin = true;
             state.currentView = 'admin-students';
             saveState();
-            renderView();
+            await fetchAllData(); // Prioritize fetching admin data immediately
             return;
         }
     }
@@ -1010,7 +1027,7 @@ window.loginAdminWithCreds = async () => {
         state.isAdmin = true;
         state.currentView = 'admin-students';
         saveState();
-        renderView();
+        fetchAllData(); // Trigger fetch for local fallback as well
     } else {
         alert(t('invalid_login'));
     }
@@ -1125,8 +1142,8 @@ window.activatePackage = async (studentId, packageName) => {
     // Robust case-insensitive search
     const pkg = state.subscriptions.find(p => p.name.trim().toLowerCase() === String(packageName).trim().toLowerCase());
 
-    console.log(`Activating package [${packageName}] for student [${studentId}]...`);
-    if (pkg) console.log(`Matched subscription:`, pkg);
+    console.log(`Activating package[${packageName}]for student[${studentId}]...`);
+    if (pkg) console.log(`Matched subscription: `, pkg);
 
     if (student) {
         // Ensure limit_count is a number. 
@@ -1138,7 +1155,7 @@ window.activatePackage = async (studentId, packageName) => {
             paid: !!pkg
         };
 
-        console.log(`Update payload:`, updates);
+        console.log(`Update payload: `, updates);
 
         if (supabaseClient) {
             const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
@@ -1168,7 +1185,7 @@ window.openPaymentModal = (subId) => {
     const content = document.getElementById('payment-modal-content');
 
     content.innerHTML = `
-        <h2 style="margin-bottom: 1.5rem;">${t('payment_instructions')}</h2>
+        < h2 style = "margin-bottom: 1.5rem;" > ${t('payment_instructions')}</h2 >
         <div class="card" style="margin-bottom: 1.5rem; text-align: left;">
             <p><strong>${sub.name}</strong> - MXD ${sub.price}</p>
             <hr style="margin: 1rem 0; opacity: 0.1;">
@@ -1216,7 +1233,7 @@ window.submitPaymentRequest = async (subId, method) => {
     // Show success message
     const content = document.getElementById('payment-modal-content');
     content.innerHTML = `
-        <i data-lucide="check-circle" size="48" style="color: var(--secondary); margin-bottom: 1rem;"></i>
+        < i data - lucide="check-circle" size = "48" style = "color: var(--secondary); margin-bottom: 1rem;" ></i >
         <h2>${t('request_sent_title')}</h2>
         <p class="text-muted" style="margin: 1rem 0;">${t('request_sent_msg')}</p>
         <button class="btn-primary w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t('close')}</button>
@@ -1263,7 +1280,7 @@ window.saveBankSettings = async (btn) => {
 
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<i data-lucide="loader-2" class="spin" size="16"></i> Saving to Vault...`;
+        btn.innerHTML = `< i data - lucide="loader-2" class="spin" size = "16" ></i > Saving to Vault...`;
         if (window.lucide) lucide.createIcons();
     }
 
@@ -1276,7 +1293,7 @@ window.saveBankSettings = async (btn) => {
 
         const status = document.getElementById('save-status');
         if (status) {
-            status.innerHTML = `<i data-lucide="check" size="14"></i> Database Updated!`;
+            status.innerHTML = `< i data - lucide="check" size = "14" ></i > Database Updated!`;
             status.classList.remove('hidden');
             setTimeout(() => status.classList.add('hidden'), 4000);
         }
@@ -1289,7 +1306,7 @@ window.saveBankSettings = async (btn) => {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = `<i data-lucide="save" size="16"></i> Save Bank Details`;
+            btn.innerHTML = `< i data - lucide="save" size = "16" ></i > Save Bank Details`;
             if (window.lucide) lucide.createIcons();
         }
     }
@@ -1302,7 +1319,7 @@ window.updateAdminSetting = async (key, value) => {
             .upsert({ key: String(key), value: String(value), school_id: state.currentSchool.id }, { onConflict: 'school_id, key' });
 
         if (error) {
-            console.error(`Error updating setting [${key}]:`, error);
+            console.error(`Error updating setting[${key}]: `, error);
             throw error;
         }
     }
@@ -1433,7 +1450,7 @@ window.renderAdminStudentCard = (s) => {
     const statusBg = s.paid ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 59, 48, 0.1)';
 
     return `
-        <div class="ios-list-item" onclick="updateStudentPrompt('${s.id}')" style="cursor: pointer; padding: 12px 16px;">
+        < div class="ios-list-item" onclick = "updateStudentPrompt('${s.id}')" style = "cursor: pointer; padding: 12px 16px;" >
             <div style="width: 44px; height: 44px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 14px; font-weight: 700; color: var(--text-secondary); font-size: 16px;">
                 ${s.name.charAt(0).toUpperCase()}
             </div>
@@ -1454,8 +1471,8 @@ window.renderAdminStudentCard = (s) => {
                 </div>
             </div>
             <i data-lucide="chevron-right" size="18" style="color: var(--system-gray4); margin-left: 8px;"></i>
-        </div>
-    `;
+        </div >
+        `;
 };
 
 window.filterStudents = (query) => {
@@ -1576,11 +1593,11 @@ window.handleScan = async (scannedId) => {
 
     if (!student) {
         resultEl.innerHTML = `
-            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+        < div class="card" style = "border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;" >
                 <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
                 <p style="margin-top:0.3rem">${t('not_found_msg')}: [${id.substring(0, 8)}...]</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
-            </div>
+            </div >
         `;
         return;
     }
@@ -1589,7 +1606,7 @@ window.handleScan = async (scannedId) => {
 
     if (hasValidPass) {
         resultEl.innerHTML = `
-            <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
+        < div class="card" style = "border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);" >
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
                         <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
@@ -1611,16 +1628,16 @@ window.handleScan = async (scannedId) => {
                 <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.5rem; opacity:0.5;">
                     ${t('cancel')}
                 </button>
-            </div>
+            </div >
         `;
     } else {
         resultEl.innerHTML = `
-            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+        < div class="card" style = "border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;" >
                 <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
                 <p style="margin-top:0.3rem">${student.name}</p>
                 <p style="font-size:0.75rem; color:var(--danger)">${t('inactive')}</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
-            </div>
+            </div >
         `;
     }
     if (window.lucide) lucide.createIcons();
@@ -1663,12 +1680,12 @@ window.confirmAttendance = async (studentId, count) => {
     }
 
     resultEl.innerHTML = `
-        <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
+        < div class="card" style = "border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;" >
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
              <div style="font-size:0.8rem">${student.name} (-${count})</div>
-        </div>
-    `;
+        </div >
+        `;
     if (window.lucide) lucide.createIcons();
 
     setTimeout(() => {
