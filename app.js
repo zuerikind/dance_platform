@@ -123,7 +123,8 @@ const DANCE_LOCALES = {
         add_school_btn: "+ New School",
         enter_school_name: "Enter new school or teacher name:",
         school_created: "School created successfully!",
-        switch_school: "Switch School"
+        switch_school: "Switch School",
+        loading: "Loading..."
     },
     es: {
         nav_schedule: "Horario",
@@ -244,7 +245,8 @@ const DANCE_LOCALES = {
         add_school_btn: "+ Nueva Escuela",
         enter_school_name: "Ingresa el nombre de la nueva escuela o profesor:",
         school_created: "¡Escuela creada con éxito!",
-        switch_school: "Cambiar Escuela"
+        switch_school: "Cambiar Escuela",
+        loading: "Cargando..."
     }
 };
 
@@ -729,11 +731,12 @@ function renderView() {
                 ${state.loading && state.paymentRequests.length === 0 ? `
                     <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
                         <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
-                        <p style="font-size: 15px; font-weight: 500;">Cargando pagos...</p>
+                        <p style="font-size: 15px; font-weight: 500;">${t.loading || 'Loading...'}</p>
                     </div>
                 ` : (state.paymentRequests.length > 0 ? state.paymentRequests.map(req => {
             const studentName = req.students ? req.students.name : t.unknown_student;
             const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
+            const statusLabel = t[req.status] || req.status;
             return `
                         <div class="ios-list-item" style="padding: 16px; align-items: center;">
                             <div style="flex: 1;">
@@ -742,9 +745,9 @@ function renderView() {
                             </div>
                             <div style="text-align: right; margin-right: 12px;">
                                 <div style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">$${req.price}</div>
-                                <div style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; letter-spacing: 0.02em;">${req.status}</div>
+                                <div style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; letter-spacing: 0.02em;">${statusLabel}</div>
                             </div>
-                            <button onclick="window.removePaymentRequest('${req.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6;" title="Eliminar pago">
+                            <button onclick="window.removePaymentRequest('${req.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6;" title="${t.delete_payment_confirm || 'Delete'}">
                                 <i data-lucide="trash-2" size="18"></i>
                             </button>
                         </div>
