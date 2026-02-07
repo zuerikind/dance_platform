@@ -421,7 +421,7 @@ function renderView() {
                         ${state.schools.length > 0 ? state.schools.map(s => `
                             <div class="dropdown-item ${state.currentSchool?.id === s.id ? 'selected' : ''}" onclick="selectSchool('${s.id}')">
                                 <span>${s.name}</span>
-                                <i data-lucide="check" size="16"></i>
+                                ${state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : ''}
                             </div>
                         `).join('') : '<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">Iniciando conexión...</div>'}
                     </div>
@@ -1745,34 +1745,42 @@ document.querySelector('.logo').addEventListener('mouseup', () => {
     // Check if session expired while away
     window.checkInactivity();
 
-    // SILENT SEED (Ensures "Profe Daniela" exists without user SQL action)
+    // SILENT SEED (Ensures "Profe Daniela" exists)
     (async function silentSeed() {
         if (!supabaseClient) return;
         try {
+            // 1. Check for existing school using exact match to avoid duplicates
             const { data: schools } = await supabaseClient.from('schools').select('*').eq('name', 'Profe Daniela');
             let schoolId;
+
             if (!schools || schools.length === 0) {
+                // If not found, insert
                 const { data: newSchool } = await supabaseClient.from('schools').insert([{ name: 'Profe Daniela' }]).select();
-                if (newSchool) schoolId = newSchool[0].id;
+                if (newSchool && newSchool.length > 0) schoolId = newSchool[0].id;
             } else {
                 schoolId = schools[0].id;
+                // [HOUSEKEEPING] If duplicates exist in DB, we'll just use the first one.
             }
+
             if (schoolId) {
-                const { data: admins } = await supabaseClient.from('students').select('*').eq('username', 'Daniela').eq('school_id', schoolId);
-                if (!admins || admins.length === 0) {
-                    await supabaseClient.from('students').insert([{
-                        name: 'Profe Daniela',
+                // 2. Check for existing admin in ADMINS table (Correct mapping)
+                const { data: adminExists } = await supabaseClient.from('admins').select('*').eq('username', 'Daniela').eq('school_id', schoolId);
+
+                if (!adminExists || adminExists.length === 0) {
+                    await supabaseClient.from('admins').insert([{
                         username: 'Daniela',
-                        password: 'dany',
-                        role: 'admin',
-                        school_id: schoolId,
-                        paid: true
+                        password: 'dany', // Note: In production, hash passwords!
+                        school_id: schoolId
                     }]);
                 }
             }
-            // Refresh schools after seeding
-            if (state.currentView === 'school-selection') fetchAllData();
-        } catch (e) { console.warn("Silent seed failed:", e); }
+            // Refresh logic to show changes immediately
+            if (state.currentView === 'school-selection' && !state.schools.find(s => s.name === 'Profe Daniela')) {
+                fetchAllData();
+            }
+        } catch (e) {
+            console.warn("Silent seed skipped/failed:", e);
+        }
     })();
 
     updateI18n();
