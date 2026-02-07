@@ -856,7 +856,7 @@ function renderView() {
     `;
     }
 
-    html += `</div > `;
+    html += `</div>`;
     root.innerHTML = html;
     if (window.lucide) lucide.createIcons();
 
@@ -1185,7 +1185,7 @@ window.openPaymentModal = (subId) => {
     const content = document.getElementById('payment-modal-content');
 
     content.innerHTML = `
-        < h2 style = "margin-bottom: 1.5rem;" > ${t('payment_instructions')}</h2 >
+        <h2 style="margin-bottom: 1.5rem;">${t('payment_instructions')}</h2>
         <div class="card" style="margin-bottom: 1.5rem; text-align: left;">
             <p><strong>${sub.name}</strong> - MXD ${sub.price}</p>
             <hr style="margin: 1rem 0; opacity: 0.1;">
@@ -1233,7 +1233,7 @@ window.submitPaymentRequest = async (subId, method) => {
     // Show success message
     const content = document.getElementById('payment-modal-content');
     content.innerHTML = `
-        < i data - lucide="check-circle" size = "48" style = "color: var(--secondary); margin-bottom: 1rem;" ></i >
+        <i data-lucide="check-circle" size="48" style="color: var(--secondary); margin-bottom: 1rem;"></i>
         <h2>${t('request_sent_title')}</h2>
         <p class="text-muted" style="margin: 1rem 0;">${t('request_sent_msg')}</p>
         <button class="btn-primary w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t('close')}</button>
@@ -1280,7 +1280,7 @@ window.saveBankSettings = async (btn) => {
 
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `< i data - lucide="loader-2" class="spin" size = "16" ></i > Saving to Vault...`;
+        btn.innerHTML = `<i data-lucide="loader-2" class="spin" size="16"></i> Saving to Vault...`;
         if (window.lucide) lucide.createIcons();
     }
 
@@ -1293,7 +1293,7 @@ window.saveBankSettings = async (btn) => {
 
         const status = document.getElementById('save-status');
         if (status) {
-            status.innerHTML = `< i data - lucide="check" size = "14" ></i > Database Updated!`;
+            status.innerHTML = `<i data-lucide="check" size="14"></i> Database Updated!`;
             status.classList.remove('hidden');
             setTimeout(() => status.classList.add('hidden'), 4000);
         }
@@ -1306,7 +1306,7 @@ window.saveBankSettings = async (btn) => {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = `< i data - lucide="save" size = "16" ></i > Save Bank Details`;
+            btn.innerHTML = `<i data-lucide="save" size="16"></i> Save Bank Details`;
             if (window.lucide) lucide.createIcons();
         }
     }
@@ -1450,7 +1450,7 @@ window.renderAdminStudentCard = (s) => {
     const statusBg = s.paid ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 59, 48, 0.1)';
 
     return `
-        < div class="ios-list-item" onclick = "updateStudentPrompt('${s.id}')" style = "cursor: pointer; padding: 12px 16px;" >
+        <div class="ios-list-item" onclick="updateStudentPrompt('${s.id}')" style="cursor: pointer; padding: 12px 16px;">
             <div style="width: 44px; height: 44px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 14px; font-weight: 700; color: var(--text-secondary); font-size: 16px;">
                 ${s.name.charAt(0).toUpperCase()}
             </div>
@@ -1593,11 +1593,11 @@ window.handleScan = async (scannedId) => {
 
     if (!student) {
         resultEl.innerHTML = `
-        < div class="card" style = "border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;" >
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
                 <p style="margin-top:0.3rem">${t('not_found_msg')}: [${id.substring(0, 8)}...]</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
-            </div >
+            </div>
         `;
         return;
     }
@@ -1606,7 +1606,7 @@ window.handleScan = async (scannedId) => {
 
     if (hasValidPass) {
         resultEl.innerHTML = `
-        < div class="card" style = "border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);" >
+            <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
                         <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
@@ -1628,16 +1628,16 @@ window.handleScan = async (scannedId) => {
                 <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.5rem; opacity:0.5;">
                     ${t('cancel')}
                 </button>
-            </div >
+            </div>
         `;
     } else {
         resultEl.innerHTML = `
-        < div class="card" style = "border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;" >
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
                 <p style="margin-top:0.3rem">${student.name}</p>
                 <p style="font-size:0.75rem; color:var(--danger)">${t('inactive')}</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
-            </div >
+            </div>
         `;
     }
     if (window.lucide) lucide.createIcons();
@@ -1680,11 +1680,11 @@ window.confirmAttendance = async (studentId, count) => {
     }
 
     resultEl.innerHTML = `
-        < div class="card" style = "border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;" >
+        <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
              <div style="font-size:0.8rem">${student.name} (-${count})</div>
-        </div >
+        </div>
         `;
     if (window.lucide) lucide.createIcons();
 
