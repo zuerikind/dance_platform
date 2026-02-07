@@ -396,33 +396,31 @@ function renderView() {
 
     if (view === 'school-selection') {
         html += `
-            <div class="auth-page-container" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
-                <div class="card" style="max-width: 440px; width: 90%; text-align: center; border-radius: 40px; padding: 3rem 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
-                    <div style="margin-bottom: 2rem;">
-                        <img src="logo.png" alt="Bailadmin" style="width: 80px; height: 80px; margin-bottom: 1.5rem; filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.3));">
-                        <h1 style="margin: 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em;">Bailadmin</h1>
-                        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.9rem; font-weight: 500;">${t.select_school_subtitle}</p>
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-                        <div style="position: relative;">
-                            <select id="school-selector" class="glass-input" style="width: 100%; padding: 1.2rem; appearance: none; font-weight: 600; font-size: 1rem; text-align: center; cursor: pointer; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.05);">
-                                <option value="" disabled selected>-- Elige tu academia --</option>
-                                ${state.schools.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                            </select>
-                            <div style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: 0.5;">
-                                <i data-lucide="chevron-down" size="20"></i>
+            <div class="immersive-bg-glow"></div>
+            <div class="auth-page-container" style="justify-content: center; align-items: center;">
+                <div class="landing-branding slide-in">
+                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="margin-bottom: 2rem;">
+                    <h1>Bailadmin</h1>
+                    <p class="text-muted" style="font-size: 1.1rem; max-width: 400px; margin: 0 auto;">${t.select_school_subtitle}</p>
+                </div>
+                
+                <div class="school-grid">
+                    ${state.schools.map((s, idx) => `
+                        <div class="school-card slide-in" style="animation-delay: ${idx * 0.15}s" onclick="selectSchool('${s.id}')">
+                            <div>
+                                <span class="text-muted" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.3rem;">Bienvenido a</span>
+                                <h3>${s.name}</h3>
+                            </div>
+                            <div class="school-card-icon">
+                                <i data-lucide="chevron-right" size="24"></i>
                             </div>
                         </div>
-
-                        <button id="select-school-btn" class="btn-auth-primary" onclick="window.confirmSchoolSelection()" style="width: 100%; padding: 1.2rem; border-radius: 18px; background: var(--secondary); color: #000; font-weight: 800; font-size: 1.1rem;">
-                            ${t.sign_in}
-                        </button>
-                    </div>
+                    `).join('')}
                 </div>
             </div>
         `;
-    } else if (view === 'super-admin-dashboard') {
+    }
+    else if (view === 'super-admin-dashboard') {
         html += `
             <div style="padding: 2rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 3rem;">
