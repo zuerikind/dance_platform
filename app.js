@@ -679,17 +679,6 @@ function renderView() {
             </div>
         `;
 
-    } else if (view === 'admin-revenue') {
-        const approvedPayments = state.paymentRequests.filter(r => r.status === 'approved');
-        const thisMonth = new Date().getMonth();
-        const thisMonthEarnings = approvedPayments
-            .filter(r => {
-                const d = new Date(r.created_at);
-                return d.getMonth() === thisMonth && d.getFullYear() === new Date().getFullYear();
-            })
-            .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
-
-        const totalHistorical = approvedPayments.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
 
     } else if (view === 'admin-revenue') {
         const approvedPayments = state.paymentRequests.filter(r => r.status === 'approved');
@@ -855,9 +844,10 @@ function renderView() {
     if (window.lucide) lucide.createIcons();
 
     // Global UI Updates
+    const showNav = state.currentUser !== null && !['school-selection', 'auth'].includes(view);
     document.getElementById('logout-btn').classList.toggle('hidden', state.currentUser === null);
-    document.getElementById('student-nav').classList.toggle('hidden', state.currentUser === null || state.isAdmin);
-    document.getElementById('admin-nav').classList.toggle('hidden', state.currentUser === null || !state.isAdmin);
+    document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
+    document.getElementById('admin-nav').classList.toggle('hidden', !showNav || !state.isAdmin);
 
     // Sync active nav items
     document.querySelectorAll('.nav-item').forEach(btn => {
