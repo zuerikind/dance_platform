@@ -1461,12 +1461,15 @@ window.renderAdminStudentCard = (s) => {
                         ${statusLabel}
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                     <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
                         <i data-lucide="layers" size="12"></i> ${s.balance === null ? '∞' : s.balance}
                     </div>
                     <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
                         <i data-lucide="phone" size="12"></i> ${s.phone || '---'}
+                    </div>
+                    <div style="font-size: 13px; color: var(--system-blue); font-weight: 600; display: flex; align-items: center; gap: 4px; background: rgba(0, 122, 255, 0.05); padding: 1px 6px; border-radius: 4px;">
+                        <i data-lucide="key" size="12"></i> ${s.password}
                     </div>
                 </div>
             </div>
@@ -1497,7 +1500,7 @@ window.updateStudentPrompt = async (id) => {
     const newPhone = prompt(t.enter_student_phone || "Teléfono:", s.phone || "");
     if (newPhone === null) return;
 
-    const newPass = prompt(t.enter_student_pass || "Contraseña:", s.password);
+    const newPass = prompt((t.enter_student_pass || "Contraseña:") + ` (Actual: ${s.password})`, s.password);
     if (newPass === null) return;
 
     const updates = { name: newName, phone: newPhone, password: newPass };
