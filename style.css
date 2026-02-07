@@ -15,6 +15,9 @@
     --system-gray5: #E5E5EA;
     --system-gray6: #F2F2F7;
 
+    --bg-body-grouped: #F2F2F7;
+    /* iOS Grouped background color */
+
     --bg-body: #FFFFFF;
     --bg-card: #FFFFFF;
     --text-primary: #000000;
@@ -61,6 +64,8 @@ body {
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.022em;
+    padding-bottom: 90px;
+    /* Space for floating nav */
 }
 
 .ios-header {
@@ -391,7 +396,8 @@ h1 {
 
 .container {
     padding: 1.5rem 1.2rem;
-    max-width: 600px;
+    max-width: 800px;
+    /* Slightly wider for admin screens */
     margin: 0 auto;
 }
 
@@ -439,18 +445,36 @@ h1 {
 .nav-item {
     background: none;
     border: none;
-    color: var(--text-muted);
-    padding: 0.7rem 1.2rem;
-    border-radius: 30px;
+    color: var(--text-secondary);
+    padding: 0.6rem;
+    border-radius: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.3rem;
+    justify-content: center;
+    gap: 0.2rem;
     cursor: pointer;
-    transition: all 0.2s var(--transition);
-    font-weight: 600;
-    font-size: 0.7rem;
+    transition: all 0.3s var(--transition);
+    font-weight: 500;
+    font-size: 10px;
     flex: 1;
+    min-height: unset;
+}
+
+@media (max-width: 600px) {
+    .nav-item span {
+        display: none;
+    }
+
+    .nav-item i {
+        width: 24px;
+        height: 24px;
+    }
+
+    .bottom-nav {
+        padding: 0.4rem;
+        height: 64px;
+    }
 }
 
 .nav-item i {
@@ -459,8 +483,12 @@ h1 {
 }
 
 .nav-item.active {
-    background: var(--text);
-    color: var(--background);
+    color: var(--system-blue);
+    transform: translateY(-2px);
+}
+
+.dark-mode .nav-item.active {
+    color: var(--system-blue);
 }
 
 /* QR VIEW */
