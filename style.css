@@ -53,8 +53,6 @@ body {
     -webkit-tap-highlight-color: transparent;
     padding-top: var(--safe-top);
     padding-bottom: calc(100px + var(--safe-bottom));
-    padding-left: var(--safe-left);
-    padding-right: var(--safe-right);
     min-height: 100vh;
     transition: background 0.4s var(--transition);
     overflow-x: hidden;
