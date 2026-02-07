@@ -124,6 +124,7 @@ const DANCE_LOCALES = {
         enter_school_name: "Enter new school or teacher name:",
         school_created: "School created successfully!",
         switch_school: "Switch School",
+        welcome_classes: "Welcome to the classes of",
         loading: "Loading..."
     },
     es: {
@@ -246,6 +247,7 @@ const DANCE_LOCALES = {
         enter_school_name: "Ingresa el nombre de la nueva escuela o profesor:",
         school_created: "¡Escuela creada con éxito!",
         switch_school: "Cambiar Escuela",
+        welcome_classes: "Bienvenido a las clases de",
         loading: "Cargando..."
     }
 };
@@ -470,8 +472,12 @@ function renderView() {
                             <img src="logo.png" class="auth-logo">
                         </div>
                         
+                        <button onclick="window.backToSchoolSelection()" style="background: rgba(255,255,255,0.05); color: var(--text-muted); border: none; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.05);">
+                            <i data-lucide="arrow-left" size="14"></i> ${t.switch_school}
+                        </button>
+                        
                         <div class="text-center" style="margin-bottom: 2rem; width: 100%;">
-                            <h1 class="auth-title">${t.welcome_to} <span style="font-weight: 800;">${state.currentSchool?.name || 'Bailadmin'}</span></h1>
+                            <h1 class="auth-title">${t.welcome_classes || t.welcome_to} <span style="font-weight: 800; display: block; margin-top: 0.5rem;">${state.currentSchool?.name || 'Bailadmin'}</span></h1>
                             <p class="auth-subtitle">${window.t('auth_subtitle')}</p>
                         </div>
                     </div>
@@ -1121,6 +1127,13 @@ window.selectSchool = (id) => {
         saveState();
         fetchAllData(); // Fetch school specific data
     }
+};
+
+window.backToSchoolSelection = () => {
+    state.currentSchool = null;
+    state.currentView = 'school-selection';
+    saveState();
+    renderView();
 };
 
 window.createNewSchool = async () => {
