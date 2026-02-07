@@ -273,6 +273,7 @@ let state = {
     schools: [],
     currentSchool: null,
     admins: [],
+    showWeeklyPreview: false,
     loading: false
 };
 
@@ -792,30 +793,42 @@ function renderView() {
                 <div class="ios-large-title">${t.nav_settings}</div>
             </div>
 
-            <div style="padding: 0 1.2rem; margin-top: 1rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.classes_label}
-            </div>
-            <div class="ios-list">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; padding: 0 1.2rem; margin-top: 1rem;">
                 ${state.classes.map(c => `
-                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <input type="text" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 70%; color: var(--text-primary); outline: none;">
-                            <button onclick="removeClass(${c.id})" style="background: none; border: none; color: var(--system-red); padding: 5px;">
-                                <i data-lucide="trash-2" size="18"></i>
+                    <div style="background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 20px; padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem; transition: all 0.2s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nombre de Clase</label>
+                                <input type="text" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 16px; font-weight: 700; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
+                            </div>
+                            <button onclick="removeClass(${c.id})" style="background: rgba(255, 59, 48, 0.1); border: none; color: var(--system-red); padding: 8px; border-radius: 10px; cursor: pointer;">
+                                <i data-lucide="trash-2" size="16"></i>
                             </button>
                         </div>
-                        <div style="display: flex; gap: 12px;">
-                            <div style="flex: 1; position: relative;">
-                                <select onchange="updateClass(${c.id}, 'day', this.value)" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 8px 12px; font-size: 14px; width: 100%; color: var(--text-primary); -webkit-appearance: none;">
+                        
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
+                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px;">Día</label>
+                                <select onchange="updateClass(${c.id}, 'day', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; -webkit-appearance: none;">
                                     ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
                                 </select>
                             </div>
-                            <input type="time" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 8px 12px; font-size: 14px; color: var(--text-primary); outline: none;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
+                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px;">Hora</label>
+                                <input type="time" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer;">
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(var(--system-blue-rgb), 0.05); border-radius: 12px; padding: 8px 12px;">
+                             <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--system-blue); display: block; margin-bottom: 2px;">Nivel / Tag</label>
+                             <input type="text" value="${c.tag || 'Clase'}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
                         </div>
                     </div>
                 `).join('')}
-                <div class="ios-list-item" onclick="addClass()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
-                    <i data-lucide="plus-circle" size="18"></i> ${t.add_label} Clase
+                
+                <div onclick="addClass()" style="background: transparent; border: 2px dashed var(--border); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; color: var(--system-blue); transition: all 0.2s ease;">
+                    <i data-lucide="plus-circle" size="24"></i>
+                    <span style="font-weight: 700; font-size: 14px;">${t.add_label} Nueva Clase</span>
                 </div>
             </div>
 
@@ -885,6 +898,50 @@ function renderView() {
                     <i data-lucide="user-plus" size="18"></i> ${t.add_admin || 'Agregar Admin'}
                 </div>
             </div>
+
+            <!-- WEEKLY PREVIEW FOR ADMINS -->
+            <div style="padding: 0 1.2rem; margin-top: 3rem; margin-bottom: 2rem;">
+                <button onclick="window.toggleWeeklyPreview()" style="width: 100%; padding: 16px; border-radius: 20px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s ease;">
+                    <i data-lucide="${state.showWeeklyPreview ? 'eye-off' : 'eye'}" size="20"></i>
+                    ${state.showWeeklyPreview ? 'Ocultar Plan Semanal' : 'Ver Plan Semanal'}
+                </button>
+            </div>
+
+            ${state.showWeeklyPreview ? `
+            <div style="padding: 0 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;" class="slide-in">
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                    Vista Previa Alumnos (Semanal)
+                </div>
+                <div style="font-size: 10px; font-weight: 600; background: var(--system-gray6); padding: 4px 10px; border-radius: 20px; color: var(--text-secondary);">
+                    Solo lectura
+                </div>
+            </div>
+            <div style="padding: 0 0.5rem; margin-bottom: 3rem;" class="slide-in">
+                <!-- REUSING WEEKLY GRID LOGIC -->
+                <div class="weekly-grid">
+                    ${daysOrder.map(dayKey => {
+            const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
+            const aliases = dayAliases[dayKey];
+            const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
+
+            return `
+                        <div class="day-tile" style="background: var(--bg-card); border-radius: 16px;">
+                            <div class="day-tile-header" style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;">${t[dayKey.toLowerCase()]}</div>
+                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.8rem;">
+                                ${dayClasses.length > 0 ? dayClasses.map(c => `
+                                    <div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
+                                        <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
+                                        <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
+                                        <div class="tile-class-time" style="font-size: 9px;">${c.time}</div>
+                                    </div>
+                                `).join('') : `<div class="text-muted" style="font-size:9px; font-style:italic; padding: 1rem 0;">${t.no_classes_msg}</div>`}
+                            </div>
+                        </div>
+                        `;
+        }).join('')}
+                </div>
+            </div>
+            ` : ''}
     `;
     }
 
@@ -1161,6 +1218,15 @@ window.backToSchoolSelection = () => {
     state.currentView = 'school-selection';
     saveState();
     renderView();
+};
+
+window.toggleWeeklyPreview = () => {
+    state.showWeeklyPreview = !state.showWeeklyPreview;
+    renderView();
+    // Re-initialize Lucide icons since we just re-rendered or added new elements
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
 };
 
 window.createNewSchool = async () => {
