@@ -735,15 +735,18 @@ function renderView() {
             const studentName = req.students ? req.students.name : t.unknown_student;
             const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
             return `
-                        <div class="ios-list-item" style="padding: 16px;">
+                        <div class="ios-list-item" style="padding: 16px; align-items: center;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${studentName}</div>
                                 <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} • ${new Date(req.created_at).toLocaleDateString()}</div>
                             </div>
-                            <div style="text-align: right;">
+                            <div style="text-align: right; margin-right: 12px;">
                                 <div style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">$${req.price}</div>
                                 <div style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; letter-spacing: 0.02em;">${req.status}</div>
                             </div>
+                            <button onclick="window.removePaymentRequest('${req.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6;" title="Eliminar pago">
+                                <i data-lucide="trash-2" size="18"></i>
+                            </button>
                         </div>
                     `;
         }).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">No data yet</div>`)}
@@ -851,6 +854,15 @@ function renderView() {
                 </div>
                 <div class="ios-list-item" onclick="saveBankSettings(this)" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="save" size="18"></i> ${t.save_bank_btn}
+                </div>
+            </div>
+
+            <div style="padding: 0 1.2rem; margin-top: 2rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                Administradores
+            </div>
+            <div class="ios-list">
+                <div class="ios-list-item" onclick="createNewAdmin()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                    <i data-lucide="user-plus" size="18"></i> ${t.add_admin || 'Agregar Admin'}
                 </div>
             </div>
     `;
@@ -1537,6 +1549,12 @@ window.updateStudentPrompt = async (id) => {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2.5rem;">
                 <button class="btn-secondary" onclick="document.getElementById('student-modal').classList.add('hidden')" style="height: 50px; border-radius: 14px; font-weight: 600;">Cancelar</button>
                 <button class="btn-primary" onclick="window.saveStudentDetails('${s.id}')" style="height: 50px; border-radius: 14px; font-weight: 600;">Guardar</button>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+                <button onclick="window.deleteStudent('${s.id}')" style="background: rgba(255, 59, 48, 0.05); color: var(--system-red); border: none; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i data-lucide="user-minus" size="14"></i> Eliminar Alumno permenentemente
+                </button>
             </div>
         </div>
     `;
