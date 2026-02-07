@@ -117,7 +117,13 @@ const DANCE_LOCALES = {
         enter_student_pass: "Enter student password:",
         student_created: "Student created!",
         unknown_student: "Unknown Student",
-        delete_payment_confirm: "Delete this payment record forever?"
+        delete_payment_confirm: "Delete this payment record forever?",
+        select_school_title: "Welcome to Bailadmin",
+        select_school_subtitle: "Please select your school or teacher to continue",
+        add_school_btn: "+ New School",
+        enter_school_name: "Enter new school or teacher name:",
+        school_created: "School created successfully!",
+        switch_school: "Switch School"
     },
     es: {
         nav_schedule: "Horario",
@@ -232,7 +238,13 @@ const DANCE_LOCALES = {
         enter_student_pass: "Ingresa la contraseña del alumno:",
         student_created: "¡Alumno creado!",
         unknown_student: "Alumno Desconocido",
-        delete_payment_confirm: "¿Eliminar este registro de pago permanentemente?"
+        delete_payment_confirm: "¿Eliminar este registro de pago permanentemente?",
+        select_school_title: "Bienvenido a Bailadmin",
+        select_school_subtitle: "Por favor selecciona tu escuela o profesor para continuar",
+        add_school_btn: "+ Nueva Escuela",
+        enter_school_name: "Ingresa el nombre de la nueva escuela o profesor:",
+        school_created: "¡Escuela creada con éxito!",
+        switch_school: "Cambiar Escuela"
     }
 };
 
@@ -253,7 +265,9 @@ let state = {
     isAdmin: false,
     paymentRequests: [],
     adminSettings: {},
-    lastActivity: Date.now()
+    lastActivity: Date.now(),
+    schools: [],
+    currentSchool: null
 };
 
 // --- DATA FETCHING ---
@@ -261,12 +275,25 @@ async function fetchAllData() {
     if (!window.supabase) return;
 
     try {
+        // First, always fetch schools
+        const { data: schoolsData } = await supabaseClient.from('schools').select('*').order('name');
+        if (schoolsData) state.schools = schoolsData;
+
+        // If no school is selected, we can't fetch tenant-specific data
+        if (!state.currentSchool) {
+            state.currentView = 'school-selection';
+            renderView();
+            return;
+        }
+
+        const sid = state.currentSchool.id;
+
         const [classesRes, subsRes, studentsRes, requestsRes, settingsRes] = await Promise.all([
-            supabaseClient.from('classes').select('*').order('id'),
-            supabaseClient.from('subscriptions').select('*').order('name'),
-            supabaseClient.from('students').select('*').order('name'),
-            supabaseClient.from('payment_requests').select('*, students(name)').order('created_at', { ascending: false }),
-            supabaseClient.from('admin_settings').select('*')
+            supabaseClient.from('classes').select('*').eq('school_id', sid).order('id'),
+            supabaseClient.from('subscriptions').select('*').eq('school_id', sid).order('name'),
+            supabaseClient.from('students').select('*').eq('school_id', sid).order('name'),
+            supabaseClient.from('payment_requests').select('*, students(name)').eq('school_id', sid).order('created_at', { ascending: false }),
+            supabaseClient.from('admin_settings').select('*').eq('school_id', sid)
         ]);
 
         if (classesRes.data) state.classes = classesRes.data;
@@ -306,7 +333,8 @@ function saveState() {
         isAdmin: state.isAdmin,
         currentView: state.currentView,
         scheduleView: state.scheduleView,
-        lastActivity: state.lastActivity
+        lastActivity: state.lastActivity,
+        currentSchool: state.currentSchool
     }));
 }
 
@@ -366,7 +394,44 @@ function renderView() {
 
     let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} slide-in">`;
 
-    if (view === 'auth') {
+    if (view === 'school-selection') {
+        html += `
+            <div class="auth-page-container" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+                <div class="card" style="max-width: 500px; width: 90%; text-align: center; border-radius: 30px; padding: 2.5rem;">
+                    <h1 style="margin-bottom: 0.5rem; font-size: 2rem; font-weight: 800;">${t.select_school_title}</h1>
+                    <p class="text-muted" style="margin-bottom: 2.5rem; font-size: 0.95rem;">${t.select_school_subtitle}</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        ${state.schools.map(s => `
+                            <button class="btn-auth-primary" onclick="selectSchool('${s.id}')" style="background: rgba(45, 212, 191, 0.1); border: 1px solid var(--secondary); color: var(--text); padding: 1.2rem; font-weight: 700; border-radius: 18px;">
+                                ${s.name}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (view === 'super-admin-dashboard') {
+        html += `
+            <div style="padding: 2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 3rem;">
+                    <h1 style="margin:0;">Platform Super Admin</h1>
+                    <button class="btn-primary" onclick="createNewSchool()">${t.add_school_btn}</button>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                    ${state.schools.map(s => `
+                        <div class="card" style="padding: 1.5rem; border-radius: 20px;">
+                            <h3 style="margin-bottom: 0.5rem;">${s.name}</h3>
+                            <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 1rem;">ID: ${s.id}</div>
+                            <button class="btn-secondary w-full" onclick="selectSchool('${s.id}')">Manage School</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="btn-icon mt-4" onclick="setState({currentView: 'school-selection'})" style="margin-top: 2rem;">Back to Selection</button>
+            </div>
+        `;
+    } else if (view === 'auth') {
         const isSignup = state.authMode === 'signup';
         html += `
             <div class="auth-page-container">
@@ -857,7 +922,8 @@ window.signUpStudent = async () => {
         password: pass,
         paid: false,
         package: null,
-        balance: 0
+        balance: 0,
+        school_id: state.currentSchool.id
     };
 
     if (supabaseClient) {
@@ -953,6 +1019,7 @@ window.loginAdminWithCreds = async () => {
             .select('*')
             .eq('username', user)
             .eq('password', pass)
+            .eq('school_id', state.currentSchool.id)
             .single();
 
         if (data) {
@@ -987,7 +1054,7 @@ window.createNewAdmin = async () => {
 
     const newId = "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase();
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('admins').insert([{ id: newId, username: name, password: pass }]);
+        const { error } = await supabaseClient.from('admins').insert([{ id: newId, username: name, password: pass, school_id: state.currentSchool.id }]);
         if (error) { alert("Error: " + error.message); return; }
         alert(t('admin_created'));
     }
@@ -1009,7 +1076,8 @@ window.createNewStudent = async () => {
         password: pass,
         paid: false,
         package: null,
-        balance: 0
+        balance: 0,
+        school_id: state.currentSchool.id
     };
 
     if (supabaseClient) {
@@ -1024,10 +1092,36 @@ window.createNewStudent = async () => {
 window.logout = () => {
     state.currentUser = null;
     state.isAdmin = false;
-    state.currentView = 'auth';
+    state.currentView = 'school-selection';
+    state.currentSchool = null;
     state.lastActivity = Date.now();
     saveState();
     renderView();
+};
+
+window.selectSchool = (id) => {
+    const school = state.schools.find(s => s.id === id);
+    if (school) {
+        state.currentSchool = school;
+        state.currentView = 'auth';
+        saveState();
+        fetchAllData(); // Fetch school specific data
+    }
+};
+
+window.createNewSchool = async () => {
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    const name = prompt(t('enter_school_name'));
+    if (!name) return;
+
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('schools').insert([{ name: name }]);
+        if (error) { alert("Error: " + error.message); return; }
+        alert(t('school_created'));
+        fetchAllData();
+    }
 };
 
 window.togglePayment = async (id) => {
@@ -1125,6 +1219,7 @@ window.submitPaymentRequest = async (subId, method) => {
         sub_name: sub.name,
         price: sub.price,
         payment_method: method,
+        school_id: state.currentSchool.id,
         status: 'pending'
     };
 
@@ -1222,7 +1317,7 @@ window.updateAdminSetting = async (key, value) => {
     if (supabaseClient) {
         const { error } = await supabaseClient
             .from('admin_settings')
-            .upsert({ key: String(key), value: String(value) }, { onConflict: 'key' });
+            .upsert({ key: String(key), value: String(value), school_id: state.currentSchool.id }, { onConflict: 'school_id, key' });
 
         if (error) {
             console.error(`Error updating setting [${key}]:`, error);
@@ -1261,7 +1356,7 @@ window.updateClass = async (id, field, value) => {
 };
 
 window.addClass = async () => {
-    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner" };
+    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner", school_id: state.currentSchool.id };
     if (supabaseClient) {
         const { data, error } = await supabaseClient.from('classes').insert([newClass]).select();
         if (error) { alert("Error adding class: " + error.message); return; }
@@ -1298,7 +1393,7 @@ window.updateSub = async (id, field, value) => {
 };
 
 window.addSubscription = async () => {
-    const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10 };
+    const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10, school_id: state.currentSchool.id };
     if (supabaseClient) {
         const { error } = await supabaseClient.from('subscriptions').insert([newSub]);
         if (error) { alert("Error adding plan: " + error.message); return; }
@@ -1536,14 +1631,22 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 
 // Admin toggle (Logo hold)
 let logoPressTimer;
+let superAdminTimer;
 document.querySelector('.logo').addEventListener('mousedown', () => {
     logoPressTimer = setTimeout(() => {
         state.isAdmin = !state.isAdmin;
         state.currentView = state.isAdmin ? 'admin-students' : 'schedule';
         renderView();
     }, 2000);
+    superAdminTimer = setTimeout(() => {
+        state.currentView = 'super-admin-dashboard';
+        renderView();
+    }, 5000);
 });
-document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(logoPressTimer));
+document.querySelector('.logo').addEventListener('mouseup', () => {
+    clearTimeout(logoPressTimer);
+    clearTimeout(superAdminTimer);
+});
 
 // Global User Activity Listeners (Auto-Logout)
 ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
