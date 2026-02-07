@@ -397,25 +397,31 @@ function renderView() {
     if (view === 'school-selection') {
         html += `
             <div class="immersive-bg-glow"></div>
-            <div class="auth-page-container" style="justify-content: center; align-items: center;">
-                <div class="landing-branding slide-in">
-                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="margin-bottom: 2rem;">
-                    <h1>Bailadmin</h1>
-                    <p class="text-muted" style="font-size: 1.1rem; max-width: 400px; margin: 0 auto;">${t.select_school_subtitle}</p>
+            <div class="auth-page-container" style="justify-content: flex-start; padding-top: 4rem;">
+                <div class="landing-branding slide-in" style="margin-bottom: 2rem;">
+                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 60px; height: 60px; margin-bottom: 1rem;">
+                    <h1 style="font-size: 2.5rem;">Bailadmin</h1>
+                    <p class="text-muted" style="font-size: 1rem;">${t.select_school_subtitle}</p>
                 </div>
                 
-                <div class="school-grid">
-                    ${state.schools.map((s, idx) => `
-                        <div class="school-card slide-in" style="animation-delay: ${idx * 0.15}s" onclick="selectSchool('${s.id}')">
-                            <div>
-                                <span class="text-muted" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.3rem;">Bienvenido a</span>
-                                <h3>${s.name}</h3>
+                <div style="width: 100%; max-width: 400px; padding: 0 1rem;">
+                    <div style="position: relative; margin-bottom: 1rem;">
+                        <input type="text" class="ios-search-bar" placeholder="Buscar academia..." oninput="filterSchools(this.value)" style="margin: 0; width: 100%; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.1);">
+                    </div>
+
+                    <div class="ios-list" id="school-list-container" style="margin: 0; max-height: 60vh; overflow-y: auto; background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);">
+                        ${state.schools.map(s => `
+                            <div class="ios-list-item" onclick="selectSchool('${s.id}')" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; padding: 1.2rem 1rem;">
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: var(--text-primary);">${s.name}</h3>
+                                </div>
+                                <i data-lucide="chevron-right" size="20" style="color: var(--text-muted);"></i>
                             </div>
-                            <div class="school-card-icon">
-                                <i data-lucide="chevron-right" size="24"></i>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 1rem; text-align: center;">
+                         <button class="btn-text" onclick="alert('Contact support to register a new school.')" style="color: var(--text-muted); font-size: 0.8rem;">¿No encuentras tu academia?</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -1365,6 +1371,28 @@ window.updateSub = async (id, field, value) => {
         sub[field] = val;
         saveState();
     }
+};
+
+window.filterSchools = (query) => {
+    const q = query.toLowerCase();
+    const list = document.getElementById('school-list-container');
+    if (!list) return;
+
+    const filtered = state.schools.filter(s => s.name.toLowerCase().includes(q));
+    list.innerHTML = filtered.map(s => `
+        <div class="ios-list-item" onclick="selectSchool('${s.id}')" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; padding: 1.2rem 1rem;">
+            <div style="flex: 1;">
+                <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: var(--text-primary);">${s.name}</h3>
+            </div>
+            <i data-lucide="chevron-right" size="20" style="color: var(--text-muted);"></i>
+        </div>
+    `).join('');
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">No se encontraron academias.</div>`;
+    }
+
+    if (window.lucide) lucide.createIcons();
 };
 
 window.addSubscription = async () => {
