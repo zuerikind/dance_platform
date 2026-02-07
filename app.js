@@ -1465,12 +1465,6 @@ window.renderAdminStudentCard = (s) => {
                     <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
                         <i data-lucide="layers" size="12"></i> ${s.balance === null ? '∞' : s.balance}
                     </div>
-                    <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
-                        <i data-lucide="phone" size="12"></i> ${s.phone || '---'}
-                    </div>
-                    <div style="font-size: 13px; color: var(--system-blue); font-weight: 600; display: flex; align-items: center; gap: 4px; background: rgba(0, 122, 255, 0.05); padding: 1px 6px; border-radius: 4px;">
-                        <i data-lucide="key" size="12"></i> ${s.password}
-                    </div>
                 </div>
             </div>
             <i data-lucide="chevron-right" size="18" style="color: var(--system-gray4); margin-left: 8px;"></i>
@@ -1494,6 +1488,18 @@ window.updateStudentPrompt = async (id) => {
     if (!s) return;
 
     const t = window.t;
+
+    // Security Check: Require admin password to edit/view sensitive data
+    const adminPass = prompt("Admin Password Required:");
+    if (!adminPass) return;
+
+    // Check against hardcoded fallback or (simulated) validation
+    // In a real app, we'd verify this against Supabase or a session token
+    if (adminPass !== "royal" && adminPass !== "dany") {
+        alert("Incorrect Admin Password.");
+        return;
+    }
+
     const newName = prompt(t.enter_student_name || "Nombre:", s.name);
     if (newName === null) return;
 
