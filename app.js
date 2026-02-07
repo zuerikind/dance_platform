@@ -28,8 +28,8 @@ const DANCE_LOCALES = {
         scan_fail: "Membership Inactive",
         switch_to_admin: "Go to Admin",
         switch_to_student: "Go to Student",
-        auth_title: "Bailadmin",
         auth_subtitle: "Precision in every step.",
+        welcome_to: "Welcome to",
         student_signup: "New Student",
         admin_login: "Admin login",
         enter_name: "How should we call you?",
@@ -147,8 +147,8 @@ const DANCE_LOCALES = {
         scan_fail: "Membresía Inactiva",
         switch_to_admin: "Ir a Admin",
         switch_to_student: "Ir a Alumno",
-        auth_title: "Bailadmin",
         auth_subtitle: "Eleva tu baile.",
+        welcome_to: "Bienvenido a",
         student_signup: "Nuevo Alumno",
         admin_login: "Acceso Admin",
         enter_name: "¿Cómo te llamas?",
@@ -462,7 +462,7 @@ function renderView() {
                         </div>
                         
                         <div class="text-center" style="margin-bottom: 2rem; width: 100%;">
-                            <h1 class="auth-title">${window.t('auth_title')}</h1>
+                            <h1 class="auth-title">${t.welcome_to} <span style="font-weight: 800;">${state.currentSchool?.name || 'Bailadmin'}</span></h1>
                             <p class="auth-subtitle">${window.t('auth_subtitle')}</p>
                         </div>
                     </div>

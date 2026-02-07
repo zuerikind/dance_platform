@@ -15,7 +15,7 @@
     --system-gray5: #E5E5EA;
     --system-gray6: #F2F2F7;
 
-    --bg-body: var(--system-gray6);
+    --bg-body: #FFFFFF;
     --bg-card: #FFFFFF;
     --text-primary: #000000;
     --text-secondary: #8E8E93;
@@ -26,7 +26,7 @@
     --radius-l: 18px;
     --accent: #000000;
     /* Unified with primary for consistency */
-    --background: #ffffff;
+    --background: #FFFFFF;
     --surface: rgba(255, 255, 255, 0.8);
     --surface-solid: #f5f5f7;
     --text: #1d1d1f;
@@ -181,7 +181,7 @@ body::before {
     padding: 0.5rem 1.5rem;
     height: calc(60px + var(--safe-top));
     padding-top: var(--safe-top);
-    background: rgba(245, 245, 247, 0.7);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(25px) saturate(200%);
     -webkit-backdrop-filter: blur(25px) saturate(200%);
     border-bottom: 1px solid var(--border);
@@ -485,7 +485,7 @@ h1 {
 
 /* AUTH SCREEN - High Contrast & Depth */
 .auth-page-container {
-    background: var(--background);
+    background: transparent;
     flex: 1;
     /* Allow content to grow/shrink */
     padding: 4rem 1.5rem;
