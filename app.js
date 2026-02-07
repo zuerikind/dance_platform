@@ -277,7 +277,13 @@ async function fetchAllData() {
     try {
         // First, always fetch schools
         const { data: schoolsData } = await supabaseClient.from('schools').select('*').order('name');
-        if (schoolsData) state.schools = schoolsData;
+        if (schoolsData) {
+            state.schools = schoolsData;
+            // If we are on the selection screen, re-render to show schools immediately
+            if (state.currentView === 'school-selection') {
+                renderView();
+            }
+        }
 
         // If no school is selected, we can't fetch tenant-specific data
         if (!state.currentSchool) {
@@ -397,28 +403,28 @@ function renderView() {
     if (view === 'school-selection') {
         html += `
             <div class="immersive-bg-glow"></div>
-            <div class="auth-page-container" style="justify-content: center; align-items: center;">
-                <div class="landing-branding slide-in" style="margin-bottom: 3rem;">
-                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 80px; height: 80px; margin-bottom: 1rem;">
-                    <h1 style="font-size: 2.5rem; letter-spacing: -1px;">Bailadmin</h1>
-                    <p class="text-muted" style="font-size: 1.1rem;">Selecciona tu academia</p>
+            <div class="auth-page-container" style="justify-content: center; align-items: center; min-height: 70vh;">
+                <div class="landing-branding slide-in" style="margin-bottom: 2.5rem; text-align: center;">
+                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 70px; height: 70px; margin-bottom: 0.5rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));">
+                    <h1 style="font-size: 2.2rem; letter-spacing: -1.5px; font-weight: 800; margin-bottom: 0.2rem;">Bailadmin</h1>
+                    <p class="text-muted" style="font-size: 1rem; opacity: 0.6;">Selecciona tu academia</p>
                 </div>
                 
-                <div style="width: 100%; max-width: 340px; position: relative; z-index: 50;">
+                <div style="width: 100%; max-width: 320px; position: relative; z-index: 50;">
                     <!-- Custom Dropdown Trigger -->
-                    <div id="school-dropdown-trigger" class="custom-dropdown-trigger" onclick="toggleSchoolDropdown()">
-                        <span>Seleccionar Academia...</span>
+                    <div id="school-dropdown-trigger" onclick="toggleSchoolDropdown()">
+                        <span>${state.schools.length > 0 ? 'Elige tu escuela...' : 'Cargando academias...'}</span>
                         <i data-lucide="chevron-down"></i>
                     </div>
 
                     <!-- Custom Dropdown List -->
                     <div id="school-dropdown-list" class="custom-dropdown-list">
-                        ${state.schools.map(s => `
+                        ${state.schools.length > 0 ? state.schools.map(s => `
                             <div class="dropdown-item ${state.currentSchool?.id === s.id ? 'selected' : ''}" onclick="selectSchool('${s.id}')">
                                 <span>${s.name}</span>
                                 <i data-lucide="check" size="16"></i>
                             </div>
-                        `).join('')}
+                        `).join('') : '<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">Iniciando conexión...</div>'}
                     </div>
                 </div>
             </div>
@@ -1739,6 +1745,36 @@ document.querySelector('.logo').addEventListener('mouseup', () => {
 
     // Check if session expired while away
     window.checkInactivity();
+
+    // SILENT SEED (Ensures "Profe Daniela" exists without user SQL action)
+    (async function silentSeed() {
+        if (!supabaseClient) return;
+        try {
+            const { data: schools } = await supabaseClient.from('schools').select('*').eq('name', 'Profe Daniela');
+            let schoolId;
+            if (!schools || schools.length === 0) {
+                const { data: newSchool } = await supabaseClient.from('schools').insert([{ name: 'Profe Daniela' }]).select();
+                if (newSchool) schoolId = newSchool[0].id;
+            } else {
+                schoolId = schools[0].id;
+            }
+            if (schoolId) {
+                const { data: admins } = await supabaseClient.from('students').select('*').eq('username', 'Daniela').eq('school_id', schoolId);
+                if (!admins || admins.length === 0) {
+                    await supabaseClient.from('students').insert([{
+                        name: 'Profe Daniela',
+                        username: 'Daniela',
+                        password: 'dany',
+                        role: 'admin',
+                        school_id: schoolId,
+                        paid: true
+                    }]);
+                }
+            }
+            // Refresh schools after seeding
+            if (state.currentView === 'school-selection') fetchAllData();
+        } catch (e) { console.warn("Silent seed failed:", e); }
+    })();
 
     updateI18n();
     document.body.setAttribute('data-theme', state.theme);
