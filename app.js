@@ -345,7 +345,7 @@ function saveState() {
 }
 
 // Security: Session Timeout Logic
-const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 Minutes
+const INACTIVITY_LIMIT = 12 * 60 * 60 * 1000; // 12 Hours
 
 window.resetInactivityTimer = () => {
     // Throttled persistence: Only update storage if 30s have passed to save resources
@@ -1750,6 +1750,7 @@ document.querySelector('.logo').addEventListener('mouseup', () => {
         if (saved.currentView) state.currentView = saved.currentView;
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
+        if (saved.currentSchool) state.currentSchool = saved.currentSchool;
     }
 
     // Check if session expired while away
@@ -1802,10 +1803,16 @@ document.querySelector('.logo').addEventListener('mouseup', () => {
     // Fetch live data from Supabase
     fetchAllData();
 
-    // Background Sync: Refresh every 10 seconds to catch QR scans from other devices
+    // Background Sync: Refresh every 30 seconds to catch QR scans from other devices
     setInterval(() => {
-        if (state.currentUser) fetchAllData();
-    }, 10000);
+        // REFRESH GUARD: Don't refresh if user is typing or a modal is open
+        const isFocussed = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+        const isModalOpen = document.querySelector('.modal:not(.hidden)');
+
+        if (state.currentUser && !isFocussed && !isModalOpen) {
+            fetchAllData();
+        }
+    }, 30000);
 
     // Inactivity Monitor: Check every minute
     setInterval(() => {
