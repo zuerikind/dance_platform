@@ -272,6 +272,7 @@ let state = {
     lastActivity: Date.now(),
     schools: [],
     currentSchool: null,
+    admins: [],
     loading: false
 };
 
@@ -302,12 +303,13 @@ async function fetchAllData() {
 
         const sid = state.currentSchool.id;
 
-        const [classesRes, subsRes, studentsRes, requestsRes, settingsRes] = await Promise.all([
+        const [classesRes, subsRes, studentsRes, requestsRes, settingsRes, adminsRes] = await Promise.all([
             supabaseClient.from('classes').select('*').eq('school_id', sid).order('id'),
             supabaseClient.from('subscriptions').select('*').eq('school_id', sid).order('name'),
             supabaseClient.from('students').select('*').eq('school_id', sid).order('name'),
             supabaseClient.from('payment_requests').select('*, students(name)').eq('school_id', sid).order('created_at', { ascending: false }),
-            supabaseClient.from('admin_settings').select('*').eq('school_id', sid)
+            supabaseClient.from('admin_settings').select('*').eq('school_id', sid),
+            supabaseClient.from('admins').select('*').eq('school_id', sid).order('username')
         ]);
 
         if (classesRes.data) state.classes = classesRes.data;
@@ -331,6 +333,7 @@ async function fetchAllData() {
             });
             state.adminSettings = settingsObj;
         }
+        if (adminsRes.data) state.admins = adminsRes.data;
 
         state.loading = false;
         renderView();
@@ -870,6 +873,14 @@ function renderView() {
                 Administradores
             </div>
             <div class="ios-list">
+                ${state.admins.map(adm => `
+                    <div class="ios-list-item" style="padding: 12px 16px; align-items: center;">
+                        <span style="font-size: 16px; font-weight: 500;">${adm.username}</span>
+                        <button onclick="window.removeAdmin('${adm.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6; margin-left: auto;">
+                            <i data-lucide="trash-2" size="18"></i>
+                        </button>
+                    </div>
+                `).join('')}
                 <div class="ios-list-item" onclick="createNewAdmin()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="user-plus" size="18"></i> ${t.add_admin || 'Agregar Admin'}
                 </div>
@@ -1067,6 +1078,22 @@ window.createNewAdmin = async () => {
         const { error } = await supabaseClient.from('admins').insert([{ id: newId, username: name, password: pass, school_id: state.currentSchool.id }]);
         if (error) { alert("Error: " + error.message); return; }
         alert(t('admin_created'));
+        await fetchAllData();
+    }
+};
+
+window.removeAdmin = async (id) => {
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    if (confirm("¿Estás seguro de eliminar a este administrador?")) {
+        if (supabaseClient) {
+            const { error } = await supabaseClient.from('admins').delete().eq('id', id);
+            if (error) { alert("Error: " + error.message); return; }
+        }
+        state.admins = state.admins.filter(a => a.id !== id);
+        saveState();
+        renderView();
     }
 };
 
