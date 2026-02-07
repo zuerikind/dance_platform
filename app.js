@@ -1462,8 +1462,8 @@ window.renderAdminStudentCard = (s) => {
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
-                        <i data-lucide="layers" size="12"></i> ${s.balance === null ? '∞' : s.balance}
+                    <div style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">
+                        ${t('remaining_classes') || 'Clases restantes'}: <span style="color: var(--system-blue); font-weight: 700;">${s.balance === null ? '∞' : s.balance}</span>
                     </div>
                 </div>
             </div>
@@ -1487,36 +1487,88 @@ window.updateStudentPrompt = async (id) => {
     const s = state.students.find(x => x.id === id);
     if (!s) return;
 
-    const t = window.t;
-
     // Security Check: Require admin password to edit/view sensitive data
     const adminPass = prompt("Admin Password Required:");
     if (!adminPass) return;
 
-    // Check against hardcoded fallback or (simulated) validation
-    // In a real app, we'd verify this against Supabase or a session token
     if (adminPass !== "royal" && adminPass !== "dany") {
         alert("Incorrect Admin Password.");
         return;
     }
 
-    const newName = prompt(t.enter_student_name || "Nombre:", s.name);
-    if (newName === null) return;
+    const t = window.t;
+    const modal = document.getElementById('student-modal');
+    const content = document.getElementById('student-modal-content');
 
-    const newPhone = prompt(t.enter_student_phone || "Teléfono:", s.phone || "");
-    if (newPhone === null) return;
+    content.innerHTML = `
+        <div style="text-align: left;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+                <div style="width: 50px; height: 50px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--system-blue); font-size: 20px;">
+                    ${s.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                    <h2 style="margin: 0; font-size: 20px; letter-spacing: -0.5px;">${s.name}</h2>
+                    <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">${s.id}</p>
+                </div>
+            </div>
 
-    const newPass = prompt((t.enter_student_pass || "Contraseña:") + ` (Actual: ${s.password})`, s.password);
-    if (newPass === null) return;
+            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Nombre Completo</label>
+                    <input type="text" id="edit-student-name" class="minimal-input" value="${s.name}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
 
-    const updates = { name: newName, phone: newPhone, password: newPass };
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Teléfono</label>
+                    <input type="text" id="edit-student-phone" class="minimal-input" value="${s.phone || ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Contraseña (Pin)</label>
+                    <input type="text" id="edit-student-pass" class="minimal-input" value="${s.password}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Clases Restantes</label>
+                    <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2.5rem;">
+                <button class="btn-secondary" onclick="document.getElementById('student-modal').classList.add('hidden')" style="height: 50px; border-radius: 14px; font-weight: 600;">Cancelar</button>
+                <button class="btn-primary" onclick="window.saveStudentDetails('${s.id}')" style="height: 50px; border-radius: 14px; font-weight: 600;">Guardar</button>
+            </div>
+        </div>
+    `;
+
+    modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+};
+
+window.saveStudentDetails = async (id) => {
+    const s = state.students.find(x => x.id === id);
+    if (!s) return;
+
+    const newName = document.getElementById('edit-student-name').value.trim();
+    const newPhone = document.getElementById('edit-student-phone').value.trim();
+    const newPass = document.getElementById('edit-student-pass').value.trim();
+    const balanceVal = document.getElementById('edit-student-balance').value;
+    const newBalance = balanceVal === "" ? null : parseInt(balanceVal);
+
+    if (!newName || !newPass) {
+        alert("Nombre and Password are required.");
+        return;
+    }
+
+    const updates = { name: newName, phone: newPhone, password: newPass, balance: newBalance };
 
     if (supabaseClient) {
         const { error } = await supabaseClient.from('students').update(updates).eq('id', id);
-        if (error) { alert("Error: " + error.message); return; }
+        if (error) { alert("Error saving: " + error.message); return; }
     }
 
     Object.assign(s, updates);
+    document.getElementById('student-modal').classList.add('hidden');
     saveState();
     renderView();
 };
