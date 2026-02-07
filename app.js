@@ -252,7 +252,8 @@ let state = {
     theme: 'dark',
     isAdmin: false,
     paymentRequests: [],
-    adminSettings: {}
+    adminSettings: {},
+    lastActivity: Date.now()
 };
 
 // --- DATA FETCHING ---
@@ -304,9 +305,34 @@ function saveState() {
         currentUser: state.currentUser,
         isAdmin: state.isAdmin,
         currentView: state.currentView,
-        scheduleView: state.scheduleView
+        scheduleView: state.scheduleView,
+        lastActivity: state.lastActivity
     }));
 }
+
+// Security: Session Timeout Logic
+const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 Minutes
+
+window.resetInactivityTimer = () => {
+    // Throttled persistence: Only update storage if 30s have passed to save resources
+    const now = Date.now();
+    if (now - state.lastActivity > 30000) {
+        state.lastActivity = now;
+        saveState();
+    } else {
+        state.lastActivity = now; // Update local state regardless
+    }
+};
+
+window.checkInactivity = () => {
+    if (!state.currentUser) return;
+    const now = Date.now();
+    const idleTime = now - state.lastActivity;
+    if (idleTime > INACTIVITY_LIMIT) {
+        console.warn("Session expired due to inactivity.");
+        window.logout();
+    }
+};
 
 // Bulletproof translation helper
 window.t = function (key) {
@@ -999,6 +1025,7 @@ window.logout = () => {
     state.currentUser = null;
     state.isAdmin = false;
     state.currentView = 'auth';
+    state.lastActivity = Date.now();
     saveState();
     renderView();
 };
@@ -1518,6 +1545,11 @@ document.querySelector('.logo').addEventListener('mousedown', () => {
 });
 document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(logoPressTimer));
 
+// Global User Activity Listeners (Auto-Logout)
+['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+    window.addEventListener(evt, window.resetInactivityTimer, { passive: true });
+});
+
 // Initial Load
 (function init() {
     const local = localStorage.getItem('dance_app_state');
@@ -1529,7 +1561,11 @@ document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(l
         if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
         if (saved.currentView) state.currentView = saved.currentView;
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
+        if (saved.lastActivity) state.lastActivity = saved.lastActivity;
     }
+
+    // Check if session expired while away
+    window.checkInactivity();
 
     updateI18n();
     document.body.setAttribute('data-theme', state.theme);
@@ -1544,4 +1580,9 @@ document.querySelector('.logo').addEventListener('mouseup', () => clearTimeout(l
     setInterval(() => {
         if (state.currentUser) fetchAllData();
     }, 10000);
+
+    // Inactivity Monitor: Check every minute
+    setInterval(() => {
+        window.checkInactivity();
+    }, 60000);
 })();
