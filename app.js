@@ -402,7 +402,6 @@ function renderView() {
 
     if (view === 'school-selection') {
         html += `
-            <div class="immersive-bg-glow"></div>
             <div class="auth-page-container" style="justify-content: center; align-items: center; min-height: 70vh;">
                 <div class="landing-branding slide-in" style="margin-bottom: 2.5rem; text-align: center;">
                     <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 70px; height: 70px; margin-bottom: 0.5rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));">
