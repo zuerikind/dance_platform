@@ -614,85 +614,61 @@ function renderView() {
         }, 50);
     } else if (view === 'admin-students') {
         html += `
-            <div class="admin-header">
-                <div>
-                    <h1>${t.nav_students}</h1>
-                    <p class="text-muted" style="font-size: 0.9rem;">${state.students.length} registrados</p>
-                </div>
-                <button class="btn-primary" onclick="createNewStudent()">
-                    <i data-lucide="user-plus" size="18"></i> ${t.add_label}
-                </button>
+            <div class="ios-header">
+                <div class="ios-large-title">${t.nav_students}</div>
             </div>
-
-            <div style="margin-bottom: 2rem;">
-                <div style="position: relative;">
-                    <input type="text" id="student-search" class="glass-input" placeholder="Buscar por nombre..." oninput="filterStudents(this.value)" style="padding-left: 3rem; background: var(--surface-solid);">
-                    <i data-lucide="search" size="18" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); opacity: 0.5;"></i>
-                </div>
+            <div style="position: sticky; top: 60px; z-index: 90; background: var(--bg-body); padding-bottom: 5px;">
+                <input type="text" class="ios-search-bar" placeholder="Buscar" oninput="filterStudents(this.value)">
             </div>
-
-            <div id="admin-student-list">
+            <div class="ios-list" id="admin-student-list">
                 ${state.students.map(s => renderAdminStudentCard(s)).join('')}
+            </div>
+            <div style="padding: 1rem; text-align: center;">
+                <button class="btn-primary" onclick="createNewStudent()" style="border-radius: 20px; padding: 12px 24px; font-size: 16px;">
+                    + ${t.add_student}
+                </button>
             </div>
         `;
     } else if (view === 'admin-memberships') {
         html += `
-            <div class="admin-header">
-                <div>
-                    <h1>${t.pending_payments}</h1>
-                    <p class="text-muted" style="font-size: 0.9rem;">${state.paymentRequests.filter(r => r.status === 'pending').length} solicitudes pendientes</p>
-                </div>
+            <div class="ios-header">
+                <div class="ios-large-title">${t.pending_payments}</div>
             </div>
         `;
 
         if (state.paymentRequests.length === 0) {
             html += `
-                <div class="card text-center" style="padding: 3rem; border-style: dashed; opacity: 0.5;">
-                    <i data-lucide="coffee" size="48" style="margin-bottom: 1rem; opacity: 0.3;"></i>
+                <div style="text-align: center; padding: 4rem 2rem; color: var(--text-secondary);">
+                    <i data-lucide="check-circle" size="48" style="margin-bottom: 1rem; opacity: 0.3;"></i>
                     <p>${t.no_subs}</p>
                 </div>
             `;
         } else {
-            state.paymentRequests.forEach(req => {
+            html += `<div class="ios-list">`;
+            state.paymentRequests.forEach((req, idx) => {
                 const studentName = req.students ? req.students.name : t.unknown_student;
                 const isPending = req.status === 'pending';
-                const statusBadge = isPending ? 'badge-warning' : (req.status === 'approved' ? 'badge-success' : 'badge-danger');
+                const statusColor = isPending ? 'var(--system-blue)' : (req.status === 'approved' ? 'var(--system-green)' : 'var(--system-red)');
 
                 html += `
-                    <div class="card slide-in" style="margin-bottom: 1rem; border-left: 4px solid ${isPending ? '#ff9f0a' : (req.status === 'approved' ? '#34c759' : '#ff3b30')}">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="flex: 1;">
-                                <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom: 0.25rem;">
-                                    <h3 style="font-size: 1.1rem; margin:0;">${studentName}</h3>
-                                    <span class="badge ${statusBadge}">${req.status}</span>
-                                </div>
-                                <div class="text-muted" style="font-size: 0.85rem; font-weight: 500;">
-                                    ${req.sub_name} • <span style="color: var(--text); font-weight: 700;">MXD ${req.price}</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:0.4rem; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; opacity: 0.7;">
-                                    <i data-lucide="clock" size="12"></i> ${new Date(req.created_at).toLocaleString()} 
-                                    <span style="opacity: 0.3;">•</span>
-                                    <i data-lucide="wallet" size="12"></i> ${req.payment_method.toUpperCase()}
-                                </div>
-                            </div>
-                            ${isPending ? `
-                                <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                                    <button class="btn-action" onclick="processPaymentRequest(${req.id}, 'approved')" style="background: rgba(52, 199, 89, 0.1); border-color: rgba(52, 199, 89, 0.2); color: #34c759;">
-                                        <i data-lucide="check" size="18"></i>
-                                    </button>
-                                    <button class="btn-action" onclick="processPaymentRequest(${req.id}, 'rejected')" style="background: rgba(255, 59, 48, 0.1); border-color: rgba(255, 59, 48, 0.2); color: #ff3b30;">
-                                        <i data-lucide="x" size="18"></i>
-                                    </button>
-                                </div>
-                            ` : `
-                                <button class="btn-action" onclick="removePaymentRequest('${req.id}')" style="opacity: 0.3;">
-                                    <i data-lucide="trash-2" size="16"></i>
-                                </button>
-                            `}
+                    <div class="ios-list-item" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <div style="font-weight: 600; font-size: 17px;">${studentName}</div>
+                            <div style="font-size: 13px; font-weight: 600; color: ${statusColor}; text-transform: uppercase;">${req.status}</div>
                         </div>
+                        <div style="font-size: 14px; color: var(--text-secondary); width: 100%;">
+                            ${req.sub_name} • $${req.price}
+                        </div>
+                        ${isPending ? `
+                            <div style="display: flex; gap: 10px; width: 100%; margin-top: 8px;">
+                                <button onclick="processPaymentRequest(${req.id}, 'approved')" style="flex: 1; background: var(--system-green); color: white; border: none; padding: 8px; border-radius: 8px; font-weight: 600;">${t.approve}</button>
+                                <button onclick="processPaymentRequest(${req.id}, 'rejected')" style="flex: 1; background: var(--system-gray5); color: var(--system-red); border: none; padding: 8px; border-radius: 8px; font-weight: 600;">${t.reject}</button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
+            html += `</div>`;
         }
     } else if (view === 'admin-revenue') {
         const approvedPayments = state.paymentRequests.filter(r => r.status === 'approved');
@@ -706,42 +682,49 @@ function renderView() {
 
         const totalHistorical = approvedPayments.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
 
+    } else if (view === 'admin-revenue') {
+        const approvedPayments = state.paymentRequests.filter(r => r.status === 'approved');
+        const thisMonth = new Date().getMonth();
+        const thisMonthEarnings = approvedPayments
+            .filter(r => {
+                const d = new Date(r.created_at);
+                return d.getMonth() === thisMonth && d.getFullYear() === new Date().getFullYear();
+            })
+            .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+
+        const totalHistorical = approvedPayments.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+
         html += `
-            <div class="admin-header">
-                <div>
-                    <h1>${t.nav_revenue}</h1>
-                    <p class="text-muted" style="font-size: 0.9rem;">Resumen de ingresos</p>
-                </div>
+            <div class="ios-header">
+                <div class="ios-large-title">${t.nav_revenue}</div>
             </div>
             
-            <div style="display:grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem;">
-                <div class="card" style="padding: 2rem; border-radius: 30px; background: var(--text); color: var(--background); box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
-                    <div style="opacity: 0.7; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">${t.monthly_total}</div>
-                    <div style="font-size: 3rem; font-weight: 800; letter-spacing: -0.05em;">$${thisMonthEarnings.toLocaleString()}</div>
-                    <div style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; opacity: 0.8;">
+            <div style="padding: 0 1rem; margin-bottom: 2rem;">
+                <div style="background: linear-gradient(135deg, var(--system-blue), #5AC8FA); padding: 1.5rem; border-radius: 20px; color: white; box-shadow: 0 10px 20px rgba(0,122,255,0.3);">
+                    <div style="opacity: 0.8; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem;">${t.monthly_total}</div>
+                    <div style="font-size: 42px; font-weight: 700; letter-spacing: -1px;">$${thisMonthEarnings.toLocaleString()}</div>
+                    <div style="margin-top: 1rem; font-size: 14px; font-weight: 500; opacity: 0.9;">
                         Total histórico: $${totalHistorical.toLocaleString()} MXD
                     </div>
                 </div>
             </div>
 
-            <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em;">Histórico de Pagos</h2>
-            <div style="display:flex; flex-direction:column; gap:0.6rem;">
+            <div style="padding: 0 1rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 13px; color: var(--text-secondary);">
+                ${t.all_payments}
+            </div>
+            <div class="ios-list">
                 ${state.paymentRequests.map(req => {
             const studentName = req.students ? req.students.name : t.unknown_student;
-            const statusBadge = req.status === 'approved' ? 'badge-success' : (req.status === 'rejected' ? 'badge-danger' : 'badge-warning');
+            const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
             return `
-                        <div class="card" style="padding: 1rem; border-radius: 18px; margin-bottom: 0.2rem;">
+                        <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 4px; padding-top: 12px; padding-bottom: 12px;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.2rem;">${studentName}</div>
-                                    <div class="text-muted" style="font-size: 0.75rem; font-weight: 500;">
-                                        ${req.sub_name} • ${new Date(req.created_at).toLocaleDateString()}
-                                    </div>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="font-weight: 800; font-size: 1.1rem; color: var(--text);">$${req.price}</div>
-                                    <span class="badge ${statusBadge}" style="font-size: 0.6rem; padding: 0.2rem 0.5rem;">${req.status}</span>
-                                </div>
+                                <div style="font-weight: 600; font-size: 17px;">${studentName}</div>
+                                <div style="font-weight: 600; font-size: 17px;">$${req.price}</div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-size: 14px; color: var(--text-secondary);">${req.sub_name} • ${new Date(req.created_at).toLocaleDateString()}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: ${statusColor}; text-transform: uppercase;">${req.status}</div>
                             </div>
                         </div>
                     `;
@@ -750,146 +733,101 @@ function renderView() {
         `;
     } else if (view === 'admin-scanner') {
         html += `
-            <div class="text-center">
-                <h1>${t.nav_scan}</h1>
-                <p class="text-muted" style="margin-bottom: 4rem;">${t.scan_cta_desc}</p>
-                <div class="card" style="max-width: 440px; margin: 0 auto; border-radius: 30px;">
-                    <div style="width: 120px; height: 120px; background: var(--background); border-radius: 30px; margin: 0 auto 2rem; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-                         <i data-lucide="camera" size="48"></i>
-                    </div>
-                    <button class="btn-primary w-full" onclick="startScanner()" style="justify-content:center; padding: 1.5rem; font-size: 1.1rem;">
-                        ${t.initiate_scan_btn}
-                    </button>
-                </div>
-                <div id="scan-result" class="mt-4"></div>
+            <div class="ios-header">
+                <div class="ios-large-title">${t.nav_scan}</div>
+            </div>
+            <div style="padding: 2rem; text-align: center;">
+                 <p style="font-size: 17px; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.5;">${t.scan_cta_desc}</p>
+                 
+                 <div style="width: 200px; height: 200px; margin: 0 auto 3rem; position: relative; display: flex; align-items: center; justify-content: center;">
+                    <div style="position: absolute; inset: 0; border: 2px solid var(--system-gray4); border-radius: 30px;"></div>
+                    <div style="position: absolute; inset: -4px; border: 4px solid var(--system-blue); border-radius: 34px; clip-path: polygon(0% 20%, 0% 0%, 20% 0%, 80% 0%, 100% 0%, 100% 20%, 100% 80%, 100% 100%, 80% 100%, 20% 100%, 0% 100%, 0% 80%);"></div>
+                    <i data-lucide="qr-code" size="64" style="color: var(--system-gray);"></i>
+                 </div>
+
+                 <button class="btn-primary" onclick="startScanner()" style="width: 100%; border-radius: 14px; height: 50px; font-size: 17px; font-weight: 600;">
+                    ${t.initiate_scan_btn}
+                 </button>
+                 <div id="scan-result" style="margin-top: 1.5rem; font-weight: 600; font-size: 17px;"></div>
             </div>
         `;
     } else if (view === 'admin-settings') {
         const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
         html += `
-            <div class="admin-header">
-                <div>
-                    <h1>${t.nav_settings}</h1>
-                    <p class="text-muted" style="font-size: 0.9rem;">Configuración de la academia</p>
+            <div class="ios-header">
+                <div class="ios-large-title">${t.nav_settings}</div>
+            </div>
+
+            <div style="padding: 0 1rem; margin-top: 1rem; text-transform: uppercase; font-size: 13px; color: var(--text-secondary);">
+                ${t.classes_label}
+            </div>
+            <div class="ios-list">
+                ${state.classes.map(c => `
+                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <input type="text" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 60%; color: var(--text-primary);">
+                            <i data-lucide="trash-2" size="18" style="color: var(--system-red);" onclick="removeClass(${c.id})"></i>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <select onchange="updateClass(${c.id}, 'day', this.value)" style="background: var(--system-gray6); border: none; border-radius: 6px; padding: 4px 8px; font-size: 14px; width: 100px; color: var(--text-primary);">
+                                ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
+                            </select>
+                            <input type="time" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="background: var(--system-gray6); border: none; border-radius: 6px; padding: 4px 8px; font-size: 14px; color: var(--text-primary);">
+                        </div>
+                    </div>
+                `).join('')}
+                <div class="ios-list-item" onclick="addClass()" style="color: var(--system-blue); font-weight: 500; justify-content: center; cursor: pointer;">
+                    ${t.add_label} Clase
                 </div>
             </div>
 
-            <!-- CLASSES SECTION -->
-            <div class="card" style="padding: 1.5rem; border-radius: 24px; margin-bottom: 2rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
-                    <h3 style="font-size: 1.25rem; font-weight: 800; display:flex; align-items:center; gap:0.5rem;">
-                        <i data-lucide="calendar" size="20" style="opacity:0.5;"></i> ${t.classes_label}
-                    </h3>
-                    <button class="btn-primary" onclick="addClass()" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; min-height: 36px;">
-                        <i data-lucide="plus" size="14"></i> ${t.add_label}
-                    </button>
-                </div>
-                
-                <div style="display:flex; flex-direction:column; gap:1.5rem;">
-                    ${state.classes.map(c => `
-                        <div style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); display:flex; flex-direction:column; gap:1rem;">
-                            <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="text" class="glass-input" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" placeholder="Nombre de la clase" style="padding:0.7rem; font-weight:700; flex:1;">
-                                <button class="btn-action" onclick="removeClass(${c.id})" style="color: var(--danger); opacity:0.3;">
-                                    <i data-lucide="trash-2" size="18"></i>
-                                </button>
+            <div style="padding: 0 1rem; margin-top: 2rem; text-transform: uppercase; font-size: 13px; color: var(--text-secondary);">
+                ${t.plans_label}
+            </div>
+            <div class="ios-list">
+                ${state.subscriptions.map(s => `
+                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                         <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 60%; color: var(--text-primary);">
+                            <i data-lucide="trash-2" size="18" style="color: var(--system-red);" onclick="removeSubscription('${s.id}')"></i>
+                        </div>
+                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
+                            <div style="display:flex; align-items:center;">
+                                <span style="color: var(--text-secondary); margin-right: 5px;">${t.price_mxd_label}:</span>
+                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: var(--system-gray6); border: none; border-radius: 6px; padding: 2px 6px; width: 60px; text-align: right; color: var(--text-primary);">
                             </div>
-                            
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem;">
-                                <div>
-                                    <span class="text-muted" style="font-size:0.65rem; font-weight:700; text-transform:uppercase;">${t.day_label || 'Día'}</span>
-                                    <select class="glass-input" onchange="updateClass(${c.id}, 'day', this.value)" style="padding:0.6rem; font-size:0.85rem;">
-                                        ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div>
-                                    <span class="text-muted" style="font-size:0.65rem; font-weight:700; text-transform:uppercase;">${t.time_label || 'Hora'}</span>
-                                    <input type="time" class="glass-input" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="padding:0.6rem; font-size:0.85rem;">
-                                </div>
-                            </div>
-
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem;">
-                                <div>
-                                    <span class="text-muted" style="font-size:0.65rem; font-weight:700; text-transform:uppercase;">Nivel / Tag</span>
-                                    <input type="text" class="glass-input" value="${c.tag || ''}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="P. ej. Principiante" style="padding:0.6rem; font-size:0.85rem;">
-                                </div>
-                                <div>
-                                    <span class="text-muted" style="font-size:0.65rem; font-weight:700; text-transform:uppercase;">Precio Un.</span>
-                                    <input type="number" class="glass-input" value="${c.price}" onchange="updateClass(${c.id}, 'price', this.value)" style="padding:0.6rem; font-size:0.85rem; font-weight:700;">
-                                </div>
+                            <div style="display:flex; align-items:center;">
+                                <span style="color: var(--text-secondary); margin-right: 5px;">${t.limit_classes_label}:</span>
+                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" style="background: var(--system-gray6); border: none; border-radius: 6px; padding: 2px 6px; width: 40px; text-align: right; color: var(--text-primary);">
                             </div>
                         </div>
-                    `).join('')}
+                    </div>
+                `).join('')}
+                <div class="ios-list-item" onclick="addSubscription()" style="color: var(--system-blue); font-weight: 500; justify-content: center; cursor: pointer;">
+                    ${t.add_label} Plan
                 </div>
             </div>
 
-            <!-- PLANS SECTION -->
-            <div class="card" style="padding: 1.5rem; border-radius: 24px; margin-bottom: 2rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
-                    <h3 style="font-size: 1.25rem; font-weight: 800; display:flex; align-items:center; gap:0.5rem;">
-                        <i data-lucide="credit-card" size="20" style="opacity:0.5;"></i> ${t.plans_label}
-                    </h3>
-                    <button class="btn-primary" onclick="addSubscription()" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; min-height: 36px;">
-                        <i data-lucide="plus" size="14"></i> ${t.add_label}
-                    </button>
-                </div>
-
-                <div style="display:flex; flex-direction:column; gap:1.5rem;">
-                    ${state.subscriptions.map(s => `
-                        <div style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); display:flex; flex-direction:column; gap:1rem;">
-                            <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="text" class="glass-input" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" placeholder="Nombre del plan" style="padding:0.7rem; font-weight:700; flex:1;">
-                                <button class="btn-action" onclick="removeSubscription('${s.id}')" style="color: var(--danger); opacity:0.3;">
-                                    <i data-lucide="trash-2" size="18"></i>
-                                </button>
-                            </div>
-
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem;">
-                                <div>
-                                    <span class="text-muted" style="font-size:0.65rem; font-weight:700; text-transform:uppercase;">${t.limit_classes_label}</span>
-                                    <input type="number" class="glass-input" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="∞" style="padding:0.6rem; font-size:0.85rem; font-weight:700;">
-                                </div>
-                                <div>
-                                    <span class="text-muted" style="font-size:0.65rem; font-weight:700; text-transform:uppercase;">Precio Plan</span>
-                                    <input type="number" class="glass-input" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="padding:0.6rem; font-size:0.85rem; font-weight:700;">
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+            <div style="padding: 0 1rem; margin-top: 2rem; text-transform: uppercase; font-size: 13px; color: var(--text-secondary);">
+                ${t.transfer_details_label}
             </div>
-
-            <!-- TRANSFER SECTION -->
-            <div class="card" style="padding: 2rem; border-radius: 24px; border: 1px solid var(--secondary); background: linear-gradient(135deg, rgba(45, 212, 191, 0.05), transparent);">
-                <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; display:flex; align-items:center; gap:0.5rem;">
-                    <i data-lucide="landmark" size="20" style="opacity:0.5;"></i> ${t.transfer_details_label}
-                </h3>
-                <div style="display:flex; flex-direction:column; gap:1.2rem;">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
-                        <div>
-                            <span class="text-muted" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${t.bank_name_label}</span>
-                            <input type="text" id="set-bank-name" class="glass-input" value="${state.adminSettings.bank_name || ''}" style="padding: 0.8rem;">
-                        </div>
-                        <div>
-                            <span class="text-muted" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">Alias</span>
-                            <input type="text" id="set-bank-alias" class="glass-input" value="${state.adminSettings.bank_alias || ''}" style="padding: 0.8rem;">
-                        </div>
-                    </div>
-                    <div>
-                        <span class="text-muted" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">CBU</span>
-                        <input type="text" id="set-bank-cbu" class="glass-input" value="${state.adminSettings.bank_cbu || ''}" style="padding: 0.8rem;">
-                    </div>
-                    <div>
-                        <span class="text-muted" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${t.holder_name_label}</span>
-                        <input type="text" id="set-bank-holder" class="glass-input" value="${state.adminSettings.bank_holder || ''}" style="padding: 0.8rem;">
-                    </div>
-                    <button class="btn-primary w-full" onclick="saveBankSettings(this)" style="margin-top: 0.5rem; padding: 1.2rem; border-radius: 18px;">
-                        <i data-lucide="save" size="20"></i> ${t.save_bank_btn}
-                    </button>
-                    <div id="save-status" class="text-center hidden slide-in" style="font-size: 0.85rem; color: var(--secondary); font-weight: 800;">
-                        <i data-lucide="check" size="16"></i> ${t.saved_success_msg}
-                    </div>
+            <div class="ios-list">
+                <div class="ios-list-item">
+                    <span style="font-size: 16px;">${t.bank_name_label}</span>
+                    <input type="text" id="set-bank-name" value="${state.adminSettings.bank_name || ''}" style="text-align: right; border: none; background: transparent; width: 50%; color: var(--text-secondary);">
+                </div>
+                <div class="ios-list-item">
+                    <span style="font-size: 16px;">CBU</span>
+                    <input type="text" id="set-bank-cbu" value="${state.adminSettings.bank_cbu || ''}" style="text-align: right; border: none; background: transparent; width: 50%; color: var(--text-secondary);">
+                </div>
+                <div class="ios-list-item">
+                    <span style="font-size: 16px;">Alias</span>
+                    <input type="text" id="set-bank-alias" value="${state.adminSettings.bank_alias || ''}" style="text-align: right; border: none; background: transparent; width: 50%; color: var(--text-secondary);">
+                </div>
+                <!-- Save Button Row -->
+                 <div class="ios-list-item" onclick="saveBankSettings(this)" style="color: var(--system-blue); font-weight: 500; justify-content: center; cursor: pointer;">
+                    ${t.save_bank_btn}
                 </div>
             </div>
         `;
@@ -1451,45 +1389,37 @@ window.removeSubscription = async (id) => {
 };
 
 // --- MOBILE UI HELPERS ---
+// --- MOBILE UI HELPERS ---
 window.renderAdminStudentCard = (s) => {
-    const t = window.t;
-    const statusClass = s.paid ? 'badge-success' : 'badge-danger';
-    const statusLabel = s.paid ? t.status_active : t.status_unpaid;
+    // FIX: Use window.t as a function, not a proxy object
+    const t = (key) => window.t(key);
 
     return `
-        <div class="admin-card-student slide-in" id="card-${s.id}">
-            <div class="admin-student-info">
-                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.4rem;">
-                    <h3 style="margin:0;">${s.name}</h3>
-                    <span class="badge ${statusClass}">${statusLabel}</span>
-                </div>
-                <div class="admin-student-meta">
-                    <span style="color: var(--secondary); font-weight: 700;">${t.balance_label}: ${s.balance === null ? '∞' : s.balance}</span>
-                    <span style="opacity: 0.5;"> • </span>
-                    <span>${s.phone || 'No phone'}</span>
-                </div>
-                <div style="margin-top: 0.8rem;">
-                    <select class="glass-input" onchange="activatePackage('${s.id}', this.value)" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; width: auto; min-height: 32px;">
-                        <option value="">${t.plan_label}: ${s.package || t.none_label}</option>
-                        ${state.subscriptions.map(sub => `<option value="${sub.name}">${sub.name}</option>`).join('')}
-                    </select>
-                </div>
+        <div class="ios-list-item" onclick="updateStudentPrompt('${s.id}')">
+            <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 17px; margin-bottom: 2px;">${s.name}</div>
+                <div style="font-size: 13px; color: var(--text-secondary);">${s.package || t('none_label')} • ${s.balance === null ? '∞' : s.balance} clases</div>
             </div>
-            <div class="btn-action-group">
-                <button class="btn-action" onclick="togglePayment('${s.id}')" title="${s.paid ? t.mark_unpaid : t.mark_paid}">
-                    <i data-lucide="${s.paid ? 'x-circle' : 'check-circle'}" style="color: ${s.paid ? 'var(--danger)' : 'var(--secondary)'}"></i>
-                </button>
-                <button class="btn-action" onclick="updateStudentPrompt('${s.id}')">
-                    <i data-lucide="edit-3"></i>
-                </button>
-                <button class="btn-action" onclick="deleteStudent('${s.id}')" style="color: var(--danger);">
-                    <i data-lucide="trash-2"></i>
-                </button>
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <div style="font-size: 13px; color: ${s.paid ? 'var(--system-green)' : 'var(--system-red)'}; font-weight: 500;">
+                    ${s.paid ? t('status_active') : t('status_unpaid')}
+                </div>
+                <i data-lucide="chevron-right" size="20" style="color: var(--system-gray3);"></i>
             </div>
         </div>
     `;
 };
 
+window.filterStudents = (query) => {
+    const q = query.toLowerCase();
+    const list = document.getElementById('admin-student-list');
+    if (!list) return;
+
+    const filtered = state.students.filter(s => s.name.toLowerCase().includes(q));
+    // Wrap in ios-list container if not present, but here we just render items
+    list.innerHTML = filtered.map(s => renderAdminStudentCard(s)).join('');
+    if (window.lucide) lucide.createIcons();
+};
 window.filterStudents = (query) => {
     const q = query.toLowerCase();
     const list = document.getElementById('admin-student-list');

@@ -3,6 +3,27 @@
     --primary: #000000;
     /* Apple/Tesla Core */
     --primary-soft: rgba(0, 0, 0, 0.05);
+    /* --- APPLE DESIGN SYSTEM --- */
+    --system-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --system-blue: #007AFF;
+    --system-red: #FF3B30;
+    --system-green: #34C759;
+    --system-gray: #8E8E93;
+    --system-gray2: #AEAEB2;
+    --system-gray3: #C7C7CC;
+    --system-gray4: #D1D1D6;
+    --system-gray5: #E5E5EA;
+    --system-gray6: #F2F2F7;
+
+    --bg-body: var(--system-gray6);
+    --bg-card: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #8E8E93;
+    --border-color: #C6C6C8;
+
+    --radius-s: 10px;
+    --radius-m: 12px;
+    --radius-l: 18px;
     --accent: #000000;
     /* Unified with primary for consistency */
     --background: #ffffff;
@@ -22,6 +43,84 @@
 
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+body.dark-mode {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #8E8E93;
+    --border-color: #38383A;
+    --system-gray6: #1C1C1E;
+    /* Grouped background in dark mode */
+}
+
+body {
+    font-family: var(--system-font);
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.022em;
+}
+
+.ios-header {
+    padding: 1rem 1.2rem;
+    background: var(--bg-body);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.ios-large-title {
+    font-size: 34px;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.ios-list {
+    margin: 1.5rem 1rem;
+    border-radius: var(--radius-l);
+    background: var(--bg-card);
+    overflow: hidden;
+}
+
+.ios-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 0.5px solid var(--border-color);
+    background: var(--bg-card);
+    transition: background 0.2s;
+}
+
+.ios-list-item:last-child {
+    border-bottom: none;
+}
+
+.ios-list-item:active {
+    background: var(--system-gray5);
+}
+
+.dark-mode .ios-list-item:active {
+    background: #2C2C2E;
+}
+
+.ios-search-bar {
+    background: var(--system-gray5);
+    border-radius: 10px;
+    padding: 0.8rem;
+    border: none;
+    width: 100%;
+    font-size: 17px;
+    color: var(--text-primary);
+    margin: 0.5rem 1rem;
+    width: calc(100% - 2rem);
+}
+
+.dark-mode .ios-search-bar {
+    background: #1C1C1E;
 }
 
 [data-theme="dark"],
@@ -888,6 +987,68 @@ h1 {
     max-width: 340px;
     margin: 2rem auto;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* --- APPLE COMPONENTS --- */
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius-l);
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.dark-mode .card {
+    background: #1C1C1E;
+    border: none;
+    box-shadow: none;
+}
+
+/* Glassmorphic Tab Bar */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(249, 249, 249, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid var(--border-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(50px + env(safe-area-inset-bottom));
+    z-index: 1000;
+}
+
+.dark-mode .bottom-nav {
+    background: rgba(28, 28, 30, 0.85);
+    border-top: 0.5px solid #38383A;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--system-gray);
+    font-size: 10px;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+}
+
+.nav-item.active {
+    color: var(--system-blue);
+}
+
+.nav-item i {
+    width: 24px;
+    height: 24px;
 }
 
 /* MODAL */
