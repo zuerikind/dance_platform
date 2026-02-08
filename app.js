@@ -125,7 +125,29 @@ const DANCE_LOCALES = {
         school_created: "School created successfully!",
         switch_school: "Switch School",
         welcome_classes: "Welcome to the classes of",
-        loading: "Loading..."
+        loading: "Loading...",
+        dev_access_title: "Dev Access",
+        dev_access_subtitle: "Enter platform developer credentials",
+        dev_login_btn: "Login",
+        dev_dashboard_title: "Platform Developer",
+        dev_school_inspector: "School Inspector",
+        dev_active_schools: "Active Schools",
+        dev_stats_schools: "Schools",
+        dev_stats_students: "Total Students",
+        dev_stats_plans: "Plans",
+        dev_stats_classes: "Classes",
+        dev_view_details: "View Details",
+        dev_enter_as_admin: "Enter as Admin",
+        dev_voler_dashboard: "Back to Dashboard",
+        dev_admins_label: "Administrators",
+        dev_students_label: "Students",
+        dev_plans_label: "Subscription Catalogue",
+        dev_classes_label: "Schedule and Classes",
+        dev_no_admins: "No admins assigned",
+        dev_no_students: "No students registered",
+        dev_no_plans: "No plans defined",
+        dev_no_classes: "No classes configured",
+        password_label: "Password"
     },
     es: {
         nav_schedule: "Horario",
@@ -248,7 +270,29 @@ const DANCE_LOCALES = {
         school_created: "¡Escuela creada con éxito!",
         switch_school: "Cambiar Escuela",
         welcome_classes: "Bienvenido a las clases de",
-        loading: "Cargando..."
+        loading: "Cargando...",
+        dev_access_title: "Acceso Dev",
+        dev_access_subtitle: "Ingresa credenciales de desarrollador",
+        dev_login_btn: "Entrar",
+        dev_dashboard_title: "Plataforma Dev",
+        dev_school_inspector: "Inspector de Escuela",
+        dev_active_schools: "Escuelas Activas",
+        dev_stats_schools: "Escuelas",
+        dev_stats_students: "Total Alumnos",
+        dev_stats_plans: "Planes",
+        dev_stats_classes: "Clases",
+        dev_view_details: "Ver Detalles",
+        dev_enter_as_admin: "Entrar como Admin",
+        dev_voler_dashboard: "Volver al Dashboard",
+        dev_admins_label: "Administradores",
+        dev_students_label: "Alumnos",
+        dev_plans_label: "Catálogo de Planes",
+        dev_classes_label: "Horarios y Clases",
+        dev_no_admins: "Sin administradores",
+        dev_no_students: "Sin alumnos registrados",
+        dev_no_plans: "Sin planes definidos",
+        dev_no_classes: "Sin clases configuradas",
+        password_label: "Contraseña"
     }
 };
 
@@ -410,6 +454,10 @@ function updateI18n() {
         const key = el.getAttribute('data-i18n');
         el.textContent = window.t(key);
     });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = window.t(key);
+    });
     const langIndicator = document.getElementById('lang-text');
     if (langIndicator) langIndicator.textContent = (state.language || 'EN').toUpperCase();
 }
@@ -457,7 +505,7 @@ function renderView() {
     }
     else if (view === 'super-admin-dashboard' || view === 'platform-dev-dashboard') {
         const isDev = view === 'platform-dev-dashboard';
-        const title = isDev ? "Platform Developer" : "Platform Super Admin";
+        const title = isDev ? t.dev_dashboard_title : "Platform Super Admin";
         const schools = isDev ? state.platformData.schools : state.schools;
 
         html += `
@@ -471,19 +519,19 @@ function renderView() {
                     <!-- PLATFORM STATS -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
                         <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 20px; border: 1.5px solid var(--border);">
-                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">Escuelas</div>
+                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">${t.dev_stats_schools}</div>
                             <div style="font-size: 24px; font-weight: 800;">${state.platformData.schools.length}</div>
                         </div>
                         <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 20px; border: 1.5px solid var(--border);">
-                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">Alumnos Totales</div>
+                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">${t.dev_stats_students}</div>
                             <div style="font-size: 24px; font-weight: 800;">${state.platformData.students.length}</div>
                         </div>
                     </div>
                 ` : ''}
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">Escuelas Activas</div>
-                    <button class="${isDev ? 'btn-primary' : 'btn-primary'}" onclick="${isDev ? 'createNewSchoolWithAdmin()' : 'createNewSchool()'}" style="padding: 8px 16px; font-size: 13px; height: auto;">+ Nueva Escuela</button>
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.dev_active_schools}</div>
+                    <button class="${isDev ? 'btn-primary' : 'btn-primary'}" onclick="${isDev ? 'createNewSchoolWithAdmin()' : 'createNewSchool()'}" style="padding: 8px 16px; font-size: 13px; height: auto;">${t.add_school_btn}</button>
                 </div>
 
                 <div class="ios-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
@@ -498,17 +546,17 @@ function renderView() {
                                         <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6;">ID: ${s.id}</div>
                                     </div>
                                     <div style="font-size: 11px; font-weight: 700; color: var(--system-blue); background: rgba(0, 122, 255, 0.1); padding: 4px 10px; border-radius: 12px;">
-                                        ${schoolStudents} Alumnos
+                                        ${schoolStudents} ${t.dev_students_label}
                                     </div>
                                 </div>
                                 <div style="font-size: 13px; color: var(--text-secondary);">
-                                    <span style="font-weight: 600;">Admins:</span> ${schoolAdmins || 'N/A'}
+                                    <span style="font-weight: 600;">${t.dev_admins_label}:</span> ${schoolAdmins || 'N/A'}
                                 </div>
                                 <button class="btn-primary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px;">
-                                    Ver Detalles
+                                    ${t.dev_view_details}
                                 </button>
                                 <button class="btn-secondary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px; opacity: 0.7;">
-                                    Entrar como Admin
+                                    ${t.dev_enter_as_admin}
                                 </button>
                             </div>
                         `;
@@ -520,7 +568,7 @@ function renderView() {
         const schoolId = state.selectedDevSchoolId;
         const school = state.platformData.schools.find(s => s.id === schoolId);
         if (!school) {
-            html += `<div style="padding:2rem;">Escuela no encontrada. <button class="btn-primary" onclick="state.currentView='platform-dev-dashboard'; renderView();">Volver al Dashboard</button></div>`;
+            html += `<div style="padding:2rem;">${t.not_found_msg}. <button class="btn-primary" onclick="state.currentView='platform-dev-dashboard'; renderView();">${t.dev_voler_dashboard}</button></div>`;
         } else {
             const students = state.platformData.students.filter(s => s.school_id === schoolId);
             const admins = state.platformData.admins.filter(a => a.school_id === schoolId);
@@ -533,28 +581,28 @@ function renderView() {
                         <i data-lucide="arrow-left" size="20" style="margin: 0 auto;"></i>
                     </button>
                     <div class="ios-large-title">${school.name}</div>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 600;">PLATFORM INSPECTOR • ID: ${schoolId}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 600;">${t.dev_school_inspector} • ID: ${schoolId}</div>
                 </div>
 
                 <div style="padding: 1.2rem;">
                     <!-- STATS GRID -->
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom: 2rem;">
                         <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
-                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">Alumnos</div>
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">${t.dev_students_label}</div>
                             <div style="font-size: 20px; font-weight: 800;">${students.length}</div>
                         </div>
                         <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
-                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">Planes</div>
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">${t.dev_stats_plans}</div>
                             <div style="font-size: 20px; font-weight: 800;">${subs.length}</div>
                         </div>
                         <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
-                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">Clases</div>
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">${t.dev_stats_classes}</div>
                             <div style="font-size: 20px; font-weight: 800;">${classes.length}</div>
                         </div>
                     </div>
 
                     <!-- ADMINS SECTION -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.8rem; padding: 0 0.5rem;">Administradores</div>
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_admins_label}</div>
                     <div class="ios-list">
                         ${admins.length > 0 ? admins.map(a => `
                             <div class="ios-list-item" style="padding: 12px 16px;">
@@ -562,15 +610,15 @@ function renderView() {
                                     <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--system-blue);">${a.username.charAt(0).toUpperCase()}</div>
                                     <div>
                                         <div style="font-weight: 700; font-size: 16px;">${a.username}</div>
-                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6;">Password: ${a.password}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6;">${t.password_label}: ${a.password}</div>
                                     </div>
                                 </div>
                             </div>
-                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">Sin administradores</div>'}
+                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">${t.dev_no_admins}</div>`}
                     </div>
 
                     <!-- STUDENTS LIST -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">Alumnos de la Escuela</div>
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_students_label}</div>
                     <div class="ios-list" style="max-height: 400px; overflow-y: auto;">
                         ${students.length > 0 ? students.map(s => `
                             <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 0.5px solid var(--border);">
@@ -580,25 +628,25 @@ function renderView() {
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-weight: 800; color: var(--system-blue); font-size: 17px;">${s.balance === null ? '∞' : s.balance}</div>
-                                    <div style="font-size: 10px; opacity: 0.5; font-weight: 700; text-transform: uppercase;">Balance</div>
+                                    <div style="font-size: 10px; opacity: 0.5; font-weight: 700; text-transform: uppercase;">${t.balance_label}</div>
                                 </div>
                             </div>
-                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem;">No hay alumnos registrados</div>'}
+                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem;">${t.dev_no_students}</div>`}
                     </div>
 
                     <!-- PLANS & SUBSCRIPTIONS -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">Catálogo de Planes</div>
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_plans_label}</div>
                     <div class="ios-list">
                         ${subs.length > 0 ? subs.map(sb => `
                             <div class="ios-list-item" style="padding: 12px 16px;">
                                 <div style="font-weight: 700; font-size: 16px;">${sb.name}</div>
                                 <div style="font-weight: 800; font-size: 16px; color: var(--system-green);">$${sb.price}</div>
                             </div>
-                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">No hay planes definidos</div>'}
+                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">${t.dev_no_plans}</div>`}
                     </div>
 
                     <!-- CLASSES / SCHEDULE -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">Horarios y Clases</div>
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_classes_label}</div>
                     <div class="ios-list">
                         ${classes.length > 0 ? classes.map(c => `
                             <div class="ios-list-item" style="padding: 12px 16px;">
@@ -608,7 +656,7 @@ function renderView() {
                                 </div>
                                 <div style="font-size: 10px; font-weight: 700; background: var(--system-gray6); padding: 4px 10px; border-radius: 12px; text-transform: uppercase;">${c.tag || 'OPEN'}</div>
                             </div>
-                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">No hay clases configuradas</div>'}
+                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">${t.dev_no_classes}</div>`}
                     </div>
                 </div>
             `;
@@ -2172,6 +2220,19 @@ document.getElementById('lang-toggle').addEventListener('click', () => {
 });
 
 document.getElementById('dev-login-trigger').addEventListener('click', () => window.promptDevLogin());
+
+// Global Enter Key Handler for Logins
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const target = e.target;
+        if (target.id === 'dev-pass-input') window.submitDevLogin();
+        if (target.id === 'auth-pass') {
+            const isSignup = state.authMode === 'signup';
+            if (isSignup) signUpStudent(); else loginStudent();
+        }
+        if (target.id === 'admin-pass-input') loginAdminWithCreds();
+    }
+});
 
 document.getElementById('logout-btn').addEventListener('click', logout);
 document.getElementById('close-scanner').addEventListener('click', stopScanner);

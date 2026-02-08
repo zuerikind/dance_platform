@@ -124,25 +124,25 @@
                 style="background: var(--primary-soft); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--primary);">
                 <i data-lucide="sunglasses" size="30"></i>
             </div>
-            <h2 style="margin-bottom: 0.5rem;">Dev Access</h2>
-            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 2rem;">Enter platform developer credentials
-            </p>
+            <h2 style="margin-bottom: 0.5rem;" data-i18n="dev_access_title">Dev Access</h2>
+            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 2rem;" data-i18n="dev_access_subtitle">Enter
+                platform developer credentials</p>
 
             <div class="ios-list" style="margin-bottom: 2rem;">
                 <div class="ios-list-item" style="padding: 10px 16px;">
-                    <input type="text" id="dev-user-input" placeholder="Username"
+                    <input type="text" id="dev-user-input" data-i18n-placeholder="username" placeholder="Username"
                         style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
                 </div>
                 <div class="ios-list-item" style="padding: 10px 16px;">
-                    <input type="password" id="dev-pass-input" placeholder="Password"
+                    <input type="password" id="dev-pass-input" data-i18n-placeholder="password" placeholder="Password"
                         style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
                 </div>
             </div>
 
-            <button onclick="window.submitDevLogin()" class="btn-primary"
-                style="width: 100%; margin-bottom: 0.8rem;">Login</button>
+            <button onclick="window.submitDevLogin()" class="btn-primary" style="width: 100%; margin-bottom: 0.8rem;"
+                data-i18n="dev_login_btn">Login</button>
             <button onclick="document.getElementById('dev-login-modal').classList.add('hidden')" class="btn-secondary"
-                style="width: 100%;">Cancel</button>
+                style="width: 100%;" data-i18n="cancel">Cancel</button>
         </div>
     </div>
 
