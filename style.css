@@ -62,32 +62,33 @@ body.dark-mode {
     display: none !important;
 }
 
-/* REFINED INCONSPICUOUS DEV BUTTON */
+/* REFINED VISIBLE DEV BUTTON */
 .nav-controls #dev-login-trigger {
     background: transparent !important;
     border: none !important;
     color: var(--text-secondary) !important;
-    opacity: 0.2;
-    transition: all 0.3s ease;
+    opacity: 0.5;
+    /* Clearly visible but still discrete */
+    transition: all 0.2s ease;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 32px !important;
-    height: 32px !important;
+    width: 34px !important;
+    height: 34px !important;
     padding: 0 !important;
     cursor: pointer !important;
 }
 
 .nav-controls #dev-login-trigger:hover {
-    opacity: 0.8;
-    color: var(--text-primary) !important;
-    background: var(--primary-soft) !important;
-    border-radius: 50% !important;
+    opacity: 1;
+    color: var(--system-blue) !important;
+    background: rgba(0, 122, 255, 0.1) !important;
+    border-radius: 10px !important;
 }
 
 .nav-controls #dev-login-trigger i {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
 }
 
 body {
