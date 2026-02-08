@@ -486,38 +486,133 @@ function renderView() {
                     <button class="${isDev ? 'btn-primary' : 'btn-primary'}" onclick="${isDev ? 'createNewSchoolWithAdmin()' : 'createNewSchool()'}" style="padding: 8px 16px; font-size: 13px; height: auto;">+ Nueva Escuela</button>
                 </div>
 
-                <div class="${isDev ? 'ios-list' : 'ios-list'}" style="${!isDev ? 'display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;' : ''}">
+                <div class="ios-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
                     ${schools.map(s => {
-            if (isDev) {
-                const schoolStudents = state.platformData.students.filter(st => st.school_id === s.id).length;
-                const schoolAdmins = state.platformData.admins.filter(a => a.school_id === s.id).map(a => a.username).join(', ');
-                return `
-                            <div class="ios-list-item" style="flex-direction: column; align-items: stretch; padding: 16px; background: var(--bg-card); margin-bottom: 10px; border-radius: 15px; border: 1px solid var(--border);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <div style="font-size: 17px; font-weight: 700;">${s.name}</div>
-                                    <div style="font-size: 12px; font-weight: 600; color: var(--system-blue); background: rgba(0, 122, 255, 0.1); padding: 4px 10px; border-radius: 20px;">${schoolStudents} Alumnos</div>
+            const schoolStudents = state.platformData.students.filter(st => st.school_id === s.id).length;
+            const schoolAdmins = state.platformData.admins.filter(a => a.school_id === s.id).map(a => a.username).join(', ');
+            return `
+                            <div class="card" style="padding: 1.5rem; border-radius: 20px; display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div>
+                                        <div style="font-size: 18px; font-weight: 800; margin-bottom: 2px;">${s.name}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6;">ID: ${s.id}</div>
+                                    </div>
+                                    <div style="font-size: 11px; font-weight: 700; color: var(--system-blue); background: rgba(0, 122, 255, 0.1); padding: 4px 10px; border-radius: 12px;">
+                                        ${schoolStudents} Alumnos
+                                    </div>
                                 </div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">Admins: ${schoolAdmins || 'Sin admins'}</div>
-                                <div style="font-size: 11px; color: var(--system-gray); margin-top: 4px;">ID: ${s.id}</div>
-                                <div style="margin-top: 12px; display: flex; gap: 8px;">
-                                    <button class="btn-secondary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.currentView='admin-students'; fetchAllData();" style="flex: 1; padding: 10px; font-size: 12px; height: auto;">Entrar como Admin</button>
+                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                    <span style="font-weight: 600;">Admins:</span> ${schoolAdmins || 'N/A'}
                                 </div>
+                                <button class="btn-primary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px;">
+                                    Ver Detalles
+                                </button>
+                                <button class="btn-secondary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px; opacity: 0.7;">
+                                    Entrar como Admin
+                                </button>
                             </div>
                         `;
-            } else {
-                return `
-                        <div class="card" style="padding: 1.5rem; border-radius: 20px;">
-                            <h3 style="margin-bottom: 0.5rem;">${s.name}</h3>
-                            <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 1rem;">ID: ${s.id}</div>
-                            <button class="btn-secondary w-full" onclick="selectSchool('${s.id}')">Manage School</button>
-                        </div>
-                    `;
-            }
         }).join('')}
                 </div>
-                <button class="btn-icon mt-4" onclick="setState({currentView: 'school-selection'})" style="margin-top: 2rem;">Back to Selection</button>
             </div>
         `;
+    } else if (view === 'platform-school-details') {
+        const schoolId = state.selectedDevSchoolId;
+        const school = state.platformData.schools.find(s => s.id === schoolId);
+        if (!school) {
+            html += `<div style="padding:2rem;">Escuela no encontrada. <button class="btn-primary" onclick="state.currentView='platform-dev-dashboard'; renderView();">Volver al Dashboard</button></div>`;
+        } else {
+            const students = state.platformData.students.filter(s => s.school_id === schoolId);
+            const admins = state.platformData.admins.filter(a => a.school_id === schoolId);
+            const classes = state.platformData.classes.filter(c => c.school_id === schoolId);
+            const subs = state.platformData.subscriptions.filter(s => s.school_id === schoolId);
+
+            html += `
+                <div class="ios-header" style="background: transparent;">
+                    <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; margin-bottom: 1rem; border: 1px solid var(--border);">
+                        <i data-lucide="arrow-left" size="20" style="margin: 0 auto;"></i>
+                    </button>
+                    <div class="ios-large-title">${school.name}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 600;">PLATFORM INSPECTOR • ID: ${schoolId}</div>
+                </div>
+
+                <div style="padding: 1.2rem;">
+                    <!-- STATS GRID -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom: 2rem;">
+                        <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">Alumnos</div>
+                            <div style="font-size: 20px; font-weight: 800;">${students.length}</div>
+                        </div>
+                        <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">Planes</div>
+                            <div style="font-size: 20px; font-weight: 800;">${subs.length}</div>
+                        </div>
+                        <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">Clases</div>
+                            <div style="font-size: 20px; font-weight: 800;">${classes.length}</div>
+                        </div>
+                    </div>
+
+                    <!-- ADMINS SECTION -->
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.8rem; padding: 0 0.5rem;">Administradores</div>
+                    <div class="ios-list">
+                        ${admins.length > 0 ? admins.map(a => `
+                            <div class="ios-list-item" style="padding: 12px 16px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--system-blue);">${a.username.charAt(0).toUpperCase()}</div>
+                                    <div>
+                                        <div style="font-weight: 700; font-size: 16px;">${a.username}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6;">Password: ${a.password}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">Sin administradores</div>'}
+                    </div>
+
+                    <!-- STUDENTS LIST -->
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">Alumnos de la Escuela</div>
+                    <div class="ios-list" style="max-height: 400px; overflow-y: auto;">
+                        ${students.length > 0 ? students.map(s => `
+                            <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 0.5px solid var(--border);">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 700; font-size: 16px;">${s.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${s.phone || 'S/T'} • PW: ${s.password}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 800; color: var(--system-blue); font-size: 17px;">${s.balance === null ? '∞' : s.balance}</div>
+                                    <div style="font-size: 10px; opacity: 0.5; font-weight: 700; text-transform: uppercase;">Balance</div>
+                                </div>
+                            </div>
+                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem;">No hay alumnos registrados</div>'}
+                    </div>
+
+                    <!-- PLANS & SUBSCRIPTIONS -->
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">Catálogo de Planes</div>
+                    <div class="ios-list">
+                        ${subs.length > 0 ? subs.map(sb => `
+                            <div class="ios-list-item" style="padding: 12px 16px;">
+                                <div style="font-weight: 700; font-size: 16px;">${sb.name}</div>
+                                <div style="font-weight: 800; font-size: 16px; color: var(--system-green);">$${sb.price}</div>
+                            </div>
+                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">No hay planes definidos</div>'}
+                    </div>
+
+                    <!-- CLASSES / SCHEDULE -->
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">Horarios y Clases</div>
+                    <div class="ios-list">
+                        ${classes.length > 0 ? classes.map(c => `
+                            <div class="ios-list-item" style="padding: 12px 16px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 700; font-size: 16px;">${c.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.8;">${c.day} • ${c.time}</div>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 700; background: var(--system-gray6); padding: 4px 10px; border-radius: 12px; text-transform: uppercase;">${c.tag || 'OPEN'}</div>
+                            </div>
+                        `).join('') : '<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">No hay clases configuradas</div>'}
+                    </div>
+                </div>
+            `;
+        }
     } else if (view === 'auth') {
         const isSignup = state.authMode === 'signup';
         html += `
@@ -1004,7 +1099,9 @@ function renderView() {
     if (window.lucide) lucide.createIcons();
 
     // Global UI Updates
-    const showNav = state.currentUser !== null && !['school-selection', 'auth'].includes(view);
+    const isDevView = ['platform-dev-dashboard', 'platform-school-details'].includes(view);
+    const showNav = state.currentUser !== null && !['school-selection', 'auth'].includes(view) && !isDevView;
+
     document.getElementById('logout-btn').classList.toggle('hidden', state.currentUser === null);
     document.getElementById('dev-login-trigger').classList.toggle('hidden', state.currentUser !== null);
     document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
@@ -1231,16 +1328,20 @@ async function fetchPlatformData() {
     renderView();
 
     try {
-        const [schools, students, admins] = await Promise.all([
+        const [schools, students, admins, classes, subs] = await Promise.all([
             supabaseClient.from('schools').select('*').order('name'),
             supabaseClient.from('students').select('*'),
-            supabaseClient.from('admins').select('*')
+            supabaseClient.from('admins').select('*'),
+            supabaseClient.from('classes').select('*'),
+            supabaseClient.from('subscriptions').select('*')
         ]);
 
         state.platformData = {
             schools: schools.data || [],
             students: students.data || [],
-            admins: admins.data || []
+            admins: admins.data || [],
+            classes: classes.data || [],
+            subscriptions: subs.data || []
         };
 
         state.loading = false;
