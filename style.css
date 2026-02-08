@@ -62,26 +62,32 @@ body.dark-mode {
     display: none !important;
 }
 
-/* FORCED VISIBILITY FOR DEV BUTTON */
+/* REFINED INCONSPICUOUS DEV BUTTON */
 .nav-controls #dev-login-trigger {
-    background: #007AFF !important;
+    background: transparent !important;
     border: none !important;
-    color: #FFFFFF !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    color: var(--text-secondary) !important;
+    opacity: 0.2;
+    transition: all 0.3s ease;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0 !important;
-    width: 44px !important;
+    width: 32px !important;
     height: 32px !important;
-    border-radius: 8px !important;
-    margin-right: 8px !important;
-    z-index: 9999 !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+}
+
+.nav-controls #dev-login-trigger:hover {
+    opacity: 0.8;
+    color: var(--text-primary) !important;
+    background: var(--primary-soft) !important;
+    border-radius: 50% !important;
 }
 
 .nav-controls #dev-login-trigger i {
-    color: #FFFFFF !important;
+    width: 18px;
+    height: 18px;
 }
 
 body {
