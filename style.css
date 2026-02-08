@@ -62,18 +62,26 @@ body.dark-mode {
     display: none !important;
 }
 
-#dev-login-trigger {
-    background: var(--system-blue) !important;
+/* FORCED VISIBILITY FOR DEV BUTTON */
+.nav-controls #dev-login-trigger {
+    background: #007AFF !important;
     border: none !important;
-    color: white !important;
+    color: #FFFFFF !important;
     opacity: 1 !important;
     visibility: visible !important;
-    padding: 4px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    width: 44px !important;
+    height: 32px !important;
     border-radius: 8px !important;
+    margin-right: 8px !important;
+    z-index: 9999 !important;
 }
 
-#dev-login-trigger:hover {
-    background: #0062cc !important;
+.nav-controls #dev-login-trigger i {
+    color: #FFFFFF !important;
 }
 
 body {
