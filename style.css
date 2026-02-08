@@ -58,6 +58,18 @@ body.dark-mode {
     /* Grouped background in dark mode */
 }
 
+.hidden {
+    display: none !important;
+}
+
+#dev-login-trigger {
+    background: rgba(0, 122, 255, 0.1) !important;
+    border: 1px solid rgba(0, 122, 255, 0.3) !important;
+    color: var(--system-blue) !important;
+    border-radius: 12px !important;
+    padding: 4px 8px !important;
+}
+
 body {
     font-family: var(--system-font);
     background-color: var(--bg-body);
@@ -320,7 +332,7 @@ body::before {
     font-weight: 600;
     font-size: 0.95rem;
     transition: all 0.2s var(--transition);
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     gap: 0.6rem;
