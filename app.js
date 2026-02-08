@@ -1180,6 +1180,16 @@ function renderView() {
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-view') === view);
     });
+
+    // Update Notification Badges (Admin)
+    if (state.isAdmin) {
+        const pendingCount = (state.paymentRequests || []).filter(r => r.status === 'pending').length;
+        const badge = document.getElementById('memberships-badge');
+        if (badge) {
+            badge.textContent = pendingCount;
+            badge.classList.toggle('hidden', pendingCount === 0);
+        }
+    }
 }
 
 // --- ACTIONS ---
