@@ -25,9 +25,7 @@
             <button id="logout-btn" class="btn-icon hidden" title="Logout">
                 <i data-lucide="log-out"></i>
             </button>
-            <button id="dev-login-trigger" class="btn-icon hidden"
-                style="opacity: 0.3; transition: opacity 0.3s; margin-right: 8px;" onmouseover="this.style.opacity='1'"
-                onmouseout="this.style.opacity='0.3'">
+            <button id="dev-login-trigger" class="btn-icon" style="opacity: 1; margin-right: 8px;">
                 <i data-lucide="sunglasses"></i>
             </button>
             <button id="lang-toggle" class="btn-secondary">
@@ -117,6 +115,34 @@
     <div id="student-modal" class="modal hidden">
         <div class="modal-content" id="student-modal-content" style="max-width: 450px;">
             <!-- Content injected via app.js -->
+        </div>
+    </div>
+
+    <div id="dev-login-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 350px; text-align: center; padding: 2rem;">
+            <div
+                style="background: var(--primary-soft); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--primary);">
+                <i data-lucide="sunglasses" size="30"></i>
+            </div>
+            <h2 style="margin-bottom: 0.5rem;">Dev Access</h2>
+            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 2rem;">Enter platform developer credentials
+            </p>
+
+            <div class="ios-list" style="margin-bottom: 2rem;">
+                <div class="ios-list-item" style="padding: 10px 16px;">
+                    <input type="text" id="dev-user-input" placeholder="Username"
+                        style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
+                </div>
+                <div class="ios-list-item" style="padding: 10px 16px;">
+                    <input type="password" id="dev-pass-input" placeholder="Password"
+                        style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
+                </div>
+            </div>
+
+            <button onclick="window.submitDevLogin()" class="btn-primary"
+                style="width: 100%; margin-bottom: 0.8rem;">Login</button>
+            <button onclick="document.getElementById('dev-login-modal').classList.add('hidden')" class="btn-secondary"
+                style="width: 100%;">Cancel</button>
         </div>
     </div>
 

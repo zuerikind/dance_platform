@@ -1169,10 +1169,20 @@ window.loginAdminWithCreds = async () => {
 };
 
 window.promptDevLogin = () => {
-    const user = prompt("Developer Username:");
-    const pass = prompt("Developer Password:");
+    document.getElementById('dev-user-input').value = '';
+    document.getElementById('dev-pass-input').value = '';
+    document.getElementById('dev-login-modal').classList.remove('hidden');
+    document.getElementById('dev-user-input').focus();
+};
+
+window.submitDevLogin = () => {
+    const user = document.getElementById('dev-user-input').value;
+    const pass = document.getElementById('dev-pass-input').value;
     if (user && pass) {
+        document.getElementById('dev-login-modal').classList.add('hidden');
         window.loginDeveloper(user, pass);
+    } else {
+        alert("Please enter both username and password.");
     }
 };
 
