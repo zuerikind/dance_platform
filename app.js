@@ -138,7 +138,7 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Classes",
         dev_view_details: "View Details",
         dev_enter_as_admin: "Enter as Admin",
-        dev_voler_dashboard: "Back to Dashboard",
+        dev_volver_dashboard: "Back to Dashboard",
         dev_admins_label: "Administrators",
         dev_students_label: "Students",
         dev_plans_label: "Subscription Catalogue",
@@ -283,7 +283,7 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Clases",
         dev_view_details: "Ver Detalles",
         dev_enter_as_admin: "Entrar como Admin",
-        dev_voler_dashboard: "Volver al Dashboard",
+        dev_volver_dashboard: "Volver al Dashboard",
         dev_admins_label: "Administradores",
         dev_students_label: "Alumnos",
         dev_plans_label: "Catálogo de Planes",
@@ -568,7 +568,7 @@ function renderView() {
         const schoolId = state.selectedDevSchoolId;
         const school = state.platformData.schools.find(s => s.id === schoolId);
         if (!school) {
-            html += `<div style="padding:2rem;">${t.not_found_msg}. <button class="btn-primary" onclick="state.currentView='platform-dev-dashboard'; renderView();">${t.dev_voler_dashboard}</button></div>`;
+            html += `<div style="padding:2rem;">${t.not_found_msg}. <button class="btn-primary" onclick="state.currentView='platform-dev-dashboard'; renderView();">${t.dev_volver_dashboard}</button></div>`;
         } else {
             const students = state.platformData.students.filter(s => s.school_id === schoolId);
             const admins = state.platformData.admins.filter(a => a.school_id === schoolId);
