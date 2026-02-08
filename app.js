@@ -297,8 +297,16 @@ async function fetchAllData() {
         }
 
         // If no school is selected, we can't fetch tenant-specific data
-        if (!state.currentSchool) {
+        // PLATFORM DEV EXCEPTION: Don't redirect if in God Mode
+        if (!state.currentSchool && !state.isPlatformDev && state.currentView !== 'platform-dev-dashboard') {
             state.currentView = 'school-selection';
+            state.loading = false;
+            renderView();
+            return;
+        }
+
+        // Skip school-specific fetching if no school selected (even in dev mode)
+        if (!state.currentSchool) {
             state.loading = false;
             renderView();
             return;
@@ -354,6 +362,7 @@ function saveState() {
         theme: state.theme,
         currentUser: state.currentUser,
         isAdmin: state.isAdmin,
+        isPlatformDev: state.isPlatformDev,
         currentView: state.currentView,
         scheduleView: state.scheduleView,
         lastActivity: state.lastActivity,
@@ -2120,6 +2129,7 @@ document.querySelector('.logo').addEventListener('mouseup', () => {
         state.theme = saved.theme || 'dark';
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
+        if (saved.isPlatformDev !== undefined) state.isPlatformDev = saved.isPlatformDev;
         if (saved.currentView) state.currentView = saved.currentView;
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
