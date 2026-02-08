@@ -443,11 +443,6 @@ function renderView() {
                         `).join('') : '<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">Iniciando conexión...</div>'}
                     </div>
                 </div>
-
-                <!-- Hidden Developer Trigger -->
-                <div onclick="window.promptDevLogin()" style="position: fixed; bottom: 20px; left: 20px; color: rgba(255,255,255,0.03); cursor: pointer; padding: 10px; transition: color 0.3s;" onmouseover="this.style.color='rgba(255,255,255,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.03)'">
-                    <i data-lucide="sunglasses" size="18"></i>
-                </div>
             </div>
         `;
     }
@@ -2054,6 +2049,8 @@ document.getElementById('lang-toggle').addEventListener('click', () => {
     state.language = state.language === 'en' ? 'es' : 'en';
     saveState(); updateI18n(); renderView();
 });
+
+document.getElementById('dev-login-trigger').addEventListener('click', () => window.promptDevLogin());
 
 document.getElementById('logout-btn').addEventListener('click', logout);
 document.getElementById('close-scanner').addEventListener('click', stopScanner);
