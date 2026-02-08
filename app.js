@@ -274,6 +274,8 @@ let state = {
     currentSchool: null,
     admins: [],
     showWeeklyPreview: false,
+    isPlatformDev: false,
+    platformData: { schools: [], students: [], admins: [] },
     loading: false
 };
 
@@ -441,25 +443,73 @@ function renderView() {
                         `).join('') : '<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">Iniciando conexión...</div>'}
                     </div>
                 </div>
+
+                <!-- Hidden Developer Trigger -->
+                <div onclick="window.promptDevLogin()" style="position: fixed; bottom: 20px; left: 20px; color: rgba(255,255,255,0.03); cursor: pointer; padding: 10px; transition: color 0.3s;" onmouseover="this.style.color='rgba(255,255,255,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.03)'">
+                    <i data-lucide="sunglasses" size="18"></i>
+                </div>
             </div>
         `;
     }
-    else if (view === 'super-admin-dashboard') {
+    else if (view === 'super-admin-dashboard' || view === 'platform-dev-dashboard') {
+        const isDev = view === 'platform-dev-dashboard';
+        const title = isDev ? "Platform Developer" : "Platform Super Admin";
+        const schools = isDev ? state.platformData.schools : state.schools;
+
         html += `
-            <div style="padding: 2rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 3rem;">
-                    <h1 style="margin:0;">Platform Super Admin</h1>
-                    <button class="btn-primary" onclick="createNewSchool()">${t.add_school_btn}</button>
+            <div class="ios-header">
+                <div class="ios-large-title">${title}</div>
+                ${isDev ? '<div style="font-size: 13px; color: var(--system-blue); font-weight: 600; padding: 0 1.2rem; margin-top: -5px;">Modo Dios</div>' : ''}
+            </div>
+            
+            <div style="padding: 1.2rem;">
+                ${isDev ? `
+                    <!-- PLATFORM STATS -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 20px; border: 1.5px solid var(--border);">
+                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">Escuelas</div>
+                            <div style="font-size: 24px; font-weight: 800;">${state.platformData.schools.length}</div>
+                        </div>
+                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 20px; border: 1.5px solid var(--border);">
+                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">Alumnos Totales</div>
+                            <div style="font-size: 24px; font-weight: 800;">${state.platformData.students.length}</div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">Escuelas Activas</div>
+                    <button class="${isDev ? 'btn-primary' : 'btn-primary'}" onclick="${isDev ? 'createNewSchoolWithAdmin()' : 'createNewSchool()'}" style="padding: 8px 16px; font-size: 13px; height: auto;">+ Nueva Escuela</button>
                 </div>
-                
-                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
-                    ${state.schools.map(s => `
+
+                <div class="${isDev ? 'ios-list' : 'ios-list'}" style="${!isDev ? 'display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;' : ''}">
+                    ${schools.map(s => {
+            if (isDev) {
+                const schoolStudents = state.platformData.students.filter(st => st.school_id === s.id).length;
+                const schoolAdmins = state.platformData.admins.filter(a => a.school_id === s.id).map(a => a.username).join(', ');
+                return `
+                            <div class="ios-list-item" style="flex-direction: column; align-items: stretch; padding: 16px; background: var(--bg-card); margin-bottom: 10px; border-radius: 15px; border: 1px solid var(--border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div style="font-size: 17px; font-weight: 700;">${s.name}</div>
+                                    <div style="font-size: 12px; font-weight: 600; color: var(--system-blue); background: rgba(0, 122, 255, 0.1); padding: 4px 10px; border-radius: 20px;">${schoolStudents} Alumnos</div>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">Admins: ${schoolAdmins || 'Sin admins'}</div>
+                                <div style="font-size: 11px; color: var(--system-gray); margin-top: 4px;">ID: ${s.id}</div>
+                                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                    <button class="btn-secondary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.currentView='admin-students'; fetchAllData();" style="flex: 1; padding: 10px; font-size: 12px; height: auto;">Entrar como Admin</button>
+                                </div>
+                            </div>
+                        `;
+            } else {
+                return `
                         <div class="card" style="padding: 1.5rem; border-radius: 20px;">
                             <h3 style="margin-bottom: 0.5rem;">${s.name}</h3>
                             <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 1rem;">ID: ${s.id}</div>
                             <button class="btn-secondary w-full" onclick="selectSchool('${s.id}')">Manage School</button>
                         </div>
-                    `).join('')}
+                    `;
+            }
+        }).join('')}
                 </div>
                 <button class="btn-icon mt-4" onclick="setState({currentView: 'school-selection'})" style="margin-top: 2rem;">Back to Selection</button>
             </div>
@@ -832,6 +882,50 @@ function renderView() {
                 </div>
             </div>
 
+            <!-- WEEKLY PREVIEW FOR ADMINS (Moved here) -->
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; margin-bottom: 2rem;">
+                <button onclick="window.toggleWeeklyPreview()" style="width: 100%; padding: 16px; border-radius: 20px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s ease;">
+                    <i data-lucide="${state.showWeeklyPreview ? 'eye-off' : 'eye'}" size="20"></i>
+                    ${state.showWeeklyPreview ? 'Ocultar Plan Semanal' : 'Ver Plan Semanal'}
+                </button>
+            </div>
+
+            ${state.showWeeklyPreview ? `
+            <div style="padding: 0 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;" class="slide-in">
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                    Vista Previa Alumnos (Semanal)
+                </div>
+                <div style="font-size: 10px; font-weight: 600; background: var(--system-gray6); padding: 4px 10px; border-radius: 20px; color: var(--text-secondary);">
+                    Solo lectura
+                </div>
+            </div>
+            <div style="padding: 0 0.5rem; margin-bottom: 3rem;" class="slide-in">
+                <!-- REUSING WEEKLY GRID LOGIC -->
+                <div class="weekly-grid">
+                    ${daysOrder.map(dayKey => {
+            const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
+            const aliases = dayAliases[dayKey];
+            const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
+
+            return `
+                        <div class="day-tile" style="background: var(--bg-card); border-radius: 16px;">
+                            <div class="day-tile-header" style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;">${t[dayKey.toLowerCase()]}</div>
+                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.8rem;">
+                                ${dayClasses.length > 0 ? dayClasses.map(c => `
+                                    <div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
+                                        <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
+                                        <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
+                                        <div class="tile-class-time" style="font-size: 9px;">${c.time}</div>
+                                    </div>
+                                `).join('') : `<div class="text-muted" style="font-size:9px; font-style:italic; padding: 1rem 0;">${t.no_classes_msg}</div>`}
+                            </div>
+                        </div>
+                        `;
+        }).join('')}
+                </div>
+            </div>
+            ` : ''}
+
             <div style="padding: 0 1.2rem; margin-top: 2rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.plans_label}
             </div>
@@ -898,50 +992,6 @@ function renderView() {
                     <i data-lucide="user-plus" size="18"></i> ${t.add_admin || 'Agregar Admin'}
                 </div>
             </div>
-
-            <!-- WEEKLY PREVIEW FOR ADMINS -->
-            <div style="padding: 0 1.2rem; margin-top: 3rem; margin-bottom: 2rem;">
-                <button onclick="window.toggleWeeklyPreview()" style="width: 100%; padding: 16px; border-radius: 20px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s ease;">
-                    <i data-lucide="${state.showWeeklyPreview ? 'eye-off' : 'eye'}" size="20"></i>
-                    ${state.showWeeklyPreview ? 'Ocultar Plan Semanal' : 'Ver Plan Semanal'}
-                </button>
-            </div>
-
-            ${state.showWeeklyPreview ? `
-            <div style="padding: 0 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;" class="slide-in">
-                <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                    Vista Previa Alumnos (Semanal)
-                </div>
-                <div style="font-size: 10px; font-weight: 600; background: var(--system-gray6); padding: 4px 10px; border-radius: 20px; color: var(--text-secondary);">
-                    Solo lectura
-                </div>
-            </div>
-            <div style="padding: 0 0.5rem; margin-bottom: 3rem;" class="slide-in">
-                <!-- REUSING WEEKLY GRID LOGIC -->
-                <div class="weekly-grid">
-                    ${daysOrder.map(dayKey => {
-            const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
-            const aliases = dayAliases[dayKey];
-            const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
-
-            return `
-                        <div class="day-tile" style="background: var(--bg-card); border-radius: 16px;">
-                            <div class="day-tile-header" style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;">${t[dayKey.toLowerCase()]}</div>
-                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.8rem;">
-                                ${dayClasses.length > 0 ? dayClasses.map(c => `
-                                    <div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
-                                        <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
-                                        <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
-                                        <div class="tile-class-time" style="font-size: 9px;">${c.time}</div>
-                                    </div>
-                                `).join('') : `<div class="text-muted" style="font-size:9px; font-style:italic; padding: 1rem 0;">${t.no_classes_msg}</div>`}
-                            </div>
-                        </div>
-                        `;
-        }).join('')}
-                </div>
-            </div>
-            ` : ''}
     `;
     }
 
@@ -1119,6 +1169,116 @@ window.loginAdminWithCreds = async () => {
         fetchAllData(); // Trigger fetch for local fallback as well
     } else {
         alert(t('invalid_login'));
+    }
+};
+
+window.promptDevLogin = () => {
+    const user = prompt("Developer Username:");
+    const pass = prompt("Developer Password:");
+    if (user && pass) {
+        window.loginDeveloper(user, pass);
+    }
+};
+
+window.loginDeveloper = async (user, pass) => {
+    if (!supabaseClient) {
+        alert("Database connection not initialized.");
+        return;
+    }
+
+    state.loading = true;
+    renderView();
+
+    const { data, error } = await supabaseClient
+        .from('platform_admins')
+        .select('*')
+        .eq('username', user)
+        .eq('password', pass)
+        .single();
+
+    if (data) {
+        state.isPlatformDev = true;
+        state.currentUser = { name: data.username + " (Dev)", role: "platform-dev" };
+        state.currentView = 'platform-dev-dashboard';
+        state.loading = false;
+        saveState();
+        await fetchPlatformData();
+    } else {
+        state.loading = false;
+        renderView();
+        alert("Invalid Developer credentials.");
+    }
+};
+
+async function fetchPlatformData() {
+    if (!supabaseClient) return;
+    state.loading = true;
+    renderView();
+
+    try {
+        const [schools, students, admins] = await Promise.all([
+            supabaseClient.from('schools').select('*').order('name'),
+            supabaseClient.from('students').select('*'),
+            supabaseClient.from('admins').select('*')
+        ]);
+
+        state.platformData = {
+            schools: schools.data || [],
+            students: students.data || [],
+            admins: admins.data || []
+        };
+
+        state.loading = false;
+        renderView();
+    } catch (err) {
+        state.loading = false;
+        console.error("Error fetching platform data:", err);
+        renderView();
+    }
+}
+
+window.createNewSchoolWithAdmin = async () => {
+    const schoolName = prompt("Nombre de la nueva escuela:");
+    if (!schoolName) return;
+
+    const adminUser = prompt("Username para el primer Admin:");
+    const adminPass = prompt("Password para el primer Admin:");
+    if (!adminUser || !adminPass) {
+        alert("Debes proporcionar credenciales de admin.");
+        return;
+    }
+
+    state.loading = true;
+    renderView();
+
+    try {
+        // 1. Create School
+        const { data: schoolRes, error: schoolErr } = await supabaseClient
+            .from('schools')
+            .insert([{ name: schoolName }])
+            .select()
+            .single();
+
+        if (schoolErr) throw schoolErr;
+
+        // 2. Create Admin linked to that school
+        const { error: adminErr } = await supabaseClient
+            .from('admins')
+            .insert([{
+                id: "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
+                username: adminUser,
+                password: adminPass,
+                school_id: schoolRes.id
+            }]);
+
+        if (adminErr) throw adminErr;
+
+        alert("¡Escuela y Admin creados con éxito!");
+        await fetchPlatformData();
+    } catch (err) {
+        alert("Error: " + err.message);
+        state.loading = false;
+        renderView();
     }
 };
 
