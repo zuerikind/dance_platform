@@ -576,7 +576,8 @@ function renderView() {
                                 <button class="btn-primary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px;">
                                     ${t.dev_view_details}
                                 </button>
-                                <button class="btn-secondary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px; opacity: 0.7;">
+                                </button>
+                                <button class="btn-secondary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px; opacity: 0.7;">
                                     ${t.dev_enter_as_admin}
                                 </button>
                             </div>
@@ -602,7 +603,10 @@ function renderView() {
                         <i data-lucide="arrow-left" size="20" style="margin: 0 auto;"></i>
                     </button>
                     <div class="ios-large-title">${school.name}</div>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 600;">${t.dev_school_inspector} • ID: ${schoolId}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 600; margin-bottom: 1.5rem;">${t.dev_school_inspector} • ID: ${schoolId}</div>
+                    <button class="btn-primary" onclick="state.currentSchool={id:'${school.id}', name:'${school.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 14px; height: 44px; font-size: 14px; margin-bottom: 2rem;">
+                        <i data-lucide="shield-check" size="18"></i> ${t.dev_enter_as_admin}
+                    </button>
                 </div>
 
                 <div style="padding: 1.2rem;">
@@ -1607,6 +1611,7 @@ window.selectSchool = (id) => {
 
 window.backToSchoolSelection = () => {
     state.currentSchool = null;
+    state.isAdmin = false;
     state.currentView = 'school-selection';
     saveState();
     renderView();
