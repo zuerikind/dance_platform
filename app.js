@@ -126,8 +126,14 @@ const DANCE_LOCALES = {
         switch_school: "Switch School",
         welcome_classes: "Welcome to the classes of",
         loading: "Loading...",
+        select_school_placeholder: "Choose your school...",
+        loading_schools: "Loading schools...",
+        connecting: "Connecting...",
         dev_access_title: "Dev Access",
         dev_access_subtitle: "Enter platform developer credentials",
+        footer_support: "Support",
+        footer_contact: "Contact",
+        footer_copy: "&copy; 2026 Bailadmin Systems. All rights reserved.",
         dev_login_btn: "Login",
         dev_dashboard_title: "Platform Developer",
         dev_school_inspector: "School Inspector",
@@ -274,8 +280,14 @@ const DANCE_LOCALES = {
         switch_school: "Cambiar Escuela",
         welcome_classes: "Bienvenido a las clases de",
         loading: "Cargando...",
+        select_school_placeholder: "Elige tu escuela...",
+        loading_schools: "Cargando academias...",
+        connecting: "Iniciando conexión...",
         dev_access_title: "Acceso Dev",
         dev_access_subtitle: "Ingresa credenciales de desarrollador",
+        footer_support: "Soporte",
+        footer_contact: "Contacto",
+        footer_copy: "&copy; 2026 Bailadmin Systems. Todos los derechos reservados.",
         dev_login_btn: "Entrar",
         dev_dashboard_title: "Plataforma Dev",
         dev_school_inspector: "Inspector de Escuela",
@@ -486,13 +498,13 @@ function renderView() {
                 <div class="landing-branding slide-in" style="margin-bottom: 2.5rem; text-align: center;">
                     <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 70px; height: 70px; margin-bottom: 0.5rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));">
                     <h1 style="font-size: 2.2rem; letter-spacing: -1.5px; font-weight: 800; margin-bottom: 0.2rem;">Bailadmin</h1>
-                    <p class="text-muted" style="font-size: 1rem; opacity: 0.6;">Selecciona tu academia</p>
+                    <p class="text-muted" style="font-size: 1rem; opacity: 0.6;">${t.select_school_subtitle}</p>
                 </div>
                 
                 <div style="width: 100%; max-width: 320px; position: relative; z-index: 50;">
                     <!-- Custom Dropdown Trigger -->
                     <div id="school-dropdown-trigger" onclick="toggleSchoolDropdown()">
-                        <span>${state.schools.length > 0 ? 'Elige tu escuela...' : 'Cargando academias...'}</span>
+                        <span>${state.schools.length > 0 ? t.select_school_placeholder : t.loading_schools}</span>
                         <i data-lucide="chevron-down"></i>
                     </div>
 
@@ -503,7 +515,7 @@ function renderView() {
                                 <span>${s.name}</span>
                                 ${state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : ''}
                             </div>
-                        `).join('') : '<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">Iniciando conexión...</div>'}
+                        `).join('') : `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${t.connecting}</div>`}
                     </div>
                 </div>
             </div>
