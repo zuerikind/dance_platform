@@ -997,6 +997,7 @@ function renderView() {
     // Global UI Updates
     const showNav = state.currentUser !== null && !['school-selection', 'auth'].includes(view);
     document.getElementById('logout-btn').classList.toggle('hidden', state.currentUser === null);
+    document.getElementById('dev-login-trigger').classList.toggle('hidden', view !== 'school-selection');
     document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
     document.getElementById('admin-nav').classList.toggle('hidden', !showNav || !state.isAdmin);
 
