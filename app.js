@@ -147,7 +147,10 @@ const DANCE_LOCALES = {
         dev_no_students: "No students registered",
         dev_no_plans: "No plans defined",
         dev_no_classes: "No classes configured",
-        password_label: "Password"
+        password_label: "Password",
+        delete_school_btn: "Delete School",
+        delete_school_confirm: "Are you sure you want to delete this school? ALL data (students, admins, payments, classes) will be permanently lost.",
+        delete_school_success: "School deleted successfully"
     },
     es: {
         nav_schedule: "Horario",
@@ -292,7 +295,10 @@ const DANCE_LOCALES = {
         dev_no_students: "Sin alumnos registrados",
         dev_no_plans: "Sin planes definidos",
         dev_no_classes: "Sin clases configuradas",
-        password_label: "Contraseña"
+        password_label: "Contraseña",
+        delete_school_btn: "Eliminar Escuela",
+        delete_school_confirm: "¿Estás seguro de que quieres eliminar esta escuela? TODOS los datos (alumnos, admins, pagos, clases) se perderán permanentemente.",
+        delete_school_success: "Escuela eliminada con éxito"
     }
 };
 
@@ -548,6 +554,9 @@ function renderView() {
                                     <div style="font-size: 11px; font-weight: 700; color: var(--system-blue); background: rgba(0, 122, 255, 0.1); padding: 4px 10px; border-radius: 12px;">
                                         ${schoolStudents} ${t.dev_students_label}
                                     </div>
+                                    <button class="btn-icon" onclick="window.deleteSchool('${s.id}', '${s.name}')" style="color: var(--system-red); opacity: 0.6; padding: 4px; margin-left: 8px;" title="${t.delete_school_btn}">
+                                        <i data-lucide="trash-2" size="16"></i>
+                                    </button>
                                 </div>
                                 <div style="font-size: 13px; color: var(--text-secondary);">
                                     <span style="font-weight: 600;">${t.dev_admins_label}:</span> ${schoolAdmins || 'N/A'}
@@ -1367,6 +1376,43 @@ window.loginDeveloper = async (user, pass) => {
         state.loading = false;
         renderView();
         alert("Invalid Developer credentials.");
+    }
+};
+
+window.deleteSchool = async (schoolId, schoolName) => {
+    const t = DANCE_LOCALES[state.language] || DANCE_LOCALES.en;
+    if (!confirm(`${t.delete_school_confirm}\n\nSchool: ${schoolName}`)) return;
+
+    try {
+        if (!supabaseClient) {
+            alert("No database connection");
+            return;
+        }
+
+        // 1. Delete all related data for this school
+        // We'll run them in parallel for speed, though order might matter with DB constraints.
+        // Usually, deleting the child records first is safer.
+        await Promise.all([
+            supabaseClient.from('payments').delete().eq('school_id', schoolId),
+            supabaseClient.from('classes').delete().eq('school_id', schoolId),
+            supabaseClient.from('subscriptions').delete().eq('school_id', schoolId),
+            supabaseClient.from('students').delete().eq('school_id', schoolId),
+            supabaseClient.from('admins').delete().eq('school_id', schoolId)
+        ]);
+
+        // 2. Delete the school itself
+        const { error } = await supabaseClient.from('schools').delete().eq('id', schoolId);
+
+        if (error) {
+            alert(`Error deleting school: ${error.message}`);
+        } else {
+            alert(t.delete_school_success);
+            await fetchPlatformData(); // Refresh the list
+            renderView();
+        }
+    } catch (err) {
+        console.error("Deletion failed:", err);
+        alert(`Deletion failed: ${err.message}`);
     }
 };
 
