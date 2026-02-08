@@ -63,17 +63,17 @@ body.dark-mode {
 }
 
 #dev-login-trigger {
-    background: transparent !important;
+    background: var(--system-blue) !important;
     border: none !important;
-    color: var(--text-secondary) !important;
-    opacity: 0.3;
-    transition: opacity 0.3s ease;
-    padding: 4px !important;
+    color: white !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    padding: 4px 10px !important;
+    border-radius: 8px !important;
 }
 
 #dev-login-trigger:hover {
-    opacity: 1;
-    color: var(--text-primary) !important;
+    background: #0062cc !important;
 }
 
 body {
