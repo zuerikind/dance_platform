@@ -1659,16 +1659,31 @@ window.activatePackage = async (studentId, packageName) => {
     if (pkg) console.log(`Matched subscription: `, pkg);
 
     if (student) {
-        // Ensure limit_count is a number. 
-        const limitCount = pkg ? parseInt(pkg.limit_count) : 0;
+        // Calculate new balance: accumulate if both are numbers, otherwise handle unlimited (null)
+        let newBalance;
+        const incomingLimit = pkg ? parseInt(pkg.limit_count) : 0;
+
+        if (!pkg) {
+            // If no package (e.g. resetting), set balance to 0
+            newBalance = 0;
+        } else if (isNaN(incomingLimit) || incomingLimit === 0) {
+            // New package is Unlimited
+            newBalance = null;
+        } else if (student.balance === null) {
+            // Already Unlimited, stays Unlimited
+            newBalance = null;
+        } else {
+            // Both are specific numbers, so we ADD them
+            newBalance = (student.balance || 0) + incomingLimit;
+        }
 
         const updates = {
-            package: pkg ? pkg.name : null, // Use the canonical name from the subscription
-            balance: isNaN(limitCount) ? 0 : limitCount,
+            package: pkg ? pkg.name : null,
+            balance: newBalance,
             paid: !!pkg
         };
 
-        console.log(`Update payload: `, updates);
+        console.log(`Update payload (Cumulative): `, updates);
 
         if (supabaseClient) {
             const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
@@ -1684,7 +1699,7 @@ window.activatePackage = async (studentId, packageName) => {
         student.paid = updates.paid;
 
         saveState();
-        await fetchAllData(); // Pull fresh data to be 100% sure everything is synced
+        await fetchAllData();
     }
 };
 
