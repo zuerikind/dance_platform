@@ -2596,8 +2596,25 @@ window.updateStudentPrompt = async (id) => {
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Clases Restantes</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Clases Restantes (Total)</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.05em;">Paquetes Detalles</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px; background: var(--system-gray6); border-radius: 14px; padding: 4px;">
+                        ${(s.active_packs || []).length > 0 ? s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => `
+                            <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700;">${p.name}</div>
+                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase;">${p.count} Clases • Vence: ${new Date(p.expires_at).toLocaleDateString()}</div>
+                                </div>
+                                <button onclick="window.removeStudentPack('${s.id}', '${p.id}')" style="background: transparent; border: none; color: var(--system-red); padding: 8px; cursor: pointer; opacity: 0.5;">
+                                    <i data-lucide="minus-circle" size="16"></i>
+                                </button>
+                            </div>
+                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : '<div style="padding: 16px; font-size: 12px; opacity: 0.5; text-align: center;">Sin paquetes activos</div>'}
+                    </div>
                 </div>
 
                 <div class="ios-input-group">
@@ -2608,7 +2625,7 @@ window.updateStudentPrompt = async (id) => {
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Vencimiento del Paquete (Timer)</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Próximo Vencimiento (Main Timer)</label>
                     <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? new Date(s.package_expires_at).toISOString().split('T')[0] : ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
             </div>
@@ -2628,6 +2645,53 @@ window.updateStudentPrompt = async (id) => {
 
     modal.classList.remove('hidden');
     if (window.lucide) lucide.createIcons();
+};
+
+window.removeStudentPack = async (studentId, packId) => {
+    if (!confirm("¿Eliminar este paquete? La balanza total se ajustará.")) return;
+
+    const s = state.students.find(x => x.id === studentId);
+    if (!s || !Array.isArray(s.active_packs)) return;
+
+    // Filter out the pack
+    s.active_packs = s.active_packs.filter(p => p.id !== packId);
+
+    // Recalculate balance
+    s.balance = s.active_packs.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
+
+    // Update paid status
+    if (s.active_packs.length === 0) {
+        s.paid = false;
+        s.package = null;
+        s.package_expires_at = null;
+    } else {
+        // Update next expiration date if the one removed was the soonest
+        s.package_expires_at = s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
+    }
+
+    console.log(`Removed pack[${packId}] from student[${studentId}]. New balance: ${s.balance}`);
+
+    if (supabaseClient) {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({
+                active_packs: s.active_packs,
+                balance: s.balance,
+                paid: s.paid,
+                package: s.package,
+                package_expires_at: s.package_expires_at
+            })
+            .eq('id', studentId);
+
+        if (error) {
+            alert("Error updating database: " + error.message);
+            return;
+        }
+    }
+
+    saveState();
+    // Re-render the modal to show updated list
+    window.updateStudentPrompt(studentId);
 };
 
 window.saveStudentDetails = async (id) => {
