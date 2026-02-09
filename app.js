@@ -673,7 +673,7 @@ function renderView() {
         html += `
             <div class="auth-page-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70vh; text-align: center; width: 100%;">
                 <div class="landing-branding slide-in" style="margin-bottom: 2.5rem;">
-                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 110px; height: 110px; margin-bottom: 0.5rem;">
+                    <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 150px; height: 150px; margin-bottom: 0.5rem;">
                     <h1 style="font-size: 2.2rem; letter-spacing: -1.5px; font-weight: 800; margin-bottom: 0.2rem;">Bailadmin</h1>
                     <p class="text-muted" style="font-size: 1rem; opacity: 0.6;">${t.select_school_subtitle}</p>
                 </div>
