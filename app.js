@@ -1199,10 +1199,19 @@ function renderView() {
                         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px;">
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
                                 <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px;">Día</label>
-                                <div class="ios-select-wrapper">
-                                    <select class="ios-select" onchange="updateClass(${c.id}, 'day', this.value)" style="background: transparent;">
-                                        ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
-                                    </select>
+                                <div class="custom-dropdown-container">
+                                    <div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('${c.id}')">
+                                        <span>${t[c.day.toLowerCase()]}</span>
+                                        <i data-lucide="chevron-down" size="14" style="opacity: 0.5;"></i>
+                                    </div>
+                                    <div class="custom-dropdown-list" id="dropdown-list-${c.id}">
+                                        ${daysOrder.map(d => `
+                                            <div class="dropdown-item ${c.day === d ? 'selected' : ''}" onclick="window.selectCustomOption(${c.id}, 'day', '${d}')">
+                                                <span>${t[d.toLowerCase()]}</span>
+                                                ${c.day === d ? '<i data-lucide="check" size="14"></i>' : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
                                 </div>
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
@@ -1410,6 +1419,27 @@ window.showLocationDetails = (fullLoc) => {
     document.getElementById('loc-modal-address').innerText = fullLoc;
     document.getElementById('location-modal').classList.remove('hidden');
     if (window.lucide) lucide.createIcons();
+};
+
+// --- CUSTOM DROPDOWN LOGIC ---
+window.toggleCustomDropdown = (id) => {
+    const list = document.getElementById(`dropdown-list-${id}`);
+    const isOpen = list.classList.contains('open');
+
+    // Close all other dropdowns first
+    document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.remove('open'));
+
+    if (!isOpen) {
+        list.classList.add('open');
+    }
+};
+
+window.selectCustomOption = async (classId, field, value) => {
+    // Close dropdown
+    document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.remove('open'));
+
+    // Update data
+    await window.updateClass(classId, field, value);
 };
 
 window.signUpStudent = async () => {
@@ -2782,4 +2812,11 @@ document.querySelector('.logo').addEventListener('mouseup', () => {
     setInterval(() => {
         window.checkInactivity();
     }, 60000);
+
+    // Global Click Listener for Custom Dropdowns
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-dropdown-container')) {
+            document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.remove('open'));
+        }
+    });
 })();
