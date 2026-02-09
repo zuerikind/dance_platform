@@ -53,6 +53,7 @@ const DANCE_LOCALES = {
         weekly_view: "Weekly Plan",
         mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday",
         valid_month: "Valid for one month",
+        valid_for_days: "Valid for {days} days",
         nav_memberships: "Memberships",
         pending_payments: "Pending Payments",
         approve: "Approve",
@@ -211,6 +212,7 @@ const DANCE_LOCALES = {
         weekly_view: "Plan Semanal",
         mon: "Lunes", tue: "Martes", wed: "Miércoles", thu: "Jueves", fri: "Viernes", sat: "Sábado", sun: "Domingo",
         valid_month: "Válido por un mes",
+        valid_for_days: "Válido por {days} días",
         nav_memberships: "Membresías",
         pending_payments: "Pagos Pendientes",
         approve: "Aprobar",
@@ -372,6 +374,7 @@ const DANCE_LOCALES = {
         weekly_view: "Wochenplan",
         mon: "Montag", tue: "Dienstag", wed: "Mittwoch", thu: "Donnerstag", fri: "Freitag", sat: "Samstag", sun: "Sonntag",
         valid_month: "Gültig für einen Monat",
+        valid_for_days: "Gültig für {days} Tage",
         nav_memberships: "Mitgliedschaften",
         pending_payments: "Ausstehende Zahlungen",
         approve: "Bestätigen",
@@ -1004,13 +1007,12 @@ function renderView() {
         html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
         html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">`;
         state.subscriptions.forEach(s => {
-            const isPackage = s.name.includes("4") || s.name.includes("8");
             html += `
                 <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.8rem;">
                     <div>
                         <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">${s.name}</h3>
                         <p class="text-muted" style="margin-bottom: 1.2rem; font-size: 0.9rem;">
-                            ${isPackage ? t.valid_month : s.duration}
+                            ${t.valid_for_days.replace('{days}', s.validity_days || 30)}
                         </p>
                         <div style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.04em;">MXD ${s.price}</div>
                     </div>
