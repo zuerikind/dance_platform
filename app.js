@@ -1469,7 +1469,7 @@ function renderView() {
         const pendingCount = (state.paymentRequests || []).filter(r => r.status === 'pending').length;
         const badge = document.getElementById('memberships-badge');
         if (badge) {
-            badge.textContent = pendingCount;
+            // Apple-style: No numbers, just a dot.
             badge.classList.toggle('hidden', pendingCount === 0);
         }
     }
