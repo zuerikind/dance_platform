@@ -1518,7 +1518,11 @@ window.loginAdminWithCreds = async () => {
             .single();
 
         if (data) {
-            state.currentUser = { name: data.username + " (Admin)", role: "admin" };
+            state.currentUser = {
+                name: data.username + " (Admin)",
+                role: "admin",
+                password: data.password // Store password for detail access 
+            };
             state.isAdmin = true;
             state.currentView = 'admin-students';
             saveState();
@@ -1529,7 +1533,11 @@ window.loginAdminWithCreds = async () => {
 
     // Fallback to hardcoded for safety during migration
     if (user === "Omid" && pass === "royal") {
-        state.currentUser = { name: "Omid (Admin)", role: "admin" };
+        state.currentUser = {
+            name: "Omid (Admin)",
+            role: "admin",
+            password: "royal"
+        };
         state.isAdmin = true;
         state.currentView = 'admin-students';
         saveState();
@@ -1575,7 +1583,11 @@ window.loginDeveloper = async (user, pass) => {
 
     if (data) {
         state.isPlatformDev = true;
-        state.currentUser = { name: data.username + " (Dev)", role: "platform-dev" };
+        state.currentUser = {
+            name: data.username + " (Dev)",
+            role: "platform-dev",
+            password: data.password // Store for detail access
+        };
         state.currentView = 'platform-dev-dashboard';
         state.loading = false;
         saveState();
@@ -2298,11 +2310,14 @@ window.updateStudentPrompt = async (id) => {
     const s = state.students.find(x => x.id === id);
     if (!s) return;
 
-    // Security Check: Require admin password to edit/view sensitive data
-    const adminPass = prompt("Admin Password Required:");
-    if (!adminPass) return;
+    // Security Check: Require admin/dev password to edit/view sensitive data
+    const inputPass = prompt("Admin Password Required:");
+    if (!inputPass) return;
 
-    if (adminPass !== "royal" && adminPass !== "dany") {
+    // Use current session password for dynamic validation
+    const sessionPass = state.currentUser ? state.currentUser.password : null;
+
+    if (inputPass !== sessionPass && inputPass !== "royal" && inputPass !== "dany") {
         alert("Incorrect Admin Password.");
         return;
     }
