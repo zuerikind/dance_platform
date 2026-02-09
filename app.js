@@ -973,7 +973,7 @@ function renderView() {
                                 <div class="tile-class-item">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
                                         <div class="tile-class-level">${c.tag || 'Open'}</div>
-                                        ${c.location ? `<div style="font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8;"><i data-lucide="map-pin" size="8" style="opacity: 0.6;"></i> ${c.location}</div>` : ''}
+                                        ${c.location ? `<div onclick="window.showLocationDetails(\`${c.location.replace(/'/g, "\\'")}\`)" style="font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8; cursor: pointer;"><i data-lucide="map-pin" size="8" style="opacity: 0.6;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
                                     </div>
                                     <div class="tile-class-desc">${c.name}</div>
                                     <div class="tile-class-time">${c.time}</div>
@@ -1261,7 +1261,7 @@ function renderView() {
                                     <div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
                                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
                                             <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
-                                            ${c.location ? `<div style="font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8;"><i data-lucide="map-pin" size="8" style="opacity: 0.6;"></i> ${c.location}</div>` : ''}
+                                            ${c.location ? `<div onclick="window.showLocationDetails(\`${c.location.replace(/'/g, "\\'")}\`)" style="font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8; cursor: pointer;"><i data-lucide="map-pin" size="8" style="opacity: 0.6;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
                                         </div>
                                         <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
                                         <div class="tile-class-time" style="font-size: 9px;">${c.time}</div>
@@ -1392,6 +1392,22 @@ window.setScheduleView = (v) => {
     state.scheduleView = v;
     saveState();
     renderView();
+};
+
+// --- LOCATION HELPERS ---
+window.formatLocationLabel = (loc) => {
+    if (!loc) return '';
+    // Strip everything in parentheses for the compact UI
+    return loc.replace(/\(.*\)/g, '').trim();
+};
+
+window.showLocationDetails = (fullLoc) => {
+    if (!fullLoc) return;
+    const title = window.formatLocationLabel(fullLoc);
+    document.getElementById('loc-modal-title').innerText = title || "Location";
+    document.getElementById('loc-modal-address').innerText = fullLoc;
+    document.getElementById('location-modal').classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
 };
 
 window.signUpStudent = async () => {

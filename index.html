@@ -147,6 +147,21 @@
         </div>
     </div>
 
+    <div id="location-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2.5rem 1.5rem;">
+            <div
+                style="background: rgba(0, 122, 255, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--system-blue);">
+                <i data-lucide="map-pin" size="30"></i>
+            </div>
+            <h2 id="loc-modal-title" style="margin-bottom: 0.5rem; font-size: 1.5rem; letter-spacing: -0.02em;">Location
+            </h2>
+            <p id="loc-modal-address" class="text-muted"
+                style="font-size: 1.1rem; line-height: 1.5; margin-bottom: 2rem;"></p>
+            <button onclick="document.getElementById('location-modal').classList.add('hidden')" class="btn-primary"
+                style="width: 100%;">Entendido</button>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
