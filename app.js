@@ -156,7 +156,9 @@ const DANCE_LOCALES = {
         password_label: "Password",
         delete_school_btn: "Delete School",
         delete_school_confirm: "Are you sure you want to delete this school? ALL data (students, admins, payments, classes) will be permanently lost.",
-        delete_school_success: "School deleted successfully"
+        delete_school_success: "School deleted successfully",
+        class_location: "Location",
+        location_placeholder: "e.g. Studio A"
     },
     es: {
         nav_schedule: "Horario",
@@ -236,6 +238,7 @@ const DANCE_LOCALES = {
         admin_login_btn: "Inicia Sesión Admin",
         admin_access_trigger: "• ACCESO ADMIN •",
         add_student: "Alumno",
+        add_student_btn: "+ Nuevo Alumno",
         add_admin: "Administrador",
         status_active: "Activo",
         status_unpaid: "Impago",
@@ -310,7 +313,166 @@ const DANCE_LOCALES = {
         password_label: "Contraseña",
         delete_school_btn: "Eliminar Escuela",
         delete_school_confirm: "¿Estás seguro de que quieres eliminar esta escuela? TODOS los datos (alumnos, admins, pagos, clases) se perderán permanentemente.",
-        delete_school_success: "Escuela eliminada con éxito"
+        delete_school_success: "Escuela eliminada con éxito",
+        class_location: "Ubicación",
+        location_placeholder: "Ej: Aula A"
+    },
+    de: {
+        nav_schedule: "Stundenplan",
+        nav_shop: "Abos",
+        nav_qr: "Mein QR",
+        nav_students: "Schüler",
+        nav_scan: "Scan",
+        nav_settings: "Einstellungen",
+        schedule_title: "Kursplan",
+        shop_title: "Abonnements",
+        qr_title: "Dein Zugangspass",
+        qr_subtitle: "Zeige diesen am Studio-Eingang vor",
+        buy: "Jetzt kaufen",
+        active: "Zugang gewährt",
+        inactive: "Zahlung erforderlich",
+        pay_status: "Mitgliedschaftsstatus",
+        student_id: "Mitglieder-ID",
+        admin_title: "Administration",
+        no_subs: "Keine aktiven Mitgliedschaften gefunden",
+        scan_success: "Verifizierung erfolgreich",
+        scan_fail: "Mitgliedschaft inaktiv",
+        switch_to_admin: "Zum Admin",
+        switch_to_student: "Zum Schüler",
+        auth_subtitle: "Präzision in jedem Schritt.",
+        welcome_to: "Willkommen bei",
+        student_signup: "Neuer Schüler",
+        admin_login: "Admin-Login",
+        enter_name: "Wie sollen wir dich nennen?",
+        signup_btn: "Jetzt beitreten",
+        logout: "Abmelden",
+        admin_subtitle: "Verwalte dein Studio effizient",
+        classes_subtitle: "Kommende Kurse und Workshops",
+        username: "Benutzername",
+        password: "Passwort",
+        login_btn: "Login",
+        invalid_login: "Ungültige Anmeldedaten",
+        remaining_classes: "Verbleibende Stunden",
+        unlimited: "Unbegrenzt",
+        already_account: "Hast du bereits ein Konto?",
+        no_account: "Noch kein Konto?",
+        sign_in: "Anmelden",
+        sign_up: "Registrieren",
+        student_login: "Schüler-Login",
+        phone: "Telefonnummer",
+        list_view: "Listenansicht",
+        weekly_view: "Wochenplan",
+        mon: "Montag", tue: "Dienstag", wed: "Mittwoch", thu: "Donnerstag", fri: "Freitag", sat: "Samstag", sun: "Sonntag",
+        valid_month: "Gültig für einen Monat",
+        nav_memberships: "Mitgliedschaften",
+        pending_payments: "Ausstehende Zahlungen",
+        approve: "Bestätigen",
+        reject: "Ablehnen",
+        nav_revenue: 'Einnahmen',
+        monthly_total: 'Gesamt diesen Monat',
+        all_payments: 'Zahlungsverlauf',
+        total_earned: 'Gesamt verdient',
+        approved: 'Bestätigt',
+        rejected: 'Abgelehnt',
+        pending: 'Ausstehend',
+        transfer: "Überweisung",
+        cash: "Barzahlung",
+        payment_instructions: "Zahlungsanweisungen",
+        i_have_paid: "Ich habe überwiesen",
+        pay_cash: "Ich zahle bar",
+        request_sent_title: "Anfrage gesendet!",
+        request_sent_msg: "Dein Zugang wird aktiviert, sobald wir die Zahlung geprüft haben.",
+        close: "Schließen",
+        check_in_title: "Check-In Anwesenheit",
+        one_class: "1 Stunde",
+        two_classes: "2 Stunden",
+        cancel: "Abbrechen",
+        confirm_attendance: "Anwesenheit bestätigen",
+        attendance_success: "Anwesenheit bestätigt!",
+        attendance_error: "Fehler bei der Anwesenheit",
+        admin_user_placeholder: "Admin Benutzername",
+        admin_pass_placeholder: "Admin Passwort",
+        admin_login_btn: "Admin Login",
+        admin_access_trigger: "• ADMIN ZUGANG •",
+        add_student: "Schüler",
+        add_student_btn: "+ Neuer Schüler",
+        add_admin: "Administrator",
+        status_active: "Aktiv",
+        status_unpaid: "Unbezahlt",
+        balance_label: "Guthaben",
+        plan_label: "Plan",
+        none_label: "Keiner",
+        mark_paid: "Als bezahlt markieren",
+        mark_unpaid: "Als unbezahlt markieren",
+        history_label: "Verlauf",
+        scan_cta_desc: "Verifiziere den Studio-Zugang.",
+        initiate_scan_btn: "Scan starten",
+        classes_label: "Kurse",
+        add_label: "Hinzufügen",
+        plans_label: "Pläne",
+        limit_classes_label: "Stundenlimit",
+        price_mxd_label: "Preis MXD",
+        transfer_details_label: "Überweisungsdaten",
+        bank_name_label: "Bankname",
+        holder_name_label: "Kontoinhaber",
+        save_bank_btn: "Bankdaten speichern",
+        saved_success_msg: "Erfolgreich gespeichert!",
+        balance_manual_label: "Guthaben manuell",
+        no_classes_msg: "Keine Kurse",
+        select_plan_msg: "Wähle dein bevorzugtes Abo.",
+        delete_student_confirm: "Bist du sicher, dass du diesen Schüler löschen willst? Alle Fortschritte gehen verloren.",
+        not_found_msg: "Nicht gefunden",
+        not_enough_balance: "Nicht genügend Stunden übrig!",
+        enter_admin_user: "Neuen Admin-Benutzernamen eingeben:",
+        enter_admin_pass: "Neues Admin-Passwort eingeben:",
+        admin_created: "Admin erstellt!",
+        enter_student_name: "Name des Schülers eingeben:",
+        enter_student_phone: "Telefonnummer eingeben:",
+        enter_student_pass: "Passwort für den Schüler eingeben:",
+        student_created: "Schüler erstellt!",
+        unknown_student: "Unbekannter Schüler",
+        delete_payment_confirm: "Diesen Zahlungsbeleg permanent löschen?",
+        select_school_title: "Willkommen bei Bailadmin",
+        select_school_subtitle: "Bitte wähle deine Schule oder deinen Lehrer aus",
+        add_school_btn: "+ Neue Schule",
+        enter_school_name: "Namen der neuen Schule oder des Lehrers eingeben:",
+        school_created: "Schule erfolgreich erstellt!",
+        switch_school: "Schule wechseln",
+        welcome_classes: "Willkommen beim Unterricht von",
+        loading: "Lädt...",
+        select_school_placeholder: "Wähle deine Schule...",
+        loading_schools: "Schulen werden geladen...",
+        connecting: "Verbindung wird hergestellt...",
+        dev_access_title: "Entwickler-Zugang",
+        dev_access_subtitle: "Entwickler-Anmeldedaten eingeben",
+        footer_support: "Support",
+        footer_contact: "Kontakt",
+        footer_copy: "&copy; 2026 Bailadmin Systems. Alle Rechte vorbehalten.",
+        dev_login_btn: "Login",
+        dev_dashboard_title: "Plattform-Entwickler",
+        dev_school_inspector: "Schul-Inspektor",
+        dev_active_schools: "Aktive Schulen",
+        dev_stats_schools: "Schulen",
+        dev_stats_students: "Gesamt Schüler",
+        dev_stats_plans: "Pläne",
+        dev_stats_classes: "Kurse",
+        dev_view_details: "Details anzeigen",
+        dev_enter_as_admin: "Als Admin betreten",
+        dev_volver_dashboard: "Zurück zum Dashboard",
+        dev_admins_label: "Administratoren",
+        dev_students_label: "Schüler",
+        dev_plans_label: "Abos",
+        dev_classes_label: "Stundenplan und Kurse",
+        dev_no_admins: "Keine Admins zugewiesen",
+        dev_no_students: "Keine Schüler registriert",
+        dev_no_plans: "Keine Pläne definiert",
+        dev_no_classes: "Keine Kurse konfiguriert",
+        password_label: "Passwort",
+        delete_school_btn: "Schule löschen",
+        delete_school_confirm: "Bist du sicher? ALLE Daten (Schüler, Admins, Zahlungen, Kurse) werden unwiderruflich gelöscht.",
+        delete_school_success: "Schule erfolgreich gelöscht",
+        class_location: "Standort",
+        location_placeholder: "z.B. Studio A"
     }
 };
 
@@ -780,7 +942,10 @@ function renderView() {
                 html += `
                     <div class="card" style="padding: 1.2rem; border-radius: 20px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
-                            <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
+                            <div style="display:flex; gap: 0.5rem;">
+                                <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
+                                ${c.location ? `<span style="background: rgba(0, 122, 255, 0.1); color: var(--system-blue); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;"><i data-lucide="map-pin" size="10"></i> ${c.location}</span>` : ''}
+                            </div>
                             <span style="font-weight: 700; font-size: 1rem;">MXD ${c.price}</span>
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
@@ -806,7 +971,10 @@ function renderView() {
                         <div style="display:flex; flex-direction:column; gap:0.6rem;">
                             ${dayClasses.length > 0 ? dayClasses.map(c => `
                                 <div class="tile-class-item">
-                                    <div class="tile-class-level">${c.tag || 'Open'}</div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
+                                        <div class="tile-class-level">${c.tag || 'Open'}</div>
+                                        ${c.location ? `<div style="font-size: 7px; color: var(--system-blue); font-weight: 700;"><i data-lucide="map-pin" size="7"></i> ${c.location}</div>` : ''}
+                                    </div>
                                     <div class="tile-class-desc">${c.name}</div>
                                     <div class="tile-class-time">${c.time}</div>
                                 </div>
@@ -1041,9 +1209,15 @@ function renderView() {
                             </div>
                         </div>
 
-                        <div style="background: rgba(var(--system-blue-rgb), 0.05); border-radius: 12px; padding: 8px 12px;">
-                             <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--system-blue); display: block; margin-bottom: 2px;">Nivel / Tag</label>
-                             <input type="text" value="${c.tag || 'Clase'}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: rgba(var(--system-blue-rgb), 0.05); border-radius: 12px; padding: 8px 12px;">
+                                 <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--system-blue); display: block; margin-bottom: 2px;">${t.class_location}</label>
+                                 <input type="text" value="${c.location || ''}" onchange="updateClass(${c.id}, 'location', this.value)" placeholder="${t.location_placeholder}" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                            </div>
+                            <div style="background: rgba(var(--system-blue-rgb), 0.05); border-radius: 12px; padding: 8px 12px;">
+                                 <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--system-blue); display: block; margin-bottom: 2px;">Nivel / Tag</label>
+                                 <input type="text" value="${c.tag || 'Clase'}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                            </div>
                         </div>
                     </div>
                 `).join('')}
@@ -1085,7 +1259,10 @@ function renderView() {
                             <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.8rem;">
                                 ${dayClasses.length > 0 ? dayClasses.map(c => `
                                     <div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
-                                        <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                                            <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
+                                            ${c.location ? `<div style="font-size: 8px; color: var(--system-blue); font-weight: 700; text-transform: uppercase;"><i data-lucide="map-pin" size="8"></i> ${c.location}</div>` : ''}
+                                        </div>
                                         <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
                                         <div class="tile-class-time" style="font-size: 9px;">${c.time}</div>
                                     </div>
@@ -1888,7 +2065,7 @@ window.updateClass = async (id, field, value) => {
 };
 
 window.addClass = async () => {
-    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner", school_id: state.currentSchool.id };
+    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner", location: "Studio A", school_id: state.currentSchool.id };
     if (supabaseClient) {
         const { data, error } = await supabaseClient.from('classes').insert([newClass]).select();
         if (error) { alert("Error adding class: " + error.message); return; }
