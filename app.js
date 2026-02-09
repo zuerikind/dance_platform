@@ -1397,8 +1397,8 @@ window.setScheduleView = (v) => {
 // --- LOCATION HELPERS ---
 window.formatLocationLabel = (loc) => {
     if (!loc) return '';
-    // Strip everything in parentheses for the compact UI
-    return loc.replace(/\(.*\)/g, '').trim();
+    // Strip everything in parentheses non-greedily and clean up spacing
+    return loc.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 };
 
 window.showLocationDetails = (fullLoc) => {
