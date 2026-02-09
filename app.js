@@ -2077,12 +2077,14 @@ window.activatePackage = async (studentId, packageName) => {
             paid: !!pkg
         };
 
-        // Handle Expiration
-        if (pkg && pkg.validity_days) {
+        // Handle Expiration: Default to 30 days if not specified in the plan
+        if (pkg) {
+            const days = (pkg.validity_days && !isNaN(parseInt(pkg.validity_days))) ? parseInt(pkg.validity_days) : 30;
             const expiry = new Date();
-            expiry.setDate(expiry.getDate() + parseInt(pkg.validity_days));
+            expiry.setDate(expiry.getDate() + days);
             updates.package_expires_at = expiry.toISOString();
-        } else if (!pkg) {
+            console.log(`Setting expiration: ${days} days from now => ${updates.package_expires_at}`);
+        } else {
             updates.package_expires_at = null;
         }
 
