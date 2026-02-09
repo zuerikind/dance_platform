@@ -758,7 +758,7 @@ select option {
 
 @media (max-width: 600px) {
     .auth-logo-container {
-        margin-bottom: 1.5rem;
+        display: none !important;
     }
 }
 
