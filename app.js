@@ -164,7 +164,30 @@ const DANCE_LOCALES = {
         no_expiration: "No expiration date",
         expires_in: "Expires in",
         days_left: "days left",
-        expires_label: "Expires"
+        expires_label: "Expires",
+        search_students: "Search members...",
+        loading_students_msg: "Loading members...",
+        no_pending_msg: "No pending payments",
+        historical_total_label: "Historical",
+        no_data_msg: "No data yet",
+        mgmt_classes_title: "Class Management",
+        mgmt_admins_title: "Administrators",
+        day_label: "Day",
+        hour_label: "Time",
+        new_class_label: "New Class",
+        show_weekly_btn: "Show Weekly Plan",
+        hide_weekly_btn: "Hide Weekly Plan",
+        weekly_preview_title: "Weekly Preview",
+        full_name_label: "Full Name",
+        password_pin_label: "Password (PIN)",
+        total_classes_label: "Classes Remaining (Total)",
+        pack_details_title: "Package Details",
+        reg_date_label: "Registration Date",
+        next_expiry_label: "Next Expiry",
+        delete_perm_label: "Delete member permanently",
+        admin_pass_req: "Admin Password Required:",
+        invalid_pass_msg: "Incorrect Admin Password.",
+        save_btn: "Save"
     },
     es: {
         nav_schedule: "Horario",
@@ -327,7 +350,30 @@ const DANCE_LOCALES = {
         no_expiration: "Sin fecha de vencimiento",
         expires_in: "Vence en",
         days_left: "días restantes",
-        expires_label: "Vence"
+        expires_label: "Vence",
+        search_students: "Buscar alumnos...",
+        loading_students_msg: "Cargando alumnos...",
+        no_pending_msg: "Sin pagos pendientes",
+        historical_total_label: "Histórico",
+        no_data_msg: "No hay datos",
+        mgmt_classes_title: "Gestión de Clases",
+        mgmt_admins_title: "Administradores",
+        day_label: "Día",
+        hour_label: "Hora",
+        new_class_label: "Nueva Clase",
+        show_weekly_btn: "Ver Plan Semanal",
+        hide_weekly_btn: "Ocultar Plan Semanal",
+        weekly_preview_title: "Vista Previa (Semanal)",
+        full_name_label: "Nombre Completo",
+        password_pin_label: "Contraseña (PIN)",
+        total_classes_label: "Clases Restantes (Total)",
+        pack_details_title: "Paquetes Detalles",
+        reg_date_label: "Fecha de Registro",
+        next_expiry_label: "Próximo Vencimiento",
+        delete_perm_label: "Eliminar Alumno permanentemente",
+        admin_pass_req: "Password Admin Requerido:",
+        invalid_pass_msg: "Contraseña Incorrecta.",
+        save_btn: "Guardar"
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -490,7 +536,30 @@ const DANCE_LOCALES = {
         no_expiration: "Kein Ablaufdatum",
         expires_in: "Läuft ab in",
         days_left: "Tage übrig",
-        expires_label: "Gültig bis"
+        expires_label: "Gültig bis",
+        search_students: "Schüler suchen...",
+        loading_students_msg: "Schüler werden geladen...",
+        no_pending_msg: "Keine ausstehenden Zahlungen",
+        historical_total_label: "Gesamtverlauf",
+        no_data_msg: "Noch keine Daten",
+        mgmt_classes_title: "Kursverwaltung",
+        mgmt_admins_title: "Administratoren",
+        day_label: "Tag",
+        hour_label: "Uhrzeit",
+        new_class_label: "Neuer Kurs",
+        show_weekly_btn: "Wochenplan anzeigen",
+        hide_weekly_btn: "Wochenplan ausblenden",
+        weekly_preview_title: "Vorschau (Woche)",
+        full_name_label: "Vollständiger Name",
+        password_pin_label: "Passwort (PIN)",
+        total_classes_label: "Stunden insgesamt",
+        pack_details_title: "Paket-Details",
+        reg_date_label: "Registriert am",
+        next_expiry_label: "Nächster Ablauf",
+        delete_perm_label: "Schüler dauerhaft löschen",
+        admin_pass_req: "Admin-Passwort erforderlich:",
+        invalid_pass_msg: "Falsches Admin-Passwort.",
+        save_btn: "Speichern"
     }
 };
 
@@ -1116,13 +1185,13 @@ function renderView() {
                 </div>
             </div>
             <div style="position: sticky; top: 60px; z-index: 90; background: var(--bg-body); padding-bottom: 5px; opacity: 0.98; backdrop-filter: blur(10px);">
-                <input type="text" class="ios-search-bar" placeholder="Buscar alumnos..." oninput="filterStudents(this.value)" style="margin-bottom: 1.5rem;">
+                <input type="text" class="ios-search-bar" placeholder="${t.search_students}" oninput="filterStudents(this.value)" style="margin-bottom: 1.5rem;">
             </div>
             <div class="ios-list" id="admin-student-list" style="margin-top: 0;">
                 ${state.loading && state.students.length === 0 ? `
                     <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
                         <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
-                        <p style="font-size: 15px; font-weight: 500;">Cargando alumnos...</p>
+                        <p style="font-size: 15px; font-weight: 500;">${t.loading_students_msg}</p>
                     </div>
                 ` : state.students.map(s => renderAdminStudentCard(s)).join('')}
             </div>
@@ -1168,7 +1237,7 @@ function renderView() {
                     `;
         }).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2.5rem; flex-direction: column; gap: 12px;">
                     <i data-lucide="check-circle" size="32" style="opacity: 0.2;"></i>
-                    <span style="font-size: 15px; font-weight: 500; opacity: 0.6;">Sin pagos pendientes</span>
+                    <span style="font-size: 15px; font-weight: 500; opacity: 0.6;">${t.no_pending_msg}</span>
                 </div>`}
             </div>
         `;
@@ -1199,7 +1268,7 @@ function renderView() {
                     
                     <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
                         <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
-                        <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">Histórico: $${totalHistorical.toLocaleString()} </span>
+                        <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">${t.historical_total_label}: $${totalHistorical.toLocaleString()} </span>
                     </div>
                 </div>
             </div>
@@ -1235,7 +1304,7 @@ function renderView() {
                             </button>
                         </div>
                     `;
-        }).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">No data yet</div>`)}
+        }).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">${t.no_data_msg}</div>`)}
             </div>
         `;
     } else if (view === 'admin-scanner') {
@@ -1267,7 +1336,7 @@ function renderView() {
             </div>
 
             <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                Gestión de Clases
+                ${t.mgmt_classes_title}
             </div>
             <div class="ios-list">
                 ${state.classes.map(c => `
@@ -1284,7 +1353,7 @@ function renderView() {
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; position: relative;">
-                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">Día</label>
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.day_label}</label>
                                 <div class="custom-dropdown-container">
                                     <div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('${c.id}')" style="background: transparent; border: none; padding: 0; min-height: auto; width: 100%; justify-content: space-between;">
                                         <span style="font-size: 14px; font-weight: 600;">${t[c.day.toLowerCase()]}</span>
@@ -1301,7 +1370,7 @@ function renderView() {
                                 </div>
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
-                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">Hora</label>
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.hour_label}</label>
                                 <input type="time" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
                             </div>
                         </div>
@@ -1312,7 +1381,7 @@ function renderView() {
                                  <input type="text" value="${c.location || ''}" onchange="updateClass(${c.id}, 'location', this.value)" placeholder="${t.location_placeholder}" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; opacity: 0.8;">
-                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">Nivel / Tag</label>
+                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.level_tag_label}</label>
                                  <input type="text" value="${c.tag || 'Clase'}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
                             </div>
                         </div>
@@ -1320,7 +1389,7 @@ function renderView() {
                 `).join('')}
                 
                 <div class="ios-list-item" onclick="addClass()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
-                    <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} Nueva Clase
+                    <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} ${t.new_class_label}
                 </div>
             </div>
 
@@ -1328,14 +1397,14 @@ function renderView() {
             <div style="padding: 0 1.2rem; margin-top: 1.5rem;">
                 <button onclick="window.toggleWeeklyPreview()" style="width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; font-size: 14px;">
                     <i data-lucide="${state.showWeeklyPreview ? 'eye-off' : 'eye'}" size="16" style="opacity: 0.6;"></i>
-                    ${state.showWeeklyPreview ? 'Ocultar Plan Semanal' : 'Ver Plan Semanal'}
+                    ${state.showWeeklyPreview ? t.hide_weekly_btn : t.show_weekly_btn}
                 </button>
             </div>
 
             ${state.showWeeklyPreview ? `
             <div style="padding: 0 1.2rem; margin-top: 2rem; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between;" class="slide-in">
                 <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                    Vista Previa (Semanal)
+                    ${t.weekly_preview_title}
                 </div>
             </div>
             <div style="padding: 0 0.5rem; margin-bottom: 2rem;" class="slide-in">
@@ -1368,7 +1437,7 @@ function renderView() {
             ` : ''}
 
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                Catálogo de Planes
+                ${t.plans_label}
             </div>
             <div class="ios-list">
                 ${state.subscriptions.map(s => `
@@ -1430,7 +1499,7 @@ function renderView() {
             </div>
 
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                Administradores
+                ${t.mgmt_admins_title}
             </div>
             <div class="ios-list">
                 ${state.admins.map(adm => `
@@ -2526,7 +2595,7 @@ window.renderAdminStudentCard = (s) => {
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                     <div style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">
-                        ${t('remaining_classes') || 'Clases restantes'}: <span style="color: var(--system-blue); font-weight: 700;">${s.balance === null ? '∞' : s.balance}</span>
+                        ${t('remaining_classes')}: <span style="color: var(--system-blue); font-weight: 700;">${s.balance === null ? '∞' : s.balance}</span>
                     </div>
                     ${Array.isArray(s.active_packs) && s.active_packs.length > 0 ? `
                         <div style="font-size: 11px; background: var(--system-gray6); padding: 2px 6px; border-radius: 6px; color: var(--text-secondary); font-weight: 600;">
@@ -2555,19 +2624,20 @@ window.updateStudentPrompt = async (id) => {
     const s = state.students.find(x => x.id === id);
     if (!s) return;
 
+    const t = window.t;
     // Security Check: Require admin/dev password to edit/view sensitive data
-    const inputPass = prompt("Admin Password Required:");
+    const inputPass = prompt(t('admin_pass_req'));
     if (!inputPass) return;
 
     // Use current session password for dynamic validation
     const sessionPass = state.currentUser ? state.currentUser.password : null;
 
     if (inputPass !== sessionPass && inputPass !== "royal" && inputPass !== "dany") {
-        alert("Incorrect Admin Password.");
+        alert(t('invalid_pass_msg'));
         return;
     }
 
-    const t = window.t;
+
     const modal = document.getElementById('student-modal');
     const content = document.getElementById('student-modal-content');
 
@@ -2585,27 +2655,27 @@ window.updateStudentPrompt = async (id) => {
 
             <div style="display: flex; flex-direction: column; gap: 1.2rem;">
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Nombre Completo</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('full_name_label')}</label>
                     <input type="text" id="edit-student-name" class="minimal-input" value="${s.name}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Teléfono</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('phone')}</label>
                     <input type="text" id="edit-student-phone" class="minimal-input" value="${s.phone || ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Contraseña (Pin)</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('password_pin_label')}</label>
                     <input type="text" id="edit-student-pass" class="minimal-input" value="${s.password}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Clases Restantes (Total)</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('total_classes_label')}</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.05em;">Paquetes Detalles</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.05em;">${t('pack_details_title')}</label>
                     <div style="display: flex; flex-direction: column; gap: 8px; background: var(--system-gray6); border-radius: 14px; padding: 4px;">
                         ${(s.active_packs || []).length > 0 ? s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => `
                             <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
@@ -2617,31 +2687,31 @@ window.updateStudentPrompt = async (id) => {
                                     <i data-lucide="minus-circle" size="16"></i>
                                 </button>
                             </div>
-                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : '<div style="padding: 16px; font-size: 12px; opacity: 0.5; text-align: center;">Sin paquetes activos</div>'}
+                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div style="padding: 16px; font-size: 12px; opacity: 0.5; text-align: center;">${t('no_classes_msg')}</div>`}
                     </div>
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Fecha de Registro</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('reg_date_label')}</label>
                     <div style="background: var(--system-gray6); padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
                         ${s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A'}
                     </div>
                 </div>
 
                 <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Próximo Vencimiento (Main Timer)</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('next_expiry_label')} (Main Timer)</label>
                     <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? new Date(s.package_expires_at).toISOString().split('T')[0] : ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2.5rem;">
-                <button class="btn-secondary" onclick="document.getElementById('student-modal').classList.add('hidden')" style="height: 50px; border-radius: 14px; font-weight: 600;">Cancelar</button>
-                <button class="btn-primary" onclick="window.saveStudentDetails('${s.id}')" style="height: 50px; border-radius: 14px; font-weight: 600;">Guardar</button>
+                <button class="btn-secondary" onclick="document.getElementById('student-modal').classList.add('hidden')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('cancel')}</button>
+                <button class="btn-primary" onclick="window.saveStudentDetails('${s.id}')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('save_btn')}</button>
             </div>
 
             <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
                 <button onclick="window.deleteStudent('${s.id}')" style="background: rgba(255, 59, 48, 0.05); color: var(--system-red); border: none; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <i data-lucide="user-minus" size="14"></i> Eliminar Alumno permenentemente
+                    <i data-lucide="user-minus" size="14"></i> ${t('delete_perm_label')}
                 </button>
             </div>
         </div>
