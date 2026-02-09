@@ -337,7 +337,8 @@ body::before {
 }
 
 .logo-img {
-    height: 32px;
+    height: 48px;
+    /* Increased from 32px */
     width: auto;
     object-fit: contain;
     mix-blend-mode: multiply;
@@ -346,7 +347,8 @@ body::before {
 
 .dark-mode .logo-img {
     filter: invert(1);
-    mix-blend-mode: normal;
+    mix-blend-mode: screen;
+    /* Changed from normal to screen to hide black background */
 }
 
 .logo span {
@@ -699,7 +701,8 @@ select option {
     }
 
     .auth-logo {
-        width: 180px;
+        width: 270px;
+        /* 180 * 1.5 */
     }
 
     .auth-title {
@@ -755,7 +758,8 @@ select option {
 
 /* Transparent Logo Magic */
 .auth-logo {
-    width: 140px;
+    width: 210px;
+    /* 140 * 1.5 */
     height: auto;
     object-fit: contain;
     mix-blend-mode: multiply;
@@ -766,13 +770,15 @@ select option {
 
 @media (max-width: 600px) {
     .auth-logo {
-        width: 80px;
+        width: 120px;
+        /* 80 * 1.5 */
     }
 }
 
 .dark-mode .auth-logo {
     filter: invert(1);
-    mix-blend-mode: normal;
+    mix-blend-mode: screen;
+    /* Improved for transparency in dark mode */
 }
 
 @keyframes floatingLogo {
