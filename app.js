@@ -959,7 +959,6 @@ function renderView() {
                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
                             <div style="display:flex; gap: 0.5rem;">
                                 <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
-                                ${c.location ? `<span style="background: var(--system-gray6); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 4px;"><i data-lucide="map-pin" size="10" style="opacity: 0.7;"></i> ${c.location}</span>` : ''}
                             </div>
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
@@ -988,7 +987,7 @@ function renderView() {
                                 <div class="tile-class-item">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
                                         <div class="tile-class-level">${c.tag || 'Open'}</div>
-                                        ${c.location ? `<div onclick="window.showLocationDetails(\`${c.location.replace(/'/g, "\\'")}\`)" style="font-size: 8px; color: var(--system-blue); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 2px; cursor: pointer;"><i data-lucide="map-pin" style="width: 8px; height: 8px; opacity: 0.8;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
+                                        ${c.location ? `<div onclick="window.showLocationDetails(\`${c.location.replace(/'/g, "\\'")}\`)" style="font-size: 7px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8; cursor: pointer;"><i data-lucide="map-pin" style="width: 7px; height: 7px; opacity: 0.5;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
                                     </div>
                                     <div class="tile-class-desc">${c.name}</div>
                                     <div class="tile-class-time">${c.time}</div>
