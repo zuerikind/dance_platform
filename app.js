@@ -1435,7 +1435,8 @@ window.signUpStudent = async () => {
         paid: false,
         package: null,
         balance: 0,
-        school_id: state.currentSchool.id
+        school_id: state.currentSchool.id,
+        created_at: new Date().toISOString()
     };
 
     if (supabaseClient) {
@@ -2387,6 +2388,13 @@ window.updateStudentPrompt = async (id) => {
                 <div class="ios-input-group">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Clases Restantes</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Fecha de Registro</label>
+                    <div style="background: var(--system-gray6); padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                        ${s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A'}
+                    </div>
                 </div>
             </div>
 
