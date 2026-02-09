@@ -257,7 +257,7 @@ const DANCE_LOCALES = {
         price_mxd_label: "Precio MXD",
         transfer_details_label: "Detalles de Transferencia",
         bank_name_label: "Nombre del Banco",
-        holder_name_label: "Nombre des Titular",
+        holder_name_label: "Nombre del Titular",
         save_bank_btn: "Guardar Detalles",
         saved_success_msg: "¡Guardado con éxito!",
         balance_manual_label: "Saldo Manual",
@@ -1320,6 +1320,10 @@ function renderView() {
                 <div class="ios-list-item" style="padding: 12px 16px;">
                     <span style="font-size: 16px; font-weight: 500;">Alias</span>
                     <input type="text" id="set-bank-alias" value="${state.adminSettings.bank_alias || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                </div>
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500;">${t.holder_name_label}</span>
+                    <input type="text" id="set-bank-holder" value="${state.adminSettings.bank_holder || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
                 <div class="ios-list-item" onclick="saveBankSettings(this)" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="save" size="18"></i> ${t.save_bank_btn}
