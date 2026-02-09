@@ -158,7 +158,11 @@ const DANCE_LOCALES = {
         delete_school_confirm: "Are you sure you want to delete this school? ALL data (students, admins, payments, classes) will be permanently lost.",
         delete_school_success: "School deleted successfully",
         class_location: "Location",
-        location_placeholder: "e.g. Studio A"
+        location_placeholder: "e.g. Studio A",
+        active_packs_label: "Your Active Packs",
+        no_expiration: "No expiration date",
+        expires_in: "Expires in",
+        days_left: "days left"
     },
     es: {
         nav_schedule: "Horario",
@@ -315,7 +319,11 @@ const DANCE_LOCALES = {
         delete_school_confirm: "¿Estás seguro de que quieres eliminar esta escuela? TODOS los datos (alumnos, admins, pagos, clases) se perderán permanentemente.",
         delete_school_success: "Escuela eliminada con éxito",
         class_location: "Ubicación",
-        location_placeholder: "Ej: Aula A"
+        location_placeholder: "Ej: Aula A",
+        active_packs_label: "Tus Paquetes Activos",
+        no_expiration: "Sin fecha de vencimiento",
+        expires_in: "Vence en",
+        days_left: "días restantes"
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -472,7 +480,11 @@ const DANCE_LOCALES = {
         delete_school_confirm: "Bist du sicher? ALLE Daten (Schüler, Admins, Zahlungen, Kurse) werden unwiderruflich gelöscht.",
         delete_school_success: "Schule erfolgreich gelöscht",
         class_location: "Standort",
-        location_placeholder: "z.B. Studio A"
+        location_placeholder: "z.B. Studio A",
+        active_packs_label: "Deine aktiven Pakete",
+        no_expiration: "Kein Ablaufdatum",
+        expires_in: "Läuft ab in",
+        days_left: "Tage übrig"
     }
 };
 
@@ -1019,37 +1031,66 @@ function renderView() {
                         ${t.student_id}: <span style="color: var(--primary);">${state.currentUser.id}</span>
                     </div>
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
-                        <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">${t.remaining_classes}</div>
+                    <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">${t.remaining_classes}</div>
                         <div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">
                             ${state.currentUser.balance === null ? t.unlimited : state.currentUser.balance}
                         </div>
                     </div>
-                    </div>
 
-                    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                        ${(() => {
-                const expires = state.currentUser.package_expires_at;
-                if (!expires) return `<div style="font-size: 11px; color: var(--text-secondary); opacity: 0.5;">${t.no_expiration || 'Sin fecha de vencimiento'}</div>`;
+                    <div style="margin-top: 2rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; text-align: left;">
+                        <div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">
+                            ${t.active_packs_label || 'Tus Paquetes Activos'}
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            ${(() => {
+                const packs = state.currentUser.active_packs || [];
+                if (packs.length === 0) {
+                    return `
+                                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; text-align: center; border: 1px dashed var(--border);">
+                                            <div style="font-size: 13px; color: var(--text-secondary); opacity: 0.5;">No tienes paquetes activos</div>
+                                        </div>
+                                    `;
+                }
 
-                const days = window.getDaysRemaining(expires);
-                const isExpired = days <= 0;
-                const isSoon = days > 0 && days <= 5;
+                return packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => {
+                    const days = window.getDaysRemaining(p.expires_at);
+                    const isExpired = days <= 0;
+                    const isSoon = days > 0 && days <= 5;
 
-                let color = 'var(--text-secondary)';
-                let bg = 'var(--system-gray6)';
-                let icon = 'clock';
+                    let statusColor = 'var(--system-blue)';
+                    if (isExpired) statusColor = 'var(--system-red)';
+                    else if (isSoon) statusColor = 'var(--system-orange)';
 
-                if (isExpired) { color = 'white'; bg = 'var(--system-red)'; icon = 'alert-circle'; }
-                else if (isSoon) { color = 'white'; bg = 'var(--system-orange)'; icon = 'clock-8'; }
-
-                return `
-                                <div style="background: ${bg}; color: ${color}; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
-                                    <i data-lucide="${icon}" size="14"></i>
-                                    <span>${isExpired ? 'Expirado' : (isSoon ? `Expira en ${days} días` : `Vence: ${new Date(expires).toLocaleDateString()}`)}</span>
-                                </div>
-                                ${!isExpired ? `<div style="font-size: 10px; font-weight: 600; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em;">${days} días restantes</div>` : ''}
-                            `;
+                    return `
+                                        <div class="card" style="padding: 1.2rem; border-radius: 22px; position: relative; overflow: hidden; border: 1px solid var(--border); background: linear-gradient(145deg, var(--bg-card), var(--bg-body));">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                                <div>
+                                                    <div style="font-size: 15px; font-weight: 700; margin-bottom: 2px;">${p.name}</div>
+                                                    <div style="font-size: 11px; font-weight: 600; opacity: 0.5; text-transform: uppercase;">${new Date(p.created_at).toLocaleDateString()}</div>
+                                                </div>
+                                                <div style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase;">
+                                                   ${isExpired ? 'Expirado' : (isSoon ? `${days}d Restantes` : 'Activo')}
+                                                </div>
+                                            </div>
+                                            
+                                            <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                                                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);">
+                                                    <i data-lucide="calendar" size="14" style="opacity: 0.6;"></i>
+                                                    <span>Vence: ${new Date(p.expires_at).toLocaleDateString()}</span>
+                                                </div>
+                                                <div style="text-align: right;">
+                                                    <div style="font-size: 20px; font-weight: 800; color: var(--primary);">${p.count}</div>
+                                                    <div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">Clases</div>
+                                                </div>
+                                            </div>
+                                            
+                                            ${isSoon ? `<div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--system-orange); opacity: 0.3;"></div>` : ''}
+                                        </div>
+                                    `;
+                }).join('');
             })()}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1471,32 +1512,51 @@ window.checkExpirations = async () => {
     let updatedCount = 0;
 
     for (let s of state.students) {
-        if (s.package_expires_at && s.balance > 0) {
+        let changed = false;
+
+        // Handle Multi-Batch Expiration
+        if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
+            const initialCount = s.active_packs.length;
+            s.active_packs = s.active_packs.filter(p => new Date(p.expires_at) > now);
+
+            if (s.active_packs.length !== initialCount) {
+                s.balance = s.active_packs.reduce((sum, p) => sum + p.count, 0);
+                if (s.active_packs.length === 0) {
+                    s.package = null;
+                    s.paid = false;
+                    s.package_expires_at = null;
+                }
+                changed = true;
+            }
+        } else if (s.package_expires_at && s.balance > 0) {
+            // Legacy/Single Fallback Expiration
             const expiry = new Date(s.package_expires_at);
             if (now > expiry) {
-                console.log(`Student[${s.id}] package expired. Wiping balance.`);
                 s.balance = 0;
                 s.paid = false;
                 s.package = null;
                 s.package_expires_at = null;
-
-                if (supabaseClient) {
-                    await supabaseClient.from('students').update({
-                        balance: 0,
-                        paid: false,
-                        package: null,
-                        package_expires_at: null
-                    }).eq('id', s.id);
-                }
-                updatedCount++;
+                changed = true;
             }
+        }
+
+        if (changed) {
+            console.log(`Student[${s.id}] package(s) expired. Updating profile.`);
+            if (supabaseClient) {
+                await supabaseClient.from('students').update({
+                    balance: s.balance,
+                    paid: s.paid,
+                    package: s.package,
+                    package_expires_at: s.package_expires_at,
+                    active_packs: s.active_packs
+                }).eq('id', s.id);
+            }
+            updatedCount++;
         }
     }
 
     if (updatedCount > 0) {
         saveState();
-        // Don't call fetchAllData here to avoid infinite loops, 
-        // rely on the next render or interval.
     }
 };
 
@@ -2071,24 +2131,32 @@ window.activatePackage = async (studentId, packageName) => {
             newBalance = (student.balance || 0) + incomingLimit;
         }
 
+        // Handle Multi-Batch Expiration
+        const days = (pkg && pkg.validity_days && !isNaN(parseInt(pkg.validity_days))) ? parseInt(pkg.validity_days) : 30;
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + days);
+
+        const newPack = {
+            id: "PACK-" + Date.now().toString(36).toUpperCase(),
+            name: pkg ? pkg.name : packageName,
+            count: incomingLimit,
+            expires_at: expiry.toISOString(),
+            created_at: new Date().toISOString()
+        };
+
+        // Initialize active_packs if it doesn't exist
+        const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+        if (pkg) activePacks.push(newPack);
+
         const updates = {
             package: pkg ? pkg.name : null,
             balance: newBalance,
-            paid: !!pkg
+            paid: !!pkg,
+            active_packs: activePacks,
+            package_expires_at: pkg ? expiry.toISOString() : null // Keep for backward compatibility/quick check
         };
 
-        // Handle Expiration: Default to 30 days if not specified in the plan
-        if (pkg) {
-            const days = (pkg.validity_days && !isNaN(parseInt(pkg.validity_days))) ? parseInt(pkg.validity_days) : 30;
-            const expiry = new Date();
-            expiry.setDate(expiry.getDate() + days);
-            updates.package_expires_at = expiry.toISOString();
-            console.log(`Setting expiration: ${days} days from now => ${updates.package_expires_at}`);
-        } else {
-            updates.package_expires_at = null;
-        }
-
-        console.log(`Update payload (Cumulative): `, updates);
+        console.log(`Update payload (Multi-Batch): `, updates);
 
         if (supabaseClient) {
             const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
@@ -2102,6 +2170,7 @@ window.activatePackage = async (studentId, packageName) => {
         student.package = updates.package;
         student.balance = updates.balance;
         student.paid = updates.paid;
+        student.active_packs = updates.active_packs;
         student.package_expires_at = updates.package_expires_at;
 
         saveState();
@@ -2440,6 +2509,11 @@ window.renderAdminStudentCard = (s) => {
                     <div style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">
                         ${t('remaining_classes') || 'Clases restantes'}: <span style="color: var(--system-blue); font-weight: 700;">${s.balance === null ? '∞' : s.balance}</span>
                     </div>
+                    ${Array.isArray(s.active_packs) && s.active_packs.length > 0 ? `
+                        <div style="font-size: 11px; background: var(--system-gray6); padding: 2px 6px; border-radius: 6px; color: var(--text-secondary); font-weight: 600;">
+                            ${s.active_packs.length} ${s.active_packs.length === 1 ? 'Pack' : 'Packs'}
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             <i data-lucide="chevron-right" size="18" style="color: var(--system-gray4); margin-left: 8px;"></i>
@@ -2732,12 +2806,49 @@ window.confirmAttendance = async (studentId, count) => {
     }
 
     if (student.balance !== null) {
-        const newBalance = student.balance - count;
-        if (supabaseClient) {
-            const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
-            if (error) { alert("Error updating balance: " + error.message); return; }
+        // Multi-Batch Consumption: Consume from the soonest-expiring pack first
+        const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+        let remainingToDeduct = count;
+
+        if (activePacks.length > 0) {
+            // Sort by expiration date (ascending)
+            activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+
+            for (let i = 0; i < activePacks.length && remainingToDeduct > 0; i++) {
+                const pack = activePacks[i];
+                if (pack.count >= remainingToDeduct) {
+                    pack.count -= remainingToDeduct;
+                    remainingToDeduct = 0;
+                } else {
+                    remainingToDeduct -= pack.count;
+                    pack.count = 0;
+                }
+            }
+            // Remove empty packs
+            const updatedPacks = activePacks.filter(p => p.count > 0);
+            const newBalance = updatedPacks.reduce((sum, p) => sum + p.count, 0);
+
+            const updates = {
+                balance: newBalance,
+                active_packs: updatedPacks
+            };
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
+                if (error) { alert("Error updating balance: " + error.message); return; }
+            }
+            student.balance = newBalance;
+            student.active_packs = updatedPacks;
+        } else {
+            // Fallback for students without active_packs field (legacy balance)
+            const newBalance = student.balance - count;
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
+                if (error) { alert("Error updating balance: " + error.message); return; }
+            }
+            student.balance = newBalance;
         }
-        student.balance = newBalance;
+
         saveState();
         await fetchAllData();
     }
