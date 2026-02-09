@@ -1334,7 +1334,9 @@ select option {
 }
 
 .dark-mode .custom-dropdown-trigger {
-    background: #1C1C1E;
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .custom-dropdown-trigger:hover {
@@ -1342,7 +1344,8 @@ select option {
 }
 
 .dark-mode .custom-dropdown-trigger:hover {
-    background: #2C2C2E;
+    background: #1C1C1E;
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .custom-dropdown-list {
