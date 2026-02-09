@@ -163,7 +163,8 @@ const DANCE_LOCALES = {
         active_packs_label: "Your Active Packs",
         no_expiration: "No expiration date",
         expires_in: "Expires in",
-        days_left: "days left"
+        days_left: "days left",
+        expires_label: "Expires"
     },
     es: {
         nav_schedule: "Horario",
@@ -325,7 +326,8 @@ const DANCE_LOCALES = {
         active_packs_label: "Tus Paquetes Activos",
         no_expiration: "Sin fecha de vencimiento",
         expires_in: "Vence en",
-        days_left: "días restantes"
+        days_left: "días restantes",
+        expires_label: "Vence"
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -487,7 +489,8 @@ const DANCE_LOCALES = {
         active_packs_label: "Deine aktiven Pakete",
         no_expiration: "Kein Ablaufdatum",
         expires_in: "Läuft ab in",
-        days_left: "Tage übrig"
+        days_left: "Tage übrig",
+        expires_label: "Gültig bis"
     }
 };
 
@@ -1078,7 +1081,7 @@ function renderView() {
                                             <div style="display: flex; align-items: flex-end; justify-content: space-between;">
                                                 <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);">
                                                     <i data-lucide="calendar" size="14" style="opacity: 0.6;"></i>
-                                                    <span>Vence: ${new Date(p.expires_at).toLocaleDateString()}</span>
+                                                    <span>${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</span>
                                                 </div>
                                                 <div style="text-align: right;">
                                                     <div style="font-size: 20px; font-weight: 800; color: var(--primary);">${p.count}</div>
@@ -2608,7 +2611,7 @@ window.updateStudentPrompt = async (id) => {
                             <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700;">${p.name}</div>
-                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase;">${p.count} Clases • Vence: ${new Date(p.expires_at).toLocaleDateString()}</div>
+                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase;">${p.count} Clases • ${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
                                 </div>
                                 <button onclick="window.removeStudentPack('${s.id}', '${p.id}')" style="background: transparent; border: none; color: var(--system-red); padding: 8px; cursor: pointer; opacity: 0.5;">
                                     <i data-lucide="minus-circle" size="16"></i>
