@@ -1216,7 +1216,10 @@ function renderView() {
                         <div class="ios-list-item" style="padding: 16px; align-items: center;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${studentName}</div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} • ${new Date(req.created_at).toLocaleDateString()}</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                                    ${req.sub_name} • ${new Date(req.created_at).toLocaleDateString()}
+                                    <span style="font-size: 9px; opacity: 0.6; text-transform: uppercase; font-weight: 700; background: var(--system-gray6); padding: 1px 6px; border-radius: 4px;">${t[req.payment_method] || req.payment_method}</span>
+                                </div>
                             </div>
                             <div style="text-align: right; margin-right: 12px;">
                                 <div style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">$${req.price}</div>
