@@ -944,14 +944,14 @@ function renderView() {
                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
                             <div style="display:flex; gap: 0.5rem;">
                                 <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
-                                ${c.location ? `<span style="background: rgba(0, 122, 255, 0.1); color: var(--system-blue); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;"><i data-lucide="map-pin" size="10"></i> ${c.location}</span>` : ''}
+                                ${c.location ? `<span style="background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.1); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 4px;"><i data-lucide="map-pin" size="10" style="opacity: 0.7;"></i> ${c.location}</span>` : ''}
                             </div>
                             <span style="font-weight: 700; font-size: 1rem;">MXD ${c.price}</span>
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
                         <div class="text-muted" style="display:flex; align-items:center; flex-wrap: wrap; gap:0.4rem; font-size: 0.9rem;">
                             <i data-lucide="calendar" size="14"></i> ${c.day} • <i data-lucide="clock" size="14"></i> ${c.time}
-                            ${c.location ? `• <i data-lucide="map-pin" size="14" style="color: var(--system-blue);"></i> <span style="color: var(--system-blue); font-weight: 600;">${c.location}</span>` : ''}
+                            ${c.location ? `• <i data-lucide="map-pin" size="14" style="opacity: 0.4;"></i> <span style="opacity: 0.7; font-weight: 500;">${c.location}</span>` : ''}
                         </div>
                     </div>
                 `;
@@ -974,7 +974,7 @@ function renderView() {
                                 <div class="tile-class-item">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
                                         <div class="tile-class-level">${c.tag || 'Open'}</div>
-                                        ${c.location ? `<div style="font-size: 8px; color: var(--system-blue); font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 2px;"><i data-lucide="map-pin" size="8"></i> ${c.location}</div>` : ''}
+                                        ${c.location ? `<div style="font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8;"><i data-lucide="map-pin" size="8" style="opacity: 0.6;"></i> ${c.location}</div>` : ''}
                                     </div>
                                     <div class="tile-class-desc">${c.name}</div>
                                     <div class="tile-class-time">${c.time}</div>
@@ -1262,7 +1262,7 @@ function renderView() {
                                     <div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
                                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
                                             <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
-                                            ${c.location ? `<div style="font-size: 8px; color: var(--system-blue); font-weight: 700; text-transform: uppercase;"><i data-lucide="map-pin" size="8"></i> ${c.location}</div>` : ''}
+                                            ${c.location ? `<div style="font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8;"><i data-lucide="map-pin" size="8" style="opacity: 0.6;"></i> ${c.location}</div>` : ''}
                                         </div>
                                         <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
                                         <div class="tile-class-time" style="font-size: 9px;">${c.time}</div>
