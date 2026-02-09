@@ -2084,9 +2084,18 @@ window.saveBankSettings = async (btn) => {
 
 window.updateAdminSetting = async (key, value) => {
     if (supabaseClient) {
+        if (!state.currentSchool || !state.currentSchool.id) {
+            console.error("Cannot update setting: No school selected.");
+            return;
+        }
+
         const { error } = await supabaseClient
             .from('admin_settings')
-            .upsert({ key: String(key), value: String(value), school_id: state.currentSchool.id }, { onConflict: 'school_id, key' });
+            .upsert({
+                school_id: state.currentSchool.id,
+                key: String(key),
+                value: String(value)
+            });
 
         if (error) {
             console.error(`Error updating setting[${key}]: `, error);
