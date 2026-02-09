@@ -1199,9 +1199,11 @@ function renderView() {
                         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px;">
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
                                 <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px;">Día</label>
-                                <select onchange="updateClass(${c.id}, 'day', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; -webkit-appearance: none;">
-                                    ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
-                                </select>
+                                <div class="ios-select-wrapper">
+                                    <select class="ios-select" onchange="updateClass(${c.id}, 'day', this.value)" style="background: transparent;">
+                                        ${daysOrder.map(d => `<option value="${d}" ${c.day === d ? 'selected' : ''}>${t[d.toLowerCase()]}</option>`).join('')}
+                                    </select>
+                                </div>
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
                                 <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px;">Hora</label>
