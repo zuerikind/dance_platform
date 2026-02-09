@@ -1470,6 +1470,7 @@ function renderView() {
         const badge = document.getElementById('memberships-badge');
         if (badge) {
             // Apple-style: No numbers, just a dot.
+            badge.textContent = "";
             badge.classList.toggle('hidden', pendingCount === 0);
         }
     }
