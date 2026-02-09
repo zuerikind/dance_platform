@@ -1878,6 +1878,18 @@ window.createNewSchoolWithAdmin = async () => {
 
             if (adminError) throw adminError;
 
+            // 3. Create Default "Clase Suelta" Pass
+            const { error: subError } = await supabaseClient
+                .from('subscriptions')
+                .insert([{
+                    name: 'Clase Suelta',
+                    price: 150,
+                    limit_count: 1,
+                    school_id: schoolId
+                }]);
+
+            if (subError) throw subError;
+
             alert(`School "${schoolName}" and Admin "${adminUser}" created successfully!`);
             await fetchPlatformData();
         } catch (err) {
@@ -2178,7 +2190,7 @@ window.updateClass = async (id, field, value) => {
 };
 
 window.addClass = async () => {
-    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 10, tag: "Beginner", location: "Studio A", school_id: state.currentSchool.id };
+    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 150, tag: "Beginner", location: "Studio A", school_id: state.currentSchool.id };
     if (supabaseClient) {
         const { data, error } = await supabaseClient.from('classes').insert([newClass]).select();
         if (error) { alert("Error adding class: " + error.message); return; }
