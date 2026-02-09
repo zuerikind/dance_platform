@@ -570,6 +570,9 @@ async function fetchAllData() {
         }
         if (adminsRes.data) state.admins = adminsRes.data;
 
+        // --- NEW: Check for expired memberships ---
+        await window.checkExpirations();
+
         state.loading = false;
         renderView();
     } catch (err) {
@@ -1021,6 +1024,13 @@ function renderView() {
                             ${state.currentUser.balance === null ? t.unlimited : state.currentUser.balance}
                         </div>
                     </div>
+
+                    ${state.currentUser.package_expires_at ? `
+                        <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary);">
+                            <i data-lucide="clock" size="14" style="opacity: 0.6;"></i>
+                            <span>Vence: ${new Date(state.currentUser.package_expires_at).toLocaleDateString()}</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -1298,14 +1308,19 @@ function renderView() {
                                 <i data-lucide="trash-2" size="18"></i>
                             </button>
                         </div>
-                         <div style="display: flex; gap: 12px; align-items: center; font-size: 14px;">
-                            <div style="flex: 1; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 8px;">
-                                <span style="color: var(--text-secondary); font-size: 12px;">$</span>
-                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none;">
+                         <div style="display: flex; gap: 10px; align-items: center; font-size: 14px;">
+                            <div style="flex: 1.2; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
+                                <span style="color: var(--text-secondary); font-size: 11px; font-weight: 700;">$</span>
+                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px;">
                             </div>
-                            <div style="flex: 1; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 8px;">
+                            <div style="flex: 1; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
                                 <i data-lucide="layers" size="12" style="color: var(--text-secondary);"></i>
-                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none;">
+                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="Clases" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px;">
+                            </div>
+                            <div style="flex: 1.5; display:flex; align-items:center; background: rgba(var(--system-blue-rgb), 0.05); padding: 8px 12px; border-radius: 10px; gap: 6px;">
+                                <i data-lucide="calendar-clock" size="12" style="color: var(--system-blue);"></i>
+                                <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px;">
+                                <span style="font-size: 9px; font-weight: 700; color: var(--system-blue); opacity: 0.6; text-transform: uppercase;">Días</span>
                             </div>
                         </div>
                     </div>
@@ -1419,6 +1434,42 @@ window.showLocationDetails = (fullLoc) => {
     document.getElementById('loc-modal-address').innerText = fullLoc;
     document.getElementById('location-modal').classList.remove('hidden');
     if (window.lucide) lucide.createIcons();
+};
+
+// --- EXPIRATION LOGIC ---
+window.checkExpirations = async () => {
+    if (!state.students || state.students.length === 0) return;
+    const now = new Date();
+    let updatedCount = 0;
+
+    for (let s of state.students) {
+        if (s.package_expires_at && s.balance > 0) {
+            const expiry = new Date(s.package_expires_at);
+            if (now > expiry) {
+                console.log(`Student[${s.id}] package expired. Wiping balance.`);
+                s.balance = 0;
+                s.paid = false;
+                s.package = null;
+                s.package_expires_at = null;
+
+                if (supabaseClient) {
+                    await supabaseClient.from('students').update({
+                        balance: 0,
+                        paid: false,
+                        package: null,
+                        package_expires_at: null
+                    }).eq('id', s.id);
+                }
+                updatedCount++;
+            }
+        }
+    }
+
+    if (updatedCount > 0) {
+        saveState();
+        // Don't call fetchAllData here to avoid infinite loops, 
+        // rely on the next render or interval.
+    }
 };
 
 // --- CUSTOM DROPDOWN LOGIC ---
@@ -1998,6 +2049,15 @@ window.activatePackage = async (studentId, packageName) => {
             paid: !!pkg
         };
 
+        // Handle Expiration
+        if (pkg && pkg.validity_days) {
+            const expiry = new Date();
+            expiry.setDate(expiry.getDate() + parseInt(pkg.validity_days));
+            updates.package_expires_at = expiry.toISOString();
+        } else if (!pkg) {
+            updates.package_expires_at = null;
+        }
+
         console.log(`Update payload (Cumulative): `, updates);
 
         if (supabaseClient) {
@@ -2012,6 +2072,7 @@ window.activatePackage = async (studentId, packageName) => {
         student.package = updates.package;
         student.balance = updates.balance;
         student.paid = updates.paid;
+        student.package_expires_at = updates.package_expires_at;
 
         saveState();
         await fetchAllData();
@@ -2265,7 +2326,7 @@ window.removeClass = async (id) => {
 window.updateSub = async (id, field, value) => {
     const sub = state.subscriptions.find(s => s.id === id);
     if (sub) {
-        const val = (field === 'price' ? parseFloat(value) : (field === 'limit_count' ? parseInt(value) : value));
+        const val = (field === 'price' ? parseFloat(value) : (['limit_count', 'validity_days'].includes(field) ? parseInt(value) : value));
         if (supabaseClient) {
             const { error } = await supabaseClient.from('subscriptions').update({ [field]: val }).eq('id', id);
             if (error) { console.error(error); return; }
@@ -2277,7 +2338,7 @@ window.updateSub = async (id, field, value) => {
 
 
 window.addSubscription = async () => {
-    const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10, school_id: state.currentSchool.id };
+    const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10, validity_days: 30, school_id: state.currentSchool.id };
     if (supabaseClient) {
         const { error } = await supabaseClient.from('subscriptions').insert([newSub]);
         if (error) { alert("Error adding plan: " + error.message); return; }
