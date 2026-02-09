@@ -1819,7 +1819,62 @@ window.createNewSchool = async () => {
         const { error } = await supabaseClient.from('schools').insert([{ name: name }]);
         if (error) { alert("Error: " + error.message); return; }
         alert(t('school_created'));
-        fetchAllData();
+        if (state.isPlatformDev) {
+            await fetchPlatformData();
+        } else {
+            fetchAllData();
+        }
+    }
+};
+
+window.createNewSchoolWithAdmin = async () => {
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+
+    const schoolName = prompt(t('enter_school_name'));
+    if (!schoolName) return;
+
+    const adminUser = prompt(t('enter_admin_user') || "Admin Username:");
+    if (!adminUser) return;
+
+    const adminPass = prompt(t('enter_admin_pass') || "Admin Password:");
+    if (!adminPass) return;
+
+    if (supabaseClient) {
+        state.loading = true;
+        renderView();
+
+        try {
+            // 1. Create School
+            const { data: schoolData, error: schoolError } = await supabaseClient
+                .from('schools')
+                .insert([{ name: schoolName }])
+                .select();
+
+            if (schoolError) throw schoolError;
+            const schoolId = schoolData[0].id;
+
+            // 2. Create Admin
+            const { error: adminError } = await supabaseClient
+                .from('admins')
+                .insert([{
+                    username: adminUser,
+                    password: adminPass,
+                    school_id: schoolId
+                }]);
+
+            if (adminError) throw adminError;
+
+            alert(`School "${schoolName}" and Admin "${adminUser}" created successfully!`);
+            await fetchPlatformData();
+        } catch (err) {
+            console.error("Creation Error:", err);
+            alert("Failed to create school/admin: " + err.message);
+        } finally {
+            state.loading = false;
+            renderView();
+        }
     }
 };
 
@@ -2040,6 +2095,38 @@ window.updateAdminSetting = async (key, value) => {
     }
     state.adminSettings[key] = value;
     saveState();
+};
+
+window.createNewAdmin = async () => {
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    const username = prompt(t('enter_admin_user') || 'Username:');
+    if (!username) return;
+    const password = prompt(t('enter_admin_pass') || 'Password:');
+    if (!password) return;
+
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('admins').insert([{
+            username,
+            password,
+            school_id: state.currentSchool.id
+        }]);
+        if (error) { alert("Error creating admin: " + error.message); return; }
+        alert(t('admin_created'));
+        fetchAllData();
+    }
+};
+
+window.removeAdmin = async (id) => {
+    const t = DANCE_LOCALES[state.language] || DANCE_LOCALES.en;
+    if (!confirm("Are you sure you want to remove this administrator?")) return;
+
+    if (supabaseClient) {
+        const { error } = await supabaseClient.from('admins').delete().eq('id', id);
+        if (error) { alert("Error removing admin: " + error.message); return; }
+        fetchAllData();
+    }
 };
 
 window.updateBalance = async (studentId, value) => {
