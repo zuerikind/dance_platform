@@ -1143,7 +1143,12 @@ function renderView() {
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 17px;">${studentName}</div>
-                                    <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} • $${req.price}</div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} • $${req.price}</div>
+                                        <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                                            <i data-lucide="${req.payment_method === 'cash' ? 'banknote' : 'send'}" size="10"></i> ${t[req.payment_method] || req.payment_method}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -2161,7 +2166,11 @@ window.activatePackage = async (studentId, packageName) => {
             const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
             if (error) {
                 console.error("Supabase update error:", error);
-                alert("Error updating: " + error.message);
+                if (error.message.includes('active_packs')) {
+                    alert("FATAL ERROR: The database is missing the 'active_packs' column. Please run the SQL script in Supabase: ALTER TABLE students ADD COLUMN IF NOT EXISTS active_packs JSONB DEFAULT '[]';");
+                } else {
+                    alert("Error updating: " + error.message);
+                }
                 return;
             }
         }
