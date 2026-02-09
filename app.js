@@ -949,8 +949,9 @@ function renderView() {
                             <span style="font-weight: 700; font-size: 1rem;">MXD ${c.price}</span>
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
-                        <div class="text-muted" style="display:flex; align-items:center; gap:0.4rem; font-size: 0.9rem;">
+                        <div class="text-muted" style="display:flex; align-items:center; flex-wrap: wrap; gap:0.4rem; font-size: 0.9rem;">
                             <i data-lucide="calendar" size="14"></i> ${c.day} • <i data-lucide="clock" size="14"></i> ${c.time}
+                            ${c.location ? `• <i data-lucide="map-pin" size="14" style="color: var(--system-blue);"></i> <span style="color: var(--system-blue); font-weight: 600;">${c.location}</span>` : ''}
                         </div>
                     </div>
                 `;
@@ -973,7 +974,7 @@ function renderView() {
                                 <div class="tile-class-item">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
                                         <div class="tile-class-level">${c.tag || 'Open'}</div>
-                                        ${c.location ? `<div style="font-size: 7px; color: var(--system-blue); font-weight: 700;"><i data-lucide="map-pin" size="7"></i> ${c.location}</div>` : ''}
+                                        ${c.location ? `<div style="font-size: 8px; color: var(--system-blue); font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 2px;"><i data-lucide="map-pin" size="8"></i> ${c.location}</div>` : ''}
                                     </div>
                                     <div class="tile-class-desc">${c.name}</div>
                                     <div class="tile-class-time">${c.time}</div>
