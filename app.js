@@ -946,7 +946,6 @@ function renderView() {
                                 <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
                                 ${c.location ? `<span style="background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.1); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 4px;"><i data-lucide="map-pin" size="10" style="opacity: 0.7;"></i> ${c.location}</span>` : ''}
                             </div>
-                            <span style="font-weight: 700; font-size: 1rem;">MXD ${c.price}</span>
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
                         <div class="text-muted" style="display:flex; align-items:center; flex-wrap: wrap; gap:0.4rem; font-size: 0.9rem;">
