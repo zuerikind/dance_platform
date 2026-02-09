@@ -671,22 +671,22 @@ function renderView() {
 
     if (view === 'school-selection') {
         html += `
-            <div class="auth-page-container" style="justify-content: center; align-items: center; min-height: 70vh;">
-                <div class="landing-branding slide-in" style="margin-bottom: 2.5rem; text-align: center;">
+            <div class="auth-page-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70vh; text-align: center; width: 100%;">
+                <div class="landing-branding slide-in" style="margin-bottom: 2.5rem;">
                     <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 70px; height: 70px; margin-bottom: 0.5rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));">
                     <h1 style="font-size: 2.2rem; letter-spacing: -1.5px; font-weight: 800; margin-bottom: 0.2rem;">Bailadmin</h1>
                     <p class="text-muted" style="font-size: 1rem; opacity: 0.6;">${t.select_school_subtitle}</p>
                 </div>
                 
-                <div style="width: 100%; max-width: 320px; position: relative; z-index: 50;">
+                <div class="custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
                     <!-- Custom Dropdown Trigger -->
-                    <div id="school-dropdown-trigger" onclick="toggleSchoolDropdown()">
+                    <div id="school-dropdown-trigger" class="custom-dropdown-trigger" onclick="toggleSchoolDropdown()" style="width: 100%; box-sizing: border-box;">
                         <span>${state.schools.length > 0 ? t.select_school_placeholder : t.loading_schools}</span>
-                        <i data-lucide="chevron-down"></i>
+                        <i data-lucide="chevron-down" size="18"></i>
                     </div>
 
                     <!-- Custom Dropdown List -->
-                    <div id="school-dropdown-list" class="custom-dropdown-list">
+                    <div id="school-dropdown-list" class="custom-dropdown-list" style="width: 100%; box-sizing: border-box;">
                         ${state.schools.length > 0 ? state.schools.map(s => `
                             <div class="dropdown-item ${state.currentSchool?.id === s.id ? 'selected' : ''}" onclick="selectSchool('${s.id}')">
                                 <span>${s.name}</span>
