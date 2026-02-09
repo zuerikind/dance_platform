@@ -1263,26 +1263,29 @@ function renderView() {
                 <div class="ios-large-title">${t.nav_settings}</div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; padding: 0 1.2rem; margin-top: 1rem;">
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                Gestión de Clases
+            </div>
+            <div class="ios-list">
                 ${state.classes.map(c => `
-                    <div style="background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 20px; padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem; transition: all 0.2s ease;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div style="flex: 1;">
-                                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nombre de Clase</label>
-                                <input type="text" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 16px; font-weight: 700; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
+                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                <i data-lucide="music" size="16" style="opacity: 0.3;"></i>
+                                <input type="text" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 85%; color: var(--text-primary); outline: none;">
                             </div>
-                            <button onclick="removeClass(${c.id})" style="background: rgba(255, 59, 48, 0.1); border: none; color: var(--system-red); padding: 8px; border-radius: 10px; cursor: pointer;">
-                                <i data-lucide="trash-2" size="16"></i>
+                            <button onclick="removeClass(${c.id})" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 5px; cursor: pointer;">
+                                <i data-lucide="trash-2" size="18"></i>
                             </button>
                         </div>
                         
-                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px;">
-                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
-                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px;">Día</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; position: relative;">
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">Día</label>
                                 <div class="custom-dropdown-container">
-                                    <div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('${c.id}')">
-                                        <span>${t[c.day.toLowerCase()]}</span>
-                                        <i data-lucide="chevron-down" size="14" style="opacity: 0.5;"></i>
+                                    <div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('${c.id}')" style="background: transparent; border: none; padding: 0; min-height: auto; width: 100%; justify-content: space-between;">
+                                        <span style="font-size: 14px; font-weight: 600;">${t[c.day.toLowerCase()]}</span>
+                                        <i data-lucide="chevron-down" size="12" style="opacity: 0.4;"></i>
                                     </div>
                                     <div class="custom-dropdown-list" id="dropdown-list-${c.id}">
                                         ${daysOrder.map(d => `
@@ -1295,49 +1298,44 @@ function renderView() {
                                 </div>
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
-                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px;">Hora</label>
-                                <input type="time" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer;">
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">Hora</label>
+                                <input type="time" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
                             </div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div style="background: rgba(var(--system-blue-rgb), 0.05); border-radius: 12px; padding: 8px 12px;">
-                                 <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--system-blue); display: block; margin-bottom: 2px;">${t.class_location}</label>
-                                 <input type="text" value="${c.location || ''}" onchange="updateClass(${c.id}, 'location', this.value)" placeholder="${t.location_placeholder}" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; opacity: 0.8;">
+                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.class_location}</label>
+                                 <input type="text" value="${c.location || ''}" onchange="updateClass(${c.id}, 'location', this.value)" placeholder="${t.location_placeholder}" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
                             </div>
-                            <div style="background: rgba(var(--system-blue-rgb), 0.05); border-radius: 12px; padding: 8px 12px;">
-                                 <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--system-blue); display: block; margin-bottom: 2px;">Nivel / Tag</label>
-                                 <input type="text" value="${c.tag || 'Clase'}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; opacity: 0.8;">
+                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">Nivel / Tag</label>
+                                 <input type="text" value="${c.tag || 'Clase'}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
                             </div>
                         </div>
                     </div>
                 `).join('')}
                 
-                <div onclick="addClass()" style="background: transparent; border: 2px dashed var(--border); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; color: var(--system-blue); transition: all 0.2s ease;">
-                    <i data-lucide="plus-circle" size="24"></i>
-                    <span style="font-weight: 700; font-size: 14px;">${t.add_label} Nueva Clase</span>
+                <div class="ios-list-item" onclick="addClass()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                    <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} Nueva Clase
                 </div>
             </div>
 
-            <!-- WEEKLY PREVIEW FOR ADMINS (Moved here) -->
-            <div style="padding: 0 1.2rem; margin-top: 1.5rem; margin-bottom: 2rem;">
-                <button onclick="window.toggleWeeklyPreview()" style="width: 100%; padding: 16px; border-radius: 20px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s ease;">
-                    <i data-lucide="${state.showWeeklyPreview ? 'eye-off' : 'eye'}" size="20"></i>
+            <!-- WEEKLY PREVIEW FOR ADMINS -->
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem;">
+                <button onclick="window.toggleWeeklyPreview()" style="width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; font-size: 14px;">
+                    <i data-lucide="${state.showWeeklyPreview ? 'eye-off' : 'eye'}" size="16" style="opacity: 0.6;"></i>
                     ${state.showWeeklyPreview ? 'Ocultar Plan Semanal' : 'Ver Plan Semanal'}
                 </button>
             </div>
 
             ${state.showWeeklyPreview ? `
-            <div style="padding: 0 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;" class="slide-in">
+            <div style="padding: 0 1.2rem; margin-top: 2rem; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between;" class="slide-in">
                 <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                    Vista Previa Alumnos (Semanal)
-                </div>
-                <div style="font-size: 10px; font-weight: 600; background: var(--system-gray6); padding: 4px 10px; border-radius: 20px; color: var(--text-secondary);">
-                    Solo lectura
+                    Vista Previa (Semanal)
                 </div>
             </div>
-            <div style="padding: 0 0.5rem; margin-bottom: 3rem;" class="slide-in">
-                <!-- REUSING WEEKLY GRID LOGIC -->
+            <div style="padding: 0 0.5rem; margin-bottom: 2rem;" class="slide-in">
                 <div class="weekly-grid">
                     ${daysOrder.map(dayKey => {
             const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
@@ -1346,16 +1344,16 @@ function renderView() {
 
             return `
                         <div class="day-tile" style="background: var(--bg-card); border-radius: 16px;">
-                            <div class="day-tile-header" style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;">${t[dayKey.toLowerCase()]}</div>
+                            <div class="day-tile-header" style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 11px; opacity: 0.6;">${t[dayKey.toLowerCase()]}</div>
                             <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.8rem;">
                                 ${dayClasses.length > 0 ? dayClasses.map(c => `
                                     <div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
                                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
-                                            <div class="tile-class-level" style="font-size: 8px;">${c.tag || 'Open'}</div>
-                                            ${c.location ? `<div onclick="window.showLocationDetails(\`${c.location.replace(/'/g, "\\'")}\`)" style="font-size: 6px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8; cursor: pointer;"><i data-lucide="map-pin" style="width: 6px; height: 6px; opacity: 0.6;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
+                                            <div class="tile-class-level" style="font-size: 8px; background: var(--system-gray6); padding: 2px 6px; border-radius: 4px;">${c.tag || 'Open'}</div>
+                                            ${c.location ? `<div style="font-size: 6px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.7;"><i data-lucide="map-pin" size="6" style="opacity: 0.5;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
                                         </div>
                                         <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
-                                        <div class="tile-class-time" style="font-size: 9px;">${c.time}</div>
+                                        <div class="tile-class-time" style="font-size: 9px; opacity: 0.6;">${c.time}</div>
                                     </div>
                                 `).join('') : `<div class="text-muted" style="font-size:9px; font-style:italic; padding: 1rem 0;">${t.no_classes_msg}</div>`}
                             </div>
@@ -1366,81 +1364,85 @@ function renderView() {
             </div>
             ` : ''}
 
-            <div style="padding: 0 1.2rem; margin-top: 2rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.plans_label}
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                Catálogo de Planes
             </div>
             <div class="ios-list">
                 ${state.subscriptions.map(s => `
                     <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 70%; color: var(--text-primary); outline: none;">
-                            <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--system-red); padding: 5px;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                <i data-lucide="credit-card" size="16" style="opacity: 0.3;"></i>
+                                <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 80%; color: var(--text-primary); outline: none;">
+                            </div>
+                            <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 5px; cursor: pointer;">
                                 <i data-lucide="trash-2" size="18"></i>
                             </button>
                         </div>
-                         <div style="display: flex; gap: 10px; align-items: center; font-size: 14px;">
-                            <div style="flex: 1.2; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
-                                <span style="color: var(--text-secondary); font-size: 11px; font-weight: 700;">$</span>
-                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px;">
+                         <div style="display: flex; gap: 8px; align-items: center;">
+                            <div style="flex: 1; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
+                                <span style="color: var(--text-secondary); font-size: 11px; font-weight: 700; opacity: 0.6;">$</span>
+                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px; padding: 0;">
                             </div>
                             <div style="flex: 1; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
-                                <i data-lucide="layers" size="12" style="color: var(--text-secondary);"></i>
-                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="Clases" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px;">
+                                <i data-lucide="layers" size="12" style="color: var(--text-secondary); opacity: 0.5;"></i>
+                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="Clases" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px; padding: 0;">
                             </div>
-                            <div style="flex: 1.5; display:flex; align-items:center; background: rgba(var(--system-blue-rgb), 0.05); padding: 8px 12px; border-radius: 10px; gap: 6px;">
-                                <i data-lucide="calendar-clock" size="12" style="color: var(--system-blue);"></i>
-                                <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px;">
-                                <span style="font-size: 9px; font-weight: 700; color: var(--system-blue); opacity: 0.6; text-transform: uppercase;">Días</span>
+                            <div style="flex: 1.2; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
+                                <i data-lucide="calendar" size="12" style="color: var(--text-secondary); opacity: 0.5;"></i>
+                                <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px; padding: 0;">
+                                <span style="font-size: 8px; font-weight: 700; color: var(--text-secondary); opacity: 0.4; text-transform: uppercase;">Días</span>
                             </div>
                         </div>
                     </div>
                 `).join('')}
-                <div class="ios-list-item" onclick="addSubscription()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
-                    <i data-lucide="plus-circle" size="18"></i> ${t.add_label} Plan
+                <div class="ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                    <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} Plan
                 </div>
             </div>
 
-            <div style="padding: 0 1.2rem; margin-top: 2rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.transfer_details_label}
             </div>
             <div class="ios-list">
                 <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500;">${t.bank_name_label}</span>
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.bank_name_label}</span>
                     <input type="text" id="set-bank-name" value="${state.adminSettings.bank_name || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
                 <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500;">CBU</span>
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">CBU</span>
                     <input type="text" id="set-bank-cbu" value="${state.adminSettings.bank_cbu || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
                 <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500;">Alias</span>
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">Alias</span>
                     <input type="text" id="set-bank-alias" value="${state.adminSettings.bank_alias || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
                 <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500;">${t.holder_name_label}</span>
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.holder_name_label}</span>
                     <input type="text" id="set-bank-holder" value="${state.adminSettings.bank_holder || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
-                <div class="ios-list-item" onclick="saveBankSettings(this)" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
-                    <i data-lucide="save" size="18"></i> ${t.save_bank_btn}
+                <div class="ios-list-item" onclick="saveBankSettings(this)" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                    <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_bank_btn}
                 </div>
             </div>
 
-            <div style="padding: 0 1.2rem; margin-top: 2rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 Administradores
             </div>
             <div class="ios-list">
                 ${state.admins.map(adm => `
                     <div class="ios-list-item" style="padding: 12px 16px; align-items: center;">
-                        <span style="font-size: 16px; font-weight: 500;">${adm.username}</span>
-                        <button onclick="window.removeAdmin('${adm.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6; margin-left: auto;">
+                        <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${adm.username}</span>
+                        <button onclick="window.removeAdmin('${adm.id}')" style="background: none; border: none; color: var(--text-secondary); padding: 8px; opacity: 0.4; margin-left: auto; cursor: pointer;">
                             <i data-lucide="trash-2" size="18"></i>
                         </button>
                     </div>
                 `).join('')}
-                <div class="ios-list-item" onclick="createNewAdmin()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
-                    <i data-lucide="user-plus" size="18"></i> ${t.add_admin || 'Agregar Admin'}
+                <div class="ios-list-item" onclick="createNewAdmin()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                    <i data-lucide="user-plus" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_admin || 'Agregar Admin'}
                 </div>
             </div>
+            <div style="height: 100px;"></div> <!-- Spacer for bottom nav padding -->
     `;
     }
 
