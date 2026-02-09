@@ -532,43 +532,42 @@ select option {
 /* BOTTOM NAV - Minimal Floating */
 .bottom-nav {
     position: fixed;
-    bottom: 2rem;
-    /* Increased for float effect */
-    bottom: calc(2.2rem + var(--safe-bottom));
+    bottom: 2.5rem;
+    bottom: calc(2.5rem + var(--safe-bottom));
     left: 50%;
     transform: translateX(-50%);
-    width: auto;
-    min-width: 280px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(25px) saturate(180%);
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    width: max-content;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(25px) saturate(200%);
+    -webkit-backdrop-filter: blur(25px) saturate(200%);
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 32px;
+    border-radius: 40px;
     display: flex;
     justify-content: center;
-    gap: 8px;
-    padding: 8px;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
     z-index: 1000;
     box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.1),
-        0 0 0 1px rgba(0, 0, 0, 0.05);
+        0 20px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(0, 0, 0, 0.02);
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark-mode .bottom-nav {
-    background: rgba(20, 20, 22, 0.7);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(20, 20, 22, 0.8);
+    border-color: rgba(255, 255, 255, 0.15);
     box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.08);
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .nav-item {
     background: none;
     border: none;
     color: var(--text-secondary);
-    padding: 10px 18px;
-    border-radius: 24px;
+    padding: 10px 20px;
+    border-radius: 34px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -578,6 +577,7 @@ select option {
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     font-weight: 600;
     font-size: 10px;
+    min-width: 70px;
 }
 
 .nav-badge {
@@ -628,15 +628,15 @@ select option {
 }
 
 .nav-item.active {
-    color: #000000;
-    background: #FFFFFF;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    color: #FFFFFF;
+    background: #000000;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .dark-mode .nav-item.active {
     color: #000000;
     background: #FFFFFF;
-    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
 }
 
 /* QR VIEW */
