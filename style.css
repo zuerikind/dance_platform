@@ -336,6 +336,19 @@ body::before {
     display: none !important;
 }
 
+.logo-img {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .logo-img {
+    filter: invert(1);
+    mix-blend-mode: normal;
+}
+
 .logo span {
     letter-spacing: -0.02em;
     font-size: 1.2rem;
@@ -747,6 +760,8 @@ select option {
     object-fit: contain;
     mix-blend-mode: multiply;
     animation: floatingLogo 6s ease-in-out infinite;
+    /* Avoid white box by ensuring no background */
+    background: transparent !important;
 }
 
 @media (max-width: 600px) {
