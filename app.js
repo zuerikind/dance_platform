@@ -1797,6 +1797,7 @@ window.selectSchool = (id) => {
     const school = state.schools.find(s => s.id === id);
     if (school) {
         state.currentSchool = school;
+        state.adminSettings = {}; // PROACTIVE CLEAR
         state.currentView = 'auth';
         saveState();
         fetchAllData(); // Fetch school specific data
@@ -2119,7 +2120,7 @@ window.updateAdminSetting = async (key, value) => {
                 school_id: state.currentSchool.id,
                 key: String(key),
                 value: String(value)
-            });
+            }, { onConflict: 'school_id, key' });
 
         if (error) {
             console.error(`Error updating setting[${key}]: `, error);
