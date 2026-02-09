@@ -1024,13 +1024,33 @@ function renderView() {
                             ${state.currentUser.balance === null ? t.unlimited : state.currentUser.balance}
                         </div>
                     </div>
+                    </div>
 
-                    ${state.currentUser.package_expires_at ? `
-                        <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary);">
-                            <i data-lucide="clock" size="14" style="opacity: 0.6;"></i>
-                            <span>Vence: ${new Date(state.currentUser.package_expires_at).toLocaleDateString()}</span>
-                        </div>
-                    ` : ''}
+                    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        ${(() => {
+                const expires = state.currentUser.package_expires_at;
+                if (!expires) return `<div style="font-size: 11px; color: var(--text-secondary); opacity: 0.5;">${t.no_expiration || 'Sin fecha de vencimiento'}</div>`;
+
+                const days = window.getDaysRemaining(expires);
+                const isExpired = days <= 0;
+                const isSoon = days > 0 && days <= 5;
+
+                let color = 'var(--text-secondary)';
+                let bg = 'var(--system-gray6)';
+                let icon = 'clock';
+
+                if (isExpired) { color = 'white'; bg = 'var(--system-red)'; icon = 'alert-circle'; }
+                else if (isSoon) { color = 'white'; bg = 'var(--system-orange)'; icon = 'clock-8'; }
+
+                return `
+                                <div style="background: ${bg}; color: ${color}; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+                                    <i data-lucide="${icon}" size="14"></i>
+                                    <span>${isExpired ? 'Expirado' : (isSoon ? `Expira en ${days} días` : `Vence: ${new Date(expires).toLocaleDateString()}`)}</span>
+                                </div>
+                                ${!isExpired ? `<div style="font-size: 10px; font-weight: 600; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em;">${days} días restantes</div>` : ''}
+                            `;
+            })()}
+                    </div>
                 </div>
             </div>
         `;
@@ -1425,6 +1445,14 @@ window.formatLocationLabel = (loc) => {
     if (!loc) return '';
     // Strip everything in parentheses non-greedily and clean up spacing
     return loc.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+};
+
+// --- HELPER: CALCULATE DAYS REMAINING ---
+window.getDaysRemaining = (expiryDate) => {
+    if (!expiryDate) return null;
+    const diff = new Date(expiryDate) - new Date();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days;
 };
 
 window.showLocationDetails = (fullLoc) => {
@@ -2487,6 +2515,11 @@ window.updateStudentPrompt = async (id) => {
                         ${s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A'}
                     </div>
                 </div>
+
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">Vencimiento del Paquete (Timer)</label>
+                    <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? new Date(s.package_expires_at).toISOString().split('T')[0] : ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2.5rem;">
@@ -2514,14 +2547,20 @@ window.saveStudentDetails = async (id) => {
     const newPhone = document.getElementById('edit-student-phone').value.trim();
     const newPass = document.getElementById('edit-student-pass').value.trim();
     const balanceVal = document.getElementById('edit-student-balance').value;
-    const newBalance = balanceVal === "" ? null : parseInt(balanceVal);
+    const expiresVal = document.getElementById('edit-student-expires').value;
+
+    const updates = {
+        name: newName,
+        phone: newPhone,
+        password: newPass,
+        balance: balanceVal === "" ? null : parseInt(balanceVal),
+        package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
+    };
 
     if (!newName || !newPass) {
         alert("Nombre and Password are required.");
         return;
     }
-
-    const updates = { name: newName, phone: newPhone, password: newPass, balance: newBalance };
 
     if (supabaseClient) {
         const { error } = await supabaseClient.from('students').update(updates).eq('id', id);
