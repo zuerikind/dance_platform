@@ -2204,6 +2204,7 @@ window.submitNewSchoolWithAdmin = async () => {
             const { error: subError } = await supabaseClient
                 .from('subscriptions')
                 .insert([{
+                    id: "S-" + Date.now(),
                     name: 'Clase Suelta',
                     price: 150,
                     limit_count: 1,
