@@ -3373,47 +3373,66 @@ window.confirmAttendance = async (studentId, count) => {
     }
 
     if (student.balance !== null) {
-        // Multi-Batch Consumption: Consume from the soonest-expiring pack first
-        const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
-        let remainingToDeduct = count;
+        const schoolId = student.school_id || state.currentSchool?.id;
+        let updated = false;
 
-        if (activePacks.length > 0) {
-            // Sort by expiration date (ascending)
-            activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-
-            for (let i = 0; i < activePacks.length && remainingToDeduct > 0; i++) {
-                const pack = activePacks[i];
-                if (pack.count >= remainingToDeduct) {
-                    pack.count -= remainingToDeduct;
-                    remainingToDeduct = 0;
-                } else {
-                    remainingToDeduct -= pack.count;
-                    pack.count = 0;
+        if (supabaseClient && schoolId) {
+            const { error: rpcError } = await supabaseClient.rpc('deduct_student_classes', {
+                p_student_id: String(studentId),
+                p_school_id: schoolId,
+                p_count: count
+            });
+            if (!rpcError) {
+                updated = true;
+                const newBalance = (student.balance || 0) - count;
+                student.balance = newBalance;
+                if (Array.isArray(student.active_packs) && student.active_packs.length > 0) {
+                    let remaining = count;
+                    const packs = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+                    for (const pack of packs) {
+                        if (remaining <= 0) break;
+                        const c = (pack.count || 0);
+                        const deduct = Math.min(c, remaining);
+                        pack.count = c - deduct;
+                        remaining -= deduct;
+                    }
+                    student.active_packs = packs.filter(p => (p.count || 0) > 0);
                 }
             }
-            // Remove empty packs
-            const updatedPacks = activePacks.filter(p => p.count > 0);
-            const newBalance = updatedPacks.reduce((sum, p) => sum + p.count, 0);
+        }
 
-            const updates = {
-                balance: newBalance,
-                active_packs: updatedPacks
-            };
+        if (!updated) {
+            const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+            let remainingToDeduct = count;
 
-            if (supabaseClient) {
-                const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
-                if (error) { alert("Error updating balance: " + error.message); return; }
+            if (activePacks.length > 0) {
+                activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+                for (let i = 0; i < activePacks.length && remainingToDeduct > 0; i++) {
+                    const pack = activePacks[i];
+                    if (pack.count >= remainingToDeduct) {
+                        pack.count -= remainingToDeduct;
+                        remainingToDeduct = 0;
+                    } else {
+                        remainingToDeduct -= pack.count;
+                        pack.count = 0;
+                    }
+                }
+                const updatedPacks = activePacks.filter(p => p.count > 0);
+                const newBalance = updatedPacks.reduce((sum, p) => sum + p.count, 0);
+                if (supabaseClient) {
+                    const { error } = await supabaseClient.from('students').update({ balance: newBalance, active_packs: updatedPacks }).eq('id', studentId);
+                    if (error) { alert("Error updating balance: " + error.message); return; }
+                }
+                student.balance = newBalance;
+                student.active_packs = updatedPacks;
+            } else {
+                const newBalance = student.balance - count;
+                if (supabaseClient) {
+                    const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
+                    if (error) { alert("Error updating balance: " + error.message); return; }
+                }
+                student.balance = newBalance;
             }
-            student.balance = newBalance;
-            student.active_packs = updatedPacks;
-        } else {
-            // Fallback for students without active_packs field (legacy balance)
-            const newBalance = student.balance - count;
-            if (supabaseClient) {
-                const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
-                if (error) { alert("Error updating balance: " + error.message); return; }
-            }
-            student.balance = newBalance;
         }
 
         saveState();
