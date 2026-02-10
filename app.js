@@ -2620,8 +2620,7 @@ window.activatePackage = async (studentId, packageName) => {
         state.currentUser = { ...state.currentUser, ...updates, role: 'student' };
         saveState();
     }
-    await fetchAllData();
-};
+}
 
 window.openPaymentModal = async (subId) => {
     const sub = state.subscriptions.find(s => s.id === subId);
@@ -2714,13 +2713,17 @@ window.processPaymentRequest = async (id, status) => {
     if (!req) return;
 
     if (supabaseClient) {
-        let err = null;
-        const { error: tableError } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
-        if (tableError) {
-            const { error: rpcError } = await supabaseClient.rpc('update_payment_request_status', { p_request_id: id, p_status: status });
-            err = rpcError;
+        const { error: rpcError } = await supabaseClient.rpc('update_payment_request_status', { p_request_id: id, p_status: status });
+        if (rpcError) {
+            const { error: tableError } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
+            if (tableError) {
+                alert("Error processing: " + (tableError.message || rpcError.message));
+                return;
+            }
         }
-        if (err) { alert("Error processing: " + err.message); return; }
+        req.status = status;
+        saveState();
+        renderView();
 
         if (status === 'approved') {
             await window.activatePackage(req.student_id, req.sub_name);
