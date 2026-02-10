@@ -706,13 +706,16 @@ async function fetchAllData() {
             supabaseClient.from('admins').select('*').eq('school_id', sid).order('username')
         ]);
 
-        if (classesRes.data) state.classes = classesRes.data;
-        else if (state.isAdmin && supabaseClient) {
+        // When RLS blocks, table returns { data: [], error: null }; treat empty as "no data" and use RPC for admins
+        if (classesRes.data && classesRes.data.length > 0) {
+            state.classes = classesRes.data;
+        } else if (state.isAdmin && supabaseClient) {
             const { data: rpcClasses } = await supabaseClient.rpc('get_school_classes', { p_school_id: sid });
             if (rpcClasses && Array.isArray(rpcClasses)) state.classes = rpcClasses;
         }
-        if (subsRes.data) state.subscriptions = subsRes.data;
-        else if (state.isAdmin && supabaseClient) {
+        if (subsRes.data && subsRes.data.length > 0) {
+            state.subscriptions = subsRes.data;
+        } else if (state.isAdmin && supabaseClient) {
             const { data: rpcSubs } = await supabaseClient.rpc('get_school_subscriptions', { p_school_id: sid });
             if (rpcSubs && Array.isArray(rpcSubs)) state.subscriptions = rpcSubs;
         }
