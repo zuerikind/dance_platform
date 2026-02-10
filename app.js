@@ -785,6 +785,22 @@ async function fetchAllData() {
                 state.students = [{ ...state.currentUser }];
             }
         }
+        // Always refresh current student profile from server so balance shows latest (e.g. after admin deducts via QR)
+        if (isStudent && state.currentUser && supabaseClient) {
+            const schoolId = state.currentUser.school_id || sid;
+            const { data: freshRow } = await supabaseClient.rpc('get_student_by_id', {
+                p_student_id: String(state.currentUser.id),
+                p_school_id: schoolId
+            });
+            if (freshRow && Array.isArray(freshRow) && freshRow.length > 0) {
+                const row = freshRow[0];
+                state.currentUser = { ...row, role: 'student' };
+                const idx = state.students.findIndex(s => s.id === row.id || String(s.id) === String(row.id));
+                if (idx >= 0) state.students[idx] = row;
+                else state.students = [row];
+                saveState();
+            }
+        }
         if (requestsRes.data && requestsRes.data.length > 0) {
             state.paymentRequests = requestsRes.data;
         } else if (state.isAdmin && supabaseClient) {
@@ -3578,16 +3594,15 @@ logoEl.addEventListener('click', () => {
     // Fetch live data from Supabase
     fetchAllData();
 
-    // Background Sync: Refresh every 30 seconds to catch QR scans from other devices
+    // Background Sync: Refresh every 2 minutes (less aggressive to avoid overwriting state / race conditions)
     setInterval(() => {
-        // REFRESH GUARD: Don't refresh if user is typing or a modal is open
-        const isFocussed = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+        const isFocussed = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '');
         const isModalOpen = document.querySelector('.modal:not(.hidden)');
 
         if (state.currentUser && !isFocussed && !isModalOpen) {
             fetchAllData();
         }
-    }, 30000);
+    }, 120000);
 
     // Inactivity Monitor: Check every minute
     setInterval(() => {
