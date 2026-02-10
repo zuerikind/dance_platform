@@ -122,7 +122,7 @@ const DANCE_LOCALES = {
         delete_payment_confirm: "Delete this payment record forever?",
         select_school_title: "Welcome to Bailadmin",
         select_school_subtitle: "Please select your school or teacher to continue",
-        add_school_btn: "+ New School",
+        add_school_btn: "New School",
         enter_school_name: "Enter new school or teacher name:",
         school_created: "School created successfully!",
         switch_school: "Switch School",
@@ -159,6 +159,10 @@ const DANCE_LOCALES = {
         delete_school_btn: "Delete School",
         delete_school_confirm: "Are you sure you want to delete this school? ALL data (students, admins, payments, classes) will be permanently lost.",
         delete_school_success: "School deleted successfully",
+        add_school_title: "Create New School",
+        school_info_section: "Academy Details",
+        admin_info_section: "Initial Administrator",
+        create_school_btn: "Execute Initialization",
         class_location: "Location",
         location_placeholder: "e.g. Studio A",
         active_packs_label: "Your Active Packs",
@@ -315,7 +319,7 @@ const DANCE_LOCALES = {
         delete_payment_confirm: "¿Eliminar este registro de pago permanentemente?",
         select_school_title: "Bienvenido a Bailadmin",
         select_school_subtitle: "Por favor selecciona tu escuela o profesor para continuar",
-        add_school_btn: "+ Nueva Escuela",
+        add_school_btn: "Nueva Escuela",
         enter_school_name: "Ingresa el nombre de la nueva escuela o profesor:",
         school_created: "¡Escuela creada con éxito!",
         switch_school: "Cambiar Escuela",
@@ -352,6 +356,10 @@ const DANCE_LOCALES = {
         delete_school_btn: "Eliminar Escuela",
         delete_school_confirm: "¿Estás seguro de que quieres eliminar esta escuela? TODOS los datos (alumnos, admins, pagos, clases) se perderán permanentemente.",
         delete_school_success: "Escuela eliminada con éxito",
+        add_school_title: "Crear Nueva Escuela",
+        school_info_section: "Detalles de la Academia",
+        admin_info_section: "Administrador Inicial",
+        create_school_btn: "Ejecutar Inicialización",
         class_location: "Ubicación",
         location_placeholder: "Ej: Aula A",
         active_packs_label: "Tus Paquetes Activos",
@@ -509,7 +517,7 @@ const DANCE_LOCALES = {
         delete_payment_confirm: "Diesen Zahlungsbeleg permanent löschen?",
         select_school_title: "Willkommen bei Bailadmin",
         select_school_subtitle: "Bitte wähle deine Schule oder deinen Lehrer aus",
-        add_school_btn: "+ Neue Schule",
+        add_school_btn: "Neue Schule",
         enter_school_name: "Namen der neuen Schule oder des Lehrers eingeben:",
         school_created: "Schule erfolgreich erstellt!",
         switch_school: "Schule wechseln",
@@ -546,6 +554,10 @@ const DANCE_LOCALES = {
         delete_school_btn: "Schule löschen",
         delete_school_confirm: "Bist du sicher? ALLE Daten (Schüler, Admins, Zahlungen, Kurse) werden unwiderruflich gelöscht.",
         delete_school_success: "Schule erfolgreich gelöscht",
+        add_school_title: "Neue Schule erstellen",
+        school_info_section: "Akademie-Details",
+        admin_info_section: "Erster Administrator",
+        create_school_btn: "Initialisierung ausführen",
         class_location: "Standort",
         location_placeholder: "z.B. Studio A",
         active_packs_label: "Deine aktiven Pakete",
@@ -866,6 +878,64 @@ function renderView() {
                             </div>
                         `;
         }).join('')}
+                </div>
+            </div>
+        `;
+    } else if (view === 'platform-add-school') {
+        html += `
+            <div class="ios-header" style="background: transparent; padding-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0 0.5rem;">
+                    <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="border-radius: 50%; width: 36px; height: 36px; padding: 0; border: 1.5px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.transform='translateX(-2px)'" onmouseout="this.style.opacity='0.8'; this.style.transform='translateX(0)'">
+                        <i data-lucide="chevron-left" size="20" style="margin-right: 2px;"></i>
+                    </button>
+                    <div style="font-size: 11px; color: var(--system-blue); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">${t.dev_dashboard_title}</div>
+                </div>
+                <div class="ios-large-title" style="letter-spacing: -1.2px;">${t.add_school_title}</div>
+            </div>
+
+            <div style="padding: 1.2rem;">
+                <!-- SCHOOL INFO -->
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.school_info_section}</div>
+                <div class="ios-list" style="margin-bottom: 2.5rem; overflow: hidden;">
+                    <div class="ios-list-item" style="padding: 16px; border-bottom: none;">
+                        <div style="width: 100%;">
+                            <div style="font-size: 12px; font-weight: 800; color: var(--system-blue); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em;">${t.enter_school_name || 'Academy Name'}</div>
+                            <input type="text" id="new-school-name" placeholder="e.g. Tanzstudio Berlin" style="width: 100%; border: none; background: transparent; color: var(--text-primary); outline: none; font-size: 17px; font-weight: 700; padding: 0; letter-spacing: -0.3px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN INFO -->
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.admin_info_section}</div>
+                <div class="ios-list" style="margin-bottom: 3.5rem; overflow: hidden;">
+                    <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                        <div style="width: 100%;">
+                            <div style="font-size: 12px; font-weight: 800; color: var(--system-blue); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em;">${t.username}</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i data-lucide="user" size="14" style="opacity: 0.3;"></i>
+                                <input type="text" id="new-school-admin-user" placeholder="admin_user" style="width: 100%; border: none; background: transparent; color: var(--text-primary); outline: none; font-size: 17px; font-weight: 700; padding: 0; letter-spacing: -0.3px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ios-list-item" style="padding: 16px; border-bottom: none;">
+                        <div style="width: 100%;">
+                            <div style="font-size: 12px; font-weight: 800; color: var(--system-blue); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em;">${t.password}</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i data-lucide="key" size="14" style="opacity: 0.3;"></i>
+                                <input type="text" id="new-school-admin-pass" placeholder="••••••••" style="width: 100%; border: none; background: transparent; color: var(--text-primary); outline: none; font-size: 17px; font-weight: 700; padding: 0; letter-spacing: -0.3px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIONS -->
+                <div style="padding: 0 0.5rem;">
+                    <button class="btn-primary" onclick="window.submitNewSchoolWithAdmin()" style="width: 100%; border-radius: 20px; height: 60px; font-size: 17px; font-weight: 900; box-shadow: var(--shadow-lg); background: var(--text-primary); color: var(--bg-body); transition: all 0.3s;" onmouseover="this.style.transform='scale(1.01)'; this.style.filter='brightness(1.1)'" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)'">
+                        <i data-lucide="sparkles" size="18" style="margin-right: 10px;"></i> ${t.create_school_btn}
+                    </button>
+                    <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="width: 100%; background: transparent; border: none; color: var(--system-red); font-weight: 700; margin-top: 1.2rem; font-size: 15px; opacity: 0.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">
+                        ${t.cancel}
+                    </button>
                 </div>
             </div>
         `;
@@ -2090,18 +2160,19 @@ window.createNewSchool = async () => {
 };
 
 window.createNewSchoolWithAdmin = async () => {
-    const t = new Proxy(window.t, {
-        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
-    });
+    state.currentView = 'platform-add-school';
+    renderView();
+};
 
-    const schoolName = prompt(t('enter_school_name'));
-    if (!schoolName) return;
+window.submitNewSchoolWithAdmin = async () => {
+    const schoolName = document.getElementById('new-school-name').value;
+    const adminUser = document.getElementById('new-school-admin-user').value;
+    const adminPass = document.getElementById('new-school-admin-pass').value;
 
-    const adminUser = prompt(t('enter_admin_user') || "Admin Username:");
-    if (!adminUser) return;
-
-    const adminPass = prompt(t('enter_admin_pass') || "Admin Password:");
-    if (!adminPass) return;
+    if (!schoolName || !adminUser || !adminPass) {
+        alert("Please fill in all fields.");
+        return;
+    }
 
     if (supabaseClient) {
         state.loading = true;
@@ -2142,11 +2213,11 @@ window.createNewSchoolWithAdmin = async () => {
             if (subError) throw subError;
 
             alert(`School "${schoolName}" and Admin "${adminUser}" created successfully!`);
+            state.currentView = 'platform-dev-dashboard';
             await fetchPlatformData();
         } catch (err) {
             console.error("Creation Error:", err);
             alert("Failed to create school/admin: " + err.message);
-        } finally {
             state.loading = false;
             renderView();
         }
