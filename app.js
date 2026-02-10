@@ -1379,6 +1379,18 @@ function renderView() {
                         <div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">
                             ${state.currentUser.balance === null ? t.unlimited : state.currentUser.balance}
                         </div>
+                        ${(() => {
+                            const packs = state.currentUser.active_packs || [];
+                            const nextExpiry = state.currentUser.package_expires_at || (packs.length > 0 ? packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
+                            if (nextExpiry) {
+                                const d = new Date(nextExpiry);
+                                const days = window.getDaysRemaining(nextExpiry);
+                                const isSoon = days !== null && days <= 5 && days > 0;
+                                const isExpired = days !== null && days <= 0;
+                                return `<div style="margin-top: 10px; font-size: 11px; font-weight: 600; color: var(--text-secondary);">${t.next_expiry_label}: <span style="color: ${isExpired ? 'var(--system-red)' : isSoon ? 'var(--system-orange)' : 'var(--primary)'};">${d.toLocaleDateString()}</span>${days !== null && days > 0 && days <= 31 ? ` (${days} ${t.days_left || 'days left'})` : ''}</div>`;
+                            }
+                            return '';
+                        })()}
                     </div>
 
                     <div style="margin-top: 2rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; text-align: left;">
@@ -2533,80 +2545,82 @@ window.togglePayment = async (id) => {
 
 window.activatePackage = async (studentId, packageName) => {
     const student = state.students.find(s => s.id === studentId);
-    // Robust case-insensitive search
-    const pkg = state.subscriptions.find(p => p.name.trim().toLowerCase() === String(packageName).trim().toLowerCase());
+    let pkg = state.subscriptions.find(p => p.name.trim().toLowerCase() === String(packageName).trim().toLowerCase());
+    if (!pkg && packageName) {
+        const numMatch = String(packageName).match(/\d+/);
+        const inferredCount = numMatch ? parseInt(numMatch[0], 10) : 1;
+        pkg = { name: packageName, limit_count: inferredCount, validity_days: 30 };
+    }
 
-    console.log(`Activating package[${packageName}]for student[${studentId}]...`);
-    if (pkg) console.log(`Matched subscription: `, pkg);
+    if (!student) {
+        console.warn("activatePackage: student not found", studentId);
+        return;
+    }
 
-    if (student) {
-        // Calculate new balance: accumulate if both are numbers, otherwise handle unlimited (null)
-        let newBalance;
-        const incomingLimit = pkg ? parseInt(pkg.limit_count) : 0;
+    let newBalance;
+    const incomingLimit = pkg ? parseInt(pkg.limit_count, 10) : 0;
+    const effectiveLimit = isNaN(incomingLimit) ? 0 : incomingLimit;
 
-        if (!pkg) {
-            // If no package (e.g. resetting), set balance to 0
-            newBalance = 0;
-        } else if (isNaN(incomingLimit) || incomingLimit === 0) {
-            // New package is Unlimited
-            newBalance = null;
-        } else if (student.balance === null) {
-            // Already Unlimited, stays Unlimited
-            newBalance = null;
-        } else {
-            // Both are specific numbers, so we ADD them
-            newBalance = (student.balance || 0) + incomingLimit;
-        }
+    if (!pkg || effectiveLimit === 0) {
+        newBalance = student.balance ?? 0;
+    } else if (student.balance === null) {
+        newBalance = null;
+    } else {
+        newBalance = (student.balance || 0) + effectiveLimit;
+    }
 
-        // Handle Multi-Batch Expiration
-        const days = (pkg && pkg.validity_days && !isNaN(parseInt(pkg.validity_days))) ? parseInt(pkg.validity_days) : 30;
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + days);
+    const days = (pkg && pkg.validity_days && !isNaN(parseInt(pkg.validity_days, 10))) ? parseInt(pkg.validity_days, 10) : 30;
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + days);
 
-        const newPack = {
-            id: "PACK-" + Date.now().toString(36).toUpperCase(),
-            name: pkg ? pkg.name : packageName,
-            count: incomingLimit,
-            expires_at: expiry.toISOString(),
-            created_at: new Date().toISOString()
-        };
+    const newPack = {
+        id: "PACK-" + Date.now().toString(36).toUpperCase(),
+        name: pkg ? pkg.name : packageName,
+        count: effectiveLimit,
+        expires_at: expiry.toISOString(),
+        created_at: new Date().toISOString()
+    };
 
-        // Initialize active_packs if it doesn't exist
-        const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
-        if (pkg) activePacks.push(newPack);
+    const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+    if (pkg && effectiveLimit > 0) activePacks.push(newPack);
 
-        const updates = {
-            package: pkg ? pkg.name : null,
-            balance: newBalance,
-            paid: !!pkg,
-            active_packs: activePacks,
-            package_expires_at: pkg ? expiry.toISOString() : null // Keep for backward compatibility/quick check
-        };
+    const updates = {
+        package: pkg ? pkg.name : null,
+        balance: newBalance,
+        paid: !!pkg,
+        active_packs: activePacks,
+        package_expires_at: activePacks.length > 0 ? expiry.toISOString() : null
+    };
 
-        console.log(`Update payload (Multi-Batch): `, updates);
-
-        if (supabaseClient) {
-            const { error } = await supabaseClient.from('students').update(updates).eq('id', studentId);
-            if (error) {
-                console.error("Supabase update error:", error);
-                if (error.message.includes('active_packs')) {
-                    alert("FATAL ERROR: The database is missing the 'active_packs' column. Please run the SQL script in Supabase: ALTER TABLE students ADD COLUMN IF NOT EXISTS active_packs JSONB DEFAULT '[]';");
-                } else {
-                    alert("Error updating: " + error.message);
-                }
+    if (supabaseClient) {
+        const { error: rpcError } = await supabaseClient.rpc('apply_student_package', {
+            p_student_id: studentId,
+            p_balance: updates.balance,
+            p_active_packs: updates.active_packs,
+            p_package_expires_at: updates.package_expires_at,
+            p_package_name: updates.package,
+            p_paid: updates.paid
+        });
+        if (rpcError) {
+            const { error: tableError } = await supabaseClient.from('students').update(updates).eq('id', studentId);
+            if (tableError) {
+                console.error("Supabase update error:", tableError);
+                alert("Error applying package: " + tableError.message);
                 return;
             }
         }
-
-        student.package = updates.package;
-        student.balance = updates.balance;
-        student.paid = updates.paid;
-        student.active_packs = updates.active_packs;
-        student.package_expires_at = updates.package_expires_at;
-
-        saveState();
-        await fetchAllData();
     }
+
+    student.package = updates.package;
+    student.balance = updates.balance;
+    student.paid = updates.paid;
+    student.active_packs = updates.active_packs;
+    student.package_expires_at = updates.package_expires_at;
+    if (state.currentUser && state.currentUser.id === studentId) {
+        state.currentUser = { ...state.currentUser, ...updates, role: 'student' };
+        saveState();
+    }
+    await fetchAllData();
 };
 
 window.openPaymentModal = async (subId) => {

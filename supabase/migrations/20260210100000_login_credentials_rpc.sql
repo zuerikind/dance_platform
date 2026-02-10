@@ -263,3 +263,32 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_platform_all_data() TO anon;
 GRANT EXECUTE ON FUNCTION public.get_platform_all_data() TO authenticated;
+
+-- Apply package to student (e.g. when admin approves payment). Bypasses RLS so it always works.
+CREATE OR REPLACE FUNCTION public.apply_student_package(
+  p_student_id text,
+  p_balance numeric,
+  p_active_packs jsonb,
+  p_package_expires_at timestamptz,
+  p_package_name text,
+  p_paid boolean
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.students
+  SET
+    balance = p_balance,
+    active_packs = COALESCE(p_active_packs, '[]'::jsonb),
+    package_expires_at = p_package_expires_at,
+    package = p_package_name,
+    paid = COALESCE(p_paid, false)
+  WHERE id = p_student_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.apply_student_package(text, numeric, jsonb, timestamptz, text, boolean) TO anon;
+GRANT EXECUTE ON FUNCTION public.apply_student_package(text, numeric, jsonb, timestamptz, text, boolean) TO authenticated;
