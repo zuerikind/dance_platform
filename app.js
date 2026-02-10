@@ -646,16 +646,17 @@ async function fetchAllData() {
         }
 
         // If no school is selected, we can't fetch tenant-specific data
-        // PLATFORM DEV EXCEPTION: Don't redirect if in God Mode
-        if (!state.currentSchool && !state.isPlatformDev && state.currentView !== 'platform-dev-dashboard') {
+        // PLATFORM DEV EXCEPTION: If in God Mode, fetch platform stats instead of redirecting
+        if (state.isPlatformDev) {
+            await fetchPlatformData();
+            // If we're not impersonating a specific school, we stop here
+            if (!state.currentSchool) {
+                state.loading = false;
+                renderView();
+                return;
+            }
+        } else if (!state.currentSchool) {
             state.currentView = 'school-selection';
-            state.loading = false;
-            renderView();
-            return;
-        }
-
-        // Skip school-specific fetching if no school selected (even in dev mode)
-        if (!state.currentSchool) {
             state.loading = false;
             renderView();
             return;
