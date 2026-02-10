@@ -34,6 +34,10 @@ const DANCE_LOCALES = {
         student_signup: "New Student",
         admin_login: "Admin login",
         enter_name: "How should we call you?",
+        full_name_placeholder: "Full name",
+        email_placeholder: "Email address",
+        signup_require_fields: "Please enter full name, email, phone and password.",
+        signup_invalid_email: "Please enter a valid email address.",
         signup_btn: "Join Now",
         logout: "Sign Out",
         admin_subtitle: "Manage your studio efficiently",
@@ -231,6 +235,10 @@ const DANCE_LOCALES = {
         student_signup: "Nuevo Alumno",
         admin_login: "Acceso Admin",
         enter_name: "¿Cómo te llamas?",
+        full_name_placeholder: "Nombre completo",
+        email_placeholder: "Correo electrónico",
+        signup_require_fields: "Ingresa nombre completo, correo, teléfono y contraseña.",
+        signup_invalid_email: "Ingresa un correo electrónico válido.",
         signup_btn: "Unirme Ahora",
         logout: "Cerrar Sesión",
         admin_subtitle: "Gestiona tu academia",
@@ -432,6 +440,10 @@ const DANCE_LOCALES = {
         student_signup: "Neuer Schüler",
         admin_login: "Admin-Login",
         enter_name: "Wie sollen wir dich nennen?",
+        full_name_placeholder: "Vollständiger Name",
+        email_placeholder: "E-Mail-Adresse",
+        signup_require_fields: "Bitte gib Name, E-Mail, Telefon und Passwort ein.",
+        signup_invalid_email: "Bitte gib eine gültige E-Mail-Adresse ein.",
         signup_btn: "Jetzt beitreten",
         logout: "Abmelden",
         admin_subtitle: "Verwalte dein Studio effizient",
@@ -1183,8 +1195,9 @@ function renderView() {
 
                             <div class="auth-input-group">
                                 ${isSignup ? `
-                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('enter_name')}">
-                                    <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}">
+                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('full_name_placeholder')}" autocomplete="name">
+                                    <input type="email" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email">
+                                    <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}" autocomplete="tel">
                                 ` : `
                                     <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('username')}">
                                 `}
@@ -1882,12 +1895,20 @@ window.selectCustomOption = async (classId, field, value) => {
 };
 
 window.signUpStudent = async () => {
+    const t = new Proxy(window.t, { get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop] });
     const name = document.getElementById('auth-name').value.trim();
+    const emailEl = document.getElementById('auth-email');
+    const email = emailEl ? emailEl.value.trim() : '';
     const phone = document.getElementById('auth-phone').value.trim();
     const pass = document.getElementById('auth-pass').value.trim();
 
-    if (!name || !pass || !phone) {
-        alert("Please enter name, phone number and password");
+    if (!name || !pass || !phone || !email) {
+        alert(t('signup_require_fields'));
+        return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert(t('signup_invalid_email'));
         return;
     }
 
@@ -1900,7 +1921,6 @@ window.signUpStudent = async () => {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
         name,
         phone,
-        // password is never stored in local profile; rely on Supabase Auth instead
         paid: false,
         package: null,
         balance: 0,
@@ -1910,10 +1930,8 @@ window.signUpStudent = async () => {
 
     if (supabaseClient) {
         try {
-            // Create Supabase Auth user using a deterministic pseudo-email based on name + school
-            const pseudoEmail = `${name.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
             const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-                email: pseudoEmail,
+                email,
                 password: pass
             });
             if (signUpError) {
