@@ -708,6 +708,11 @@ async function fetchAllData() {
 
         if (classesRes.data) state.classes = classesRes.data;
         if (subsRes.data) state.subscriptions = subsRes.data;
+        // Students cannot read admin_settings (RLS); fetch bank details via RPC for payment modal
+        if (isStudent) {
+            const { data: settingsJson } = await supabaseClient.rpc('get_school_admin_settings', { p_school_id: sid });
+            if (settingsJson && typeof settingsJson === 'object') state.adminSettings = settingsJson;
+        }
         if (studentsRes.data && studentsRes.data.length > 0) {
             state.students = studentsRes.data;
             // SYNC: Update currentUser if they are a student to show latest balance
@@ -2463,18 +2468,16 @@ window.submitPaymentRequest = async (subId, method) => {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
-    const newRequest = {
-        student_id: state.currentUser.id,
-        sub_id: String(sub.id),
-        sub_name: sub.name,
-        price: sub.price,
-        payment_method: method,
-        school_id: state.currentSchool.id,
-        status: 'pending'
-    };
-
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('payment_requests').insert([newRequest]);
+        // Students cannot insert into payment_requests (RLS); use RPC so request is created.
+        const { error } = await supabaseClient.rpc('create_payment_request', {
+            p_student_id: state.currentUser.id,
+            p_sub_id: String(sub.id),
+            p_sub_name: sub.name,
+            p_price: sub.price,
+            p_payment_method: method,
+            p_school_id: state.currentSchool.id
+        });
         if (error) { alert("Error sending request: " + error.message); return; }
     }
 

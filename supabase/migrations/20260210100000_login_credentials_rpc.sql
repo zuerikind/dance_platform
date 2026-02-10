@@ -78,3 +78,44 @@ GRANT EXECUTE ON FUNCTION public.get_school_classes(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_school_classes(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_school_subscriptions(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_school_subscriptions(uuid) TO authenticated;
+
+-- Student creates a payment request (RLS only allows admins to insert; this runs as definer).
+CREATE OR REPLACE FUNCTION public.create_payment_request(
+  p_student_id text,
+  p_sub_id text,
+  p_sub_name text,
+  p_price numeric,
+  p_payment_method text,
+  p_school_id uuid
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.payment_requests (student_id, sub_id, sub_name, price, payment_method, school_id, status)
+  VALUES (p_student_id, p_sub_id, p_sub_name, p_price, p_payment_method, p_school_id, 'pending');
+END;
+$$;
+
+COMMENT ON FUNCTION public.create_payment_request IS 'Allows students to submit a payment request; RLS blocks direct insert.';
+
+GRANT EXECUTE ON FUNCTION public.create_payment_request(text, text, text, numeric, text, uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.create_payment_request(text, text, text, numeric, text, uuid) TO authenticated;
+
+-- Bank details for payment modal (students cannot read admin_settings via RLS).
+CREATE OR REPLACE FUNCTION public.get_school_admin_settings(p_school_id uuid)
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(jsonb_object_agg(key, value), '{}'::jsonb)
+  FROM public.admin_settings
+  WHERE school_id = p_school_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_school_admin_settings(uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_school_admin_settings(uuid) TO authenticated;
