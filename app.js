@@ -3191,44 +3191,6 @@ logoEl.addEventListener('click', () => {
     // Check if session expired while away
     window.checkInactivity();
 
-    // SILENT SEED (Ensures "Profe Daniela" exists)
-    (async function silentSeed() {
-        if (!supabaseClient) return;
-        try {
-            // 1. Check for existing school using exact match to avoid duplicates
-            const { data: schools } = await supabaseClient.from('schools').select('*').eq('name', 'Profe Daniela');
-            let schoolId;
-
-            if (!schools || schools.length === 0) {
-                // If not found, insert
-                const { data: newSchool } = await supabaseClient.from('schools').insert([{ name: 'Profe Daniela' }]).select();
-                if (newSchool && newSchool.length > 0) schoolId = newSchool[0].id;
-            } else {
-                schoolId = schools[0].id;
-                // [HOUSEKEEPING] If duplicates exist in DB, we'll just use the first one.
-            }
-
-            if (schoolId) {
-                // 2. Check for existing admin in ADMINS table (Correct mapping)
-                const { data: adminExists } = await supabaseClient.from('admins').select('*').eq('username', 'Daniela').eq('school_id', schoolId);
-
-                if (!adminExists || adminExists.length === 0) {
-                    await supabaseClient.from('admins').insert([{
-                        username: 'Daniela',
-                        password: 'dany', // Note: In production, hash passwords!
-                        school_id: schoolId
-                    }]);
-                }
-            }
-            // Refresh logic to show changes immediately
-            if (state.currentView === 'school-selection' && !state.schools.find(s => s.name === 'Profe Daniela')) {
-                fetchAllData();
-            }
-        } catch (e) {
-            console.warn("Silent seed skipped/failed:", e);
-        }
-    })();
-
     updateI18n();
     document.body.setAttribute('data-theme', state.theme);
     document.body.classList.toggle('dark-mode', state.theme === 'dark');
