@@ -29,6 +29,28 @@ COMMENT ON FUNCTION public.student_username_exists(text, uuid) IS 'True if usern
 GRANT EXECUTE ON FUNCTION public.student_username_exists(text, uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.student_username_exists(text, uuid) TO authenticated;
 
+-- Student login by username + password (students sign in with usuario, not full name).
+CREATE OR REPLACE FUNCTION public.get_student_by_username_credentials(
+  p_username text,
+  p_password text,
+  p_school_id uuid
+)
+RETURNS SETOF public.students
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM public.students
+  WHERE school_id = p_school_id
+    AND LOWER(TRIM(username)) = LOWER(TRIM(p_username))
+    AND password = p_password
+  LIMIT 1;
+$$;
+COMMENT ON FUNCTION public.get_student_by_username_credentials(text, text, uuid) IS 'Student login: validate username+password for a school.';
+GRANT EXECUTE ON FUNCTION public.get_student_by_username_credentials(text, text, uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_student_by_username_credentials(text, text, uuid) TO authenticated;
+
 -- Update create_student_with_auth to accept and store username
 CREATE OR REPLACE FUNCTION public.create_student_with_auth(
   p_user_id uuid,

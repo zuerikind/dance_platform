@@ -206,6 +206,7 @@ const DANCE_LOCALES = {
         next_expiry_label: "Next Expiry",
         delete_perm_label: "Delete member permanently",
         admin_pass_req: "Admin Password Required:",
+        leave_blank_keep: "leave blank to keep",
         invalid_pass_msg: "Incorrect Admin Password.",
         save_btn: "Save",
         enter_admin_user: "Enter Admin Username:",
@@ -417,6 +418,7 @@ const DANCE_LOCALES = {
         next_expiry_label: "Próximo Vencimiento",
         delete_perm_label: "Eliminar Alumno permanentemente",
         admin_pass_req: "Password Admin Requerido:",
+        leave_blank_keep: "dejar en blanco para mantener",
         invalid_pass_msg: "Contraseña Incorrecta.",
         save_btn: "Guardar",
         enter_admin_user: "Usuario Administrador:",
@@ -629,6 +631,7 @@ const DANCE_LOCALES = {
         next_expiry_label: "Nächster Ablauf",
         delete_perm_label: "Schüler dauerhaft löschen",
         admin_pass_req: "Admin-Passwort erforderlich:",
+        leave_blank_keep: "leer lassen um beizubehalten",
         invalid_pass_msg: "Falsches Admin-Passwort.",
         save_btn: "Speichern",
         enter_admin_user: "Admin-Benutzername:",
@@ -1324,7 +1327,7 @@ function renderView() {
                                     <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                     <input type="password" id="auth-pass-confirm" class="minimal-input" placeholder="${window.t('confirm_password_placeholder')}" autocomplete="new-password">
                                 ` : `
-                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('full_name_placeholder')}" autocomplete="name">
+                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('username')}" autocomplete="username">
                                     <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                 `}
                             </div>
@@ -2212,7 +2215,7 @@ window.signUpStudent = async () => {
 };
 
 window.loginStudent = async () => {
-    const nameInput = document.getElementById('auth-name').value.trim();
+    const userInput = document.getElementById('auth-name').value.trim();
     const passInput = document.getElementById('auth-pass').value.trim();
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
@@ -2221,26 +2224,31 @@ window.loginStudent = async () => {
     let student;
     if (supabaseClient) {
         try {
-            // 1) Sign-in is by full name + password: look up student by name and password first
-            if (nameInput && passInput) {
-                const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_student_by_credentials', {
-                    p_name: nameInput,
+            // 1) Sign-in by usuario (username) + password
+            if (userInput && passInput) {
+                const { data: usernameRows, error: usernameErr } = await supabaseClient.rpc('get_student_by_username_credentials', {
+                    p_username: userInput,
                     p_password: passInput,
                     p_school_id: state.currentSchool.id
                 });
-                if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
-                    student = legacyRows[0];
-                    if (student.username) {
-                        const usernameEmail = `${String(student.username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
-                        await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput });
-                    }
+                if (!usernameErr && Array.isArray(usernameRows) && usernameRows.length > 0) {
+                    student = usernameRows[0];
+                    const usernameEmail = `${String(student.username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+                    await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput });
+                }
+                if (!student) {
+                    const { data: nameRows, error: nameErr } = await supabaseClient.rpc('get_student_by_credentials', {
+                        p_name: userInput,
+                        p_password: passInput,
+                        p_school_id: state.currentSchool.id
+                    });
+                    if (!nameErr && Array.isArray(nameRows) && nameRows.length > 0) student = nameRows[0];
                 }
             }
-            // 2) If not found by name+password, try Auth (e.g. user_id set, session from another device)
             if (!student) {
-                const nameEmail = `${nameInput.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+                const usernameEmail = `${userInput.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
                 const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-                    email: nameEmail,
+                    email: usernameEmail,
                     password: passInput
                 });
                 if (!authError && authData?.user) {
@@ -2258,7 +2266,7 @@ window.loginStudent = async () => {
         }
     } else {
         student = state.students.find(s =>
-            s.name.toLowerCase() === nameInput.toLowerCase() && s.password === passInput
+            ((s.username && s.username.toLowerCase() === userInput.toLowerCase()) || s.name.toLowerCase() === userInput.toLowerCase()) && s.password === passInput
         );
     }
 
@@ -3254,14 +3262,33 @@ window.updateStudentPrompt = async (id) => {
     if (!s) return;
 
     const t = window.t;
-    // Extra confirmation before editing sensitive member data
-    if (!confirm(t('admin_pass_req'))) {
-        return;
+    if (!state.isAdmin || !state.currentSchool?.id) return;
+
+    const adminUsername = (state.currentUser?.name || '').replace(/\s*\(Admin\)\s*$/i, '').trim();
+    if (!adminUsername) return;
+
+    const adminPassword = prompt(t('admin_pass_req') + '\n' + (t('password_label') || 'Password'));
+    if (adminPassword == null) return;
+
+    if (supabaseClient) {
+        const { data: adminRows, error } = await supabaseClient.rpc('get_admin_by_credentials', {
+            p_username: adminUsername,
+            p_password: adminPassword,
+            p_school_id: state.currentSchool.id
+        });
+        if (error || !Array.isArray(adminRows) || adminRows.length === 0) {
+            alert(t('invalid_login') || 'Invalid admin password.');
+            return;
+        }
+    } else {
+        if (adminPassword !== (state.currentUser?.password)) {
+            alert(t('invalid_login') || 'Invalid admin password.');
+            return;
+        }
     }
 
-
     const modal = document.getElementById('student-modal');
-    const content = document.getElementById('student-modal-content');
+    const content = document.getElementById('student-modal-scroll') || document.getElementById('student-modal-content');
 
     content.innerHTML = `
         <div style="text-align: left;">
@@ -3278,15 +3305,28 @@ window.updateStudentPrompt = async (id) => {
             <div style="display: flex; flex-direction: column; gap: 1.2rem;">
                 <div class="ios-input-group">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('full_name_label')}</label>
-                    <input type="text" id="edit-student-name" class="minimal-input" value="${s.name}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                    <input type="text" id="edit-student-name" class="minimal-input" value="${(s.name || '').replace(/"/g, '&quot;')}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('username')}</label>
+                    <input type="text" id="edit-student-username" class="minimal-input" value="${(s.username || '').replace(/"/g, '&quot;')}" placeholder="${t('username')}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('email_placeholder') || 'Email'}</label>
+                    <input type="text" id="edit-student-email" class="minimal-input" value="${(s.email || '').replace(/"/g, '&quot;')}" placeholder="email@example.com" inputmode="email" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('phone')}</label>
-                    <input type="text" id="edit-student-phone" class="minimal-input" value="${s.phone || ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                    <input type="text" id="edit-student-phone" class="minimal-input" value="${(s.phone || '').replace(/"/g, '&quot;')}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <!-- Password/PIN is not displayed to avoid leaking credentials -->
+                <div class="ios-input-group">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('password_label')} (${t('leave_blank_keep') || 'leave blank to keep'})</label>
+                    <input type="password" id="edit-student-password" class="minimal-input" placeholder="••••••••" autocomplete="new-password" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                </div>
 
                 <div class="ios-input-group">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('total_classes_label')}</label>
@@ -3392,16 +3432,22 @@ window.saveStudentDetails = async (id) => {
     if (!s) return;
 
     const newName = document.getElementById('edit-student-name').value.trim();
+    const newUsername = document.getElementById('edit-student-username')?.value.trim() ?? '';
+    const newEmail = document.getElementById('edit-student-email')?.value.trim() ?? '';
     const newPhone = document.getElementById('edit-student-phone').value.trim();
+    const newPassword = document.getElementById('edit-student-password')?.value ?? '';
     const balanceVal = document.getElementById('edit-student-balance').value;
     const expiresVal = document.getElementById('edit-student-expires').value;
 
     const updates = {
         name: newName,
+        username: newUsername || null,
+        email: newEmail || null,
         phone: newPhone,
-        balance: balanceVal === "" ? null : parseInt(balanceVal),
+        balance: balanceVal === "" ? null : parseInt(balanceVal, 10),
         package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
     };
+    if (newPassword) updates.password = newPassword;
 
     if (!newName) {
         alert("Nombre is required.");
