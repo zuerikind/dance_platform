@@ -3062,23 +3062,36 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
     lucide.createIcons();
 });
 
-// Admin toggle (Logo hold)
+// Admin toggle (Logo hold) & Logo Click Logout
 let logoPressTimer;
 let superAdminTimer;
-document.querySelector('.logo').addEventListener('mousedown', () => {
+let isLongPress = false;
+
+const logoEl = document.querySelector('.logo');
+logoEl.addEventListener('mousedown', () => {
+    isLongPress = false;
     logoPressTimer = setTimeout(() => {
+        isLongPress = true;
         state.isAdmin = !state.isAdmin;
         state.currentView = state.isAdmin ? 'admin-students' : 'schedule';
         renderView();
     }, 2000);
     superAdminTimer = setTimeout(() => {
+        isLongPress = true;
         state.currentView = 'super-admin-dashboard';
         renderView();
     }, 5000);
 });
-document.querySelector('.logo').addEventListener('mouseup', () => {
+
+logoEl.addEventListener('mouseup', () => {
     clearTimeout(logoPressTimer);
     clearTimeout(superAdminTimer);
+});
+
+logoEl.addEventListener('click', () => {
+    if (!isLongPress) {
+        window.logout();
+    }
 });
 
 // Global User Activity Listeners (Auto-Logout)
