@@ -1384,20 +1384,29 @@ function renderView() {
             html += `</div>`;
         }
     } else if (view === 'shop') {
+        const planSortKey = (s) => {
+            const name = (s.name || '').toLowerCase();
+            if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
+            const n = parseInt(s.limit_count, 10);
+            if (!isNaN(n)) return n;
+            const m = (s.name || '').match(/\d+/);
+            return m ? parseInt(m[0], 10) : 0;
+        };
+        const sortedShopPlans = [...(state.subscriptions || [])].sort((a, b) => planSortKey(a) - planSortKey(b));
         html += `<h1>${t.shop_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
-        html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">`;
-        state.subscriptions.forEach(s => {
+        html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">`;
+        sortedShopPlans.forEach(s => {
             html += `
-                <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.8rem;">
+                <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;">
                     <div>
-                        <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">${s.name}</h3>
-                        <p class="text-muted" style="margin-bottom: 1.2rem; font-size: 0.9rem;">
+                        <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${s.name}</h3>
+                        <p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
                             ${t.valid_for_days.replace('{days}', s.validity_days || 30)}
                         </p>
-                        <div style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.04em;">MXD ${s.price}</div>
+                        <div style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.04em;">MXD ${s.price}</div>
                     </div>
-                    <button class="btn-primary w-full" onclick="openPaymentModal('${s.id}')" style="padding: 1rem;">${t.buy}</button>
+                    <button class="btn-primary w-full" onclick="openPaymentModal('${s.id}')" style="padding: 0.75rem; font-size: 0.9rem;">${t.buy}</button>
                 </div>
             `;
         });
@@ -1651,7 +1660,15 @@ function renderView() {
     } else if (view === 'admin-settings') {
         const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const classesList = Array.isArray(state.classes) ? state.classes : [];
-        const subscriptionsList = Array.isArray(state.subscriptions) ? state.subscriptions : [];
+        const planSortKey = (s) => {
+            const name = (s.name || '').toLowerCase();
+            if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
+            const n = parseInt(s.limit_count, 10);
+            if (!isNaN(n)) return n;
+            const m = (s.name || '').match(/\d+/);
+            return m ? parseInt(m[0], 10) : 0;
+        };
+        const subscriptionsList = [...(Array.isArray(state.subscriptions) ? state.subscriptions : [])].sort((a, b) => planSortKey(a) - planSortKey(b));
 
         html += `
             <div class="ios-header">
@@ -1762,36 +1779,35 @@ function renderView() {
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.plans_label}
             </div>
-            <div class="ios-list">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem;">
                 ${subscriptionsList.map(s => `
-                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;">
+                    <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                <i data-lucide="credit-card" size="16" style="opacity: 0.3;"></i>
-                                <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 80%; color: var(--text-primary); outline: none;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
+                                <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
                             </div>
-                            <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 5px; cursor: pointer;">
-                                <i data-lucide="trash-2" size="18"></i>
+                            <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 4px; cursor: pointer; flex-shrink: 0;">
+                                <i data-lucide="trash-2" size="16"></i>
                             </button>
                         </div>
-                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <div style="flex: 1; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
-                                <span style="color: var(--text-secondary); font-size: 11px; font-weight: 700; opacity: 0.6;">$</span>
-                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px; padding: 0;">
+                         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <div style="flex: 1; min-width: 60px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">$</span>
+                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
-                            <div style="flex: 1; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
-                                <i data-lucide="layers" size="12" style="color: var(--text-secondary); opacity: 0.5;"></i>
-                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="Clases" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px; padding: 0;">
+                            <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
+                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="Clases" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
-                            <div style="flex: 1.2; display:flex; align-items:center; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; gap: 6px;">
-                                <i data-lucide="calendar" size="12" style="color: var(--text-secondary); opacity: 0.5;"></i>
-                                <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 14px; padding: 0;">
-                                <span style="font-size: 8px; font-weight: 700; color: var(--text-secondary); opacity: 0.4; text-transform: uppercase;">Días</span>
+                            <div style="flex: 1; min-width: 56px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
+                                <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                         </div>
                     </div>
                 `).join('')}
-                <div class="ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; grid-column: span 2;">
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} Plan
                 </div>
             </div>
