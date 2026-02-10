@@ -215,7 +215,38 @@ const DANCE_LOCALES = {
         remove_admin_confirm: "Are you sure you want to remove this administrator?",
         admin_removed: "Administrator removed successfully!",
         error_creating_admin: "Error creating administrator:",
-        error_removing_admin: "Error removing administrator:"
+        error_removing_admin: "Error removing administrator:",
+        additional_features: "Additional features",
+        create_new_competition: "Create new competition",
+        jack_and_jill: "Jack and Jill",
+        competition_date: "Date",
+        competition_time: "Time",
+        competition_name: "Event name",
+        competition_questions: "Organizer questions",
+        competition_add_question: "Add question",
+        competition_next_steps: "Next steps (shown to students)",
+        competition_activate_event: "Activate event",
+        competition_activate_signin: "Activate sign-in",
+        competition_save: "Save",
+        competition_saved: "Competition saved successfully.",
+        competition_error: "Error saving competition.",
+        competition_registrations: "Registrations",
+        competition_publish_decisions: "Publish decisions",
+        competition_republish_decisions: "Republish decisions",
+        competition_confirm_publish: "Are you sure?",
+        competition_approve: "Approve",
+        competition_decline: "Decline",
+        register_for_event: "Register for {eventName}",
+        register_for_event_es: "Register for",
+        reviewing_application: "We are reviewing your application",
+        reviewing_application_es: "Estamos revisando tu solicitud",
+        accepted: "Accepted",
+        declined: "Declined",
+        submit_registration: "Submit registration",
+        competition_no_events: "No Jack and Jill events yet.",
+        competition_select_or_create: "Select an event or create new.",
+        competition_create_new: "Create new",
+        competition_edit_tab: "Edit"
     },
     es: {
         nav_schedule: "Horario",
@@ -427,7 +458,38 @@ const DANCE_LOCALES = {
         remove_admin_confirm: "¿Estás seguro de que quieres eliminar a dieser Administrador?",
         admin_removed: "Administrador eliminado con éxito.",
         error_creating_admin: "Error al crear administrador:",
-        error_removing_admin: "Error al eliminar administrador:"
+        error_removing_admin: "Error al eliminar administrador:",
+        additional_features: "Funciones adicionales",
+        create_new_competition: "Crear nueva competencia",
+        jack_and_jill: "Jack and Jill",
+        competition_date: "Fecha",
+        competition_time: "Hora",
+        competition_name: "Nombre del evento",
+        competition_questions: "Preguntas del organizador",
+        competition_add_question: "Añadir pregunta",
+        competition_next_steps: "Próximos pasos (para alumnos)",
+        competition_activate_event: "Activar evento",
+        competition_activate_signin: "Activar registro",
+        competition_save: "Guardar",
+        competition_saved: "Competencia guardada correctamente.",
+        competition_error: "Error al guardar la competencia.",
+        competition_registrations: "Registros",
+        competition_publish_decisions: "Publicar decisión",
+        competition_republish_decisions: "Republicar decisiones",
+        competition_confirm_publish: "¿Estás seguro?",
+        competition_approve: "Aprobar",
+        competition_decline: "Rechazar",
+        register_for_event: "Registrarse para {eventName}",
+        register_for_event_es: "Registrarse para",
+        reviewing_application: "Estamos revisando tu solicitud",
+        reviewing_application_es: "Estamos revisando tu solicitud",
+        accepted: "Aceptado",
+        declined: "Rechazado",
+        submit_registration: "Enviar registro",
+        competition_no_events: "Aún no hay eventos Jack and Jill.",
+        competition_select_or_create: "Selecciona un evento o crea uno nuevo.",
+        competition_create_new: "Crear nuevo",
+        competition_edit_tab: "Editar"
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -668,7 +730,20 @@ let state = {
     showWeeklyPreview: false,
     isPlatformDev: false,
     platformData: { schools: [], students: [], admins: [] },
-    loading: false
+    loading: false,
+    // Jack and Jill competitions (hash routing)
+    competitionId: null,
+    competitionSchoolId: null,
+    competitionTab: 'edit', // 'edit' | 'registrations'
+    competitions: [],
+    currentCompetition: null,
+    competitionRegistrations: [],
+    additionalFeaturesExpanded: false,
+    currentCompetitionForStudent: null,
+    studentCompetitionRegistration: null,
+    studentCompetitionDetail: null,
+    studentCompetitionRegDetail: null,
+    studentCompetitionAnswers: {}
 };
 
 // --- DATA FETCHING ---
@@ -856,6 +931,18 @@ async function fetchAllData() {
             const { data: rpcAdmins } = await supabaseClient.rpc('get_school_admins', { p_school_id: sid });
             if (rpcAdmins && Array.isArray(rpcAdmins)) state.admins = rpcAdmins;
         }
+        if (isStudent && state.currentUser?.id && supabaseClient) {
+            const { data: compData } = await supabaseClient.rpc('competition_get_for_student', { p_student_id: String(state.currentUser.id), p_school_id: sid });
+            const comp = Array.isArray(compData) && compData.length > 0 ? compData[0] : null;
+            state.currentCompetitionForStudent = comp || null;
+            if (comp) {
+                const { data: regData } = await supabaseClient.rpc('competition_registration_get', { p_competition_id: comp.id, p_student_id: String(state.currentUser.id) });
+                state.studentCompetitionRegistration = Array.isArray(regData) && regData.length > 0 ? regData[0] : null;
+            } else state.studentCompetitionRegistration = null;
+        } else {
+            state.currentCompetitionForStudent = null;
+            state.studentCompetitionRegistration = null;
+        }
 
         // --- NEW: Check for expired memberships ---
         await window.checkExpirations();
@@ -897,7 +984,10 @@ function saveState() {
         currentView: state.currentView,
         scheduleView: state.scheduleView,
         lastActivity: state.lastActivity,
-        currentSchool: state.currentSchool
+        currentSchool: state.currentSchool,
+        competitionId: state.competitionId,
+        competitionSchoolId: state.competitionSchoolId,
+        competitionTab: state.competitionTab
     }));
 }
 
@@ -948,6 +1038,228 @@ function updateI18n() {
     const langIndicator = document.getElementById('lang-text');
     if (langIndicator) langIndicator.textContent = (state.language || 'EN').toUpperCase();
 }
+
+// --- HASH ROUTING (competitions) ---
+function parseHashRoute() {
+    const hash = (window.location.hash || '').replace(/^#/, '');
+    const [pathPart, queryPart] = hash.split('?');
+    const segments = pathPart.split('/').filter(Boolean);
+    const params = new URLSearchParams(queryPart || '');
+
+    // #/admin/schools/:schoolId/competitions/jack-and-jill[/:competitionId]
+    if (segments[0] === 'admin' && segments[1] === 'schools' && segments[2] && segments[3] === 'competitions' && segments[4] === 'jack-and-jill') {
+        const schoolId = segments[2];
+        const competitionId = segments[5] || null;
+        state.competitionSchoolId = schoolId;
+        state.competitionId = competitionId;
+        state.competitionTab = params.get('tab') === 'registrations' ? 'registrations' : 'edit';
+        state.currentView = 'admin-competition-jack-and-jill';
+        if (state.currentSchool?.id !== schoolId) {
+            const school = state.schools.find(s => s.id === schoolId);
+            state.currentSchool = school ? { id: school.id, name: school.name } : { id: schoolId, name: 'School' };
+        }
+        state.isAdmin = true;
+        return true;
+    }
+
+    // #/student/competitions/:competitionId/jack-and-jill
+    if (segments[0] === 'student' && segments[1] === 'competitions' && segments[2] && segments[3] === 'jack-and-jill') {
+        state.competitionId = segments[2];
+        state.currentView = 'student-competition-register';
+        state.studentCompetitionDetail = null;
+        state.studentCompetitionRegDetail = null;
+        return true;
+    }
+
+    return false;
+}
+
+function applyHashAndRender() {
+    if (parseHashRoute()) {
+        saveState();
+        renderView();
+        return true;
+    }
+    return false;
+}
+
+function navigateToAdminJackAndJill(schoolId, competitionId, tab) {
+    const sid = schoolId || state.currentSchool?.id;
+    if (!sid) return;
+    let hash = `#/admin/schools/${sid}/competitions/jack-and-jill`;
+    if (competitionId) hash += `/${competitionId}`;
+    if (tab === 'registrations') hash += '?tab=registrations';
+    window.location.hash = hash;
+}
+
+function navigateToStudentJackAndJill(competitionId) {
+    if (!competitionId) return;
+    window.location.hash = `#/student/competitions/${competitionId}/jack-and-jill`;
+}
+
+window.selectCompetition = async (id) => {
+    state.competitionId = id;
+    state.currentCompetition = (state.competitions || []).find(c => c.id === id) || null;
+    if (id) await fetchCompetitionRegistrations(id);
+    saveState();
+    renderView();
+};
+
+window.fetchCompetitionList = async (schoolId) => {
+    if (!supabaseClient || !schoolId) return;
+    const { data } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: schoolId });
+    state.competitions = Array.isArray(data) ? data : [];
+    if (state.competitionId) state.currentCompetition = state.competitions.find(c => c.id === state.competitionId) || null;
+    else state.currentCompetition = null;
+    renderView();
+};
+
+window.fetchCompetitionRegistrations = async (competitionId) => {
+    if (!supabaseClient || !competitionId) return;
+    const { data } = await supabaseClient.rpc('competition_registrations_list', { p_competition_id: competitionId });
+    state.competitionRegistrations = Array.isArray(data) ? data : [];
+    renderView();
+};
+
+window.saveCompetition = async () => {
+    const t = window.t;
+    const schoolId = state.competitionSchoolId || state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) { alert(t('competition_error')); return; }
+    const name = (document.getElementById('comp-name') || {}).value?.trim();
+    const date = (document.getElementById('comp-date') || {}).value;
+    const time = (document.getElementById('comp-time') || {}).value || '19:00';
+    if (!name || !date) { alert(t('competition_error')); return; }
+    const startsAt = new Date(date + 'T' + time + ':00').toISOString();
+    const nextSteps = (document.getElementById('comp-next-steps') || {}).value || '';
+    const container = document.getElementById('comp-questions-container');
+    const questions = container ? Array.from(container.querySelectorAll('input[data-qidx]')).sort((a, b) => parseInt(a.getAttribute('data-qidx'), 10) - parseInt(b.getAttribute('data-qidx'), 10)).map(inp => inp.value?.trim() || '') : [];
+    const id = (document.getElementById('comp-id') || {}).value;
+    try {
+        if (id) {
+            const cur = state.currentCompetition || {};
+            const { data: res, error } = await supabaseClient.rpc('competition_update', {
+                p_competition_id: id,
+                p_name: name,
+                p_starts_at: startsAt,
+                p_questions: questions,
+                p_next_steps_text: nextSteps,
+                p_is_active: !!cur.is_active,
+                p_is_sign_in_active: !!cur.is_sign_in_active
+            });
+            if (error) throw new Error(error.message);
+            state.currentCompetition = res || cur;
+            state.competitions = (state.competitions || []).map(c => c.id === id ? (res || c) : c);
+        } else {
+            const { data: res, error } = await supabaseClient.rpc('competition_create', {
+                p_school_id: schoolId,
+                p_name: name,
+                p_starts_at: startsAt,
+                p_questions: questions,
+                p_next_steps_text: nextSteps
+            });
+            if (error) throw new Error(error.message);
+            const newComp = res && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
+            if (newComp) {
+                state.competitions = [newComp, ...(state.competitions || [])];
+                state.currentCompetition = newComp;
+                state.competitionId = newComp.id;
+                navigateToAdminJackAndJill(schoolId, newComp.id);
+            }
+        }
+        alert(t('competition_saved'));
+        renderView();
+    } catch (e) {
+        alert(t('competition_error') + ' ' + (e.message || ''));
+    }
+};
+
+window.addCompetitionQuestion = () => {
+    if (!state.competitionFormQuestions) state.competitionFormQuestions = state.currentCompetition && Array.isArray(state.currentCompetition.questions) ? [...state.currentCompetition.questions] : [];
+    state.competitionFormQuestions.push('');
+    state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, questions: state.competitionFormQuestions } : { questions: state.competitionFormQuestions };
+    renderView();
+};
+window.updateCompetitionQuestion = (idx, value) => {
+    if (!state.competitionFormQuestions) state.competitionFormQuestions = state.currentCompetition && Array.isArray(state.currentCompetition.questions) ? [...state.currentCompetition.questions] : [];
+    state.competitionFormQuestions[idx] = value;
+    state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, questions: state.competitionFormQuestions } : { questions: state.competitionFormQuestions };
+};
+window.removeCompetitionQuestion = (idx) => {
+    if (!state.competitionFormQuestions) state.competitionFormQuestions = state.currentCompetition && Array.isArray(state.currentCompetition.questions) ? [...state.currentCompetition.questions] : [];
+    state.competitionFormQuestions.splice(idx, 1);
+    state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, questions: state.competitionFormQuestions } : { questions: state.competitionFormQuestions };
+    renderView();
+};
+
+window.toggleCompetitionActive = async (id, checked) => {
+    if (!supabaseClient) return;
+    const { data } = await supabaseClient.rpc('competition_toggle_active', { p_competition_id: id, p_is_active: checked });
+    if (data) state.currentCompetition = data; state.competitions = (state.competitions || []).map(c => c.id === id ? (data || c) : c);
+    renderView();
+};
+window.toggleCompetitionSignIn = async (id, checked) => {
+    if (!supabaseClient) return;
+    const { data } = await supabaseClient.rpc('competition_toggle_sign_in', { p_competition_id: id, p_is_sign_in_active: checked });
+    if (data) state.currentCompetition = data; state.competitions = (state.competitions || []).map(c => c.id === id ? (data || c) : c);
+    renderView();
+};
+
+window.publishCompetitionDecisions = async (id) => {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.rpc('competition_publish_decisions', { p_competition_id: id });
+    if (!error) { state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, decisions_published_at: new Date().toISOString() } : null; await fetchCompetitionRegistrations(id); renderView(); }
+};
+window.republishCompetitionDecisions = async (id) => {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.rpc('competition_publish_decisions', { p_competition_id: id });
+    if (!error) { state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, decisions_published_at: new Date().toISOString() } : null; renderView(); }
+};
+
+window.competitionRegistrationDecide = async (regId, status) => {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.rpc('competition_registration_decide', { p_registration_id: regId, p_status: status });
+    if (!error && state.competitionId) await fetchCompetitionRegistrations(state.competitionId);
+    renderView();
+};
+
+let _competitionDraftSaveTimer = null;
+window.debouncedSaveCompetitionDraft = () => {
+    if (_competitionDraftSaveTimer) clearTimeout(_competitionDraftSaveTimer);
+    _competitionDraftSaveTimer = setTimeout(() => {
+        _competitionDraftSaveTimer = null;
+        saveStudentCompetitionDraft();
+    }, 600);
+};
+window.saveStudentCompetitionDraft = async () => {
+    const form = document.getElementById('student-comp-form');
+    if (!form || !supabaseClient || !state.competitionId || !state.currentUser?.id) return;
+    const schoolId = state.currentUser.school_id || state.currentSchool?.id;
+    if (!schoolId) return;
+    const answers = {};
+    form.querySelectorAll('input[data-qidx]').forEach(inp => {
+        const i = inp.getAttribute('data-qidx');
+        answers[i] = inp.value || '';
+    });
+    state.studentCompetitionAnswers = answers;
+    const { data } = await supabaseClient.rpc('competition_registration_upsert_draft', {
+        p_competition_id: state.competitionId,
+        p_student_id: String(state.currentUser.id),
+        p_school_id: schoolId,
+        p_answers: answers
+    });
+    if (data) state.studentCompetitionRegDetail = typeof data === 'object' ? data : (typeof data === 'string' ? JSON.parse(data) : null);
+};
+window.submitStudentCompetitionRegistration = async () => {
+    if (!supabaseClient || !state.competitionId || !state.currentUser?.id) return;
+    const btn = document.getElementById('student-comp-submit-btn');
+    if (btn) btn.disabled = true;
+    const { data, error } = await supabaseClient.rpc('competition_registration_submit', { p_competition_id: state.competitionId, p_student_id: String(state.currentUser.id) });
+    if (error) { if (btn) btn.disabled = false; alert(window.t('competition_error')); return; }
+    state.studentCompetitionRegDetail = data && (typeof data === 'object' ? data : (typeof data === 'string' ? JSON.parse(data) : null));
+    state.studentCompetitionRegDetail = state.studentCompetitionRegDetail ? { ...state.studentCompetitionRegDetail, status: 'SUBMITTED' } : { status: 'SUBMITTED' };
+    state.studentCompetitionRegistration = state.studentCompetitionRegDetail;
+    renderView();
+};
 
 function renderView() {
     const root = document.getElementById('app-root');
@@ -1541,6 +1853,21 @@ function renderView() {
             })()}
                         </div>
                     </div>
+
+                    ${state.currentCompetitionForStudent ? (() => {
+                        const comp = state.currentCompetitionForStudent;
+                        const reg = state.studentCompetitionRegistration;
+                        const eventName = (comp.name || '').substring(0, 40);
+                        if (reg && reg.status === 'SUBMITTED' && !comp.decisions_published_at) {
+                            return `<div style="margin-top: 1.5rem; padding: 1rem; border-radius: 16px; background: var(--system-gray6); text-align: center;"><span style="font-size: 14px; font-weight: 600;">${t.reviewing_application}</span></div>`;
+                        }
+                        if (reg && comp.decisions_published_at) {
+                            const accepted = reg.status === 'APPROVED';
+                            return `<div style="margin-top: 1.5rem;"><span class="status-badge ${accepted ? 'status-approved' : 'status-declined'}" style="display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 14px;">${accepted ? t.accepted : t.declined}</span></div>`;
+                        }
+                        return `<div style="margin-top: 1.5rem;"><button class="btn-primary" onclick="navigateToStudentJackAndJill('${comp.id}')" style="width: 100%; max-width: 280px; border-radius: 14px; height: 48px;">${(t.register_for_event || 'Register for {eventName}').replace('{eventName}', eventName)}</button></div>`;
+                    })() : ''}
+
                 </div>
             </div>
         `;
@@ -1550,13 +1877,67 @@ function renderView() {
                 width: 250, height: 250, colorDark: "#000", colorLight: "#fff"
             });
         }, 50);
+    } else if (view === 'student-competition-register') {
+        const compId = state.competitionId;
+        const studentId = state.currentUser?.id;
+        const schoolId = state.currentUser?.school_id || state.currentSchool?.id;
+        if (compId && studentId && schoolId && !state.studentCompetitionDetail) {
+            (async () => {
+                const { data: compData } = await supabaseClient.rpc('competition_get_by_id_for_student', { p_competition_id: compId, p_student_id: String(studentId), p_school_id: schoolId });
+                state.studentCompetitionDetail = Array.isArray(compData) && compData.length > 0 ? compData[0] : null;
+                const { data: regData } = await supabaseClient.rpc('competition_registration_get', { p_competition_id: compId, p_student_id: String(studentId) });
+                state.studentCompetitionRegDetail = Array.isArray(regData) && regData.length > 0 ? regData[0] : null;
+                if (state.studentCompetitionRegDetail && state.studentCompetitionRegDetail.answers) state.studentCompetitionAnswers = state.studentCompetitionRegDetail.answers;
+                else state.studentCompetitionAnswers = state.studentCompetitionAnswers || {};
+                renderView();
+            })();
+        }
+        const comp = state.studentCompetitionDetail;
+        const reg = state.studentCompetitionRegDetail;
+        const questions = (comp && Array.isArray(comp.questions)) ? comp.questions : [];
+        const isSubmitted = reg && reg.status !== 'DRAFT';
+        const isPublished = comp && comp.decisions_published_at;
+        const answers = state.studentCompetitionAnswers || {};
+
+        html += `
+            <div class="ios-header" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-icon" onclick="window.location.hash=''; state.currentView='qr'; state.studentCompetitionDetail=null; state.studentCompetitionRegDetail=null; saveState(); renderView();" style="padding: 8px;"><i data-lucide="arrow-left" size="20"></i></button>
+                <div class="ios-large-title">${t.jack_and_jill}</div>
+            </div>
+            <div style="padding: 1.2rem;">
+                ${!comp ? `<p style="color: var(--text-secondary);">${t.loading}</p>` : `
+                <div style="margin-bottom: 1.5rem;">
+                    <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem;">${(comp.name || '').replace(/</g, '&lt;')}</h2>
+                    <p style="font-size: 14px; color: var(--text-secondary);">${comp.starts_at ? new Date(comp.starts_at).toLocaleString() : ''}</p>
+                    ${comp.next_steps_text ? `<div style="margin-top: 1rem; padding: 1rem; background: var(--system-gray6); border-radius: 12px; font-size: 14px; white-space: pre-wrap;">${(comp.next_steps_text || '').replace(/</g, '&lt;')}</div>` : ''}
+                </div>
+                ${isSubmitted ? `
+                    ${isPublished && reg ? `<div style="text-align: center; padding: 1.5rem;"><span class="status-badge ${reg.status === 'APPROVED' ? 'status-approved' : 'status-declined'}" style="display: inline-block; padding: 10px 20px; border-radius: 20px; font-weight: 700; font-size: 16px;">${reg.status === 'APPROVED' ? t.accepted : t.declined}</span></div>` : `<p style="text-align: center; font-weight: 600;">${t.reviewing_application}</p>`}
+                ` : `
+                <form id="student-comp-form" onsubmit="return false;">
+                    ${questions.map((q, i) => `
+                        <div style="margin-bottom: 1rem;">
+                            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">${(q || '').replace(/</g, '&lt;')}</label>
+                            <input type="text" name="q${i}" data-qidx="${i}" value="${(answers[i] || answers[String(i)] || '').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" oninput="debouncedSaveCompetitionDraft()" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        </div>
+                    `).join('')}
+                    <button type="button" class="btn-primary" id="student-comp-submit-btn" onclick="submitStudentCompetitionRegistration()" style="width: 100%; border-radius: 14px; height: 50px; font-size: 16px; font-weight: 600; margin-top: 1rem;">${t.submit_registration}</button>
+                </form>
+                `}
+                `}
+            </div>
+            <div style="height: 80px;"></div>
+        `;
     } else if (view === 'admin-students') {
         html += `
             <div class="ios-header" style="background: transparent;">
                 <div class="ios-large-title">${t.nav_students}</div>
-                <div style="margin-top: -5px; margin-bottom: 2rem;">
+                <div style="margin-top: -5px; margin-bottom: 2rem; display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn-primary" onclick="createNewStudent()" style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px;">
                         <i data-lucide="plus" size="14"></i> ${t.add_student}
+                    </button>
+                    <button class="btn-secondary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, 'registrations')" style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px;">
+                        <i data-lucide="trophy" size="14"></i> ${t.jack_and_jill}
                     </button>
                 </div>
             </div>
@@ -1906,8 +2287,147 @@ function renderView() {
                     <i data-lucide="user-plus" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_admin || 'Agregar Admin'}
                 </div>
             </div>
+
+            <div class="expandable-section" style="margin-top: 2rem; padding: 0 1.2rem;">
+                <div class="expandable-section-header" onclick="state.additionalFeaturesExpanded=!state.additionalFeaturesExpanded; renderView();" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
+                    <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.additional_features}</span>
+                    <i data-lucide="${state.additionalFeaturesExpanded ? 'chevron-up' : 'chevron-down'}" size="18" style="opacity: 0.5;"></i>
+                </div>
+                ${state.additionalFeaturesExpanded ? `
+                <div class="expandable-section-content" style="padding: 1rem 0;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${t.create_new_competition}</div>
+                    <button class="btn-primary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
+                        <i data-lucide="trophy" size="16" style="margin-right: 8px;"></i> ${t.jack_and_jill}
+                    </button>
+                </div>
+                ` : ''}
+            </div>
+
             <div style="height: 100px;"></div> <!-- Spacer for bottom nav padding -->
     `;
+    } else if (view === 'admin-competition-jack-and-jill') {
+        const schoolId = state.competitionSchoolId || state.currentSchool?.id;
+        if (schoolId && state._competitionListSchoolId !== schoolId) {
+            state._competitionListSchoolId = schoolId;
+            window.fetchCompetitionList(schoolId);
+        }
+        const comps = Array.isArray(state.competitions) ? state.competitions : [];
+        const current = state.currentCompetition;
+        const tab = state.competitionTab || 'edit';
+        const regs = Array.isArray(state.competitionRegistrations) ? state.competitionRegistrations : [];
+        if (tab === 'edit' && current) state.competitionFormQuestions = Array.isArray(state.competitionFormQuestions) ? state.competitionFormQuestions : (Array.isArray(current.questions) ? [...current.questions] : []);
+        else if (tab === 'edit' && !current) state.competitionFormQuestions = Array.isArray(state.competitionFormQuestions) ? state.competitionFormQuestions : [];
+
+        html += `
+            <div class="ios-header" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-icon" onclick="window.location.hash=''; state.currentView='admin-settings'; saveState(); renderView();" style="padding: 8px;"><i data-lucide="arrow-left" size="20"></i></button>
+                <div class="ios-large-title">${t.jack_and_jill}</div>
+            </div>
+            <div style="padding: 1.2rem;">
+                ${!schoolId ? `<p style="color: var(--text-secondary);">${t.not_found_msg}</p>` : `
+                <div class="competition-picker" style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; display: block;">${t.competition_select_or_create}</label>
+                    <div class="ios-list">
+                        ${comps.map(c => `
+                            <div class="ios-list-item ${state.competitionId === c.id ? 'selected' : ''}" style="cursor: pointer; padding: 14px;" onclick="selectCompetition('${c.id}');">
+                                <span>${(c.name || '').substring(0, 40)}${(c.name || '').length > 40 ? '…' : ''}</span>
+                                <span style="font-size: 12px; opacity: 0.6;">${c.starts_at ? new Date(c.starts_at).toLocaleDateString() : ''}</span>
+                            </div>
+                        `).join('')}
+                        <div class="ios-list-item" onclick="state.competitionId=null; state.currentCompetition=null; state.competitionRegistrations=[]; state.competitionTab='edit'; navigateToAdminJackAndJill(state.competitionSchoolId||state.currentSchool?.id, null);" style="cursor: pointer; padding: 14px; font-weight: 600;">
+                            <i data-lucide="plus" size="16" style="margin-right: 8px;"></i> ${t.competition_create_new}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 1rem;">
+                    <button class="btn-secondary ${tab === 'edit' ? 'active' : ''}" style="flex:1; border-radius: 12px; padding: 10px;" onclick="state.competitionTab='edit'; renderView();">${t.competition_edit_tab}</button>
+                    <button class="btn-secondary ${tab === 'registrations' ? 'active' : ''}" style="flex:1; border-radius: 12px; padding: 10px;" onclick="state.competitionTab='registrations'; if(state.competitionId) fetchCompetitionRegistrations(state.competitionId); renderView();">${t.competition_registrations}</button>
+                </div>
+                ${tab === 'edit' ? `
+                <div class="competition-form">
+                    <input type="hidden" id="comp-id" value="${(current && current.id) || ''}">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_name}</label>
+                        <input type="text" id="comp-name" value="${(current && current.name) || ''}" placeholder="${t.competition_name}" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_date}</label>
+                            <input type="date" id="comp-date" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_time}</label>
+                            <input type="time" id="comp-time" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_questions}</label>
+                        <div id="comp-questions-container"></div>
+                        <button type="button" class="btn-secondary" onclick="addCompetitionQuestion()" style="margin-top: 8px; padding: 8px 14px; font-size: 13px;"><i data-lucide="plus" size="14" style="margin-right: 6px;"></i>${t.competition_add_question}</button>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_next_steps}</label>
+                        <textarea id="comp-next-steps" rows="3" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); resize: vertical;">${(current && current.next_steps_text) || ''}</textarea>
+                    </div>
+                    ${current && current.id ? `
+                    <div style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 10px;">
+                        <label class="toggle-row" style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 14px;">${t.competition_activate_event}</span>
+                            <input type="checkbox" id="comp-is-active" ${current.is_active ? 'checked' : ''} onchange="toggleCompetitionActive('${current.id}', this.checked)">
+                        </label>
+                        <label class="toggle-row" style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 14px;">${t.competition_activate_signin}</span>
+                            <input type="checkbox" id="comp-is-signin" ${current.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignIn('${current.id}', this.checked)">
+                        </label>
+                    </div>
+                    ` : ''}
+                    <button class="btn-primary" onclick="saveCompetition()" style="width: 100%; border-radius: 14px; height: 50px; font-size: 16px; font-weight: 600;">${t.competition_save}</button>
+                </div>
+                ` : `
+                <div class="competition-registrations">
+                    ${!state.competitionId ? `<p style="color: var(--text-secondary);">${t.competition_select_or_create}</p>` : `
+                    ${current && current.decisions_published_at
+                        ? `<button class="btn-secondary" onclick="if(confirm(t('competition_confirm_publish'))) republishCompetitionDecisions('${state.competitionId}');" style="width: 100%; margin-bottom: 1rem; border-radius: 14px;">${t.competition_republish_decisions}</button>`
+                        : `<button class="btn-primary" onclick="if(confirm(t('competition_confirm_publish'))) publishCompetitionDecisions('${state.competitionId}');" style="width: 100%; margin-bottom: 1rem; border-radius: 14px;">${t.competition_publish_decisions}</button>`
+                    }
+                    <div class="ios-list">
+                        ${regs.length === 0 ? `<div class="ios-list-item" style="padding: 2rem; text-align: center; color: var(--text-secondary);">No registrations yet.</div>` : regs.map(r => `
+                            <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 14px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 600;">${(r.student_name || r.student_id || '').substring(0, 30)}</span>
+                                    <span class="status-badge status-${(r.status || '').toLowerCase()}" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700;">${r.status === 'APPROVED' ? t.accepted : r.status === 'DECLINED' ? t.declined : r.status === 'SUBMITTED' ? t.pending : 'Draft'}</span>
+                                </div>
+                                ${r.status === 'SUBMITTED' ? `
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-primary" style="flex:1; padding: 8px; font-size: 13px;" onclick="competitionRegistrationDecide('${r.id}', 'APPROVED');">${t.competition_approve}</button>
+                                    <button class="btn-secondary" style="flex:1; padding: 8px; font-size: 13px;" onclick="competitionRegistrationDecide('${r.id}', 'DECLINED');">${t.competition_decline}</button>
+                                </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    `}
+                </div>
+                `}
+                `}
+            </div>
+            <div style="height: 80px;"></div>
+        `;
+        if (view === 'admin-competition-jack-and-jill' && tab === 'edit') {
+            const questions = Array.isArray(state.competitionFormQuestions) ? state.competitionFormQuestions : (current && Array.isArray(current.questions) ? current.questions : []);
+            setTimeout(() => {
+                const container = document.getElementById('comp-questions-container');
+                if (container) {
+                    container.innerHTML = questions.map((q, i) => `
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                            <input type="text" value="${String(q || '').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" data-qidx="${i}" onchange="updateCompetitionQuestion(${i}, this.value)" style="flex:1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                            <button type="button" onclick="removeCompetitionQuestion(${i})" style="padding: 8px; color: var(--system-red);"><i data-lucide="trash-2" size="16"></i></button>
+                        </div>
+                    `).join('');
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }, 0);
+        }
     }
 
     html += `</div>`;
@@ -3747,7 +4267,11 @@ document.getElementById('close-scanner').addEventListener('click', stopScanner);
 
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
-        state.currentView = btn.getAttribute('data-view');
+        const view = btn.getAttribute('data-view');
+        state.currentView = view;
+        if (view !== 'admin-competition-jack-and-jill' && view !== 'student-competition-register') {
+            window.location.hash = '';
+        }
         saveState();
         renderView();
     });
@@ -3827,11 +4351,31 @@ logoEl.addEventListener('click', () => {
     // Check if session expired while away
     window.checkInactivity();
 
+    // Hash routing: if URL has competition route, apply it and overwrite state
+    if (window.location.hash) {
+        parseHashRoute();
+    }
+    if (saved.currentView && saved.currentView.startsWith('admin-competition') && !window.location.hash) {
+        state.competitionId = saved.competitionId || null;
+        state.competitionSchoolId = saved.competitionSchoolId || null;
+        state.competitionTab = saved.competitionTab || 'edit';
+    }
+    if (saved.currentView && saved.currentView === 'student-competition-register' && !window.location.hash) {
+        state.competitionId = saved.competitionId || null;
+    }
+
     updateI18n();
     document.body.setAttribute('data-theme', state.theme);
     document.body.classList.toggle('dark-mode', state.theme === 'dark');
     renderView();
     if (window.lucide) lucide.createIcons();
+
+    window.addEventListener('hashchange', () => {
+        if (parseHashRoute()) {
+            saveState();
+            renderView();
+        }
+    });
 
     // Fetch live data from Supabase
     fetchAllData();

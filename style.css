@@ -1462,3 +1462,13 @@ select option {
 .dropdown-item:hover i {
     color: white !important;
 }
+
+/* Jack and Jill competition */
+.status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.status-badge.status-approved { background: rgba(52, 199, 89, 0.2); color: var(--system-green); }
+.status-badge.status-declined { background: rgba(255, 59, 48, 0.2); color: var(--system-red); }
+.status-badge.status-submitted { background: rgba(255, 149, 0, 0.2); color: var(--system-orange, #ff9500); }
+.expandable-section-header { user-select: none; }
+.expandable-section-header:hover { opacity: 0.9; }
+.competition-picker .ios-list-item.selected { background: var(--system-gray6); border-radius: 12px; }
+.btn-secondary.active { background: var(--system-blue); color: white; border-color: var(--system-blue); }
