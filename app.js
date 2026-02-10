@@ -932,13 +932,21 @@ async function fetchAllData() {
             if (rpcAdmins && Array.isArray(rpcAdmins)) state.admins = rpcAdmins;
         }
         if (isStudent && state.currentUser?.id && supabaseClient) {
-            const { data: compData } = await supabaseClient.rpc('competition_get_for_student', { p_student_id: String(state.currentUser.id), p_school_id: sid });
-            const comp = Array.isArray(compData) && compData.length > 0 ? compData[0] : null;
-            state.currentCompetitionForStudent = comp || null;
-            if (comp) {
-                const { data: regData } = await supabaseClient.rpc('competition_registration_get', { p_competition_id: comp.id, p_student_id: String(state.currentUser.id) });
-                state.studentCompetitionRegistration = Array.isArray(regData) && regData.length > 0 ? regData[0] : null;
-            } else state.studentCompetitionRegistration = null;
+            try {
+                const { data: compData, error: compErr } = await supabaseClient.rpc('competition_get_for_student', { p_student_id: String(state.currentUser.id), p_school_id: sid });
+                if (compErr) { state.currentCompetitionForStudent = null; state.studentCompetitionRegistration = null; }
+                else {
+                    const comp = Array.isArray(compData) && compData.length > 0 ? compData[0] : null;
+                    state.currentCompetitionForStudent = comp || null;
+                    if (comp) {
+                        const { data: regData } = await supabaseClient.rpc('competition_registration_get', { p_competition_id: comp.id, p_student_id: String(state.currentUser.id) });
+                        state.studentCompetitionRegistration = Array.isArray(regData) && regData.length > 0 ? regData[0] : null;
+                    } else state.studentCompetitionRegistration = null;
+                }
+            } catch (_) {
+                state.currentCompetitionForStudent = null;
+                state.studentCompetitionRegistration = null;
+            }
         } else {
             state.currentCompetitionForStudent = null;
             state.studentCompetitionRegistration = null;
@@ -4330,8 +4338,8 @@ logoEl.addEventListener('click', () => {
 
 (function init() {
     const local = localStorage.getItem('dance_app_state');
+    const saved = local ? JSON.parse(local) : {};
     if (local) {
-        const saved = JSON.parse(local);
         state.language = saved.language || 'en';
         state.theme = saved.theme || 'dark';
         if (saved.currentUser) state.currentUser = saved.currentUser;
