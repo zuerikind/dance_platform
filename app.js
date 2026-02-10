@@ -1113,6 +1113,16 @@ function navigateToStudentJackAndJill(competitionId) {
     window.location.hash = `#/student/competitions/${competitionId}/jack-and-jill`;
 }
 
+window.openCreateNewCompetition = () => {
+    state.competitionId = null;
+    state.currentCompetition = null;
+    state.competitionRegistrations = [];
+    state.competitionTab = 'edit';
+    saveState();
+    renderView();
+    navigateToAdminJackAndJill(state.competitionSchoolId || state.currentSchool?.id, null);
+};
+
 window.selectCompetition = async (id) => {
     state.competitionId = id;
     state.currentCompetition = (state.competitions || []).find(c => c.id === id) || null;
@@ -2362,88 +2372,87 @@ function renderView() {
         else if (tab === 'edit' && !current) state.competitionFormQuestions = Array.isArray(state.competitionFormQuestions) ? state.competitionFormQuestions : [];
 
         html += `
-            <div class="ios-header" style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn-icon" onclick="window.location.hash=''; state.currentView='admin-settings'; saveState(); renderView();" style="padding: 8px;"><i data-lucide="arrow-left" size="20"></i></button>
-                <div class="ios-large-title">${t.jack_and_jill}</div>
+            <div class="jandj-page" style="min-height: 100vh; background: var(--bg-body);">
+            <div class="ios-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px 16px; border-bottom: 1px solid var(--border);">
+                <button class="btn-icon" onclick="window.location.hash=''; state.currentView='admin-settings'; saveState(); renderView();" style="width: 36px; height: 36px; border-radius: 50%; background: var(--system-gray6); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--system-blue);"><i data-lucide="chevron-left" size="22"></i></button>
+                <h1 style="font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t.jack_and_jill}</h1>
             </div>
-            <div style="padding: 1.2rem;">
-                ${!schoolId ? `<p style="color: var(--text-secondary);">${t.not_found_msg}</p>` : `
-                <div class="competition-picker" style="margin-bottom: 1.5rem;">
-                    <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; display: block;">${t.competition_select_or_create}</label>
-                    <div class="ios-list">
-                        ${comps.map(c => `
-                            <div class="ios-list-item ${state.competitionId === c.id ? 'selected' : ''}" style="cursor: pointer; padding: 14px;" onclick="selectCompetition('${c.id}');">
-                                <span>${(c.name || '').substring(0, 40)}${(c.name || '').length > 40 ? '…' : ''}</span>
-                                <span style="font-size: 12px; opacity: 0.6;">${c.starts_at ? new Date(c.starts_at).toLocaleDateString() : ''}</span>
-                            </div>
-                        `).join('')}
-                        <div class="ios-list-item" onclick="state.competitionId=null; state.currentCompetition=null; state.competitionRegistrations=[]; state.competitionTab='edit'; navigateToAdminJackAndJill(state.competitionSchoolId||state.currentSchool?.id, null);" style="cursor: pointer; padding: 14px; font-weight: 600;">
-                            <i data-lucide="plus" size="16" style="margin-right: 8px;"></i> ${t.competition_create_new}
+            <div style="padding: 20px 20px 32px; max-width: 560px; margin: 0 auto;">
+                ${!schoolId ? `<p style="color: var(--text-secondary); font-size: 15px;">${t.not_found_msg}</p>` : `
+                <p style="font-size: 13px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.02em; margin-bottom: 12px;">${t.competition_select_or_create}</p>
+                <div style="background: var(--bg-card); border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    ${comps.map(c => `
+                        <div class="jandj-event-row ${state.competitionId === c.id ? 'selected' : ''}" onclick="selectCompetition('${c.id}');" style="padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); transition: background 0.2s;">
+                            <span style="font-size: 17px; font-weight: 600; color: var(--text-primary);">${(c.name || '').substring(0, 36)}${(c.name || '').length > 36 ? '…' : ''}</span>
+                            <span style="font-size: 15px; color: var(--text-secondary);">${c.starts_at ? new Date(c.starts_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</span>
                         </div>
-                    </div>
+                    `).join('')}
+                    <button type="button" onclick="openCreateNewCompetition()" style="width: 100%; padding: 18px 20px; border: none; background: transparent; color: var(--system-blue); font-size: 17px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s;">
+                        <i data-lucide="plus-circle" size="20"></i> ${t.competition_create_new}
+                    </button>
                 </div>
-                <div style="display: flex; gap: 8px; margin-bottom: 1rem;">
-                    <button class="btn-secondary ${tab === 'edit' ? 'active' : ''}" style="flex:1; border-radius: 12px; padding: 10px;" onclick="state.competitionTab='edit'; renderView();">${t.competition_edit_tab}</button>
-                    <button class="btn-secondary ${tab === 'registrations' ? 'active' : ''}" style="flex:1; border-radius: 12px; padding: 10px;" onclick="state.competitionTab='registrations'; if(state.competitionId) fetchCompetitionRegistrations(state.competitionId); renderView();">${t.competition_registrations}</button>
+                <div style="display: flex; background: var(--system-gray6); border-radius: 12px; padding: 4px; margin: 24px 0 20px;">
+                    <button type="button" class="jandj-segmented ${tab === 'edit' ? 'active' : ''}" onclick="state.competitionTab='edit'; renderView();" style="flex: 1; padding: 10px 16px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; background: ${tab === 'edit' ? 'var(--bg-card)' : 'transparent'}; color: var(--text-primary); box-shadow: ${tab === 'edit' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'}; transition: all 0.2s;">${t.competition_edit_tab}</button>
+                    <button type="button" class="jandj-segmented ${tab === 'registrations' ? 'active' : ''}" onclick="state.competitionTab='registrations'; if(state.competitionId) fetchCompetitionRegistrations(state.competitionId); renderView();" style="flex: 1; padding: 10px 16px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; background: ${tab === 'registrations' ? 'var(--bg-card)' : 'transparent'}; color: var(--text-primary); box-shadow: ${tab === 'registrations' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'}; transition: all 0.2s;">${t.competition_registrations}</button>
                 </div>
                 ${tab === 'edit' ? `
-                <div class="competition-form">
+                <div class="competition-form" style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
                     <input type="hidden" id="comp-id" value="${(current && current.id) || ''}">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_name}</label>
-                        <input type="text" id="comp-name" value="${(current && current.name) || ''}" placeholder="${t.competition_name}" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">${t.competition_name}</label>
+                        <input type="text" id="comp-name" value="${(current && current.name) || ''}" placeholder="${t.competition_name}" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box;">
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                         <div>
-                            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_date}</label>
-                            <input type="date" id="comp-date" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                            <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">${t.competition_date}</label>
+                            <input type="date" id="comp-date" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_time}</label>
-                            <input type="time" id="comp-time" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                            <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">${t.competition_time}</label>
+                            <input type="time" id="comp-time" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box;">
                         </div>
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_questions}</label>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">${t.competition_questions}</label>
                         <div id="comp-questions-container"></div>
-                        <button type="button" class="btn-secondary" onclick="addCompetitionQuestion()" style="margin-top: 8px; padding: 8px 14px; font-size: 13px;"><i data-lucide="plus" size="14" style="margin-right: 6px;"></i>${t.competition_add_question}</button>
+                        <button type="button" onclick="addCompetitionQuestion()" style="margin-top: 10px; padding: 12px 18px; border-radius: 12px; border: 1px dashed var(--border); background: transparent; color: var(--system-blue); font-size: 15px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="plus" size="18"></i>${t.competition_add_question}</button>
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.competition_next_steps}</label>
-                        <textarea id="comp-next-steps" rows="3" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); resize: vertical;">${(current && current.next_steps_text) || ''}</textarea>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">${t.competition_next_steps}</label>
+                        <textarea id="comp-next-steps" rows="4" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; resize: vertical; outline: none; box-sizing: border-box; font-family: inherit;">${(current && current.next_steps_text) || ''}</textarea>
                     </div>
                     ${current && current.id ? `
-                    <div style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 10px;">
-                        <label class="toggle-row" style="display: flex; align-items: center; justify-content: space-between;">
-                            <span style="font-size: 14px;">${t.competition_activate_event}</span>
-                            <input type="checkbox" id="comp-is-active" ${current.is_active ? 'checked' : ''} onchange="toggleCompetitionActive('${current.id}', this.checked)">
+                    <div style="margin-bottom: 20px; padding: 16px; background: var(--system-gray6); border-radius: 12px;">
+                        <label style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer;">
+                            <span style="font-size: 16px; font-weight: 500;">${t.competition_activate_event}</span>
+                            <input type="checkbox" id="comp-is-active" ${current.is_active ? 'checked' : ''} onchange="toggleCompetitionActive('${current.id}', this.checked)" style="width: 51px; height: 31px; accent-color: var(--system-green);">
                         </label>
-                        <label class="toggle-row" style="display: flex; align-items: center; justify-content: space-between;">
-                            <span style="font-size: 14px;">${t.competition_activate_signin}</span>
-                            <input type="checkbox" id="comp-is-signin" ${current.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignIn('${current.id}', this.checked)">
+                        <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                            <span style="font-size: 16px; font-weight: 500;">${t.competition_activate_signin}</span>
+                            <input type="checkbox" id="comp-is-signin" ${current.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignIn('${current.id}', this.checked)" style="width: 51px; height: 31px; accent-color: var(--system-green);">
                         </label>
                     </div>
                     ` : ''}
-                    <button class="btn-primary" onclick="saveCompetition()" style="width: 100%; border-radius: 14px; height: 50px; font-size: 16px; font-weight: 600;">${t.competition_save}</button>
+                    <button type="button" onclick="saveCompetition()" style="width: 100%; padding: 16px; border-radius: 14px; border: none; background: var(--system-blue); color: white; font-size: 17px; font-weight: 600; cursor: pointer;">${t.competition_save}</button>
                 </div>
                 ` : `
-                <div class="competition-registrations">
-                    ${!state.competitionId ? `<p style="color: var(--text-secondary);">${t.competition_select_or_create}</p>` : `
+                <div class="competition-registrations" style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    ${!state.competitionId ? `<p style="padding: 24px; color: var(--text-secondary); font-size: 15px;">${t.competition_select_or_create}</p>` : `
                     ${current && current.decisions_published_at
-                        ? `<button class="btn-secondary" onclick="if(confirm(t('competition_confirm_publish'))) republishCompetitionDecisions('${state.competitionId}');" style="width: 100%; margin-bottom: 1rem; border-radius: 14px;">${t.competition_republish_decisions}</button>`
-                        : `<button class="btn-primary" onclick="if(confirm(t('competition_confirm_publish'))) publishCompetitionDecisions('${state.competitionId}');" style="width: 100%; margin-bottom: 1rem; border-radius: 14px;">${t.competition_publish_decisions}</button>`
+                        ? `<button type="button" onclick="if(confirm(t('competition_confirm_publish'))) republishCompetitionDecisions('${state.competitionId}');" style="width: 100%; padding: 14px 20px; border: none; background: var(--system-gray6); color: var(--text-primary); font-size: 16px; font-weight: 600; cursor: pointer;">${t.competition_republish_decisions}</button>`
+                        : `<button type="button" onclick="if(confirm(t('competition_confirm_publish'))) publishCompetitionDecisions('${state.competitionId}');" style="width: 100%; padding: 14px 20px; border: none; background: var(--system-blue); color: white; font-size: 16px; font-weight: 600; cursor: pointer;">${t.competition_publish_decisions}</button>`
                     }
-                    <div class="ios-list">
-                        ${regs.length === 0 ? `<div class="ios-list-item" style="padding: 2rem; text-align: center; color: var(--text-secondary);">No registrations yet.</div>` : regs.map(r => `
-                            <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 14px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 600;">${(r.student_name || r.student_id || '').substring(0, 30)}</span>
-                                    <span class="status-badge status-${(r.status || '').toLowerCase()}" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700;">${r.status === 'APPROVED' ? t.accepted : r.status === 'DECLINED' ? t.declined : r.status === 'SUBMITTED' ? t.pending : 'Draft'}</span>
+                    <div style="padding: 8px 0;">
+                        ${regs.length === 0 ? `<div style="padding: 32px 20px; text-align: center; color: var(--text-secondary); font-size: 15px;">No registrations yet.</div>` : regs.map(r => `
+                            <div style="padding: 16px 20px; border-bottom: 1px solid var(--border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${r.status === 'SUBMITTED' ? '12px' : '0'};">
+                                    <span style="font-size: 17px; font-weight: 600;">${(r.student_name || r.student_id || '').substring(0, 30)}</span>
+                                    <span class="status-badge status-${(r.status || '').toLowerCase()}" style="font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">${r.status === 'APPROVED' ? t.accepted : r.status === 'DECLINED' ? t.declined : r.status === 'SUBMITTED' ? t.pending : 'Draft'}</span>
                                 </div>
                                 ${r.status === 'SUBMITTED' ? `
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-primary" style="flex:1; padding: 8px; font-size: 13px;" onclick="competitionRegistrationDecide('${r.id}', 'APPROVED');">${t.competition_approve}</button>
-                                    <button class="btn-secondary" style="flex:1; padding: 8px; font-size: 13px;" onclick="competitionRegistrationDecide('${r.id}', 'DECLINED');">${t.competition_decline}</button>
+                                <div style="display: flex; gap: 10px;">
+                                    <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: none; background: var(--system-green); color: white; font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'APPROVED');">${t.competition_approve}</button>
+                                    <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'DECLINED');">${t.competition_decline}</button>
                                 </div>
                                 ` : ''}
                             </div>
@@ -2455,6 +2464,7 @@ function renderView() {
                 `}
             </div>
             <div style="height: 80px;"></div>
+            </div>
         `;
         if (view === 'admin-competition-jack-and-jill' && tab === 'edit') {
             const questions = Array.isArray(state.competitionFormQuestions) ? state.competitionFormQuestions : (current && Array.isArray(current.questions) ? current.questions : []);

@@ -1472,3 +1472,10 @@ select option {
 .expandable-section-header:hover { opacity: 0.9; }
 .competition-picker .ios-list-item.selected { background: var(--system-gray6); border-radius: 12px; }
 .btn-secondary.active { background: var(--system-blue); color: white; border-color: var(--system-blue); }
+
+/* Jack and Jill Apple-style page */
+.jandj-page .jandj-event-row:hover { background: var(--system-gray6); }
+.jandj-page .jandj-event-row.selected { background: rgba(0, 122, 255, 0.08); }
+.jandj-page .jandj-event-row:last-of-type { border-bottom: none; }
+.jandj-page button[onclick*="openCreateNewCompetition"]:hover { background: rgba(0, 122, 255, 0.08); }
+.jandj-page .jandj-segmented:hover { opacity: 0.9; }
