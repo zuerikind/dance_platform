@@ -1920,6 +1920,7 @@ window.signUpStudent = async () => {
     const newStudent = {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
         name,
+        email: email || null,
         phone,
         paid: false,
         package: null,
@@ -2261,6 +2262,7 @@ window.createNewStudent = async () => {
     const newStudent = {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
         name: name,
+        email: null,
         phone: phone,
         password: pass,
         paid: false,
