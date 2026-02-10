@@ -1897,39 +1897,42 @@ window.loginStudent = async () => {
     let student;
     if (supabaseClient) {
         try {
+            // 1) Try Supabase Auth (for users who have user_id set)
             const pseudoEmail = `${nameInput.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
             const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                 email: pseudoEmail,
                 password: passInput
             });
 
-            if (authError || !authData?.user) {
-                alert(t('invalid_login'));
-                return;
+            if (!authError && authData?.user) {
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('students')
+                    .select('*')
+                    .eq('user_id', authData.user.id)
+                    .eq('school_id', state.currentSchool.id)
+                    .single();
+                if (!profileError && profile) {
+                    student = profile;
+                }
             }
 
-            const userId = authData.user.id;
-            const { data: profile, error: profileError } = await supabaseClient
-                .from('students')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('school_id', state.currentSchool.id)
-                .single();
-
-            if (profileError || !profile) {
-                alert(t('invalid_login'));
-                return;
+            // 2) Fallback: check database directly (existing rows with name+password, no Auth user)
+            if (!student && nameInput && passInput) {
+                const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_student_by_credentials', {
+                    p_name: nameInput,
+                    p_password: passInput,
+                    p_school_id: state.currentSchool.id
+                });
+                if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
+                    student = legacyRows[0];
+                }
             }
-
-            student = profile;
         } catch (e) {
-            alert(t('invalid_login'));
-            return;
+            console.warn('Student login error:', e);
         }
     } else {
-        // Local fallback: match only by name (no stored password)
         student = state.students.find(s =>
-            s.name.toLowerCase() === nameInput.toLowerCase()
+            s.name.toLowerCase() === nameInput.toLowerCase() && s.password === passInput
         );
     }
 
@@ -1980,49 +1983,54 @@ window.loginAdminWithCreds = async () => {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
+    let adminRow = null;
     if (supabaseClient) {
         try {
-            // Use Supabase Auth for admin credentials (pseudo-email pattern)
+            // 1) Try Supabase Auth (for admins who have user_id set)
             const pseudoEmail = `${user.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
             const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                 email: pseudoEmail,
                 password: pass
             });
 
-            if (authError || !authData?.user) {
-                alert(t('invalid_login'));
-                return;
+            if (!authError && authData?.user) {
+                const { data: row, error: adminError } = await supabaseClient
+                    .from('admins')
+                    .select('*')
+                    .eq('user_id', authData.user.id)
+                    .eq('school_id', state.currentSchool.id)
+                    .single();
+                if (!adminError && row) adminRow = row;
             }
 
-            const userId = authData.user.id;
-            const { data: adminRow, error: adminError } = await supabaseClient
-                .from('admins')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('school_id', state.currentSchool.id)
-                .single();
-
-            if (adminError || !adminRow) {
-                alert(t('invalid_login'));
-                return;
+            // 2) Fallback: check database directly (existing admins with username+password, no Auth user)
+            if (!adminRow && user && pass) {
+                const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_admin_by_credentials', {
+                    p_username: user,
+                    p_password: pass,
+                    p_school_id: state.currentSchool.id
+                });
+                if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
+                    adminRow = legacyRows[0];
+                }
             }
-
-            state.currentUser = {
-                name: adminRow.username + " (Admin)",
-                role: "admin"
-            };
-            state.isAdmin = true;
-            state.currentView = 'admin-students';
-            saveState();
-            await fetchAllData(); // Prioritize fetching admin data immediately
-            return;
         } catch (e) {
-            alert(t('invalid_login'));
-            return;
+            console.warn('Admin login error:', e);
         }
     }
 
-    alert(t('invalid_login'));
+    if (adminRow) {
+        state.currentUser = {
+            name: adminRow.username + " (Admin)",
+            role: "admin"
+        };
+        state.isAdmin = true;
+        state.currentView = 'admin-students';
+        saveState();
+        await fetchAllData();
+    } else {
+        alert(t('invalid_login'));
+    }
 };
 
 window.promptDevLogin = () => {

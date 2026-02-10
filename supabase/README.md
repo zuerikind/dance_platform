@@ -9,6 +9,16 @@
 
 Then follow the **POST-MIGRATION STEPS** at the bottom of that SQL file (create Auth users for admins, add platform devs to `platform_admins`, etc.).
 
+### Login fallback (existing students/admins)
+
+So existing rows in `students` and `admins` (with name/username + password, no Auth user) can log in:
+
+1. In SQL Editor, open **New query**.
+2. Paste the contents of `supabase/migrations/20260210100000_login_credentials_rpc.sql`.
+3. Run the query.
+
+This adds `get_student_by_credentials` and `get_admin_by_credentials`; the app uses them when Supabase Auth login fails.
+
 ## What the migration does
 
 - Adds `user_id` (references `auth.users`) to `students` and `admins`.
