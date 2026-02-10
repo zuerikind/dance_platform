@@ -664,10 +664,22 @@ async function fetchAllData() {
 
         const sid = state.currentSchool.id;
 
+        // Privacy: only admins / platform devs should ever load ALL students.
+        // Regular students only fetch their own record.
+        let studentsQuery = supabaseClient.from('students').select('*');
+        if (state.isAdmin || state.isPlatformDev) {
+            studentsQuery = studentsQuery.eq('school_id', sid).order('name');
+        } else if (state.currentUser && state.currentUser.id) {
+            studentsQuery = studentsQuery.eq('id', state.currentUser.id);
+        } else {
+            // Not logged in as student or admin – do not fetch any student rows
+            studentsQuery = studentsQuery.eq('school_id', sid).limit(0);
+        }
+
         const [classesRes, subsRes, studentsRes, requestsRes, settingsRes, adminsRes] = await Promise.all([
             supabaseClient.from('classes').select('*').eq('school_id', sid).order('id'),
             supabaseClient.from('subscriptions').select('*').eq('school_id', sid).order('name'),
-            supabaseClient.from('students').select('*').eq('school_id', sid).order('name'),
+            studentsQuery,
             supabaseClient.from('payment_requests').select('*, students(name)').eq('school_id', sid).order('created_at', { ascending: false }),
             supabaseClient.from('admin_settings').select('*').eq('school_id', sid),
             supabaseClient.from('admins').select('*').eq('school_id', sid).order('username')
@@ -710,10 +722,17 @@ async function fetchAllData() {
 
 // --- LOGIC ---
 function saveState() {
+    // Never persist raw passwords or other highly sensitive session fields.
+    let safeCurrentUser = state.currentUser;
+    if (safeCurrentUser && typeof safeCurrentUser === 'object') {
+        const { password, ...rest } = safeCurrentUser;
+        safeCurrentUser = rest;
+    }
+
     localStorage.setItem('dance_app_state', JSON.stringify({
         language: state.language,
         theme: state.theme,
-        currentUser: state.currentUser,
+        currentUser: safeCurrentUser,
         isAdmin: state.isAdmin,
         isPlatformDev: state.isPlatformDev,
         currentView: state.currentView,
@@ -1005,7 +1024,8 @@ function renderView() {
                                     <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: var(--system-blue); border: 1px solid rgba(0,0,0,0.05);">${a.username.charAt(0).toUpperCase()}</div>
                                     <div style="flex: 1;">
                                         <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${a.username}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.6; margin-top: 2px;"><i data-lucide="key" size="10" style="vertical-align: middle; margin-right: 4px;"></i>${t.password_label}: <span style="font-family: monospace; font-weight: 600;">${a.password}</span></div>
+                                        <!-- Passwords are never displayed for security reasons -->
+                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.6; margin-top: 2px;"><i data-lucide="key" size="10" style="vertical-align: middle; margin-right: 4px;"></i>${t.password_label}: <span style="font-family: monospace; font-weight: 600;">••••</span></div>
                                     </div>
                                     <i data-lucide="chevron-right" size="16" style="opacity: 0.2;"></i>
                                 </div>
@@ -1023,7 +1043,7 @@ function renderView() {
                             <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
                                 <div style="flex: 1;">
                                     <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${s.name}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7;">${s.phone || 'S/T'} • PW: <span style="font-family: monospace; font-weight: 600;">${s.password}</span></div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7;">${s.phone || 'S/T'}</div>
                                 </div>
                                 <div style="text-align: right; background: var(--system-gray6); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.02);">
                                     <div style="font-weight: 900; color: var(--system-blue); font-size: 18px; letter-spacing: -0.5px;">${s.balance === null ? '∞' : s.balance}</div>
@@ -1809,9 +1829,9 @@ window.signUpStudent = async () => {
 
     const newStudent = {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
-        name: name,
-        phone: phone,
-        password: pass,
+        name,
+        phone,
+        // password is never stored in local profile; rely on Supabase Auth instead
         paid: false,
         package: null,
         balance: 0,
@@ -1820,11 +1840,35 @@ window.signUpStudent = async () => {
     };
 
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('students').insert([newStudent]);
-        if (error) { alert("Error signing up: " + error.message); return; }
+        try {
+            // Create Supabase Auth user using a deterministic pseudo-email based on name + school
+            const pseudoEmail = `${name.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+            const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+                email: pseudoEmail,
+                password: pass
+            });
+            if (signUpError) {
+                alert("Error creating account: " + signUpError.message);
+                return;
+            }
+
+            const authUser = signUpData?.user;
+            const studentToInsert = authUser ? { ...newStudent, user_id: authUser.id } : newStudent;
+
+            const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
+            if (insertError) {
+                alert("Error saving profile: " + insertError.message);
+                return;
+            }
+        } catch (e) {
+            alert("Unexpected signup error: " + e.message);
+            return;
+        }
+    } else {
+        // Local-only fallback (no Supabase) – still avoid exposing password field
+        state.students.push(newStudent);
     }
 
-    state.students.push(newStudent);
     state.currentUser = { ...newStudent, role: 'student' };
     state.isAdmin = false;
     state.currentView = 'qr';
@@ -1841,21 +1885,40 @@ window.loginStudent = async () => {
 
     let student;
     if (supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('students')
-            .select('*')
-            .eq('name', nameInput)
-            .eq('password', passInput)
-            .single();
+        try {
+            const pseudoEmail = `${nameInput.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+            const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                email: pseudoEmail,
+                password: passInput
+            });
 
-        if (error) {
+            if (authError || !authData?.user) {
+                alert(t('invalid_login'));
+                return;
+            }
+
+            const userId = authData.user.id;
+            const { data: profile, error: profileError } = await supabaseClient
+                .from('students')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('school_id', state.currentSchool.id)
+                .single();
+
+            if (profileError || !profile) {
+                alert(t('invalid_login'));
+                return;
+            }
+
+            student = profile;
+        } catch (e) {
             alert(t('invalid_login'));
             return;
         }
-        student = data;
     } else {
+        // Local fallback: match only by name (no stored password)
         student = state.students.find(s =>
-            s.name.toLowerCase() === nameInput.toLowerCase() && s.password === passInput
+            s.name.toLowerCase() === nameInput.toLowerCase()
         );
     }
 
@@ -1907,42 +1970,48 @@ window.loginAdminWithCreds = async () => {
     });
 
     if (supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('admins')
-            .select('*')
-            .eq('username', user)
-            .eq('password', pass)
-            .eq('school_id', state.currentSchool.id)
-            .single();
+        try {
+            // Use Supabase Auth for admin credentials (pseudo-email pattern)
+            const pseudoEmail = `${user.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
+            const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                email: pseudoEmail,
+                password: pass
+            });
 
-        if (data) {
+            if (authError || !authData?.user) {
+                alert(t('invalid_login'));
+                return;
+            }
+
+            const userId = authData.user.id;
+            const { data: adminRow, error: adminError } = await supabaseClient
+                .from('admins')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('school_id', state.currentSchool.id)
+                .single();
+
+            if (adminError || !adminRow) {
+                alert(t('invalid_login'));
+                return;
+            }
+
             state.currentUser = {
-                name: data.username + " (Admin)",
-                role: "admin",
-                password: data.password // Store password for detail access 
+                name: adminRow.username + " (Admin)",
+                role: "admin"
             };
             state.isAdmin = true;
             state.currentView = 'admin-students';
             saveState();
             await fetchAllData(); // Prioritize fetching admin data immediately
             return;
+        } catch (e) {
+            alert(t('invalid_login'));
+            return;
         }
     }
 
-    // Fallback to hardcoded for safety during migration
-    if (user === "Omid" && pass === "royal") {
-        state.currentUser = {
-            name: "Omid (Admin)",
-            role: "admin",
-            password: "royal"
-        };
-        state.isAdmin = true;
-        state.currentView = 'admin-students';
-        saveState();
-        fetchAllData(); // Trigger fetch for local fallback as well
-    } else {
-        alert(t('invalid_login'));
-    }
+    alert(t('invalid_login'));
 };
 
 window.promptDevLogin = () => {
@@ -1972,29 +2041,28 @@ window.loginDeveloper = async (user, pass) => {
     state.loading = true;
     renderView();
 
-    const { data, error } = await supabaseClient
-        .from('platform_admins')
-        .select('*')
-        .eq('username', user)
-        .eq('password', pass)
-        .single();
+    // Authenticate developer via Supabase Auth instead of reading plaintext password from table.
+    const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+        email: user,
+        password: pass
+    });
 
-    if (data) {
-        state.isPlatformDev = true;
-        state.currentUser = {
-            name: data.username + " (Dev)",
-            role: "platform-dev",
-            password: data.password // Store for detail access
-        };
-        state.currentView = 'platform-dev-dashboard';
-        state.loading = false;
-        saveState();
-        await fetchPlatformData();
-    } else {
+    if (authError || !authData?.user) {
         state.loading = false;
         renderView();
         alert("Invalid Developer credentials.");
+        return;
     }
+
+    state.isPlatformDev = true;
+    state.currentUser = {
+        name: authData.user.email + " (Dev)",
+        role: "platform-dev"
+    };
+    state.currentView = 'platform-dev-dashboard';
+    state.loading = false;
+    saveState();
+    await fetchPlatformData();
 };
 
 window.deleteSchool = async (schoolId, schoolName) => {
@@ -2687,15 +2755,8 @@ window.updateStudentPrompt = async (id) => {
     if (!s) return;
 
     const t = window.t;
-    // Security Check: Require admin/dev password to edit/view sensitive data
-    const inputPass = prompt(t('admin_pass_req'));
-    if (!inputPass) return;
-
-    // Use current session password for dynamic validation
-    const sessionPass = state.currentUser ? state.currentUser.password : null;
-
-    if (inputPass !== sessionPass && inputPass !== "royal" && inputPass !== "dany") {
-        alert(t('invalid_pass_msg'));
+    // Extra confirmation before editing sensitive member data
+    if (!confirm(t('admin_pass_req'))) {
         return;
     }
 
@@ -2726,10 +2787,7 @@ window.updateStudentPrompt = async (id) => {
                     <input type="text" id="edit-student-phone" class="minimal-input" value="${s.phone || ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('password_pin_label')}</label>
-                    <input type="text" id="edit-student-pass" class="minimal-input" value="${s.password}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
-                </div>
+                <!-- Password/PIN is not displayed to avoid leaking credentials -->
 
                 <div class="ios-input-group">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('total_classes_label')}</label>
@@ -2836,20 +2894,18 @@ window.saveStudentDetails = async (id) => {
 
     const newName = document.getElementById('edit-student-name').value.trim();
     const newPhone = document.getElementById('edit-student-phone').value.trim();
-    const newPass = document.getElementById('edit-student-pass').value.trim();
     const balanceVal = document.getElementById('edit-student-balance').value;
     const expiresVal = document.getElementById('edit-student-expires').value;
 
     const updates = {
         name: newName,
         phone: newPhone,
-        password: newPass,
         balance: balanceVal === "" ? null : parseInt(balanceVal),
         package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
     };
 
-    if (!newName || !newPass) {
-        alert("Nombre and Password are required.");
+    if (!newName) {
+        alert("Nombre is required.");
         return;
     }
 
