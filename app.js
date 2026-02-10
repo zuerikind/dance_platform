@@ -187,7 +187,14 @@ const DANCE_LOCALES = {
         delete_perm_label: "Delete member permanently",
         admin_pass_req: "Admin Password Required:",
         invalid_pass_msg: "Incorrect Admin Password.",
-        save_btn: "Save"
+        save_btn: "Save",
+        enter_admin_user: "Enter Admin Username:",
+        enter_admin_pass: "Enter Admin Password:",
+        admin_created: "Administrator created successfully!",
+        remove_admin_confirm: "Are you sure you want to remove this administrator?",
+        admin_removed: "Administrator removed successfully!",
+        error_creating_admin: "Error creating administrator:",
+        error_removing_admin: "Error removing administrator:"
     },
     es: {
         nav_schedule: "Horario",
@@ -373,7 +380,14 @@ const DANCE_LOCALES = {
         delete_perm_label: "Eliminar Alumno permanentemente",
         admin_pass_req: "Password Admin Requerido:",
         invalid_pass_msg: "Contraseña Incorrecta.",
-        save_btn: "Guardar"
+        save_btn: "Guardar",
+        enter_admin_user: "Usuario Administrador:",
+        enter_admin_pass: "Contraseña Administrador:",
+        admin_created: "¡Administrador creado con éxito!",
+        remove_admin_confirm: "¿Estás seguro de que quieres eliminar a dieser Administrador?",
+        admin_removed: "Administrador eliminado con éxito.",
+        error_creating_admin: "Error al crear administrador:",
+        error_removing_admin: "Error al eliminar administrador:"
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -559,7 +573,14 @@ const DANCE_LOCALES = {
         delete_perm_label: "Schüler dauerhaft löschen",
         admin_pass_req: "Admin-Passwort erforderlich:",
         invalid_pass_msg: "Falsches Admin-Passwort.",
-        save_btn: "Speichern"
+        save_btn: "Speichern",
+        enter_admin_user: "Admin-Benutzername:",
+        enter_admin_pass: "Admin-Passwort:",
+        admin_created: "Administrator erfolgreich erstellt!",
+        remove_admin_confirm: "Sind Sie sicher, dass Sie diesen Administrator entfernen möchten?",
+        admin_removed: "Administrator erfolgreich entfernt!",
+        error_creating_admin: "Fehler beim Erstellen des Administrators:",
+        error_removing_admin: "Fehler beim Entfernen des Administrators:"
     }
 };
 
@@ -1983,37 +2004,6 @@ window.createNewSchoolWithAdmin = async () => {
     }
 };
 
-window.createNewAdmin = async () => {
-    const t = new Proxy(window.t, {
-        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
-    });
-    const name = prompt(t('enter_admin_user'));
-    const pass = prompt(t('enter_admin_pass'));
-    if (!name || !pass) return;
-
-    const newId = "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase();
-    if (supabaseClient) {
-        const { error } = await supabaseClient.from('admins').insert([{ id: newId, username: name, password: pass, school_id: state.currentSchool.id }]);
-        if (error) { alert("Error: " + error.message); return; }
-        alert(t('admin_created'));
-        await fetchAllData();
-    }
-};
-
-window.removeAdmin = async (id) => {
-    const t = new Proxy(window.t, {
-        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
-    });
-    if (confirm("¿Estás seguro de eliminar a este administrador?")) {
-        if (supabaseClient) {
-            const { error } = await supabaseClient.from('admins').delete().eq('id', id);
-            if (error) { alert("Error: " + error.message); return; }
-        }
-        state.admins = state.admins.filter(a => a.id !== id);
-        saveState();
-        renderView();
-    }
-};
 
 window.createNewStudent = async () => {
     const t = new Proxy(window.t, {
@@ -2428,34 +2418,36 @@ window.updateAdminSetting = async (key, value) => {
 };
 
 window.createNewAdmin = async () => {
-    const t = new Proxy(window.t, {
-        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
-    });
-    const username = prompt(t('enter_admin_user') || 'Username:');
+    const t = window.t;
+    const username = prompt(t('enter_admin_user'));
     if (!username) return;
-    const password = prompt(t('enter_admin_pass') || 'Password:');
+    const password = prompt(t('enter_admin_pass'));
     if (!password) return;
+
+    const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
 
     if (supabaseClient) {
         const { error } = await supabaseClient.from('admins').insert([{
+            id: newId,
             username,
             password,
             school_id: state.currentSchool.id
         }]);
-        if (error) { alert("Error creating admin: " + error.message); return; }
+        if (error) { alert(t('error_creating_admin') + " " + error.message); return; }
         alert(t('admin_created'));
-        fetchAllData();
+        await fetchAllData();
     }
 };
 
 window.removeAdmin = async (id) => {
-    const t = DANCE_LOCALES[state.language] || DANCE_LOCALES.en;
-    if (!confirm("Are you sure you want to remove this administrator?")) return;
+    const t = window.t;
+    if (!confirm(t('remove_admin_confirm'))) return;
 
     if (supabaseClient) {
         const { error } = await supabaseClient.from('admins').delete().eq('id', id);
-        if (error) { alert("Error removing admin: " + error.message); return; }
-        fetchAllData();
+        if (error) { alert(t('error_removing_admin') + " " + error.message); return; }
+        alert(t('admin_removed'));
+        await fetchAllData();
     }
 };
 
