@@ -163,6 +163,7 @@ const DANCE_LOCALES = {
         school_info_section: "Academy Details",
         admin_info_section: "Initial Administrator",
         create_school_btn: "Execute Initialization",
+        username_exists_msg: "This username is already taken. Please choose another one.",
         class_location: "Location",
         location_placeholder: "e.g. Studio A",
         active_packs_label: "Your Active Packs",
@@ -360,6 +361,7 @@ const DANCE_LOCALES = {
         school_info_section: "Detalles de la Academia",
         admin_info_section: "Administrador Inicial",
         create_school_btn: "Ejecutar Inicialización",
+        username_exists_msg: "Este usuario ya está en uso. Por favor elige otro.",
         class_location: "Ubicación",
         location_placeholder: "Ej: Aula A",
         active_packs_label: "Tus Paquetes Activos",
@@ -558,6 +560,7 @@ const DANCE_LOCALES = {
         school_info_section: "Akademie-Details",
         admin_info_section: "Erster Administrator",
         create_school_btn: "Initialisierung ausführen",
+        username_exists_msg: "Dieser Benutzername ist bereits vergeben. Bitte wähle einen anderen.",
         class_location: "Standort",
         location_placeholder: "z.B. Studio A",
         active_packs_label: "Deine aktiven Pakete",
@@ -2218,7 +2221,12 @@ window.submitNewSchoolWithAdmin = async () => {
             await fetchPlatformData();
         } catch (err) {
             console.error("Creation Error:", err);
-            alert("Failed to create school/admin: " + err.message);
+            const t = DANCE_LOCALES[state.language] || DANCE_LOCALES.en;
+            if (err.message && err.message.includes('admins_username_key')) {
+                alert(t.username_exists_msg);
+            } else {
+                alert("Failed to create school/admin: " + err.message);
+            }
             state.loading = false;
             renderView();
         }
