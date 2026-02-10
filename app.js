@@ -1318,12 +1318,13 @@ function renderView() {
                             <div class="auth-input-group">
                                 ${isSignup ? `
                                     <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('full_name_placeholder')}" autocomplete="name">
+                                    <input type="text" id="auth-username" class="minimal-input" placeholder="${window.t('username')}" autocomplete="username">
                                     <input type="text" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email" maxlength="254">
                                     <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}" autocomplete="tel">
                                     <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                     <input type="password" id="auth-pass-confirm" class="minimal-input" placeholder="${window.t('confirm_password_placeholder')}" autocomplete="new-password">
                                 ` : `
-                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('username')}">
+                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('full_name_placeholder')}" autocomplete="name">
                                     <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                 `}
                             </div>
@@ -2056,6 +2057,8 @@ window.selectCustomOption = async (classId, field, value) => {
 window.signUpStudent = async () => {
     const t = new Proxy(window.t, { get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop] });
     const name = document.getElementById('auth-name').value.trim();
+    const usernameEl = document.getElementById('auth-username');
+    const username = usernameEl ? usernameEl.value.trim() : '';
     const emailEl = document.getElementById('auth-email');
     const email = emailEl ? emailEl.value.trim() : '';
     const phone = document.getElementById('auth-phone').value.trim();
@@ -2063,7 +2066,7 @@ window.signUpStudent = async () => {
     const passConfirmEl = document.getElementById('auth-pass-confirm');
     const passConfirm = passConfirmEl ? passConfirmEl.value.trim() : '';
 
-    if (!name || !pass || !phone || !email) {
+    if (!name || !username || !pass || !phone || !email) {
         alert(t('signup_require_fields'));
         return;
     }
@@ -2072,14 +2075,21 @@ window.signUpStudent = async () => {
         return;
     }
 
-    if (state.students.find(s => s.name.toLowerCase() === name.toLowerCase())) {
-        alert("This name is already taken. Try signing in!");
-        return;
+    if (supabaseClient) {
+        const { data: usernameTaken } = await supabaseClient.rpc('student_username_exists', {
+            p_username: username,
+            p_school_id: state.currentSchool.id
+        });
+        if (usernameTaken) {
+            alert(t('username_exists_msg'));
+            return;
+        }
     }
 
     const newStudent = {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
         name,
+        username: username || null,
         email: email || null,
         phone,
         paid: false,
@@ -2092,49 +2102,60 @@ window.signUpStudent = async () => {
     let studentCreated = false;
     if (supabaseClient) {
         try {
-            // Use same pseudo-email as login so Auth account matches when they sign in (name+schoolId@...)
-            const pseudoEmail = `${name.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+            // Use username for Auth pseudo-email so it's unique per school (sign-in uses full name + password)
+            const pseudoEmail = `${username.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
             const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
                 email: pseudoEmail,
                 password: pass
             });
             if (!signUpError && signUpData?.user) {
                 const authUser = signUpData.user;
-                // Ensure the next Supabase calls use the new user's session (so RLS and create_student_with_auth see auth.uid())
+                // Ensure we have a session so auth.uid() is set for insert/RPC. signUp sometimes doesn't return session; signIn does.
                 if (signUpData.session) {
                     await supabaseClient.auth.setSession({
                         access_token: signUpData.session.access_token,
                         refresh_token: signUpData.session.refresh_token
                     });
-                }
-                const studentToInsert = { ...newStudent, user_id: authUser.id };
-                const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
-                if (!insertError) studentCreated = true;
-                if (!studentCreated) {
-                    // Table insert failed (e.g. RLS): create with user_id via RPC (requires auth.uid() = p_user_id, so session above is important)
-                    const { data: authRpcRow, error: authRpcError } = await supabaseClient.rpc('create_student_with_auth', {
-                        p_user_id: authUser.id,
-                        p_name: name,
-                        p_email: email || null,
-                        p_phone: phone || null,
-                        p_password: pass,
-                        p_school_id: state.currentSchool.id
+                } else {
+                    const { data: signInData, error: signInErr } = await supabaseClient.auth.signInWithPassword({
+                        email: pseudoEmail,
+                        password: pass
                     });
-                    if (!authRpcError && authRpcRow) {
-                        const created = typeof authRpcRow === 'object' ? authRpcRow : (typeof authRpcRow === 'string' ? JSON.parse(authRpcRow) : null);
-                        if (created) {
-                            newStudent.id = created.id;
-                            newStudent.email = created.email ?? email;
-                            newStudent.user_id = created.user_id;
-                            studentCreated = true;
-                        }
+                    if (signInErr || !signInData?.session) {
+                        console.warn('No session after signUp; signIn failed:', signInErr?.message);
                     }
+                }
+                // Try RPC first (bypasses RLS, sets user_id) so we don't depend on table insert
+                const { data: authRpcRow, error: authRpcError } = await supabaseClient.rpc('create_student_with_auth', {
+                    p_user_id: authUser.id,
+                    p_name: name,
+                    p_username: username || null,
+                    p_email: email || null,
+                    p_phone: phone || null,
+                    p_password: pass,
+                    p_school_id: state.currentSchool.id
+                });
+                if (!authRpcError && authRpcRow) {
+                    const created = typeof authRpcRow === 'object' ? authRpcRow : (typeof authRpcRow === 'string' ? JSON.parse(authRpcRow) : null);
+                    if (created) {
+                        newStudent.id = created.id;
+                        newStudent.email = created.email ?? email;
+                        newStudent.username = created.username ?? username;
+                        newStudent.user_id = created.user_id;
+                        studentCreated = true;
+                    }
+                }
+                if (!studentCreated) {
+                    const studentToInsert = { ...newStudent, user_id: authUser.id };
+                    const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
+                    if (!insertError) studentCreated = true;
                 }
             }
             if (!studentCreated) {
                 // Auth failed (rate limit, etc.) or both inserts failed: create student via legacy RPC (user_id stays NULL)
                 const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
                     p_name: name,
+                    p_username: username || null,
                     p_email: email || null,
                     p_phone: phone || null,
                     p_password: pass,
@@ -2153,15 +2174,16 @@ window.signUpStudent = async () => {
                 alert("Error creating account: " + (signUpError?.message || "Could not create profile. Try again."));
                 return;
             }
-        } catch (e) {
-            try {
-                const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
-                    p_name: name,
-                    p_email: email || null,
-                    p_phone: phone || null,
-                    p_password: pass,
-                    p_school_id: state.currentSchool.id
-                });
+            } catch (e) {
+                try {
+                    const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
+                        p_name: name,
+                        p_username: username || null,
+                        p_email: email || null,
+                        p_phone: phone || null,
+                        p_password: pass,
+                        p_school_id: state.currentSchool.id
+                    });
                 if (!rpcError && rpcRow) {
                     const created = typeof rpcRow === 'object' ? rpcRow : (typeof rpcRow === 'string' ? JSON.parse(rpcRow) : null);
                     if (created) {
@@ -2199,27 +2221,8 @@ window.loginStudent = async () => {
     let student;
     if (supabaseClient) {
         try {
-            // 1) Try Supabase Auth (for users who have user_id set)
-            const pseudoEmail = `${nameInput.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
-            const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-                email: pseudoEmail,
-                password: passInput
-            });
-
-            if (!authError && authData?.user) {
-                const { data: profile, error: profileError } = await supabaseClient
-                    .from('students')
-                    .select('*')
-                    .eq('user_id', authData.user.id)
-                    .eq('school_id', state.currentSchool.id)
-                    .single();
-                if (!profileError && profile) {
-                    student = profile;
-                }
-            }
-
-            // 2) Fallback: check database directly (existing rows with name+password, no Auth user)
-            if (!student && nameInput && passInput) {
+            // 1) Sign-in is by full name + password: look up student by name and password first
+            if (nameInput && passInput) {
                 const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_student_by_credentials', {
                     p_name: nameInput,
                     p_password: passInput,
@@ -2227,6 +2230,27 @@ window.loginStudent = async () => {
                 });
                 if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
                     student = legacyRows[0];
+                    if (student.username) {
+                        const usernameEmail = `${String(student.username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+                        await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput });
+                    }
+                }
+            }
+            // 2) If not found by name+password, try Auth (e.g. user_id set, session from another device)
+            if (!student) {
+                const nameEmail = `${nameInput.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email: nameEmail,
+                    password: passInput
+                });
+                if (!authError && authData?.user) {
+                    const { data: profile } = await supabaseClient
+                        .from('students')
+                        .select('*')
+                        .eq('user_id', authData.user.id)
+                        .eq('school_id', state.currentSchool.id)
+                        .single();
+                    if (profile) student = profile;
                 }
             }
         } catch (e) {
@@ -2506,6 +2530,7 @@ window.createNewStudent = async () => {
     if (supabaseClient) {
         const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
             p_name: name,
+            p_username: null,
             p_email: (email && email.trim()) || null,
             p_phone: (phone && phone.trim()) || null,
             p_password: pass,

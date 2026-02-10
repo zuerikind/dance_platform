@@ -175,6 +175,7 @@ BEGIN
 END;
 $$;
 COMMENT ON FUNCTION public.create_student_with_auth(uuid, text, text, text, text, uuid) IS 'Create student row with user_id set; only callable by that Auth user. Use when signUp succeeded but table insert failed.';
+GRANT EXECUTE ON FUNCTION public.create_student_with_auth(uuid, text, text, text, text, uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.create_student_with_auth(uuid, text, text, text, text, uuid) TO authenticated;
 
 -- Create student without Auth (e.g. when Auth rate limit or signUp fails). Lets signup always succeed. user_id stays NULL.
