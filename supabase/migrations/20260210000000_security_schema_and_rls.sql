@@ -26,12 +26,14 @@ CREATE INDEX IF NOT EXISTS idx_admins_school_user ON public.admins(school_id, us
 
 COMMENT ON COLUMN public.admins.user_id IS 'Supabase Auth user; used for login and RLS.';
 
--- 1.3) platform_admins: table for platform developers (restricts who can use God Mode)
-CREATE TABLE IF NOT EXISTS public.platform_admins (
-  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
-);
+-- 1.3) platform_admins: add user_id if your table already has (id, username, password, created_at)
+--     This links rows to Supabase Auth for is_platform_admin() and RLS.
+ALTER TABLE public.platform_admins
+  ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
 
-COMMENT ON TABLE public.platform_admins IS 'Auth users who can access platform-dev dashboard and see all schools. Add user_id after creating the user in Auth.';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_platform_admins_user_id ON public.platform_admins(user_id) WHERE user_id IS NOT NULL;
+
+COMMENT ON COLUMN public.platform_admins.user_id IS 'Supabase Auth user id; used for RLS and God Mode. Set this after creating the user in Auth.';
 
 -- Optional: stop exposing password in APIs (do not drop yet if app still uses it for legacy admin creation)
 -- ALTER TABLE public.students DROP COLUMN IF EXISTS password;
@@ -49,7 +51,13 @@ ALTER TABLE public.classes          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payment_requests  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_settings   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.payments         ENABLE ROW LEVEL SECURITY;
+-- payments: only if the table exists (your project may not have it yet)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'payments') THEN
+    ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 ALTER TABLE public.platform_admins  ENABLE ROW LEVEL SECURITY;
 
 
@@ -288,34 +296,36 @@ CREATE POLICY "admin_settings_delete" ON public.admin_settings
     OR public.is_platform_admin()
   );
 
--- Payments
-DROP POLICY IF EXISTS "payments_select" ON public.payments;
-CREATE POLICY "payments_select" ON public.payments
-  FOR SELECT USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
-    OR public.is_platform_admin()
-  );
-
-DROP POLICY IF EXISTS "payments_insert" ON public.payments;
-CREATE POLICY "payments_insert" ON public.payments
-  FOR INSERT WITH CHECK (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
-    OR public.is_platform_admin()
-  );
-
-DROP POLICY IF EXISTS "payments_update" ON public.payments;
-CREATE POLICY "payments_update" ON public.payments
-  FOR UPDATE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
-    OR public.is_platform_admin()
-  );
-
-DROP POLICY IF EXISTS "payments_delete" ON public.payments;
-CREATE POLICY "payments_delete" ON public.payments
-  FOR DELETE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
-    OR public.is_platform_admin()
-  );
+-- Payments (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'payments') THEN
+    DROP POLICY IF EXISTS "payments_select" ON public.payments;
+    CREATE POLICY "payments_select" ON public.payments
+      FOR SELECT USING (
+        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        OR public.is_platform_admin()
+      );
+    DROP POLICY IF EXISTS "payments_insert" ON public.payments;
+    CREATE POLICY "payments_insert" ON public.payments
+      FOR INSERT WITH CHECK (
+        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        OR public.is_platform_admin()
+      );
+    DROP POLICY IF EXISTS "payments_update" ON public.payments;
+    CREATE POLICY "payments_update" ON public.payments
+      FOR UPDATE USING (
+        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        OR public.is_platform_admin()
+      );
+    DROP POLICY IF EXISTS "payments_delete" ON public.payments;
+    CREATE POLICY "payments_delete" ON public.payments
+      FOR DELETE USING (
+        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        OR public.is_platform_admin()
+      );
+  END IF;
+END $$;
 
 -- Platform admins: only platform admins can read (and only service role should manage the list)
 DROP POLICY IF EXISTS "platform_admins_select" ON public.platform_admins;
@@ -360,9 +370,12 @@ CREATE POLICY "platform_admins_select" ON public.platform_admins
 --    - Copy the new user’s id (uuid) and run:
 --        UPDATE public.admins SET user_id = '<that-uuid>' WHERE school_id = '<school_id>' AND username = '<username>';
 --
--- 3) Platform developers: create Auth user (email + password), then add to
---    platform_admins:
---        INSERT INTO public.platform_admins (user_id) VALUES ('<auth-user-uuid>');
+-- 3) Platform developers: your platform_admins table has (id, username, password, created_at).
+--    We added a user_id column. To use God Mode with Supabase Auth:
+--    a) In Supabase Auth → Users → Add user (e.g. email: your@email.com, password).
+--    b) Copy the new user’s UUID, then run:
+--        UPDATE public.platform_admins SET user_id = '<auth-user-uuid>' WHERE username = 'Omid7991';
+--    After that, log in with that email + password in the app’s Dev Access.
 --
 -- 4) Existing students: if you have existing rows without user_id, either
 --    leave them (they won’t be able to log in with new flow until you
