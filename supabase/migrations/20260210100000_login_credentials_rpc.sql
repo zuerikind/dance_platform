@@ -456,3 +456,187 @@ $$;
 COMMENT ON FUNCTION public.deduct_student_classes(text, uuid, int) IS 'Deduct classes for attendance; used when admin scans QR. Bypasses RLS.';
 GRANT EXECUTE ON FUNCTION public.deduct_student_classes(text, uuid, int) TO anon;
 GRANT EXECUTE ON FUNCTION public.deduct_student_classes(text, uuid, int) TO authenticated;
+
+-- =============================================================================
+-- Admin management (bypass RLS for legacy admins who have no auth.uid())
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.admin_insert_for_school(
+  p_school_id uuid,
+  p_username text,
+  p_password text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_id text;
+  v_row public.admins%ROWTYPE;
+BEGIN
+  v_id := 'ADM-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 6));
+  INSERT INTO public.admins (id, username, password, school_id)
+  VALUES (v_id, trim(p_username), p_password, p_school_id)
+  RETURNING * INTO v_row;
+  RETURN to_jsonb(v_row);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_insert_for_school(uuid, text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.admin_insert_for_school(uuid, text, text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_for_school(p_admin_id text)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM public.admins WHERE id = p_admin_id;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_delete_for_school(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.admin_delete_for_school(text) TO authenticated;
+
+-- Classes: insert, update single field, delete (SECURITY DEFINER so legacy admins can add classes)
+CREATE OR REPLACE FUNCTION public.class_insert_for_school(
+  p_school_id uuid,
+  p_name text DEFAULT 'New Class',
+  p_day text DEFAULT 'Mon',
+  p_time text DEFAULT '09:00',
+  p_price numeric DEFAULT 0,
+  p_tag text DEFAULT '',
+  p_location text DEFAULT ''
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_row public.classes%ROWTYPE;
+BEGIN
+  BEGIN
+    INSERT INTO public.classes (school_id, name, day, time, price, tag, location)
+    VALUES (p_school_id, coalesce(nullif(trim(p_name), ''), 'New Class'), coalesce(nullif(trim(p_day), ''), 'Mon'),
+            coalesce(nullif(trim(p_time), ''), '09:00'), coalesce(p_price, 0), coalesce(trim(p_tag), ''),
+            coalesce(trim(p_location), ''))
+    RETURNING * INTO v_row;
+  EXCEPTION
+    WHEN undefined_column THEN
+      INSERT INTO public.classes (school_id, name, day, time, price)
+      VALUES (p_school_id, coalesce(nullif(trim(p_name), ''), 'New Class'), coalesce(nullif(trim(p_day), ''), 'Mon'),
+              coalesce(nullif(trim(p_time), ''), '09:00'), coalesce(p_price, 0))
+      RETURNING * INTO v_row;
+  END;
+  RETURN to_jsonb(v_row);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.class_insert_for_school(uuid, text, text, text, numeric, text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.class_insert_for_school(uuid, text, text, text, numeric, text, text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.class_update_field(p_id bigint, p_field text, p_value text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF p_field = 'name' THEN
+    UPDATE public.classes SET name = p_value WHERE id = p_id;
+  ELSIF p_field = 'day' THEN
+    UPDATE public.classes SET day = p_value WHERE id = p_id;
+  ELSIF p_field = 'time' THEN
+    UPDATE public.classes SET time = p_value WHERE id = p_id;
+  ELSIF p_field = 'price' THEN
+    UPDATE public.classes SET price = (p_value::numeric) WHERE id = p_id;
+  ELSIF p_field = 'tag' THEN
+    UPDATE public.classes SET tag = p_value WHERE id = p_id;
+  ELSIF p_field = 'location' THEN
+    UPDATE public.classes SET location = p_value WHERE id = p_id;
+  END IF;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.class_update_field(bigint, text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.class_update_field(bigint, text, text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.class_delete_for_school(p_class_id bigint)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM public.classes WHERE id = p_class_id;
+$$;
+GRANT EXECUTE ON FUNCTION public.class_delete_for_school(bigint) TO anon;
+GRANT EXECUTE ON FUNCTION public.class_delete_for_school(bigint) TO authenticated;
+
+-- Subscriptions (plans): insert, update single field, delete
+CREATE OR REPLACE FUNCTION public.subscription_insert_for_school(
+  p_school_id uuid,
+  p_name text DEFAULT 'New Plan',
+  p_price numeric DEFAULT 0,
+  p_limit_count int DEFAULT 10,
+  p_validity_days int DEFAULT 30
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_row public.subscriptions%ROWTYPE;
+BEGIN
+  INSERT INTO public.subscriptions (school_id, name, price, limit_count, validity_days)
+  VALUES (p_school_id, coalesce(nullif(trim(p_name), ''), 'New Plan'), coalesce(p_price, 0),
+          coalesce(p_limit_count, 10), coalesce(p_validity_days, 30))
+  RETURNING * INTO v_row;
+  RETURN to_jsonb(v_row);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.subscription_insert_for_school(uuid, text, numeric, int, int) TO anon;
+GRANT EXECUTE ON FUNCTION public.subscription_insert_for_school(uuid, text, numeric, int, int) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.subscription_update_field(p_id text, p_field text, p_value text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF p_field = 'name' THEN
+    UPDATE public.subscriptions SET name = p_value WHERE id::text = p_id;
+  ELSIF p_field = 'price' THEN
+    UPDATE public.subscriptions SET price = (p_value::numeric) WHERE id::text = p_id;
+  ELSIF p_field = 'limit_count' THEN
+    UPDATE public.subscriptions SET limit_count = (p_value::int) WHERE id::text = p_id;
+  ELSIF p_field = 'validity_days' THEN
+    UPDATE public.subscriptions SET validity_days = (p_value::int) WHERE id::text = p_id;
+  END IF;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.subscription_update_field(text, text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.subscription_update_field(text, text, text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.subscription_delete_for_school(p_sub_id text)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM public.subscriptions WHERE id::text = p_sub_id;
+$$;
+GRANT EXECUTE ON FUNCTION public.subscription_delete_for_school(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.subscription_delete_for_school(text) TO authenticated;
+
+-- Admin settings (transfer/bank details): upsert one key
+CREATE OR REPLACE FUNCTION public.admin_setting_upsert(p_school_id uuid, p_key text, p_value text)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  INSERT INTO public.admin_settings (school_id, key, value)
+  VALUES (p_school_id, p_key, coalesce(p_value, ''))
+  ON CONFLICT (school_id, key) DO UPDATE SET value = coalesce(p_value, '');
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_setting_upsert(uuid, text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.admin_setting_upsert(uuid, text, text) TO authenticated;

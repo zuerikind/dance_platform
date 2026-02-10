@@ -17,7 +17,7 @@ Run this so the app works for **students** (schedule, shop, buy pack, bank detai
 2. Paste the **full** contents of `supabase/migrations/20260210100000_login_credentials_rpc.sql`.
 3. Run the query.
 
-This adds: login credential checks, `get_school_classes`, `get_school_subscriptions`, `get_school_admin_settings`, `create_payment_request`, `get_school_payment_requests`, `update_payment_request_status`, `delete_payment_request`. If you see "Could not find the function" in the app, this migration was not run or needs to be re-run.
+This adds: login credential checks, `get_school_classes`, `get_school_subscriptions`, `get_school_admin_settings`, `create_payment_request`, `get_school_payment_requests`, `update_payment_request_status`, `delete_payment_request`, plus **admin management** (`admin_insert_for_school`, `admin_delete_for_school`), **classes** (`class_insert_for_school`, `class_update_field`, `class_delete_for_school`), **plans** (`subscription_insert_for_school`, `subscription_update_field`, `subscription_delete_for_school`), and **transfer details** (`admin_setting_upsert`) so legacy admins can add admins, edit classes, edit plans, and save bank details. If you see "Could not find the function" in the app, this migration was not run or needs to be re-run.
 
 ## What the migration does
 

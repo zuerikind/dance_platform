@@ -2021,8 +2021,10 @@ window.signUpStudent = async () => {
     let studentCreated = false;
     if (supabaseClient) {
         try {
+            // Use same pseudo-email as login so Auth account matches when they sign in (name+schoolId@...)
+            const pseudoEmail = `${name.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
             const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-                email,
+                email: pseudoEmail,
                 password: pass
             });
             if (!signUpError && signUpData?.user) {
@@ -2835,23 +2837,20 @@ window.saveBankSettings = async (btn) => {
 };
 
 window.updateAdminSetting = async (key, value) => {
-    if (supabaseClient) {
-        if (!state.currentSchool || !state.currentSchool.id) {
-            console.error("Cannot update setting: No school selected.");
-            return;
-        }
-
-        const { error } = await supabaseClient
-            .from('admin_settings')
-            .upsert({
-                school_id: state.currentSchool.id,
-                key: String(key),
-                value: String(value)
-            }, { onConflict: 'school_id, key' });
-
-        if (error) {
-            console.error(`Error updating setting[${key}]: `, error);
-            throw error;
+    if (supabaseClient && state.currentSchool?.id) {
+        const { error: rpcError } = await supabaseClient.rpc('admin_setting_upsert', {
+            p_school_id: state.currentSchool.id,
+            p_key: String(key),
+            p_value: String(value)
+        });
+        if (rpcError) {
+            const { error: tableError } = await supabaseClient
+                .from('admin_settings')
+                .upsert({ school_id: state.currentSchool.id, key: String(key), value: String(value) }, { onConflict: 'school_id, key' });
+            if (tableError) {
+                console.error(`Error updating setting[${key}]: `, tableError);
+                throw tableError;
+            }
         }
     }
     state.adminSettings[key] = value;
@@ -2865,16 +2864,17 @@ window.createNewAdmin = async () => {
     const password = prompt(t('enter_admin_pass'));
     if (!password) return;
 
-    const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
-
-    if (supabaseClient) {
-        const { error } = await supabaseClient.from('admins').insert([{
-            id: newId,
-            username,
-            password,
-            school_id: state.currentSchool.id
-        }]);
-        if (error) { alert(t('error_creating_admin') + " " + error.message); return; }
+    if (supabaseClient && state.currentSchool?.id) {
+        const { data: row, error: rpcError } = await supabaseClient.rpc('admin_insert_for_school', {
+            p_school_id: state.currentSchool.id,
+            p_username: username,
+            p_password: password
+        });
+        if (rpcError) {
+            const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
+            const { error } = await supabaseClient.from('admins').insert([{ id: newId, username, password, school_id: state.currentSchool.id }]);
+            if (error) { alert(t('error_creating_admin') + " " + (error.message || rpcError.message)); return; }
+        }
         alert(t('admin_created'));
         await fetchAllData();
     }
@@ -2885,8 +2885,11 @@ window.removeAdmin = async (id) => {
     if (!confirm(t('remove_admin_confirm'))) return;
 
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('admins').delete().eq('id', id);
-        if (error) { alert(t('error_removing_admin') + " " + error.message); return; }
+        const { error: rpcError } = await supabaseClient.rpc('admin_delete_for_school', { p_admin_id: String(id) });
+        if (rpcError) {
+            const { error } = await supabaseClient.from('admins').delete().eq('id', id);
+            if (error) { alert(t('error_removing_admin') + " " + (error.message || rpcError.message)); return; }
+        }
         alert(t('admin_removed'));
         await fetchAllData();
     }
@@ -2911,8 +2914,11 @@ window.updateClass = async (id, field, value) => {
     if (cls) {
         const val = (field === 'price' ? parseFloat(value) : value);
         if (supabaseClient) {
-            const { error } = await supabaseClient.from('classes').update({ [field]: val }).eq('id', id);
-            if (error) { console.error(error); return; }
+            const { error: rpcError } = await supabaseClient.rpc('class_update_field', { p_id: id, p_field: field, p_value: String(val) });
+            if (rpcError) {
+                const { error } = await supabaseClient.from('classes').update({ [field]: val }).eq('id', id);
+                if (error) { console.error(error); return; }
+            }
         }
         cls[field] = val;
         saveState();
@@ -2920,14 +2926,33 @@ window.updateClass = async (id, field, value) => {
 };
 
 window.addClass = async () => {
-    const newClass = { name: "New Class", day: "Mon", time: "09:00", price: 150, tag: "Beginner", location: "Studio A", school_id: state.currentSchool.id };
-    if (supabaseClient) {
-        const { data, error } = await supabaseClient.from('classes').insert([newClass]).select();
-        if (error) { alert("Error adding class: " + error.message); return; }
-        state.classes.push(data[0]);
+    const schoolId = state.currentSchool?.id;
+    if (supabaseClient && schoolId) {
+        const { data: row, error: rpcError } = await supabaseClient.rpc('class_insert_for_school', {
+            p_school_id: schoolId,
+            p_name: 'New Class',
+            p_day: 'Mon',
+            p_time: '09:00',
+            p_price: 150,
+            p_tag: 'Beginner',
+            p_location: 'Studio A'
+        });
+        if (rpcError) {
+            const msg = (rpcError.message || '').toLowerCase();
+            const hint = (msg.includes('could not find') || msg.includes('function') || msg.includes('row-level security'))
+                ? '\n\nRun the Supabase migration (SQL Editor → paste supabase/migrations/20260210100000_login_credentials_rpc.sql and Run) so Add Class works for admins.'
+                : '';
+            alert("Error adding class: " + (rpcError.message || 'Unknown error') + hint);
+            return;
+        }
+        if (row) {
+            const created = typeof row === 'object' && !Array.isArray(row) ? row : (Array.isArray(row) ? row[0] : null);
+            if (created) state.classes.push(created);
+            else state.classes.push({ id: state.classes.length + 1, name: 'New Class', day: 'Mon', time: '09:00', price: 150, tag: 'Beginner', location: 'Studio A', school_id: schoolId });
+        }
     } else {
         const newId = state.classes.length ? Math.max(...state.classes.map(c => c.id)) + 1 : 1;
-        state.classes.push({ id: newId, ...newClass });
+        state.classes.push({ id: newId, name: 'New Class', day: 'Mon', time: '09:00', price: 150, tag: 'Beginner', location: 'Studio A', school_id: schoolId });
     }
     saveState();
     renderView();
@@ -2935,8 +2960,11 @@ window.addClass = async () => {
 
 window.removeClass = async (id) => {
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('classes').delete().eq('id', id);
-        if (error) { alert("Error removing class: " + error.message); return; }
+        const { error: rpcError } = await supabaseClient.rpc('class_delete_for_school', { p_class_id: id });
+        if (rpcError) {
+            const { error } = await supabaseClient.from('classes').delete().eq('id', id);
+            if (error) { alert("Error removing class: " + error.message); return; }
+        }
     }
     state.classes = state.classes.filter(c => c.id !== id);
     saveState();
@@ -2948,8 +2976,11 @@ window.updateSub = async (id, field, value) => {
     if (sub) {
         const val = (field === 'price' ? parseFloat(value) : (['limit_count', 'validity_days'].includes(field) ? parseInt(value) : value));
         if (supabaseClient) {
-            const { error } = await supabaseClient.from('subscriptions').update({ [field]: val }).eq('id', id);
-            if (error) { console.error(error); return; }
+            const { error: rpcError } = await supabaseClient.rpc('subscription_update_field', { p_id: String(id), p_field: field, p_value: String(val) });
+            if (rpcError) {
+                const { error } = await supabaseClient.from('subscriptions').update({ [field]: val }).eq('id', id);
+                if (error) { console.error(error); return; }
+            }
         }
         sub[field] = val;
         saveState();
@@ -2958,20 +2989,39 @@ window.updateSub = async (id, field, value) => {
 
 
 window.addSubscription = async () => {
-    const newSub = { id: "S" + Date.now(), name: "New Plan", price: 50, duration: "30 days", limit_count: 10, validity_days: 30, school_id: state.currentSchool.id };
-    if (supabaseClient) {
-        const { error } = await supabaseClient.from('subscriptions').insert([newSub]);
-        if (error) { alert("Error adding plan: " + error.message); return; }
+    const schoolId = state.currentSchool?.id;
+    if (supabaseClient && schoolId) {
+        const { data: row, error: rpcError } = await supabaseClient.rpc('subscription_insert_for_school', {
+            p_school_id: schoolId,
+            p_name: 'New Plan',
+            p_price: 50,
+            p_limit_count: 10,
+            p_validity_days: 30
+        });
+        if (!rpcError && row) {
+            const created = typeof row === 'object' && !Array.isArray(row) ? row : (Array.isArray(row) ? row[0] : null);
+            if (created) state.subscriptions.push(created);
+            else state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId });
+        } else {
+            const newSub = { id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId };
+            const { error } = await supabaseClient.from('subscriptions').insert([newSub]);
+            if (error) { alert("Error adding plan: " + error.message); return; }
+            state.subscriptions.push(newSub);
+        }
+    } else {
+        state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId });
     }
-    state.subscriptions.push(newSub);
     saveState();
     renderView();
 };
 
 window.removeSubscription = async (id) => {
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('subscriptions').delete().eq('id', id);
-        if (error) { alert("Error removing plan: " + error.message); return; }
+        const { error: rpcError } = await supabaseClient.rpc('subscription_delete_for_school', { p_sub_id: String(id) });
+        if (rpcError) {
+            const { error } = await supabaseClient.from('subscriptions').delete().eq('id', id);
+            if (error) { alert("Error removing plan: " + error.message); return; }
+        }
     }
     state.subscriptions = state.subscriptions.filter(s => s.id !== id);
     saveState();
