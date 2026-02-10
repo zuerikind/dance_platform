@@ -38,6 +38,8 @@ const DANCE_LOCALES = {
         email_placeholder: "Email address",
         signup_require_fields: "Please enter full name, email, phone and password.",
         signup_invalid_email: "Please enter a valid email address.",
+        confirm_password_placeholder: "Confirm password",
+        signup_passwords_dont_match: "Passwords do not match.",
         signup_btn: "Join Now",
         logout: "Sign Out",
         admin_subtitle: "Manage your studio efficiently",
@@ -239,6 +241,8 @@ const DANCE_LOCALES = {
         email_placeholder: "Correo electrónico",
         signup_require_fields: "Ingresa nombre completo, correo, teléfono y contraseña.",
         signup_invalid_email: "Ingresa un correo electrónico válido.",
+        confirm_password_placeholder: "Repetir contraseña",
+        signup_passwords_dont_match: "Las contraseñas no coinciden.",
         signup_btn: "Unirme Ahora",
         logout: "Cerrar Sesión",
         admin_subtitle: "Gestiona tu academia",
@@ -444,6 +448,8 @@ const DANCE_LOCALES = {
         email_placeholder: "E-Mail-Adresse",
         signup_require_fields: "Bitte gib Name, E-Mail, Telefon und Passwort ein.",
         signup_invalid_email: "Bitte gib eine gültige E-Mail-Adresse ein.",
+        confirm_password_placeholder: "Passwort bestätigen",
+        signup_passwords_dont_match: "Die Passwörter stimmen nicht überein.",
         signup_btn: "Jetzt beitreten",
         logout: "Abmelden",
         admin_subtitle: "Verwalte dein Studio effizient",
@@ -1196,12 +1202,14 @@ function renderView() {
                             <div class="auth-input-group">
                                 ${isSignup ? `
                                     <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('full_name_placeholder')}" autocomplete="name">
-                                    <input type="email" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email">
+                                    <input type="text" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email">
                                     <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}" autocomplete="tel">
+                                    <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
+                                    <input type="password" id="auth-pass-confirm" class="minimal-input" placeholder="${window.t('confirm_password_placeholder')}" autocomplete="new-password">
                                 ` : `
                                     <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('username')}">
+                                    <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                 `}
-                                <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                             </div>
 
                             <div class="auth-actions">
@@ -1901,14 +1909,15 @@ window.signUpStudent = async () => {
     const email = emailEl ? emailEl.value.trim() : '';
     const phone = document.getElementById('auth-phone').value.trim();
     const pass = document.getElementById('auth-pass').value.trim();
+    const passConfirmEl = document.getElementById('auth-pass-confirm');
+    const passConfirm = passConfirmEl ? passConfirmEl.value.trim() : '';
 
     if (!name || !pass || !phone || !email) {
         alert(t('signup_require_fields'));
         return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert(t('signup_invalid_email'));
+    if (pass !== passConfirm) {
+        alert(t('signup_passwords_dont_match'));
         return;
     }
 
@@ -3307,7 +3316,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         const target = e.target;
         if (target.id === 'dev-pass-input') window.submitDevLogin();
-        if (target.id === 'auth-pass') {
+        if (target.id === 'auth-pass' || target.id === 'auth-pass-confirm') {
             const isSignup = state.authMode === 'signup';
             if (isSignup) signUpStudent(); else loginStudent();
         }
