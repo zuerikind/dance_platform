@@ -79,6 +79,20 @@ GRANT EXECUTE ON FUNCTION public.get_school_classes(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_school_subscriptions(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_school_subscriptions(uuid) TO authenticated;
 
+-- Admins: list students for a school (RLS blocks direct select for legacy admins).
+CREATE OR REPLACE FUNCTION public.get_school_students(p_school_id uuid)
+RETURNS SETOF public.students
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM public.students WHERE school_id = p_school_id ORDER BY name;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_school_students(uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_school_students(uuid) TO authenticated;
+
 -- Student creates a payment request (RLS only allows admins to insert; this runs as definer).
 CREATE OR REPLACE FUNCTION public.create_payment_request(
   p_student_id text,

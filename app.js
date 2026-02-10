@@ -734,6 +734,10 @@ async function fetchAllData() {
                     saveState();
                 }
             }
+        } else if (state.isAdmin && supabaseClient) {
+            // Legacy admin: RLS may return empty; fetch students via RPC
+            const { data: rpcStudents } = await supabaseClient.rpc('get_school_students', { p_school_id: sid });
+            if (rpcStudents && Array.isArray(rpcStudents)) state.students = rpcStudents;
         } else if (isStudent && state.currentUser) {
             // Legacy login: RLS may block student row; keep currentUser as single "student" in state
             state.students = [{ ...state.currentUser }];
