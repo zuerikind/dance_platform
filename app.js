@@ -987,6 +987,18 @@ function renderView() {
                         `;
         }).join('')}
                 </div>
+
+                ${isDev && state.platformData.platform_admins && state.platformData.platform_admins.length > 0 ? `
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin: 2.5rem 0 1rem; padding: 0 0.2rem; opacity: 0.8;">Platform Admins (Dev Access)</div>
+                <div class="ios-list" style="margin-bottom: 2rem;">
+                    ${state.platformData.platform_admins.map(pa => `
+                        <div class="ios-list-item" style="padding: 14px 16px; border-bottom: 1px solid var(--border);">
+                            <div style="font-weight: 800; font-size: 15px;">${pa.username || pa.id}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;"><i data-lucide="key" size="10" style="vertical-align: middle;"></i> ${t.password_label}: <span style="font-family: monospace;">${pa.password || '—'}</span></div>
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
             </div>
         `;
     } else if (view === 'platform-add-school') {
@@ -1109,8 +1121,7 @@ function renderView() {
                                     <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: var(--system-blue); border: 1px solid rgba(0,0,0,0.05);">${a.username.charAt(0).toUpperCase()}</div>
                                     <div style="flex: 1;">
                                         <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${a.username}</div>
-                                        <!-- Passwords are never displayed for security reasons -->
-                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.6; margin-top: 2px;"><i data-lucide="key" size="10" style="vertical-align: middle; margin-right: 4px;"></i>${t.password_label}: <span style="font-family: monospace; font-weight: 600;">••••</span></div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.6; margin-top: 2px;"><i data-lucide="key" size="10" style="vertical-align: middle; margin-right: 4px;"></i>${t.password_label}: <span style="font-family: monospace; font-weight: 600;">${a.password || '—'}</span></div>
                                     </div>
                                     <i data-lucide="chevron-right" size="16" style="opacity: 0.2;"></i>
                                 </div>
@@ -1125,10 +1136,11 @@ function renderView() {
                     </div>
                     <div class="ios-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 2.5rem;">
                         ${students.length > 0 ? students.map(s => `
-                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
-                                <div style="flex: 1;">
+                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;">
+                                <div style="flex: 1; min-width: 0;">
                                     <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${s.name}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7;">${s.phone || 'S/T'}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7;">${s.phone || '—'} ${s.email ? ' • ' + s.email : ''}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6; margin-top: 4px;"><i data-lucide="key" size="10" style="vertical-align: middle;"></i> ${t.password_label}: <span style="font-family: monospace;">${s.password || '—'}</span></div>
                                 </div>
                                 <div style="text-align: right; background: var(--system-gray6); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.02);">
                                     <div style="font-weight: 900; color: var(--system-blue); font-size: 18px; letter-spacing: -0.5px;">${s.balance === null ? '∞' : s.balance}</div>
@@ -1166,6 +1178,30 @@ function renderView() {
                             </div>
                         `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_classes}</div>`}
                     </div>
+
+                    ${state.platformData.payment_requests && state.platformData.payment_requests.length > 0 ? (() => { const prs = state.platformData.payment_requests.filter(pr => pr.school_id === schoolId); return prs.length > 0 ? `
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">Payment requests</div>
+                    <div class="ios-list" style="margin-bottom: 2.5rem;">
+                        ${prs.map(pr => `
+                            <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border);">
+                                <div style="font-size: 14px; font-weight: 700;">${pr.sub_name || '—'} • $${pr.price} • ${pr.status || '—'}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${pr.payment_method || '—'} • ${pr.created_at ? new Date(pr.created_at).toLocaleDateString() : '—'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''; })() : ''}
+
+                    ${state.platformData.admin_settings && state.platformData.admin_settings.length > 0 ? (() => { const sets = state.platformData.admin_settings.filter(as => as.school_id === schoolId); return sets.length > 0 ? `
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">Admin settings (bank, etc.)</div>
+                    <div class="ios-list" style="margin-bottom: 4rem;">
+                        ${sets.map(as => `
+                            <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border);">
+                                <div style="font-size: 12px; font-weight: 800; color: var(--system-blue);">${as.key || '—'}</div>
+                                <div style="font-size: 13px; font-family: monospace;">${(as.value != null && as.value !== '') ? String(as.value) : '—'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''; })() : ''}
                 </div>
             `;
         }
@@ -2280,8 +2316,27 @@ async function fetchPlatformData() {
             students: students.data || [],
             admins: admins.data || [],
             classes: classes.data || [],
-            subscriptions: subs.data || []
+            subscriptions: subs.data || [],
+            payment_requests: [],
+            admin_settings: [],
+            platform_admins: []
         };
+
+        if (state.isPlatformDev) {
+            const { data: rpcData } = await supabaseClient.rpc('get_platform_all_data');
+            if (rpcData && typeof rpcData === 'object') {
+                state.platformData = {
+                    schools: Array.isArray(rpcData.schools) ? rpcData.schools : (state.platformData.schools || []),
+                    students: Array.isArray(rpcData.students) ? rpcData.students : (state.platformData.students || []),
+                    admins: Array.isArray(rpcData.admins) ? rpcData.admins : (state.platformData.admins || []),
+                    classes: Array.isArray(rpcData.classes) ? rpcData.classes : (state.platformData.classes || []),
+                    subscriptions: Array.isArray(rpcData.subscriptions) ? rpcData.subscriptions : (state.platformData.subscriptions || []),
+                    payment_requests: Array.isArray(rpcData.payment_requests) ? rpcData.payment_requests : [],
+                    admin_settings: Array.isArray(rpcData.admin_settings) ? rpcData.admin_settings : [],
+                    platform_admins: Array.isArray(rpcData.platform_admins) ? rpcData.platform_admins : []
+                };
+            }
+        }
 
         state.loading = false;
         renderView();

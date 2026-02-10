@@ -240,3 +240,26 @@ GRANT EXECUTE ON FUNCTION public.update_payment_request_status(bigint, text) TO 
 GRANT EXECUTE ON FUNCTION public.update_payment_request_status(bigint, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_payment_request(bigint) TO anon;
 GRANT EXECUTE ON FUNCTION public.delete_payment_request(bigint) TO authenticated;
+
+-- Dev dashboard: return all platform data (schools, students, admins, classes, subscriptions, payment_requests, admin_settings, platform_admins). SECURITY DEFINER bypasses RLS.
+CREATE OR REPLACE FUNCTION public.get_platform_all_data()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT jsonb_build_object(
+    'schools', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.schools ORDER BY name) t), '[]'::jsonb),
+    'students', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.students) t), '[]'::jsonb),
+    'admins', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.admins ORDER BY school_id, username) t), '[]'::jsonb),
+    'classes', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.classes ORDER BY school_id, id) t), '[]'::jsonb),
+    'subscriptions', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.subscriptions ORDER BY school_id, name) t), '[]'::jsonb),
+    'payment_requests', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.payment_requests ORDER BY created_at DESC) t), '[]'::jsonb),
+    'admin_settings', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.admin_settings) t), '[]'::jsonb),
+    'platform_admins', COALESCE((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT * FROM public.platform_admins ORDER BY username) t), '[]'::jsonb)
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_platform_all_data() TO anon;
+GRANT EXECUTE ON FUNCTION public.get_platform_all_data() TO authenticated;
