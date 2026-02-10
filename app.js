@@ -130,6 +130,8 @@ const DANCE_LOCALES = {
         loading: "Loading...",
         select_school_placeholder: "Choose your school...",
         loading_schools: "Loading schools...",
+        no_schools: "No schools found",
+        could_not_load_schools: "Could not load schools",
         connecting: "Connecting...",
         dev_access_title: "Dev Access",
         dev_access_subtitle: "Enter platform developer credentials",
@@ -328,6 +330,8 @@ const DANCE_LOCALES = {
         loading: "Cargando...",
         select_school_placeholder: "Elige tu escuela...",
         loading_schools: "Cargando academias...",
+        no_schools: "No hay academias",
+        could_not_load_schools: "No se pudieron cargar las academias",
         connecting: "Iniciando conexión...",
         dev_access_title: "Acceso Dev",
         dev_access_subtitle: "Ingresa credenciales de desarrollador",
@@ -527,6 +531,8 @@ const DANCE_LOCALES = {
         loading: "Lädt...",
         select_school_placeholder: "Wähle deine Schule...",
         loading_schools: "Schulen werden geladen...",
+        no_schools: "Keine Schulen gefunden",
+        could_not_load_schools: "Schulen konnten nicht geladen werden",
         connecting: "Verbindung wird hergestellt...",
         dev_access_title: "Entwickler-Zugang",
         dev_access_subtitle: "Entwickler-Anmeldedaten eingeben",
@@ -630,19 +636,24 @@ let state = {
 
 // --- DATA FETCHING ---
 async function fetchAllData() {
-    if (!window.supabase) return;
+    if (!window.supabase || !supabaseClient) {
+        state.loading = false;
+        state.schools = [];
+        renderView();
+        return;
+    }
     state.loading = true;
     renderView(); // Show loading state if needed
 
     try {
-        // First, always fetch schools
-        const { data: schoolsData } = await supabaseClient.from('schools').select('*').order('name');
-        if (schoolsData) {
-            state.schools = schoolsData;
-            // If we are on the selection screen, re-render to show schools immediately
-            if (state.currentView === 'school-selection') {
-                renderView();
-            }
+        // First, always fetch schools (anon can read via RLS "schools_select_all")
+        const { data: schoolsData, error: schoolsError } = await supabaseClient.from('schools').select('*').order('name');
+        if (schoolsError) {
+            console.error('Schools fetch error:', schoolsError);
+        }
+        state.schools = schoolsData ?? [];
+        if (state.currentView === 'school-selection') {
+            renderView();
         }
 
         // If no school is selected, we can't fetch tenant-specific data
@@ -814,7 +825,7 @@ function renderView() {
                 <div class="custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
                     <!-- Custom Dropdown Trigger -->
                     <div id="school-dropdown-trigger" class="custom-dropdown-trigger" onclick="toggleSchoolDropdown()" style="width: 100%; box-sizing: border-box;">
-                        <span>${state.schools.length > 0 ? t.select_school_placeholder : t.loading_schools}</span>
+                        <span>${state.loading ? t.loading_schools : (state.schools.length > 0 ? t.select_school_placeholder : t.no_schools)}</span>
                         <i data-lucide="chevron-down" size="18"></i>
                     </div>
 
@@ -825,7 +836,7 @@ function renderView() {
                                 <span>${s.name}</span>
                                 ${state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : ''}
                             </div>
-                        `).join('') : `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${t.connecting}</div>`}
+                        `).join('') : `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${state.loading ? t.connecting : t.could_not_load_schools}</div>`}
                     </div>
                 </div>
             </div>
