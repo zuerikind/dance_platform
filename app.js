@@ -2387,7 +2387,7 @@ function renderView() {
                             <span style="font-size: 15px; color: var(--text-secondary);">${c.starts_at ? new Date(c.starts_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</span>
                         </div>
                     `).join('')}
-                    <button type="button" onclick="openCreateNewCompetition()" style="width: 100%; padding: 18px 20px; border: none; background: transparent; color: var(--system-blue); font-size: 17px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s;">
+                    <button type="button" data-action="openCreateNewCompetition" style="width: 100%; padding: 18px 20px; border: none; background: transparent; color: var(--system-blue); font-size: 17px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s;">
                         <i data-lucide="plus-circle" size="20"></i> ${t.competition_create_new}
                     </button>
                 </div>
@@ -4427,6 +4427,15 @@ logoEl.addEventListener('click', () => {
         if (parseHashRoute()) {
             saveState();
             renderView();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="openCreateNewCompetition"]');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof window.openCreateNewCompetition === 'function') window.openCreateNewCompetition();
         }
     });
 
