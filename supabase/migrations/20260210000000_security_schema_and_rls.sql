@@ -75,6 +75,17 @@ AS $$
   SELECT EXISTS (SELECT 1 FROM public.platform_admins WHERE user_id = auth.uid());
 $$;
 
+-- Check if current user is an admin of the given school (avoids RLS recursion on admins).
+CREATE OR REPLACE FUNCTION public.is_school_admin(p_school_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.admins WHERE school_id = p_school_id AND user_id = auth.uid());
+$$;
+
 
 -- -----------------------------------------------------------------------------
 -- 4) SCHOOLS
@@ -108,7 +119,7 @@ DROP POLICY IF EXISTS "students_select" ON public.students;
 CREATE POLICY "students_select" ON public.students
   FOR SELECT USING (
     (user_id IS NOT NULL AND user_id = auth.uid())
-    OR (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = students.school_id AND a.user_id = auth.uid()))
+    OR public.is_school_admin(students.school_id)
     OR public.is_platform_admin()
   );
 
@@ -117,7 +128,7 @@ DROP POLICY IF EXISTS "students_insert" ON public.students;
 CREATE POLICY "students_insert" ON public.students
   FOR INSERT WITH CHECK (
     (user_id IS NOT NULL AND user_id = auth.uid())
-    OR (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = students.school_id AND a.user_id = auth.uid()))
+    OR public.is_school_admin(students.school_id)
     OR public.is_platform_admin()
   );
 
@@ -126,7 +137,7 @@ DROP POLICY IF EXISTS "students_update" ON public.students;
 CREATE POLICY "students_update" ON public.students
   FOR UPDATE USING (
     (user_id IS NOT NULL AND user_id = auth.uid())
-    OR (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = students.school_id AND a.user_id = auth.uid()))
+    OR public.is_school_admin(students.school_id)
     OR public.is_platform_admin()
   );
 
@@ -134,7 +145,7 @@ CREATE POLICY "students_update" ON public.students
 DROP POLICY IF EXISTS "students_delete" ON public.students;
 CREATE POLICY "students_delete" ON public.students
   FOR DELETE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = students.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(students.school_id)
     OR public.is_platform_admin()
   );
 
@@ -148,7 +159,7 @@ DROP POLICY IF EXISTS "admins_select" ON public.admins;
 CREATE POLICY "admins_select" ON public.admins
   FOR SELECT USING (
     (user_id = auth.uid())
-    OR (EXISTS (SELECT 1 FROM public.admins a2 WHERE a2.school_id = admins.school_id AND a2.user_id = auth.uid()))
+    OR public.is_school_admin(admins.school_id)
     OR public.is_platform_admin()
   );
 
@@ -161,14 +172,14 @@ CREATE POLICY "admins_insert" ON public.admins
 DROP POLICY IF EXISTS "admins_update" ON public.admins;
 CREATE POLICY "admins_update" ON public.admins
   FOR UPDATE USING (
-    (EXISTS (SELECT 1 FROM public.admins a2 WHERE a2.school_id = admins.school_id AND a2.user_id = auth.uid()))
+    public.is_school_admin(admins.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "admins_delete" ON public.admins;
 CREATE POLICY "admins_delete" ON public.admins
   FOR DELETE USING (
-    (EXISTS (SELECT 1 FROM public.admins a2 WHERE a2.school_id = admins.school_id AND a2.user_id = auth.uid()))
+    public.is_school_admin(admins.school_id)
     OR public.is_platform_admin()
   );
 
@@ -182,7 +193,7 @@ CREATE POLICY "admins_delete" ON public.admins
 DROP POLICY IF EXISTS "classes_select" ON public.classes;
 CREATE POLICY "classes_select" ON public.classes
   FOR SELECT USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = classes.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(classes.school_id)
     OR (EXISTS (SELECT 1 FROM public.students s WHERE s.school_id = classes.school_id AND s.user_id = auth.uid()))
     OR public.is_platform_admin()
   );
@@ -190,21 +201,21 @@ CREATE POLICY "classes_select" ON public.classes
 DROP POLICY IF EXISTS "classes_insert" ON public.classes;
 CREATE POLICY "classes_insert" ON public.classes
   FOR INSERT WITH CHECK (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = classes.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(classes.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "classes_update" ON public.classes;
 CREATE POLICY "classes_update" ON public.classes
   FOR UPDATE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = classes.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(classes.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "classes_delete" ON public.classes;
 CREATE POLICY "classes_delete" ON public.classes
   FOR DELETE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = classes.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(classes.school_id)
     OR public.is_platform_admin()
   );
 
@@ -212,7 +223,7 @@ CREATE POLICY "classes_delete" ON public.classes
 DROP POLICY IF EXISTS "subscriptions_select" ON public.subscriptions;
 CREATE POLICY "subscriptions_select" ON public.subscriptions
   FOR SELECT USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = subscriptions.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(subscriptions.school_id)
     OR (EXISTS (SELECT 1 FROM public.students s WHERE s.school_id = subscriptions.school_id AND s.user_id = auth.uid()))
     OR public.is_platform_admin()
   );
@@ -220,21 +231,21 @@ CREATE POLICY "subscriptions_select" ON public.subscriptions
 DROP POLICY IF EXISTS "subscriptions_insert" ON public.subscriptions;
 CREATE POLICY "subscriptions_insert" ON public.subscriptions
   FOR INSERT WITH CHECK (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = subscriptions.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(subscriptions.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "subscriptions_update" ON public.subscriptions;
 CREATE POLICY "subscriptions_update" ON public.subscriptions
   FOR UPDATE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = subscriptions.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(subscriptions.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "subscriptions_delete" ON public.subscriptions;
 CREATE POLICY "subscriptions_delete" ON public.subscriptions
   FOR DELETE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = subscriptions.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(subscriptions.school_id)
     OR public.is_platform_admin()
   );
 
@@ -242,28 +253,28 @@ CREATE POLICY "subscriptions_delete" ON public.subscriptions
 DROP POLICY IF EXISTS "payment_requests_select" ON public.payment_requests;
 CREATE POLICY "payment_requests_select" ON public.payment_requests
   FOR SELECT USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payment_requests.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(payment_requests.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "payment_requests_insert" ON public.payment_requests;
 CREATE POLICY "payment_requests_insert" ON public.payment_requests
   FOR INSERT WITH CHECK (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payment_requests.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(payment_requests.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "payment_requests_update" ON public.payment_requests;
 CREATE POLICY "payment_requests_update" ON public.payment_requests
   FOR UPDATE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payment_requests.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(payment_requests.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "payment_requests_delete" ON public.payment_requests;
 CREATE POLICY "payment_requests_delete" ON public.payment_requests
   FOR DELETE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payment_requests.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(payment_requests.school_id)
     OR public.is_platform_admin()
   );
 
@@ -271,28 +282,28 @@ CREATE POLICY "payment_requests_delete" ON public.payment_requests
 DROP POLICY IF EXISTS "admin_settings_select" ON public.admin_settings;
 CREATE POLICY "admin_settings_select" ON public.admin_settings
   FOR SELECT USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = admin_settings.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(admin_settings.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "admin_settings_insert" ON public.admin_settings;
 CREATE POLICY "admin_settings_insert" ON public.admin_settings
   FOR INSERT WITH CHECK (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = admin_settings.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(admin_settings.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "admin_settings_update" ON public.admin_settings;
 CREATE POLICY "admin_settings_update" ON public.admin_settings
   FOR UPDATE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = admin_settings.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(admin_settings.school_id)
     OR public.is_platform_admin()
   );
 
 DROP POLICY IF EXISTS "admin_settings_delete" ON public.admin_settings;
 CREATE POLICY "admin_settings_delete" ON public.admin_settings
   FOR DELETE USING (
-    (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = admin_settings.school_id AND a.user_id = auth.uid()))
+    public.is_school_admin(admin_settings.school_id)
     OR public.is_platform_admin()
   );
 
@@ -303,25 +314,25 @@ BEGIN
     DROP POLICY IF EXISTS "payments_select" ON public.payments;
     CREATE POLICY "payments_select" ON public.payments
       FOR SELECT USING (
-        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        public.is_school_admin(payments.school_id)
         OR public.is_platform_admin()
       );
     DROP POLICY IF EXISTS "payments_insert" ON public.payments;
     CREATE POLICY "payments_insert" ON public.payments
       FOR INSERT WITH CHECK (
-        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        public.is_school_admin(payments.school_id)
         OR public.is_platform_admin()
       );
     DROP POLICY IF EXISTS "payments_update" ON public.payments;
     CREATE POLICY "payments_update" ON public.payments
       FOR UPDATE USING (
-        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        public.is_school_admin(payments.school_id)
         OR public.is_platform_admin()
       );
     DROP POLICY IF EXISTS "payments_delete" ON public.payments;
     CREATE POLICY "payments_delete" ON public.payments
       FOR DELETE USING (
-        (EXISTS (SELECT 1 FROM public.admins a WHERE a.school_id = payments.school_id AND a.user_id = auth.uid()))
+        public.is_school_admin(payments.school_id)
         OR public.is_platform_admin()
       );
   END IF;

@@ -2553,10 +2553,14 @@ window.removePaymentRequest = async (id) => {
     });
     if (confirm(t('delete_payment_confirm'))) {
         if (supabaseClient) {
-            const { error: tableError } = await supabaseClient.from('payment_requests').delete().eq('id', id);
-            if (tableError) {
-                const { error: rpcError } = await supabaseClient.rpc('delete_payment_request', { p_request_id: id });
-                if (rpcError) { alert("Error deleting: " + rpcError.message); return; }
+            // Prefer RPC so delete works for school admins when RLS would block direct delete (0 rows, no error).
+            const { error: rpcError } = await supabaseClient.rpc('delete_payment_request', { p_request_id: id });
+            if (rpcError) {
+                const { error: tableError } = await supabaseClient.from('payment_requests').delete().eq('id', id);
+                if (tableError) {
+                    alert("Error deleting: " + (tableError.message || rpcError.message));
+                    return;
+                }
             }
         }
         state.paymentRequests = state.paymentRequests.filter(r => r.id !== id);
