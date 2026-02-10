@@ -186,6 +186,7 @@ const DANCE_LOCALES = {
         search_students: "Search members...",
         loading_students_msg: "Loading members...",
         no_pending_msg: "No pending payments",
+        refresh_btn: "Refresh",
         historical_total_label: "Historical",
         no_data_msg: "No data yet",
         mgmt_classes_title: "Class Management",
@@ -395,6 +396,7 @@ const DANCE_LOCALES = {
         search_students: "Buscar alumnos...",
         loading_students_msg: "Cargando alumnos...",
         no_pending_msg: "Sin pagos pendientes",
+        refresh_btn: "Actualizar",
         historical_total_label: "Histórico",
         no_data_msg: "No hay datos",
         mgmt_classes_title: "Gestión de Clases",
@@ -605,6 +607,7 @@ const DANCE_LOCALES = {
         search_students: "Schüler suchen...",
         loading_students_msg: "Schüler werden geladen...",
         no_pending_msg: "Keine ausstehenden Zahlungen",
+        refresh_btn: "Aktualisieren",
         historical_total_label: "Gesamtverlauf",
         no_data_msg: "Noch keine Daten",
         mgmt_classes_title: "Kursverwaltung",
@@ -663,6 +666,10 @@ let state = {
 };
 
 // --- DATA FETCHING ---
+const FETCH_THROTTLE_MS = 1500;
+let _lastFetchEndTime = 0;
+let _fetchScheduledTimer = null;
+
 async function fetchAllData() {
     if (!window.supabase || !supabaseClient) {
         state.loading = false;
@@ -670,8 +677,21 @@ async function fetchAllData() {
         renderView();
         return;
     }
+    if (state.loading) {
+        window._fetchAllDataNeeded = true;
+        return;
+    }
+    const now = Date.now();
+    if (now - _lastFetchEndTime < FETCH_THROTTLE_MS && _lastFetchEndTime > 0) {
+        if (_fetchScheduledTimer) clearTimeout(_fetchScheduledTimer);
+        _fetchScheduledTimer = setTimeout(() => {
+            _fetchScheduledTimer = null;
+            fetchAllData();
+        }, FETCH_THROTTLE_MS - (now - _lastFetchEndTime));
+        return;
+    }
     state.loading = true;
-    renderView(); // Show loading state if needed
+    renderView();
 
     try {
         // First, always fetch schools (anon can read via RLS "schools_select_all")
@@ -835,11 +855,21 @@ async function fetchAllData() {
         await window.checkExpirations();
 
         state.loading = false;
+        _lastFetchEndTime = Date.now();
         renderView();
+        if (window._fetchAllDataNeeded) {
+            window._fetchAllDataNeeded = false;
+            setTimeout(() => fetchAllData(), 100);
+        }
     } catch (err) {
         state.loading = false;
+        _lastFetchEndTime = Date.now();
         console.error("Error fetching data:", err);
         renderView();
+        if (window._fetchAllDataNeeded) {
+            window._fetchAllDataNeeded = false;
+            setTimeout(() => fetchAllData(), 100);
+        }
     }
 }
 
@@ -1105,7 +1135,16 @@ function renderView() {
         } else {
             const students = state.platformData.students.filter(s => s.school_id === schoolId);
             const admins = state.platformData.admins.filter(a => a.school_id === schoolId);
-            const classes = state.platformData.classes.filter(c => c.school_id === schoolId);
+            const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const classes = state.platformData.classes
+                .filter(c => c.school_id === schoolId)
+                .sort((a, b) => {
+                    const ia = daysOrder.indexOf(a.day);
+                    const ib = daysOrder.indexOf(b.day);
+                    const dayDiff = (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                    if (dayDiff !== 0) return dayDiff;
+                    return (a.time || '').localeCompare(b.time || '');
+                });
             const subs = state.platformData.subscriptions.filter(s => s.school_id === schoolId);
 
             html += `
@@ -1533,8 +1572,11 @@ function renderView() {
                 <div class="ios-large-title">${t.nav_memberships}</div>
             </div>
             
-            <div style="padding: 0 1.2rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.pending_payments}
+            <div style="padding: 0 1.2rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.pending_payments}</span>
+                <button type="button" onclick="fetchAllData()" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px;" title="${t.refresh_btn}">
+                    <i data-lucide="refresh-cw" size="14"></i> ${t.refresh_btn}
+                </button>
             </div>
             <div class="ios-list">
                 ${pending.length > 0 ? pending.map(req => {
@@ -1659,7 +1701,11 @@ function renderView() {
     `;
     } else if (view === 'admin-settings') {
         const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const classesList = Array.isArray(state.classes) ? state.classes : [];
+        const classesList = [...(Array.isArray(state.classes) ? state.classes : [])].sort((a, b) => {
+            const dayDiff = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
+            if (dayDiff !== 0) return dayDiff;
+            return (a.time || '').localeCompare(b.time || '');
+        });
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
             if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
