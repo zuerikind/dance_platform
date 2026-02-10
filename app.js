@@ -768,7 +768,12 @@ async function fetchAllData() {
             const { data: settingsJson } = await supabaseClient.rpc('get_school_admin_settings', { p_school_id: sid });
             if (settingsJson && typeof settingsJson === 'object') state.adminSettings = settingsJson;
         }
-        if (adminsRes.data) state.admins = adminsRes.data;
+        if (adminsRes.data && adminsRes.data.length > 0) {
+            state.admins = adminsRes.data;
+        } else if (state.isAdmin && supabaseClient) {
+            const { data: rpcAdmins } = await supabaseClient.rpc('get_school_admins', { p_school_id: sid });
+            if (rpcAdmins && Array.isArray(rpcAdmins)) state.admins = rpcAdmins;
+        }
 
         // --- NEW: Check for expired memberships ---
         await window.checkExpirations();
@@ -1713,7 +1718,7 @@ function renderView() {
                 ${t.mgmt_admins_title}
             </div>
             <div class="ios-list">
-                ${state.admins.map(adm => `
+                ${(Array.isArray(state.admins) ? state.admins : []).map(adm => `
                     <div class="ios-list-item" style="padding: 12px 16px; align-items: center;">
                         <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${adm.username}</span>
                         <button onclick="window.removeAdmin('${adm.id}')" style="background: none; border: none; color: var(--text-secondary); padding: 8px; opacity: 0.4; margin-left: auto; cursor: pointer;">
