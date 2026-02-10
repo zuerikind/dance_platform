@@ -727,13 +727,22 @@ async function fetchAllData() {
             // Legacy login: RLS may block student row; keep currentUser as single "student" in state
             state.students = [{ ...state.currentUser }];
         }
-        if (requestsRes.data) state.paymentRequests = requestsRes.data;
-        if (settingsRes.data) {
+        if (requestsRes.data && requestsRes.data.length > 0) {
+            state.paymentRequests = requestsRes.data;
+        } else if (state.isAdmin && supabaseClient) {
+            // Legacy admin: RLS blocks table read; fetch via RPC
+            const { data: reqsRpc } = await supabaseClient.rpc('get_school_payment_requests', { p_school_id: sid });
+            if (reqsRpc && Array.isArray(reqsRpc)) state.paymentRequests = reqsRpc;
+        }
+        if (settingsRes.data && settingsRes.data.length > 0) {
             const settingsObj = {};
             settingsRes.data.forEach(item => {
                 settingsObj[item.key] = item.value;
             });
             state.adminSettings = settingsObj;
+        } else if (state.isAdmin && supabaseClient) {
+            const { data: settingsJson } = await supabaseClient.rpc('get_school_admin_settings', { p_school_id: sid });
+            if (settingsJson && typeof settingsJson === 'object') state.adminSettings = settingsJson;
         }
         if (adminsRes.data) state.admins = adminsRes.data;
 
@@ -1384,7 +1393,7 @@ function renderView() {
             </div>
             <div class="ios-list">
                 ${pending.length > 0 ? pending.map(req => {
-            const studentName = req.students ? req.students.name : t.unknown_student;
+            const studentName = (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
             return `
                         <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
                             <div style="display: flex; gap: 12px; align-items: center;">
@@ -1459,7 +1468,7 @@ function renderView() {
                         <p style="font-size: 15px; font-weight: 500;">${t.loading || 'Loading...'}</p>
                     </div>
                 ` : (state.paymentRequests.length > 0 ? state.paymentRequests.map(req => {
-            const studentName = req.students ? req.students.name : t.unknown_student;
+            const studentName = (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
             const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
             const statusLabel = t[req.status] || req.status;
             return `
@@ -2431,7 +2440,7 @@ window.activatePackage = async (studentId, packageName) => {
     }
 };
 
-window.openPaymentModal = (subId) => {
+window.openPaymentModal = async (subId) => {
     const sub = state.subscriptions.find(s => s.id === subId);
     if (!sub) return;
     const t = new Proxy(window.t, {
@@ -2440,15 +2449,29 @@ window.openPaymentModal = (subId) => {
     const modal = document.getElementById('payment-modal');
     const content = document.getElementById('payment-modal-content');
 
+    // Load bank details on demand if missing (e.g. student or RPC not run yet)
+    const needsBank = !state.adminSettings || (!state.adminSettings.bank_name && !state.adminSettings.bank_cbu);
+    if (needsBank && supabaseClient && state.currentSchool) {
+        content.innerHTML = `<p class="text-muted">${t('loading')}</p>`;
+        modal.classList.remove('hidden');
+        const { data: settingsJson } = await supabaseClient.rpc('get_school_admin_settings', { p_school_id: state.currentSchool.id });
+        if (settingsJson && typeof settingsJson === 'object') state.adminSettings = settingsJson;
+    }
+
+    const bankName = state.adminSettings?.bank_name || 'Bank';
+    const bankCbu = state.adminSettings?.bank_cbu || 'N/A';
+    const bankAlias = state.adminSettings?.bank_alias || 'N/A';
+    const bankHolder = state.adminSettings?.bank_holder || 'N/A';
+
     content.innerHTML = `
         <h2 style="margin-bottom: 1.5rem;">${t('payment_instructions')}</h2>
         <div class="card" style="margin-bottom: 1.5rem; text-align: left;">
             <p><strong>${sub.name}</strong> - MXD ${sub.price}</p>
             <hr style="margin: 1rem 0; opacity: 0.1;">
-            <p style="font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>${state.adminSettings.bank_name || 'Bank'}</strong></p>
-            <p style="font-size: 0.8rem;">CBU: ${state.adminSettings.bank_cbu || 'N/A'}</p>
-            <p style="font-size: 0.8rem;">Alias: ${state.adminSettings.bank_alias || 'N/A'}</p>
-            <p style="font-size: 0.8rem;">${t('holder_name_label')}: ${state.adminSettings.bank_holder || 'N/A'}</p>
+            <p style="font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>${bankName}</strong></p>
+            <p style="font-size: 0.8rem;">CBU: ${bankCbu}</p>
+            <p style="font-size: 0.8rem;">Alias: ${bankAlias}</p>
+            <p style="font-size: 0.8rem;">${t('holder_name_label')}: ${bankHolder}</p>
         </div>
         <div style="display:flex; flex-direction:column; gap:0.8rem;">
             <button class="btn-primary w-full" onclick="submitPaymentRequest('${sub.id}', 'transfer')">${t('i_have_paid')} (${t('transfer')})</button>
@@ -2478,7 +2501,15 @@ window.submitPaymentRequest = async (subId, method) => {
             p_payment_method: method,
             p_school_id: state.currentSchool.id
         });
-        if (error) { alert("Error sending request: " + error.message); return; }
+        if (error) {
+            const msg = error.message || '';
+            if (msg.includes('Could not find the function') || msg.includes('schema cache')) {
+                alert("Payment requests are not set up. Please run the Supabase SQL migration:\n\nsupabase/migrations/20260210100000_login_credentials_rpc.sql\n\nin your project's SQL Editor (Dashboard → SQL Editor → New query, paste file contents, Run).");
+            } else {
+                alert("Error sending request: " + msg);
+            }
+            return;
+        }
     }
 
     // Refresh local list
@@ -2500,8 +2531,13 @@ window.processPaymentRequest = async (id, status) => {
     if (!req) return;
 
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
-        if (error) { alert("Error processing: " + error.message); return; }
+        let err = null;
+        const { error: tableError } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
+        if (tableError) {
+            const { error: rpcError } = await supabaseClient.rpc('update_payment_request_status', { p_request_id: id, p_status: status });
+            err = rpcError;
+        }
+        if (err) { alert("Error processing: " + err.message); return; }
 
         if (status === 'approved') {
             await window.activatePackage(req.student_id, req.sub_name);
@@ -2517,8 +2553,11 @@ window.removePaymentRequest = async (id) => {
     });
     if (confirm(t('delete_payment_confirm'))) {
         if (supabaseClient) {
-            const { error } = await supabaseClient.from('payment_requests').delete().eq('id', id);
-            if (error) { alert("Error deleting: " + error.message); return; }
+            const { error: tableError } = await supabaseClient.from('payment_requests').delete().eq('id', id);
+            if (tableError) {
+                const { error: rpcError } = await supabaseClient.rpc('delete_payment_request', { p_request_id: id });
+                if (rpcError) { alert("Error deleting: " + rpcError.message); return; }
+            }
         }
         state.paymentRequests = state.paymentRequests.filter(r => r.id !== id);
         saveState();

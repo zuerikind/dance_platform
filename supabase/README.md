@@ -9,15 +9,15 @@
 
 Then follow the **POST-MIGRATION STEPS** at the bottom of that SQL file (create Auth users for admins, add platform devs to `platform_admins`, etc.).
 
-### Login fallback (existing students/admins)
+### RPC migration (required for students + legacy admins)
 
-So existing rows in `students` and `admins` (with name/username + password, no Auth user) can log in:
+Run this so the app works for **students** (schedule, shop, buy pack, bank details) and **legacy admins** (payment requests, bank settings):
 
 1. In SQL Editor, open **New query**.
-2. Paste the contents of `supabase/migrations/20260210100000_login_credentials_rpc.sql`.
+2. Paste the **full** contents of `supabase/migrations/20260210100000_login_credentials_rpc.sql`.
 3. Run the query.
 
-This adds `get_student_by_credentials` and `get_admin_by_credentials`; the app uses them when Supabase Auth login fails.
+This adds: login credential checks, `get_school_classes`, `get_school_subscriptions`, `get_school_admin_settings`, `create_payment_request`, `get_school_payment_requests`, `update_payment_request_status`, `delete_payment_request`. If you see "Could not find the function" in the app, this migration was not run or needs to be re-run.
 
 ## What the migration does
 

@@ -119,3 +119,48 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_school_admin_settings(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_school_admin_settings(uuid) TO authenticated;
+
+-- Payment requests for a school (legacy admins cannot read via RLS; this runs as definer).
+CREATE OR REPLACE FUNCTION public.get_school_payment_requests(p_school_id uuid)
+RETURNS SETOF public.payment_requests
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM public.payment_requests
+  WHERE school_id = p_school_id
+  ORDER BY created_at DESC;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_school_payment_requests(uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_school_payment_requests(uuid) TO authenticated;
+
+-- Legacy admin: update/delete payment_requests (RLS requires auth.uid()).
+-- id may be int4 (serial) or int8; use bigint to accept both.
+CREATE OR REPLACE FUNCTION public.update_payment_request_status(p_request_id bigint, p_status text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.payment_requests SET status = p_status WHERE id = p_request_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.delete_payment_request(p_request_id bigint)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM public.payment_requests WHERE id = p_request_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_payment_request_status(bigint, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.update_payment_request_status(bigint, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_payment_request(bigint) TO anon;
+GRANT EXECUTE ON FUNCTION public.delete_payment_request(bigint) TO authenticated;
