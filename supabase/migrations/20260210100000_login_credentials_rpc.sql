@@ -569,7 +569,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.class_delete_for_school(bigint) TO anon;
 GRANT EXECUTE ON FUNCTION public.class_delete_for_school(bigint) TO authenticated;
 
--- Subscriptions (plans): insert, update single field, delete
+-- Subscriptions (plans): insert, update single field, delete (SECURITY DEFINER for legacy admins)
 CREATE OR REPLACE FUNCTION public.subscription_insert_for_school(
   p_school_id uuid,
   p_name text DEFAULT 'New Plan',
@@ -584,11 +584,21 @@ SET search_path = public
 AS $$
 DECLARE
   v_row public.subscriptions%ROWTYPE;
+  v_id text;
 BEGIN
-  INSERT INTO public.subscriptions (school_id, name, price, limit_count, validity_days)
-  VALUES (p_school_id, coalesce(nullif(trim(p_name), ''), 'New Plan'), coalesce(p_price, 0),
-          coalesce(p_limit_count, 10), coalesce(p_validity_days, 30))
-  RETURNING * INTO v_row;
+  v_id := 'S' || floor(extract(epoch from now()) * 1000)::bigint::text;
+  BEGIN
+    INSERT INTO public.subscriptions (id, school_id, name, price, limit_count, validity_days)
+    VALUES (v_id, p_school_id, coalesce(nullif(trim(p_name), ''), 'New Plan'), coalesce(p_price, 0),
+            coalesce(p_limit_count, 10), coalesce(p_validity_days, 30))
+    RETURNING * INTO v_row;
+  EXCEPTION
+    WHEN undefined_column THEN
+      INSERT INTO public.subscriptions (school_id, name, price, limit_count, validity_days)
+      VALUES (p_school_id, coalesce(nullif(trim(p_name), ''), 'New Plan'), coalesce(p_price, 0),
+              coalesce(p_limit_count, 10), coalesce(p_validity_days, 30))
+      RETURNING * INTO v_row;
+  END;
   RETURN to_jsonb(v_row);
 END;
 $$;

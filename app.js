@@ -2998,15 +2998,18 @@ window.addSubscription = async () => {
             p_limit_count: 10,
             p_validity_days: 30
         });
-        if (!rpcError && row) {
+        if (rpcError) {
+            const msg = (rpcError.message || '').toLowerCase();
+            const hint = (msg.includes('could not find') || msg.includes('function') || msg.includes('row-level security'))
+                ? '\n\nRun the Supabase migration (SQL Editor → paste supabase/migrations/20260210100000_login_credentials_rpc.sql and Run) so Add Plan works for admins.'
+                : '';
+            alert("Error adding plan: " + (rpcError.message || 'Unknown error') + hint);
+            return;
+        }
+        if (row) {
             const created = typeof row === 'object' && !Array.isArray(row) ? row : (Array.isArray(row) ? row[0] : null);
             if (created) state.subscriptions.push(created);
             else state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId });
-        } else {
-            const newSub = { id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId };
-            const { error } = await supabaseClient.from('subscriptions').insert([newSub]);
-            if (error) { alert("Error adding plan: " + error.message); return; }
-            state.subscriptions.push(newSub);
         }
     } else {
         state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId });
@@ -3019,8 +3022,12 @@ window.removeSubscription = async (id) => {
     if (supabaseClient) {
         const { error: rpcError } = await supabaseClient.rpc('subscription_delete_for_school', { p_sub_id: String(id) });
         if (rpcError) {
-            const { error } = await supabaseClient.from('subscriptions').delete().eq('id', id);
-            if (error) { alert("Error removing plan: " + error.message); return; }
+            const msg = (rpcError.message || '').toLowerCase();
+            const hint = (msg.includes('could not find') || msg.includes('function') || msg.includes('row-level security'))
+                ? '\n\nRun the Supabase migration (SQL Editor → paste supabase/migrations/20260210100000_login_credentials_rpc.sql and Run) so Remove Plan works for admins.'
+                : '';
+            alert("Error removing plan: " + (rpcError.message || 'Unknown error') + hint);
+            return;
         }
     }
     state.subscriptions = state.subscriptions.filter(s => s.id !== id);
