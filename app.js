@@ -951,6 +951,14 @@ async function fetchAllData() {
             state.currentCompetitionForStudent = null;
             state.studentCompetitionRegistration = null;
         }
+        if (state.isAdmin && sid && supabaseClient) {
+            try {
+                const { data: compList, error: compListErr } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: sid });
+                state.competitions = !compListErr && Array.isArray(compList) ? compList : [];
+            } catch (_) {
+                state.competitions = [];
+            }
+        }
 
         // --- NEW: Check for expired memberships ---
         await window.checkExpirations();
@@ -1209,6 +1217,18 @@ window.toggleCompetitionSignIn = async (id, checked) => {
     if (!supabaseClient) return;
     const { data } = await supabaseClient.rpc('competition_toggle_sign_in', { p_competition_id: id, p_is_sign_in_active: checked });
     if (data) state.currentCompetition = data; state.competitions = (state.competitions || []).map(c => c.id === id ? (data || c) : c);
+    renderView();
+};
+window.toggleCompetitionActiveFromStudents = async (id, checked) => {
+    if (!supabaseClient) return;
+    const { data } = await supabaseClient.rpc('competition_toggle_active', { p_competition_id: id, p_is_active: checked });
+    if (data) state.competitions = (state.competitions || []).map(c => c.id === id ? (data || c) : c);
+    renderView();
+};
+window.toggleCompetitionSignInFromStudents = async (id, checked) => {
+    if (!supabaseClient) return;
+    const { data } = await supabaseClient.rpc('competition_toggle_sign_in', { p_competition_id: id, p_is_sign_in_active: checked });
+    if (data) state.competitions = (state.competitions || []).map(c => c.id === id ? (data || c) : c);
     renderView();
 };
 
@@ -1937,16 +1957,31 @@ function renderView() {
             <div style="height: 80px;"></div>
         `;
     } else if (view === 'admin-students') {
+        const comps = Array.isArray(state.competitions) ? state.competitions : [];
+        const currentComp = comps.find(c => c.is_active) || comps.sort((a, b) => new Date(b.starts_at || 0) - new Date(a.starts_at || 0))[0] || null;
+        const hasActiveEvent = comps.some(c => c.is_active);
         html += `
             <div class="ios-header" style="background: transparent;">
                 <div class="ios-large-title">${t.nav_students}</div>
-                <div style="margin-top: -5px; margin-bottom: 2rem; display: flex; gap: 10px; flex-wrap: wrap;">
+                <div style="margin-top: -5px; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
                     <button class="btn-primary" onclick="createNewStudent()" style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px;">
                         <i data-lucide="plus" size="14"></i> ${t.add_student}
                     </button>
-                    <button class="btn-secondary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, 'registrations')" style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px;">
+                    <button class="btn-secondary" ${hasActiveEvent ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, \'registrations\')"' : 'disabled'} style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px; ${!hasActiveEvent ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
                         <i data-lucide="trophy" size="14"></i> ${t.jack_and_jill}
                     </button>
+                    ${currentComp ? `
+                    <div style="display: flex; align-items: center; gap: 12px; margin-left: 4px; padding: 6px 12px; background: var(--system-gray6); border-radius: 12px;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer;">
+                            <input type="checkbox" ${currentComp.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${currentComp.id}', this.checked)" style="width: 18px; height: 18px;">
+                            ${t.competition_activate_event}
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer;">
+                            <input type="checkbox" ${currentComp.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${currentComp.id}', this.checked)" style="width: 18px; height: 18px;">
+                            ${t.competition_activate_signin}
+                        </label>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
             <div style="position: sticky; top: 60px; z-index: 90; background: var(--bg-body); padding-bottom: 5px; opacity: 0.98; backdrop-filter: blur(10px);">
