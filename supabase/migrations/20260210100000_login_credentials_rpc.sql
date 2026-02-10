@@ -52,6 +52,24 @@ GRANT EXECUTE ON FUNCTION public.get_student_by_credentials(text, text, uuid) TO
 GRANT EXECUTE ON FUNCTION public.get_admin_by_credentials(text, text, uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_admin_by_credentials(text, text, uuid) TO authenticated;
 
+-- Student profile refresh: return one student by id and school (for legacy students whose direct select is RLS-blocked).
+CREATE OR REPLACE FUNCTION public.get_student_by_id(
+  p_student_id text,
+  p_school_id uuid
+)
+RETURNS SETOF public.students
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM public.students WHERE id::text = p_student_id AND school_id = p_school_id LIMIT 1;
+$$;
+
+COMMENT ON FUNCTION public.get_student_by_id(text, uuid) IS 'Return student row by id and school; used so legacy students can refresh balance/packs after approval.';
+GRANT EXECUTE ON FUNCTION public.get_student_by_id(text, uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_student_by_id(text, uuid) TO authenticated;
+
 -- Platform dev login: return platform_admin row if username + password match (legacy, no Auth user).
 CREATE OR REPLACE FUNCTION public.get_platform_admin_by_credentials(
   p_username text,
@@ -292,3 +310,76 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.apply_student_package(text, numeric, jsonb, timestamptz, text, boolean) TO anon;
 GRANT EXECUTE ON FUNCTION public.apply_student_package(text, numeric, jsonb, timestamptz, text, boolean) TO authenticated;
+
+-- One-shot: activate package for a student by name (used when admin approves). Does not depend on client state.
+CREATE OR REPLACE FUNCTION public.activate_package_for_student(
+  p_student_id text,
+  p_sub_name text,
+  p_school_id uuid
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_student public.students%ROWTYPE;
+  v_sub public.subscriptions%ROWTYPE;
+  v_incoming_limit int;
+  v_days int;
+  v_new_balance numeric;
+  v_active_packs jsonb;
+  v_new_pack jsonb;
+  v_expiry timestamptz;
+BEGIN
+  SELECT * INTO v_student FROM public.students WHERE id::text = p_student_id AND school_id = p_school_id LIMIT 1;
+  IF NOT FOUND THEN
+    RETURN;
+  END IF;
+
+  SELECT * INTO v_sub FROM public.subscriptions
+  WHERE school_id = p_school_id AND LOWER(TRIM(name)) = LOWER(TRIM(p_sub_name))
+  LIMIT 1;
+
+  IF FOUND THEN
+    v_incoming_limit := COALESCE((v_sub.limit_count)::int, 0);
+    v_days := COALESCE((v_sub.validity_days)::int, 30);
+  ELSE
+    v_incoming_limit := COALESCE((regexp_match(p_sub_name, '\d+'))[1]::int, 1);
+    v_days := 30;
+  END IF;
+
+  IF v_incoming_limit <= 0 THEN
+    RETURN;
+  END IF;
+
+  v_expiry := now() + (v_days || ' days')::interval;
+  v_active_packs := COALESCE(v_student.active_packs, '[]'::jsonb);
+  v_new_pack := jsonb_build_object(
+    'id', 'PACK-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 4)),
+    'name', COALESCE(v_sub.name, p_sub_name),
+    'count', v_incoming_limit,
+    'expires_at', v_expiry,
+    'created_at', now()
+  );
+  v_active_packs := v_active_packs || v_new_pack;
+
+  IF v_student.balance IS NULL THEN
+    v_new_balance := v_incoming_limit;
+  ELSE
+    v_new_balance := v_student.balance + v_incoming_limit;
+  END IF;
+
+  UPDATE public.students
+  SET
+    balance = v_new_balance,
+    active_packs = v_active_packs,
+    package_expires_at = v_expiry,
+    package = COALESCE(v_sub.name, p_sub_name),
+    paid = true
+  WHERE id::text = p_student_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.activate_package_for_student(text, text, uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.activate_package_for_student(text, text, uuid) TO authenticated;

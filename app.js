@@ -766,8 +766,20 @@ async function fetchAllData() {
             const { data: rpcStudents } = await supabaseClient.rpc('get_school_students', { p_school_id: sid });
             if (rpcStudents && Array.isArray(rpcStudents)) state.students = rpcStudents;
         } else if (isStudent && state.currentUser) {
-            // Legacy login: RLS may block student row; keep currentUser as single "student" in state
-            state.students = [{ ...state.currentUser }];
+            // Legacy login: RLS may block student row; refresh profile from DB so balance/packs stay in sync
+            const schoolId = state.currentUser.school_id || sid;
+            const { data: myRow } = await supabaseClient.rpc('get_student_by_id', {
+                p_student_id: state.currentUser.id,
+                p_school_id: schoolId
+            });
+            if (myRow && Array.isArray(myRow) && myRow.length > 0) {
+                const row = myRow[0];
+                state.students = [row];
+                state.currentUser = { ...row, role: 'student' };
+                saveState();
+            } else {
+                state.students = [{ ...state.currentUser }];
+            }
         }
         if (requestsRes.data && requestsRes.data.length > 0) {
             state.paymentRequests = requestsRes.data;
@@ -2725,8 +2737,15 @@ window.processPaymentRequest = async (id, status) => {
         saveState();
         renderView();
 
-        if (status === 'approved') {
-            await window.activatePackage(req.student_id, req.sub_name);
+        if (status === 'approved' && req.student_id && req.sub_name && req.school_id) {
+            const { error: activateError } = await supabaseClient.rpc('activate_package_for_student', {
+                p_student_id: String(req.student_id),
+                p_sub_name: String(req.sub_name),
+                p_school_id: req.school_id
+            });
+            if (activateError) {
+                await window.activatePackage(req.student_id, req.sub_name);
+            }
         }
     }
 
