@@ -2847,20 +2847,23 @@ window.removePaymentRequest = async (id) => {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
     if (confirm(t('delete_payment_confirm'))) {
+        const numId = typeof id === 'string' ? parseInt(id, 10) : id;
         if (supabaseClient) {
             // Prefer RPC so delete works for school admins when RLS would block direct delete (0 rows, no error).
-            const { error: rpcError } = await supabaseClient.rpc('delete_payment_request', { p_request_id: id });
+            const { error: rpcError } = await supabaseClient.rpc('delete_payment_request', { p_request_id: numId });
             if (rpcError) {
-                const { error: tableError } = await supabaseClient.from('payment_requests').delete().eq('id', id);
+                const { error: tableError } = await supabaseClient.from('payment_requests').delete().eq('id', numId);
                 if (tableError) {
                     alert("Error deleting: " + (tableError.message || rpcError.message));
                     return;
                 }
             }
         }
-        state.paymentRequests = state.paymentRequests.filter(r => r.id !== id);
+        state.paymentRequests = state.paymentRequests.filter(r => r.id != id);
         saveState();
         renderView();
+        window._fetchAllDataNeeded = true;
+        fetchAllData();
     }
 };
 
