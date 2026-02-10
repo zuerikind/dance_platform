@@ -423,11 +423,15 @@ BEGIN
   v_remaining := p_count;
 
   IF jsonb_array_length(v_active_packs) > 0 THEN
+    /* Consume exactly p_count from total, taking from soonest-expiring packs first. Never drop unprocessed packs. */
     FOR v_elem IN
       SELECT elem FROM jsonb_array_elements(v_active_packs) AS elem
-      ORDER BY (elem->>'expires_at')::timestamptz
+      ORDER BY (elem->>'expires_at')::timestamptz NULLS LAST
     LOOP
-      EXIT WHEN v_remaining <= 0;
+      IF v_remaining <= 0 THEN
+        v_new_packs := v_new_packs || v_elem;
+        CONTINUE;
+      END IF;
       v_cnt := COALESCE((v_elem->>'count')::int, 0);
       IF v_cnt <= 0 THEN
         v_new_packs := v_new_packs || v_elem;
