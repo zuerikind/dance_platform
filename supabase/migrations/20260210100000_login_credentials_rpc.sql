@@ -145,7 +145,39 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_school_admins(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_school_admins(uuid) TO authenticated;
 
--- Create student without Auth (e.g. when Auth rate limit or signUp fails). Lets signup always succeed.
+-- Create student WITH Auth user_id (when signUp succeeded but direct insert failed due to RLS/session).
+-- Caller must be the new Auth user (auth.uid() = p_user_id). Ensures user_id is set so login and RLS work.
+CREATE OR REPLACE FUNCTION public.create_student_with_auth(
+  p_user_id uuid,
+  p_name text,
+  p_email text,
+  p_phone text,
+  p_password text,
+  p_school_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  new_id text;
+  new_row public.students;
+BEGIN
+  IF auth.uid() IS DISTINCT FROM p_user_id THEN
+    RETURN NULL;
+  END IF;
+  new_id := 'STUD-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 4));
+  INSERT INTO public.students (id, name, email, phone, password, paid, package, balance, school_id, user_id, created_at)
+  VALUES (new_id, trim(p_name), nullif(trim(p_email), ''), nullif(trim(p_phone), ''), p_password, false, null, 0, p_school_id, p_user_id, now())
+  RETURNING * INTO new_row;
+  RETURN to_jsonb(new_row);
+END;
+$$;
+COMMENT ON FUNCTION public.create_student_with_auth(uuid, text, text, text, text, uuid) IS 'Create student row with user_id set; only callable by that Auth user. Use when signUp succeeded but table insert failed.';
+GRANT EXECUTE ON FUNCTION public.create_student_with_auth(uuid, text, text, text, text, uuid) TO authenticated;
+
+-- Create student without Auth (e.g. when Auth rate limit or signUp fails). Lets signup always succeed. user_id stays NULL.
 CREATE OR REPLACE FUNCTION public.create_student_legacy(
   p_name text,
   p_email text,
@@ -172,6 +204,29 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.create_student_legacy(text, text, text, text, uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.create_student_legacy(text, text, text, text, uuid) TO authenticated;
+
+-- Link current Auth user to an existing student row (user_id was NULL). Used when admin-created student first "signs up".
+CREATE OR REPLACE FUNCTION public.link_student_auth(p_student_id text, p_school_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  updated public.students;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN NULL;
+  END IF;
+  UPDATE public.students
+  SET user_id = auth.uid()
+  WHERE id::text = p_student_id AND school_id = p_school_id AND user_id IS NULL
+  RETURNING * INTO updated;
+  RETURN to_jsonb(updated);
+END;
+$$;
+COMMENT ON FUNCTION public.link_student_auth(text, uuid) IS 'Set user_id = auth.uid() on an existing student row that has no user_id. Lets admin-created students get user_id when they first sign up.';
+GRANT EXECUTE ON FUNCTION public.link_student_auth(text, uuid) TO authenticated;
 
 -- Student creates a payment request (RLS only allows admins to insert; this runs as definer).
 CREATE OR REPLACE FUNCTION public.create_payment_request(

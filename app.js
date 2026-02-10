@@ -126,6 +126,7 @@ const DANCE_LOCALES = {
         admin_created: "Admin created!",
         enter_student_name: "Enter student name:",
         enter_student_phone: "Enter student phone:",
+        enter_student_email: "Enter student email (optional):",
         enter_student_pass: "Enter student password:",
         student_created: "Student created!",
         unknown_student: "Unknown Student",
@@ -336,6 +337,7 @@ const DANCE_LOCALES = {
         admin_created: "¡Admin creado!",
         enter_student_name: "Ingresa el nombre del alumno:",
         enter_student_phone: "Ingresa el teléfono del alumno:",
+        enter_student_email: "Ingresa el email del alumno (opcional):",
         enter_student_pass: "Ingresa la contraseña del alumno:",
         student_created: "¡Alumno creado!",
         unknown_student: "Alumno Desconocido",
@@ -547,6 +549,7 @@ const DANCE_LOCALES = {
         admin_created: "Admin erstellt!",
         enter_student_name: "Name des Schülers eingeben:",
         enter_student_phone: "Telefonnummer eingeben:",
+        enter_student_email: "E-Mail des Schülers (optional):",
         enter_student_pass: "Passwort für den Schüler eingeben:",
         student_created: "Schüler erstellt!",
         unknown_student: "Unbekannter Schüler",
@@ -2097,12 +2100,39 @@ window.signUpStudent = async () => {
             });
             if (!signUpError && signUpData?.user) {
                 const authUser = signUpData.user;
+                // Ensure the next Supabase calls use the new user's session (so RLS and create_student_with_auth see auth.uid())
+                if (signUpData.session) {
+                    await supabaseClient.auth.setSession({
+                        access_token: signUpData.session.access_token,
+                        refresh_token: signUpData.session.refresh_token
+                    });
+                }
                 const studentToInsert = { ...newStudent, user_id: authUser.id };
                 const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
                 if (!insertError) studentCreated = true;
+                if (!studentCreated) {
+                    // Table insert failed (e.g. RLS): create with user_id via RPC (requires auth.uid() = p_user_id, so session above is important)
+                    const { data: authRpcRow, error: authRpcError } = await supabaseClient.rpc('create_student_with_auth', {
+                        p_user_id: authUser.id,
+                        p_name: name,
+                        p_email: email || null,
+                        p_phone: phone || null,
+                        p_password: pass,
+                        p_school_id: state.currentSchool.id
+                    });
+                    if (!authRpcError && authRpcRow) {
+                        const created = typeof authRpcRow === 'object' ? authRpcRow : (typeof authRpcRow === 'string' ? JSON.parse(authRpcRow) : null);
+                        if (created) {
+                            newStudent.id = created.id;
+                            newStudent.email = created.email ?? email;
+                            newStudent.user_id = created.user_id;
+                            studentCreated = true;
+                        }
+                    }
+                }
             }
             if (!studentCreated) {
-                // Auth failed (rate limit, etc.) or insert failed: create student via RPC so signup always succeeds
+                // Auth failed (rate limit, etc.) or both inserts failed: create student via legacy RPC (user_id stays NULL)
                 const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
                     p_name: name,
                     p_email: email || null,
@@ -2469,25 +2499,38 @@ window.createNewStudent = async () => {
     });
     const name = prompt(t('enter_student_name'));
     const phone = prompt(t('enter_student_phone'));
+    const email = prompt(t('enter_student_email') || 'Student email (optional):');
     const pass = prompt(t('enter_student_pass'));
     if (!name || !pass) return;
 
+    if (supabaseClient) {
+        const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
+            p_name: name,
+            p_email: (email && email.trim()) || null,
+            p_phone: (phone && phone.trim()) || null,
+            p_password: pass,
+            p_school_id: state.currentSchool.id
+        });
+        if (rpcError) { alert("Error: " + (rpcError.message || "Could not create student.")); return; }
+        const created = typeof rpcRow === 'object' ? rpcRow : (typeof rpcRow === 'string' ? JSON.parse(rpcRow) : null);
+        if (created) {
+            state.students.push(created);
+            renderView();
+            alert(t('student_created'));
+            return;
+        }
+    }
     const newStudent = {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
         name: name,
-        email: null,
-        phone: phone,
+        email: (email && email.trim()) || null,
+        phone: (phone && phone.trim()) || null,
         password: pass,
         paid: false,
         package: null,
         balance: 0,
         school_id: state.currentSchool.id
     };
-
-    if (supabaseClient) {
-        const { error } = await supabaseClient.from('students').insert([newStudent]);
-        if (error) { alert("Error: " + error.message); return; }
-    }
     state.students.push(newStudent);
     renderView();
     alert(t('student_created'));
