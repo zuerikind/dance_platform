@@ -22,8 +22,7 @@ const DANCE_LOCALES = {
         inactive: "Payment Required",
         pay_status: "Membership Status",
         student_id: "Member ID",
-        admin_title: "Administrator",
-        no_subs: "No active memberships found",
+        admin_title: \"Administrator\",\n        admin_label: \"Admin\",\n        no_subs: "No active memberships found",
         scan_success: "Verification Successful",
         scan_fail: "Membership Inactive",
         switch_to_admin: "Go to Admin",
@@ -405,7 +404,8 @@ const DANCE_LOCALES = {
         inactive: "Zahlung erforderlich",
         pay_status: "Mitgliedschaftsstatus",
         student_id: "Mitglieder-ID",
-        admin_title: "Administration",
+        admin_title: "Administrator",
+        admin_label: "Admin",
         no_subs: "Keine aktiven Mitgliedschaften gefunden",
         scan_success: "Verifizierung erfolgreich",
         scan_fail: "Mitgliedschaft inaktiv",
@@ -801,58 +801,66 @@ function renderView() {
 
         html += `
             <div class="ios-header">
-                <div class="ios-large-title">${title}</div>
-                ${isDev ? '<div style="font-size: 13px; color: var(--system-blue); font-weight: 600; padding: 0 1.2rem; margin-top: -5px;">Modo Dios</div>' : ''}
+                <div class="ios-large-title" style="letter-spacing: -1.2px;">${title}</div>
+                ${isDev ? '<div style="font-size: 13px; color: var(--system-blue); font-weight: 700; padding: 0 1.2rem; margin-top: -5px; letter-spacing: 0.1em; text-transform: uppercase;">' + t.admin_label + ' (God Mode)</div>' : ''}
             </div>
             
             <div style="padding: 1.2rem;">
                 ${isDev ? `
-                    <!-- PLATFORM STATS -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 20px; border: 1.5px solid var(--border);">
-                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">${t.dev_stats_schools}</div>
-                            <div style="font-size: 24px; font-weight: 800;">${state.platformData.schools.length}</div>
+                    <!-- PREMIUM STATS -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2.5rem;">
+                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -10px; right: -10px; opacity: 0.05; color: var(--system-blue); transform: rotate(-15deg);"><i data-lucide="building-2" size="80"></i></div>
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.08em; opacity: 0.7;">${t.dev_stats_schools}</div>
+                            <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary);">${state.platformData.schools.length}</div>
                         </div>
-                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 20px; border: 1.5px solid var(--border);">
-                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">${t.dev_stats_students}</div>
-                            <div style="font-size: 24px; font-weight: 800;">${state.platformData.students.length}</div>
+                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -10px; right: -10px; opacity: 0.05; color: var(--system-green); transform: rotate(-15deg);"><i data-lucide="users" size="80"></i></div>
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.08em; opacity: 0.7;">${t.dev_stats_students}</div>
+                            <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary);">${state.platformData.students.length}</div>
                         </div>
                     </div>
                 ` : ''}
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.dev_active_schools}</div>
-                    <button class="${isDev ? 'btn-primary' : 'btn-primary'}" onclick="${isDev ? 'createNewSchoolWithAdmin()' : 'createNewSchool()'}" style="padding: 8px 16px; font-size: 13px; height: auto;">${t.add_school_btn}</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0 0.2rem;">
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); opacity: 0.8;">${t.dev_active_schools}</div>
+                    <button class="btn-primary" onclick="${isDev ? 'createNewSchoolWithAdmin()' : 'createNewSchool()'}" style="padding: 10px 20px; font-size: 13px; font-weight: 700; height: auto; border-radius: 14px; box-shadow: var(--shadow-sm);"><i data-lucide="plus" size="14" style="margin-right: 6px;"></i> ${t.add_school_btn}</button>
                 </div>
 
-                <div class="ios-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                <div class="ios-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.2rem; background: transparent; padding: 0; box-shadow: none; border: none;">
                     ${schools.map(s => {
             const schoolStudents = state.platformData.students.filter(st => st.school_id === s.id).length;
             const schoolAdmins = state.platformData.admins.filter(a => a.school_id === s.id).map(a => a.username).join(', ');
             return `
-                            <div class="card" style="padding: 1.5rem; border-radius: 20px; display: flex; flex-direction: column; gap: 1rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <div>
-                                        <div style="font-size: 18px; font-weight: 800; margin-bottom: 2px;">${s.name}</div>
-                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6;">ID: ${s.id}</div>
+                            <div class="card card-premium" style="padding: 1.8rem; border-radius: 28px; display: flex; flex-direction: column; gap: 1.4rem; background: var(--bg-card); border: 1.5px solid var(--border); transition: all 0.4s var(--transition); position: relative;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 20px; font-weight: 900; margin-bottom: 4px; letter-spacing: -0.5px; color: var(--text-primary);">${s.name}</div>
+                                        <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: monospace; letter-spacing: 0.05em;">${s.id}</div>
                                     </div>
-                                    <div style="font-size: 11px; font-weight: 700; color: var(--system-blue); background: rgba(0, 122, 255, 0.1); padding: 4px 10px; border-radius: 12px;">
-                                        ${schoolStudents} ${t.dev_students_label}
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="font-size: 11px; font-weight: 800; color: var(--system-blue); background: rgba(0, 122, 255, 0.08); padding: 5px 12px; border-radius: 14px; letter-spacing: 0.02em; border: 1px solid rgba(0, 122, 255, 0.1);">
+                                            ${schoolStudents} ${t.dev_students_label.toUpperCase()}
+                                        </div>
+                                        <button class="btn-icon" onclick="window.deleteSchool('${s.id}', '${s.name}')" style="color: var(--system-red); opacity: 0.3; padding: 6px; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255, 59, 48, 0.1)'" onmouseout="this.style.opacity='0.3'; this.style.background='transparent'">
+                                            <i data-lucide="trash-2" size="18"></i>
+                                        </button>
                                     </div>
-                                    <button class="btn-icon" onclick="window.deleteSchool('${s.id}', '${s.name}')" style="color: var(--system-red); opacity: 0.6; padding: 4px; margin-left: 8px;" title="${t.delete_school_btn}">
-                                        <i data-lucide="trash-2" size="16"></i>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--system-gray6); border-radius: 16px; border: 1px solid rgba(0,0,0,0.02);">
+                                    <i data-lucide="shield" size="14" style="color: var(--system-blue); opacity: 0.8;"></i>
+                                    <div style="font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                                        <span style="font-weight: 700; color: var(--text-primary); opacity: 0.7;">${t.dev_admins_label}:</span> ${schoolAdmins || 'N/A'}
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+                                    <button class="btn-secondary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="width: 100%; border-radius: 16px; height: 50px; font-size: 14px; font-weight: 700; background: var(--system-gray6); color: var(--text-primary); border: 1px solid var(--border); box-shadow: none;">
+                                        <i data-lucide="info" size="14" style="margin-right: 6px; opacity: 0.6;"></i> ${t.dev_view_details}
+                                    </button>
+                                    <button class="btn-primary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 16px; height: 50px; font-size: 14px; font-weight: 700; background: var(--text-primary); color: var(--bg-body); box-shadow: var(--shadow-sm);">
+                                        <i data-lucide="external-link" size="14" style="margin-right: 6px;"></i> ${t.dev_enter_as_admin}
                                     </button>
                                 </div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">
-                                    <span style="font-weight: 600;">${t.dev_admins_label}:</span> ${schoolAdmins || 'N/A'}
-                                </div>
-                                <button class="btn-primary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px;">
-                                    ${t.dev_view_details}
-                                </button>
-                                </button>
-                                <button class="btn-secondary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px; opacity: 0.7;">
-                                    ${t.dev_enter_as_admin}
-                                </button>
                             </div>
                         `;
         }).join('')}
@@ -871,95 +879,117 @@ function renderView() {
             const subs = state.platformData.subscriptions.filter(s => s.school_id === schoolId);
 
             html += `
-                <div class="ios-header" style="background: transparent;">
-                    <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; margin-bottom: 1rem; border: 1px solid var(--border);">
-                        <i data-lucide="arrow-left" size="20" style="margin: 0 auto;"></i>
-                    </button>
-                    <div class="ios-large-title">${school.name}</div>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 600; margin-bottom: 1.5rem;">${t.dev_school_inspector} • ID: ${schoolId}</div>
-                    <button class="btn-primary" onclick="state.currentSchool={id:'${school.id}', name:'${school.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 14px; height: 44px; font-size: 14px; margin-bottom: 2rem;">
-                        <i data-lucide="shield-check" size="18"></i> ${t.dev_enter_as_admin}
-                    </button>
+                <div class="ios-header" style="background: transparent; padding-bottom: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0 0.5rem;">
+                        <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="border-radius: 50%; width: 36px; height: 36px; padding: 0; border: 1.5px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.transform='translateX(-2px)'" onmouseout="this.style.opacity='0.8'; this.style.transform='translateX(0)'">
+                            <i data-lucide="chevron-left" size="20" style="margin-right: 2px;"></i>
+                        </button>
+                        <div style="font-size: 11px; color: var(--system-blue); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">${t.dev_school_inspector}</div>
+                    </div>
+                    <div class="ios-large-title" style="letter-spacing: -1.2px;">${school.name}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 500; font-family: monospace; opacity: 0.5; margin-bottom: 2rem; padding: 0 1.2rem;">ID: ${schoolId}</div>
+                    <div style="padding: 0 1.2rem; margin-bottom: 1rem;">
+                        <button class="btn-primary" onclick="state.currentSchool={id:'${school.id}', name:'${school.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 16px; height: 52px; font-size: 15px; font-weight: 800; box-shadow: var(--shadow-sm); background: var(--text-primary); color: var(--bg-body);">
+                            <i data-lucide="shield-check" size="18" style="margin-right: 8px;"></i> ${t.dev_enter_as_admin}
+                        </button>
+                    </div>
                 </div>
 
                 <div style="padding: 1.2rem;">
-                    <!-- STATS GRID -->
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom: 2rem;">
-                        <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
-                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">${t.dev_students_label}</div>
-                            <div style="font-size: 20px; font-weight: 800;">${students.length}</div>
+                    <!-- PREMIUM STATS GRID -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 2.5rem;">
+                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                            <div style="color: var(--system-blue); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="users" size="14"></i></div>
+                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">EST.</div>
+                            <div style="font-size: 20px; font-weight: 900;">${students.length}</div>
                         </div>
-                        <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
-                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">${t.dev_stats_plans}</div>
-                            <div style="font-size: 20px; font-weight: 800;">${subs.length}</div>
+                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                            <div style="color: var(--system-green); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="credit-card" size="14"></i></div>
+                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">PLAN</div>
+                            <div style="font-size: 20px; font-weight: 900;">${subs.length}</div>
                         </div>
-                        <div style="background: var(--bg-card); padding: 1.2rem 0.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border);">
-                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.5; margin-bottom: 4px;">${t.dev_stats_classes}</div>
-                            <div style="font-size: 20px; font-weight: 800;">${classes.length}</div>
+                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                            <div style="color: var(--system-orange); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="calendar" size="14"></i></div>
+                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">CLAS.</div>
+                            <div style="font-size: 20px; font-weight: 900;">${classes.length}</div>
+                        </div>
+                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                            <div style="color: var(--system-red); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="shield" size="14"></i></div>
+                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">ADM.</div>
+                            <div style="font-size: 20px; font-weight: 900;">${admins.length}</div>
                         </div>
                     </div>
 
                     <!-- ADMINS SECTION -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_admins_label}</div>
-                    <div class="ios-list">
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.dev_admins_label}</div>
+                    <div class="ios-list" style="margin-bottom: 2.5rem; overflow: hidden;">
                         ${admins.length > 0 ? admins.map(a => `
-                            <div class="ios-list-item" style="padding: 12px 16px;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--system-blue);">${a.username.charAt(0).toUpperCase()}</div>
-                                    <div>
-                                        <div style="font-weight: 700; font-size: 16px;">${a.username}</div>
-                                        <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6;">${t.password_label}: ${a.password}</div>
+                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                                <div style="display: flex; align-items: center; gap: 14px; width: 100%;">
+                                    <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: var(--system-blue); border: 1px solid rgba(0,0,0,0.05);">${a.username.charAt(0).toUpperCase()}</div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${a.username}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.6; margin-top: 2px;"><i data-lucide="key" size="10" style="vertical-align: middle; margin-right: 4px;"></i>${t.password_label}: <span style="font-family: monospace; font-weight: 600;">${a.password}</span></div>
                                     </div>
+                                    <i data-lucide="chevron-right" size="16" style="opacity: 0.2;"></i>
                                 </div>
                             </div>
-                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">${t.dev_no_admins}</div>`}
+                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_admins}</div>`}
                     </div>
 
                     <!-- STUDENTS LIST -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_students_label}</div>
-                    <div class="ios-list" style="max-height: 400px; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding: 0 0.5rem;">
+                        <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); opacity: 0.7;">${t.dev_students_label}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--system-blue); background: rgba(0,122,255,0.08); padding: 3px 8px; border-radius: 8px;">${students.length} Total</div>
+                    </div>
+                    <div class="ios-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 2.5rem;">
                         ${students.length > 0 ? students.map(s => `
-                            <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 0.5px solid var(--border);">
+                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
                                 <div style="flex: 1;">
-                                    <div style="font-weight: 700; font-size: 16px;">${s.name}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">${s.phone || 'S/T'} • PW: ${s.password}</div>
+                                    <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${s.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7;">${s.phone || 'S/T'} • PW: <span style="font-family: monospace; font-weight: 600;">${s.password}</span></div>
                                 </div>
-                                <div style="text-align: right;">
-                                    <div style="font-weight: 800; color: var(--system-blue); font-size: 17px;">${s.balance === null ? '∞' : s.balance}</div>
-                                    <div style="font-size: 10px; opacity: 0.5; font-weight: 700; text-transform: uppercase;">${t.balance_label}</div>
+                                <div style="text-align: right; background: var(--system-gray6); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.02);">
+                                    <div style="font-weight: 900; color: var(--system-blue); font-size: 18px; letter-spacing: -0.5px;">${s.balance === null ? '∞' : s.balance}</div>
+                                    <div style="font-size: 9px; opacity: 0.5; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-top: -2px;">${t.balance_label}</div>
                                 </div>
                             </div>
-                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem;">${t.dev_no_students}</div>`}
+                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2.5rem; font-size: 13px; font-weight: 600;">${t.dev_no_students}</div>`}
                     </div>
 
                     <!-- PLANS & SUBSCRIPTIONS -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_plans_label}</div>
-                    <div class="ios-list">
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.dev_plans_label}</div>
+                    <div class="ios-list" style="margin-bottom: 2.5rem;">
                         ${subs.length > 0 ? subs.map(sb => `
-                            <div class="ios-list-item" style="padding: 12px 16px;">
-                                <div style="font-weight: 700; font-size: 16px;">${sb.name}</div>
-                                <div style="font-weight: 800; font-size: 16px; color: var(--system-green);">$${sb.price}</div>
+                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${sb.name}</div>
+                                    <div style="font-weight: 900; font-size: 17px; color: var(--system-green); background: rgba(52, 199, 89, 0.08); padding: 6px 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.1); font-family: 'Outfit';">$${sb.price}</div>
+                                </div>
                             </div>
-                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">${t.dev_no_plans}</div>`}
+                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_plans}</div>`}
                     </div>
 
                     <!-- CLASSES / SCHEDULE -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 0.8rem; padding: 0 0.5rem;">${t.dev_classes_label}</div>
-                    <div class="ios-list">
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.dev_classes_label}</div>
+                    <div class="ios-list" style="margin-bottom: 4rem;">
                         ${classes.length > 0 ? classes.map(c => `
-                            <div class="ios-list-item" style="padding: 12px 16px;">
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 700; font-size: 16px;">${c.name}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.8;">${c.day} • ${c.time}</div>
+                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${c.name}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.8; margin-top: 2px;">${c.day} • ${c.time} • ${c.location || 'N/A'}</div>
+                                    </div>
+                                    <div style="font-size: 10px; font-weight: 800; background: var(--system-gray6); padding: 5px 12px; border-radius: 12px; text-transform: uppercase; color: var(--text-primary); opacity: 0.6; border: 1px solid rgba(0,0,0,0.05);">${c.tag || 'OPEN'}</div>
                                 </div>
-                                <div style="font-size: 10px; font-weight: 700; background: var(--system-gray6); padding: 4px 10px; border-radius: 12px; text-transform: uppercase;">${c.tag || 'OPEN'}</div>
                             </div>
-                        `).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 1.5rem;">${t.dev_no_classes}</div>`}
+                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_classes}</div>`}
                     </div>
                 </div>
             `;
         }
-    } else if (view === 'auth') {
+    }
+    else if (view === 'auth') {
         const isSignup = state.authMode === 'signup';
         html += `
             <div class="auth-page-container">
