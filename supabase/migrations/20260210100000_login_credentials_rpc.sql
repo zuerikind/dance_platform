@@ -52,6 +52,26 @@ GRANT EXECUTE ON FUNCTION public.get_student_by_credentials(text, text, uuid) TO
 GRANT EXECUTE ON FUNCTION public.get_admin_by_credentials(text, text, uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_admin_by_credentials(text, text, uuid) TO authenticated;
 
+-- Platform dev login: return platform_admin row if username + password match (legacy, no Auth user).
+CREATE OR REPLACE FUNCTION public.get_platform_admin_by_credentials(
+  p_username text,
+  p_password text
+)
+RETURNS SETOF public.platform_admins
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT * FROM public.platform_admins
+  WHERE TRIM(username) = TRIM(p_username)
+    AND password = p_password
+  LIMIT 1;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_platform_admin_by_credentials(text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_platform_admin_by_credentials(text, text) TO authenticated;
+
 -- Schedule/shop for students: return classes and subscriptions for a school.
 -- Used when student has no Auth session (legacy login) so RLS would block direct select.
 CREATE OR REPLACE FUNCTION public.get_school_classes(p_school_id uuid)

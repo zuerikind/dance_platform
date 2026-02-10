@@ -2120,28 +2120,45 @@ window.loginDeveloper = async (user, pass) => {
     state.loading = true;
     renderView();
 
-    // Authenticate developer via Supabase Auth instead of reading plaintext password from table.
-    const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-        email: user,
-        password: pass
-    });
+    // 1) Try Supabase Auth (email + password) if user looks like an email
+    const looksLikeEmail = typeof user === 'string' && user.includes('@');
+    if (looksLikeEmail) {
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+            email: user,
+            password: pass
+        });
+        if (!authError && authData?.user) {
+            state.isPlatformDev = true;
+            state.currentUser = { name: authData.user.email + " (Dev)", role: "platform-dev" };
+            state.currentView = 'platform-dev-dashboard';
+            state.loading = false;
+            saveState();
+            await fetchPlatformData();
+            document.getElementById('dev-login-modal').classList.add('hidden');
+            return;
+        }
+    }
 
-    if (authError || !authData?.user) {
+    // 2) Legacy: check platform_admins table (username + password)
+    const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_platform_admin_by_credentials', {
+        p_username: user,
+        p_password: pass
+    });
+    if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
+        state.isPlatformDev = true;
+        state.currentUser = { name: (legacyRows[0].username || user) + " (Dev)", role: "platform-dev" };
+        state.currentView = 'platform-dev-dashboard';
         state.loading = false;
+        saveState();
+        document.getElementById('dev-login-modal').classList.add('hidden');
+        await fetchPlatformData();
         renderView();
-        alert("Invalid Developer credentials.");
         return;
     }
 
-    state.isPlatformDev = true;
-    state.currentUser = {
-        name: authData.user.email + " (Dev)",
-        role: "platform-dev"
-    };
-    state.currentView = 'platform-dev-dashboard';
     state.loading = false;
-    saveState();
-    await fetchPlatformData();
+    renderView();
+    alert("Invalid Developer credentials.");
 };
 
 window.deleteSchool = async (schoolId, schoolName) => {
