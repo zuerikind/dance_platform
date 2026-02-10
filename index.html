@@ -3,23 +3,30 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DanceStep - School Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Bailadmin - School Management</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 
 <body class="dark-mode">
     <nav class="navbar">
         <div class="logo">
-            <i data-lucide="sparkles" class="logo-icon"></i>
-            <span>Dance<span>Step</span></span>
+            <img src="logo.png" alt="Bailadmin" class="logo-img">
+            <span>Bailadmin</span>
         </div>
         <div class="nav-controls">
             <button id="logout-btn" class="btn-icon hidden" title="Logout">
                 <i data-lucide="log-out"></i>
+            </button>
+            <button id="dev-login-trigger" class="btn-icon">
+                <i data-lucide="shield-check"></i>
             </button>
             <button id="lang-toggle" class="btn-secondary">
                 <i data-lucide="languages"></i>
@@ -37,6 +44,20 @@
             <div class="loader"></div>
         </div>
     </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-logo">Bailadmin</div>
+            <div class="footer-tagline" data-i18n="auth_subtitle">Precision in every step.</div>
+            <div class="footer-links">
+                <a href="#" class="footer-link" data-i18n="footer_support">Support</a>
+                <a href="#" class="footer-link" data-i18n="footer_contact">Contact</a>
+            </div>
+            <div class="footer-copyright" data-i18n="footer_copy">
+                &copy; 2026 Bailadmin Systems. All rights reserved.
+            </div>
+        </div>
+    </footer>
 
     <nav class="bottom-nav" id="student-nav">
         <button class="nav-item active" data-view="schedule">
@@ -62,6 +83,15 @@
             <i data-lucide="scan"></i>
             <span data-i18n="nav_scan">Scan</span>
         </button>
+        <button class="nav-item" data-view="admin-memberships" style="position: relative;">
+            <i data-lucide="credit-card"></i>
+            <span data-i18n="nav_memberships">Membresías</span>
+            <span id="memberships-badge" class="nav-badge hidden"></span>
+        </button>
+        <button class="nav-item" data-view="admin-revenue">
+            <i data-lucide="trending-up"></i>
+            <span data-i18n="nav_revenue">Revenue</span>
+        </button>
         <button class="nav-item" data-view="admin-settings">
             <i data-lucide="settings"></i>
             <span data-i18n="nav_settings">Settings</span>
@@ -69,17 +99,74 @@
     </nav>
 
     <div id="scanner-modal" class="modal hidden">
-        <div class="modal-content">
-            <div id="reader" style="width: 100%"></div>
+        <div class="modal-content" style="max-width: 500px; padding: 1.5rem;">
+            <div id="reader" style="width: 100%; border-radius: 20px; overflow: hidden; background: #000;"></div>
+            <div id="inline-scan-result" style="margin-top: 1rem;"></div>
             <p class="text-muted" style="font-size: 0.8rem; margin-top: 1rem;">Align QR code within the frame</p>
-            <button id="close-scanner" class="btn-primary mt-4">Close</button>
+            <button id="close-scanner" class="btn-primary mt-4" style="width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="modal hidden">
+        <div class="modal-content" id="payment-modal-content">
+            <!-- Content injected via app.js -->
+        </div>
+    </div>
+
+    <div id="student-modal" class="modal hidden">
+        <div class="modal-content" id="student-modal-content" style="max-width: 450px;">
+            <!-- Content injected via app.js -->
+        </div>
+    </div>
+
+    <div id="dev-login-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 350px; text-align: center; padding: 2rem;">
+            <div
+                style="background: var(--primary-soft); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--primary);">
+                <i data-lucide="shield-check" size="30"></i>
+            </div>
+            <h2 style="margin-bottom: 0.5rem;" data-i18n="dev_access_title">Dev Access</h2>
+            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 2rem;" data-i18n="dev_access_subtitle">Enter
+                platform developer credentials</p>
+
+            <div class="ios-list" style="margin-bottom: 2rem;">
+                <div class="ios-list-item" style="padding: 10px 16px;">
+                    <input type="text" id="dev-user-input" data-i18n-placeholder="username" placeholder="Username"
+                        style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
+                </div>
+                <div class="ios-list-item" style="padding: 10px 16px;">
+                    <input type="password" id="dev-pass-input" data-i18n-placeholder="password" placeholder="Password"
+                        style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
+                </div>
+            </div>
+
+            <button onclick="window.submitDevLogin()" class="btn-primary" style="width: 100%; margin-bottom: 0.8rem;"
+                data-i18n="dev_login_btn">Login</button>
+            <button onclick="document.getElementById('dev-login-modal').classList.add('hidden')" class="btn-secondary"
+                style="width: 100%;" data-i18n="cancel">Cancel</button>
+        </div>
+    </div>
+
+    <div id="location-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2.5rem 1.5rem;">
+            <div
+                style="background: rgba(0, 122, 255, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--system-blue);">
+                <i data-lucide="map-pin" size="30"></i>
+            </div>
+            <h2 id="loc-modal-title" style="margin-bottom: 0.5rem; font-size: 1.5rem; letter-spacing: -0.02em;">Location
+            </h2>
+            <p id="loc-modal-address" class="text-muted"
+                style="font-size: 1.1rem; line-height: 1.5; margin-bottom: 2rem;"></p>
+            <button onclick="document.getElementById('location-modal').classList.add('hidden')" class="btn-primary"
+                style="width: 100%;">Entendido</button>
         </div>
     </div>
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js?v=2"></script>
 </body>
 
 </html>
