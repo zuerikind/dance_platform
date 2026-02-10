@@ -85,6 +85,8 @@ const DANCE_LOCALES = {
         two_classes: "2 Classes",
         cancel: "Cancel",
         confirm_attendance: "Confirm Attendance",
+        attendance_success: "Attendance confirmed!",
+        no_classes_buy_package: "This student has no classes left. They should buy a new package.",
         admin_user_placeholder: "Admin Username",
         admin_pass_placeholder: "Admin Password",
         admin_login_btn: "Admin Login",
@@ -290,6 +292,7 @@ const DANCE_LOCALES = {
         confirm_attendance: "Confirmar Asistencia",
         attendance_success: "¡Asistencia confirmada!",
         attendance_error: "Error en la asistencia",
+        no_classes_buy_package: "Este alumno no tiene clases. Debe comprar un nuevo paquete.",
         admin_user_placeholder: "Usuario Admin",
         admin_pass_placeholder: "Contraseña Admin",
         admin_login_btn: "Inicia Sesión Admin",
@@ -497,6 +500,7 @@ const DANCE_LOCALES = {
         confirm_attendance: "Anwesenheit bestätigen",
         attendance_success: "Anwesenheit bestätigt!",
         attendance_error: "Fehler bei der Anwesenheit",
+        no_classes_buy_package: "Dieser Schüler hat keine Stunden mehr. Bitte neues Paket kaufen.",
         admin_user_placeholder: "Admin Benutzername",
         admin_pass_placeholder: "Admin Passwort",
         admin_login_btn: "Admin Login",
@@ -3294,8 +3298,17 @@ window.handleScan = async (scannedId) => {
     }
 
     const hasValidPass = student.paid && (student.balance === null || student.balance > 0);
+    const hasNoClasses = student.paid && student.balance !== null && student.balance < 1;
 
-    if (hasValidPass) {
+    if (hasNoClasses) {
+        resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--system-orange); background: rgba(255, 149, 0, 0.1); padding: 1rem; text-align: center;">
+                <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
+                <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0.75rem 0;">${t('no_classes_buy_package')}</p>
+                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
+            </div>
+        `;
+    } else if (hasValidPass) {
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -3407,11 +3420,13 @@ window.confirmAttendance = async (studentId, count) => {
         await fetchAllData();
     }
 
+    const newRemaining = student.balance === null ? t('unlimited') : student.balance;
     resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
-             <div style="font-size:0.8rem">${student.name} (-${count})</div>
+             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${count} ${count === 1 ? t('one_class') : t('two_classes')}</div>
+             <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${t('remaining_classes')}: ${newRemaining}</div>
         </div>
         `;
     if (window.lucide) lucide.createIcons();
