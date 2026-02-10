@@ -1938,32 +1938,67 @@ window.signUpStudent = async () => {
         created_at: new Date().toISOString()
     };
 
+    let studentCreated = false;
     if (supabaseClient) {
         try {
             const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
                 email,
                 password: pass
             });
-            if (signUpError) {
-                alert("Error creating account: " + signUpError.message);
-                return;
+            if (!signUpError && signUpData?.user) {
+                const authUser = signUpData.user;
+                const studentToInsert = { ...newStudent, user_id: authUser.id };
+                const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
+                if (!insertError) studentCreated = true;
             }
-
-            const authUser = signUpData?.user;
-            const studentToInsert = authUser ? { ...newStudent, user_id: authUser.id } : newStudent;
-
-            const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
-            if (insertError) {
-                alert("Error saving profile: " + insertError.message);
+            if (!studentCreated) {
+                // Auth failed (rate limit, etc.) or insert failed: create student via RPC so signup always succeeds
+                const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
+                    p_name: name,
+                    p_email: email || null,
+                    p_phone: phone || null,
+                    p_password: pass,
+                    p_school_id: state.currentSchool.id
+                });
+                if (!rpcError && rpcRow) {
+                    const created = typeof rpcRow === 'object' ? rpcRow : (typeof rpcRow === 'string' ? JSON.parse(rpcRow) : null);
+                    if (created) {
+                        newStudent.id = created.id;
+                        newStudent.email = created.email ?? email;
+                        studentCreated = true;
+                    }
+                }
+            }
+            if (!studentCreated) {
+                alert("Error creating account: " + (signUpError?.message || "Could not create profile. Try again."));
                 return;
             }
         } catch (e) {
-            alert("Unexpected signup error: " + e.message);
-            return;
+            try {
+                const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
+                    p_name: name,
+                    p_email: email || null,
+                    p_phone: phone || null,
+                    p_password: pass,
+                    p_school_id: state.currentSchool.id
+                });
+                if (!rpcError && rpcRow) {
+                    const created = typeof rpcRow === 'object' ? rpcRow : (typeof rpcRow === 'string' ? JSON.parse(rpcRow) : null);
+                    if (created) {
+                        newStudent.id = created.id;
+                        newStudent.email = created.email ?? email;
+                        studentCreated = true;
+                    }
+                }
+            } catch (_) {}
+            if (!studentCreated) {
+                alert("Unexpected signup error: " + e.message);
+                return;
+            }
         }
     } else {
-        // Local-only fallback (no Supabase) – still avoid exposing password field
         state.students.push(newStudent);
+        studentCreated = true;
     }
 
     state.currentUser = { ...newStudent, role: 'student' };

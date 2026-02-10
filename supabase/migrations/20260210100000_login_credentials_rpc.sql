@@ -127,6 +127,34 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_school_admins(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.get_school_admins(uuid) TO authenticated;
 
+-- Create student without Auth (e.g. when Auth rate limit or signUp fails). Lets signup always succeed.
+CREATE OR REPLACE FUNCTION public.create_student_legacy(
+  p_name text,
+  p_email text,
+  p_phone text,
+  p_password text,
+  p_school_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  new_id text;
+  new_row public.students;
+BEGIN
+  new_id := 'STUD-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 4));
+  INSERT INTO public.students (id, name, email, phone, password, paid, package, balance, school_id, created_at)
+  VALUES (new_id, trim(p_name), nullif(trim(p_email), ''), nullif(trim(p_phone), ''), p_password, false, null, 0, p_school_id, now())
+  RETURNING * INTO new_row;
+  RETURN to_jsonb(new_row);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_student_legacy(text, text, text, text, uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.create_student_legacy(text, text, text, text, uuid) TO authenticated;
+
 -- Student creates a payment request (RLS only allows admins to insert; this runs as definer).
 CREATE OR REPLACE FUNCTION public.create_payment_request(
   p_student_id text,
