@@ -673,7 +673,16 @@ async function fetchAllData() {
             return;
         }
 
-        const sid = state.currentSchool.id;
+        // Critical: when logged in as student, always use THEIR school so we never show another school's data
+        if (state.currentUser && !state.isAdmin && state.currentUser.school_id) {
+            if (state.currentSchool.id !== state.currentUser.school_id) {
+                state.currentSchool = state.schools.find(s => s.id === state.currentUser.school_id) || { id: state.currentUser.school_id, name: 'School' };
+                saveState();
+            }
+        }
+        const sid = (state.currentUser && !state.isAdmin && state.currentUser.school_id)
+            ? state.currentUser.school_id
+            : state.currentSchool.id;
         const isStudent = state.currentUser && !state.isAdmin;
 
         // Privacy: only admins / platform devs should ever load ALL students.
@@ -1926,6 +1935,7 @@ window.signUpStudent = async () => {
 
     state.currentUser = { ...newStudent, role: 'student' };
     state.isAdmin = false;
+    state.currentSchool = state.schools.find(s => s.id === newStudent.school_id) || state.currentSchool;
     state.currentView = 'qr';
     saveState();
     renderView();
@@ -1983,6 +1993,7 @@ window.loginStudent = async () => {
     if (student) {
         state.currentUser = { ...student, role: 'student' };
         state.isAdmin = false;
+        state.currentSchool = state.schools.find(s => s.id === student.school_id) || { id: student.school_id, name: 'School' };
         state.currentView = 'qr';
         saveState();
         renderView();
@@ -3337,6 +3348,11 @@ logoEl.addEventListener('click', () => {
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved.currentSchool) state.currentSchool = saved.currentSchool;
+        // Never show another school's data: if we have a logged-in student, force school to their school
+        if (saved.currentUser?.school_id && !saved.isAdmin) {
+            const match = saved.currentSchool && saved.currentSchool.id === saved.currentUser.school_id;
+            state.currentSchool = match ? saved.currentSchool : { id: saved.currentUser.school_id, name: saved.currentSchool?.name || 'School' };
+        }
     }
 
     // Check if session expired while away
