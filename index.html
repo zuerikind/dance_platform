@@ -114,8 +114,8 @@
     </div>
 
     <div id="student-modal" class="modal hidden">
-        <div class="modal-content" id="student-modal-content" style="max-width: 450px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
-            <div id="student-modal-scroll" style="overflow-y: auto; flex: 1; padding-right: 4px;">
+        <div class="modal-content" id="student-modal-content" style="width: min(450px, calc(100vw - 2rem)); max-width: 100%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box;">
+            <div id="student-modal-scroll" style="overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; padding-right: 4px; box-sizing: border-box;">
                 <!-- Content injected via app.js -->
             </div>
         </div>

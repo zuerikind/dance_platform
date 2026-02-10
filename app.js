@@ -3291,7 +3291,7 @@ window.updateStudentPrompt = async (id) => {
     const content = document.getElementById('student-modal-scroll') || document.getElementById('student-modal-content');
 
     content.innerHTML = `
-        <div style="text-align: left;">
+        <div style="text-align: left; max-width: 100%; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
                 <div style="width: 50px; height: 50px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--system-blue); font-size: 20px;">
                     ${s.name.charAt(0).toUpperCase()}
