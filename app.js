@@ -707,7 +707,15 @@ async function fetchAllData() {
         ]);
 
         if (classesRes.data) state.classes = classesRes.data;
+        else if (state.isAdmin && supabaseClient) {
+            const { data: rpcClasses } = await supabaseClient.rpc('get_school_classes', { p_school_id: sid });
+            if (rpcClasses && Array.isArray(rpcClasses)) state.classes = rpcClasses;
+        }
         if (subsRes.data) state.subscriptions = subsRes.data;
+        else if (state.isAdmin && supabaseClient) {
+            const { data: rpcSubs } = await supabaseClient.rpc('get_school_subscriptions', { p_school_id: sid });
+            if (rpcSubs && Array.isArray(rpcSubs)) state.subscriptions = rpcSubs;
+        }
         // Students cannot read admin_settings (RLS); fetch bank details via RPC for payment modal
         if (isStudent) {
             const { data: settingsJson } = await supabaseClient.rpc('get_school_admin_settings', { p_school_id: sid });
@@ -1514,6 +1522,8 @@ function renderView() {
     `;
     } else if (view === 'admin-settings') {
         const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const classesList = Array.isArray(state.classes) ? state.classes : [];
+        const subscriptionsList = Array.isArray(state.subscriptions) ? state.subscriptions : [];
 
         html += `
             <div class="ios-header">
@@ -1524,7 +1534,7 @@ function renderView() {
                 ${t.mgmt_classes_title}
             </div>
             <div class="ios-list">
-                ${state.classes.map(c => `
+                ${classesList.map(c => `
                     <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
@@ -1597,7 +1607,7 @@ function renderView() {
                     ${daysOrder.map(dayKey => {
             const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
             const aliases = dayAliases[dayKey];
-            const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
+            const dayClasses = classesList.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
 
             return `
                         <div class="day-tile" style="background: var(--bg-card); border-radius: 16px;">
@@ -1625,7 +1635,7 @@ function renderView() {
                 ${t.plans_label}
             </div>
             <div class="ios-list">
-                ${state.subscriptions.map(s => `
+                ${subscriptionsList.map(s => `
                     <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
