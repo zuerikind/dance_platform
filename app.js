@@ -22,7 +22,9 @@ const DANCE_LOCALES = {
         inactive: "Payment Required",
         pay_status: "Membership Status",
         student_id: "Member ID",
-        admin_title: \"Administrator\",\n        admin_label: \"Admin\",\n        no_subs: "No active memberships found",
+        admin_title: "Administrator",
+        admin_label: "Admin",
+        no_subs: "No active memberships found",
         scan_success: "Verification Successful",
         scan_fail: "Membership Inactive",
         switch_to_admin: "Go to Admin",
@@ -1989,50 +1991,6 @@ async function fetchPlatformData() {
     }
 }
 
-window.createNewSchoolWithAdmin = async () => {
-    const schoolName = prompt("Nombre de la nueva escuela:");
-    if (!schoolName) return;
-
-    const adminUser = prompt("Username para el primer Admin:");
-    const adminPass = prompt("Password para el primer Admin:");
-    if (!adminUser || !adminPass) {
-        alert("Debes proporcionar credenciales de admin.");
-        return;
-    }
-
-    state.loading = true;
-    renderView();
-
-    try {
-        // 1. Create School
-        const { data: schoolRes, error: schoolErr } = await supabaseClient
-            .from('schools')
-            .insert([{ name: schoolName }])
-            .select()
-            .single();
-
-        if (schoolErr) throw schoolErr;
-
-        // 2. Create Admin linked to that school
-        const { error: adminErr } = await supabaseClient
-            .from('admins')
-            .insert([{
-                id: "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
-                username: adminUser,
-                password: adminPass,
-                school_id: schoolRes.id
-            }]);
-
-        if (adminErr) throw adminErr;
-
-        alert("¡Escuela y Admin creados con éxito!");
-        await fetchPlatformData();
-    } catch (err) {
-        alert("Error: " + err.message);
-        state.loading = false;
-        renderView();
-    }
-};
 
 
 window.createNewStudent = async () => {
@@ -2163,6 +2121,7 @@ window.createNewSchoolWithAdmin = async () => {
             const { error: adminError } = await supabaseClient
                 .from('admins')
                 .insert([{
+                    id: "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
                     username: adminUser,
                     password: adminPass,
                     school_id: schoolId
