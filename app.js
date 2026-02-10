@@ -674,6 +674,7 @@ async function fetchAllData() {
         }
 
         const sid = state.currentSchool.id;
+        const isStudent = state.currentUser && !state.isAdmin;
 
         // Privacy: only admins / platform devs should ever load ALL students.
         // Regular students only fetch their own record.
@@ -687,9 +688,18 @@ async function fetchAllData() {
             studentsQuery = studentsQuery.eq('school_id', sid).limit(0);
         }
 
+        // Students without Auth session (legacy login) can't pass RLS on classes/subscriptions;
+        // fetch via RPC so they see schedule and shop.
+        const classesPromise = isStudent
+            ? supabaseClient.rpc('get_school_classes', { p_school_id: sid }).then(r => ({ data: r.data || [], error: r.error }))
+            : supabaseClient.from('classes').select('*').eq('school_id', sid).order('id');
+        const subsPromise = isStudent
+            ? supabaseClient.rpc('get_school_subscriptions', { p_school_id: sid }).then(r => ({ data: r.data || [], error: r.error }))
+            : supabaseClient.from('subscriptions').select('*').eq('school_id', sid).order('name');
+
         const [classesRes, subsRes, studentsRes, requestsRes, settingsRes, adminsRes] = await Promise.all([
-            supabaseClient.from('classes').select('*').eq('school_id', sid).order('id'),
-            supabaseClient.from('subscriptions').select('*').eq('school_id', sid).order('name'),
+            classesPromise,
+            subsPromise,
             studentsQuery,
             supabaseClient.from('payment_requests').select('*, students(name)').eq('school_id', sid).order('created_at', { ascending: false }),
             supabaseClient.from('admin_settings').select('*').eq('school_id', sid),
@@ -698,7 +708,7 @@ async function fetchAllData() {
 
         if (classesRes.data) state.classes = classesRes.data;
         if (subsRes.data) state.subscriptions = subsRes.data;
-        if (studentsRes.data) {
+        if (studentsRes.data && studentsRes.data.length > 0) {
             state.students = studentsRes.data;
             // SYNC: Update currentUser if they are a student to show latest balance
             if (state.currentUser && !state.isAdmin) {
@@ -708,6 +718,9 @@ async function fetchAllData() {
                     saveState();
                 }
             }
+        } else if (isStudent && state.currentUser) {
+            // Legacy login: RLS may block student row; keep currentUser as single "student" in state
+            state.students = [{ ...state.currentUser }];
         }
         if (requestsRes.data) state.paymentRequests = requestsRes.data;
         if (settingsRes.data) {
