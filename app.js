@@ -83,6 +83,8 @@ const DANCE_LOCALES = {
         check_in_title: "Check-In Attendance",
         one_class: "1 Class",
         two_classes: "2 Classes",
+        class_unit: "class",
+        classes_unit: "classes",
         cancel: "Cancel",
         confirm_attendance: "Confirm Attendance",
         attendance_success: "Attendance confirmed!",
@@ -288,6 +290,8 @@ const DANCE_LOCALES = {
         check_in_title: "Confirmar Asistencia",
         one_class: "1 Clase",
         two_classes: "2 Clases",
+        class_unit: "clase",
+        classes_unit: "clases",
         cancel: "Cancelar",
         confirm_attendance: "Confirmar Asistencia",
         attendance_success: "¡Asistencia confirmada!",
@@ -496,6 +500,8 @@ const DANCE_LOCALES = {
         check_in_title: "Check-In Anwesenheit",
         one_class: "1 Stunde",
         two_classes: "2 Stunden",
+        class_unit: "Stunde",
+        classes_unit: "Stunden",
         cancel: "Abbrechen",
         confirm_attendance: "Anwesenheit bestätigen",
         attendance_success: "Anwesenheit bestätigt!",
@@ -3517,7 +3523,7 @@ window.confirmAttendance = async (studentId, count) => {
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
-             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${count} ${count === 1 ? t('one_class') : t('two_classes')}</div>
+             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${count} ${count === 1 ? t('class_unit') : t('classes_unit')}</div>
              <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${t('remaining_classes')}: ${newRemaining}</div>
         </div>
         `;
