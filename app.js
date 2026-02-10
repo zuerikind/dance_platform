@@ -1202,7 +1202,7 @@ function renderView() {
                             <div class="auth-input-group">
                                 ${isSignup ? `
                                     <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('full_name_placeholder')}" autocomplete="name">
-                                    <input type="text" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email">
+                                    <input type="text" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email" maxlength="254">
                                     <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}" autocomplete="tel">
                                     <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                     <input type="password" id="auth-pass-confirm" class="minimal-input" placeholder="${window.t('confirm_password_placeholder')}" autocomplete="new-password">
