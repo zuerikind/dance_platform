@@ -108,7 +108,7 @@
     </div>
 
     <div id="payment-modal" class="modal hidden">
-        <div class="modal-content" id="payment-modal-content">
+        <div class="modal-content payment-modal-content" id="payment-modal-content">
             <!-- Content injected via app.js -->
         </div>
     </div>
@@ -146,6 +146,17 @@
                 data-i18n="dev_login_btn">Login</button>
             <button onclick="document.getElementById('dev-login-modal').classList.add('hidden')" class="btn-secondary"
                 style="width: 100%;" data-i18n="cancel">Cancel</button>
+        </div>
+    </div>
+
+    <div id="registration-answers-modal" class="modal hidden">
+        <div class="modal-content" id="registration-answers-content" style="max-width: 480px; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 id="registration-answers-title" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Answers</h3>
+                <button type="button" onclick="document.getElementById('registration-answers-modal').classList.add('hidden')" style="background: none; border: none; padding: 8px; cursor: pointer; color: var(--text-secondary);"><i data-lucide="x" size="22"></i></button>
+            </div>
+            <div id="registration-answers-body" style="max-height: 60vh; overflow-y: auto;"></div>
+            <button type="button" id="registration-answers-close-btn" onclick="document.getElementById('registration-answers-modal').classList.add('hidden')" class="btn-primary" style="width: 100%; margin-top: 1.25rem;">Close</button>
         </div>
     </div>
 

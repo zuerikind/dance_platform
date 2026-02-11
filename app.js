@@ -111,8 +111,10 @@ const DANCE_LOCALES = {
         limit_classes_label: "Class Limit",
         price_mxd_label: "Price MXD",
         transfer_details_label: "Transfer Details",
-        bank_name_label: "Bank Name",
-        holder_name_label: "Holder Name",
+        bank_name_label: "Nombre del banco",
+        account_number_label: "Numero de cuenta",
+        holder_name_label: "Nombre del titular",
+        asunto_label: "Asunto",
         save_bank_btn: "Save Bank Details",
         saved_success_msg: "Saved Successfully!",
         balance_manual_label: "Balance Manual",
@@ -242,13 +244,24 @@ const DANCE_LOCALES = {
         reviewing_application_es: "Estamos revisando tu solicitud",
         accepted: "Accepted",
         declined: "Declined",
+        competition_approved_message: "Congratulations! You will compete in \"{eventName}\"",
+        competition_declined_message: "This time you cannot compete, but we hope to see you next time.",
         submit_registration: "Submit registration",
         competition_no_events: "No Jack and Jill events yet.",
+        competition_reg_opens_soon: "Registration opens soon",
         competition_select_or_create: "Select an event or create new.",
         competition_create_new: "Create new",
         competition_edit_tab: "Edit",
         no_existing_events: "No existing events.",
-        add_new_event: "Add new event"
+        add_new_event: "Add new event",
+        competition_view_answers: "View answers",
+        competition_answers: "Answers",
+        competition_no_answers: "No answers yet.",
+        competition_delete_confirm: "Delete this event? All registrations will be removed.",
+        competition_done: "Done",
+        competition_saved_indicator: "Saved",
+        competition_saving: "Saving...",
+        competition_next_steps_placeholder: "E.g. No cuts, fixed camera, good lighting..."
     },
     es: {
         nav_schedule: "Horario",
@@ -356,8 +369,10 @@ const DANCE_LOCALES = {
         limit_classes_label: "Límite de Clases",
         price_mxd_label: "Precio MXD",
         transfer_details_label: "Detalles de Transferencia",
-        bank_name_label: "Nombre del Banco",
-        holder_name_label: "Nombre del Titular",
+        bank_name_label: "Nombre del banco",
+        account_number_label: "Numero de cuenta",
+        holder_name_label: "Nombre del titular",
+        asunto_label: "Asunto",
         save_bank_btn: "Guardar Detalles",
         saved_success_msg: "¡Guardado con éxito!",
         balance_manual_label: "Saldo Manual",
@@ -487,13 +502,24 @@ const DANCE_LOCALES = {
         reviewing_application_es: "Estamos revisando tu solicitud",
         accepted: "Aceptado",
         declined: "Rechazado",
+        competition_approved_message: "¡Felicidades! Vas a competir en \"{eventName}\"",
+        competition_declined_message: "Esta vez no puedes competir, pero te esperamos la próxima vez.",
         submit_registration: "Enviar registro",
         competition_no_events: "Aún no hay eventos Jack and Jill.",
+        competition_reg_opens_soon: "Inscripciones próximamente",
         competition_select_or_create: "Selecciona un evento o crea uno nuevo.",
         competition_create_new: "Crear nuevo",
         competition_edit_tab: "Editar",
         no_existing_events: "No hay eventos.",
-        add_new_event: "Añadir nuevo evento"
+        add_new_event: "Añadir nuevo evento",
+        competition_view_answers: "Ver respuestas",
+        competition_answers: "Respuestas",
+        competition_no_answers: "Aún no hay respuestas.",
+        competition_delete_confirm: "¿Eliminar este evento? Se borrarán todas las inscripciones.",
+        competition_done: "Listo",
+        competition_saved_indicator: "Guardado",
+        competition_saving: "Guardando...",
+        competition_next_steps_placeholder: "Ej: Sin cortes, cámara fija, buena iluminación..."
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -602,8 +628,10 @@ const DANCE_LOCALES = {
         limit_classes_label: "Stundenlimit",
         price_mxd_label: "Preis MXD",
         transfer_details_label: "Überweisungsdaten",
-        bank_name_label: "Bankname",
-        holder_name_label: "Kontoinhaber",
+        bank_name_label: "Nombre del banco",
+        account_number_label: "Numero de cuenta",
+        holder_name_label: "Nombre del titular",
+        asunto_label: "Asunto",
         save_bank_btn: "Bankdaten speichern",
         saved_success_msg: "Erfolgreich gespeichert!",
         balance_manual_label: "Guthaben manuell",
@@ -706,7 +734,17 @@ const DANCE_LOCALES = {
         remove_admin_confirm: "Sind Sie sicher, dass Sie diesen Administrator entfernen möchten?",
         admin_removed: "Administrator erfolgreich entfernt!",
         error_creating_admin: "Fehler beim Erstellen des Administrators:",
-        error_removing_admin: "Fehler beim Entfernen des Administrators:"
+        error_removing_admin: "Fehler beim Entfernen des Administrators:",
+        competition_view_answers: "Antworten anzeigen",
+        competition_answers: "Antworten",
+        competition_no_answers: "Noch keine Antworten.",
+        competition_delete_confirm: "Dieses Event löschen? Alle Anmeldungen werden entfernt.",
+        competition_done: "Fertig",
+        competition_saved_indicator: "Gespeichert",
+        competition_saving: "Wird gespeichert...",
+        competition_next_steps_placeholder: "Z.B. Keine Schnitte, feste Kamera, gute Beleuchtung...",
+        competition_approved_message: "Herzlichen Glückwunsch! Du wirst an \"{eventName}\" teilnehmen.",
+        competition_declined_message: "Dieses Mal kannst du nicht teilnehmen, aber wir freuen uns auf dich beim nächsten Mal."
     }
 };
 
@@ -944,7 +982,7 @@ async function fetchAllData() {
             const admins = state.admins || [];
             state.schoolAdminLinked = !!(uid && admins.some(a => a.user_id === uid));
         }
-        if (isStudent && state.currentUser?.id && supabaseClient) {
+        if (isStudent && state.currentUser?.id && supabaseClient && sid) {
             try {
                 const { data: compData, error: compErr } = await supabaseClient.rpc('competition_get_for_student', { p_student_id: String(state.currentUser.id), p_school_id: sid });
                 if (compErr) { state.currentCompetitionForStudent = null; state.studentCompetitionRegistration = null; }
@@ -1077,6 +1115,11 @@ function parseHashRoute() {
 
     // #/admin/schools/:schoolId/competitions/jack-and-jill[/:competitionId]
     if (segments[0] === 'admin' && segments[1] === 'schools' && segments[2] && segments[3] === 'competitions' && segments[4] === 'jack-and-jill') {
+        const isStudent = state.currentUser && state.currentUser.school_id && state.currentUser.role !== 'admin' && state.currentUser.role !== 'platform-dev' && !state.isPlatformDev;
+        if (isStudent) {
+            window.location.hash = '';
+            return false;
+        }
         const schoolId = segments[2];
         const competitionId = segments[5] || null;
         state.competitionSchoolId = schoolId;
@@ -1180,11 +1223,16 @@ window.fetchCompetitionRegistrations = async (competitionId) => {
 window.saveCompetition = async () => {
     const t = window.t;
     const schoolId = state.competitionSchoolId || state.currentSchool?.id;
-    if (!schoolId || !supabaseClient) { alert(t('competition_error')); return; }
+    if (!schoolId || !supabaseClient) { alert(t('competition_error') + (schoolId ? '' : ' Missing school.') + (!supabaseClient ? ' No database connection.' : '')); return; }
+    const { data: sess } = await supabaseClient.auth.getSession();
+    if (!sess?.session?.user) {
+        alert(t('competition_error') + ' You are not signed in. Log in as a school admin or platform dev, then try again.');
+        return;
+    }
     const name = (document.getElementById('comp-name') || {}).value?.trim();
     const date = (document.getElementById('comp-date') || {}).value;
     const time = (document.getElementById('comp-time') || {}).value || '19:00';
-    if (!name || !date) { alert(t('competition_error')); return; }
+    if (!name || !date) { alert(t('competition_error') + ' Please enter event name and date.'); return; }
     const startsAt = new Date(date + 'T' + time + ':00').toISOString();
     const nextSteps = (document.getElementById('comp-next-steps') || {}).value || '';
     const container = document.getElementById('comp-questions-container');
@@ -1226,7 +1274,98 @@ window.saveCompetition = async () => {
         alert(t('competition_saved'));
         renderView();
     } catch (e) {
-        alert(t('competition_error') + ' ' + (e.message || ''));
+        const msg = e?.message || String(e) || '';
+        if (msg.includes('Permission denied') && msg.includes('admin')) {
+            alert(t('competition_error') + '\n\nYour account is not linked to this session.\n\n• If you are a school admin: use the "Link account" card on your dashboard to enter your password and link.\n• If you are a platform dev: use the "Enable username login" card or log out and log in again with your username and password.');
+        } else {
+            alert(t('competition_error') + '\n\n' + (msg || 'Unknown error'));
+        }
+    }
+};
+
+let _competitionAutosaveTimer = null;
+window.debouncedAutosaveCompetition = () => {
+    if (_competitionAutosaveTimer) clearTimeout(_competitionAutosaveTimer);
+    _competitionAutosaveTimer = setTimeout(() => {
+        _competitionAutosaveTimer = null;
+        autosaveCompetition();
+    }, 800);
+};
+
+window.autosaveCompetition = async () => {
+    const statusEl = document.getElementById('comp-autosave-status') || document.getElementById('comp-autosave-status-footer');
+    const setStatus = (text, isError = false) => {
+        ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = text;
+                el.style.color = isError ? 'var(--system-red)' : 'var(--text-secondary)';
+            }
+        });
+    };
+    const schoolId = state.competitionSchoolId || state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) return;
+    const { data: sess } = await supabaseClient.auth.getSession();
+    if (!sess?.session?.user) return;
+    const name = (document.getElementById('comp-name') || {}).value?.trim() || '';
+    const date = (document.getElementById('comp-date') || {}).value || '';
+    const time = (document.getElementById('comp-time') || {}).value || '19:00';
+    const id = (document.getElementById('comp-id') || {}).value || '';
+    if (!id && (!name || !date)) return;
+    setStatus(window.t('competition_saving') || 'Saving...');
+    const startsAt = date ? new Date(date + 'T' + time + ':00').toISOString() : new Date().toISOString();
+    const nextSteps = (document.getElementById('comp-next-steps') || {}).value || '';
+    const container = document.getElementById('comp-questions-container');
+    const questions = container ? Array.from(container.querySelectorAll('input[data-qidx]')).sort((a, b) => parseInt(a.getAttribute('data-qidx'), 10) - parseInt(b.getAttribute('data-qidx'), 10)).map(inp => inp.value?.trim() || '') : (state.competitionFormQuestions || []);
+    try {
+        if (id) {
+            const cur = state.currentCompetition || {};
+            const { data: res, error } = await supabaseClient.rpc('competition_update', {
+                p_competition_id: id,
+                p_name: name || (cur.name || 'Event'),
+                p_starts_at: startsAt,
+                p_questions: questions,
+                p_next_steps_text: nextSteps,
+                p_is_active: !!cur.is_active,
+                p_is_sign_in_active: !!cur.is_sign_in_active
+            });
+            if (error) throw new Error(error.message);
+            if (res) {
+                state.currentCompetition = res;
+                state.competitions = (state.competitions || []).map(c => c.id === id ? res : c);
+                setStatus(window.t('competition_saved_indicator') || 'Saved');
+                ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { el.style.color = 'var(--system-green)'; }
+                });
+                setTimeout(() => { ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = ''; }); }, 2000);
+            }
+        } else {
+            const { data: res, error } = await supabaseClient.rpc('competition_create', {
+                p_school_id: schoolId,
+                p_name: name || 'New Event',
+                p_starts_at: startsAt,
+                p_questions: questions,
+                p_next_steps_text: nextSteps
+            });
+            if (error) throw new Error(error.message);
+            const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
+            if (newComp) {
+                state.competitions = [newComp, ...(state.competitions || [])];
+                state.currentCompetition = newComp;
+                state.competitionId = newComp.id;
+                const hid = document.getElementById('comp-id');
+                if (hid) hid.value = newComp.id;
+                setStatus(window.t('competition_saved_indicator') || 'Saved');
+                ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { el.style.color = 'var(--system-green)'; }
+                });
+                setTimeout(() => { ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = ''; }); }, 2000);
+            }
+        }
+    } catch (e) {
+        setStatus(e?.message || 'Error', true);
     }
 };
 
@@ -1235,17 +1374,20 @@ window.addCompetitionQuestion = () => {
     state.competitionFormQuestions.push('');
     state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, questions: state.competitionFormQuestions } : { questions: state.competitionFormQuestions };
     renderView();
+    debouncedAutosaveCompetition();
 };
 window.updateCompetitionQuestion = (idx, value) => {
     if (!state.competitionFormQuestions) state.competitionFormQuestions = state.currentCompetition && Array.isArray(state.currentCompetition.questions) ? [...state.currentCompetition.questions] : [];
     state.competitionFormQuestions[idx] = value;
     state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, questions: state.competitionFormQuestions } : { questions: state.competitionFormQuestions };
+    debouncedAutosaveCompetition();
 };
 window.removeCompetitionQuestion = (idx) => {
     if (!state.competitionFormQuestions) state.competitionFormQuestions = state.currentCompetition && Array.isArray(state.currentCompetition.questions) ? [...state.currentCompetition.questions] : [];
     state.competitionFormQuestions.splice(idx, 1);
     state.currentCompetition = state.currentCompetition ? { ...state.currentCompetition, questions: state.competitionFormQuestions } : { questions: state.competitionFormQuestions };
     renderView();
+    debouncedAutosaveCompetition();
 };
 
 window.toggleCompetitionActive = async (id, checked) => {
@@ -1289,6 +1431,52 @@ window.competitionRegistrationDecide = async (regId, status) => {
     const { error } = await supabaseClient.rpc('competition_registration_decide', { p_registration_id: regId, p_status: status });
     if (!error && state.competitionId) await fetchCompetitionRegistrations(state.competitionId);
     renderView();
+};
+
+window.deleteCompetition = async (competitionId) => {
+    const t = window.t;
+    if (!confirm(t('competition_delete_confirm'))) return;
+    if (!supabaseClient) { alert(t('competition_error')); return; }
+    const { data: ok, error } = await supabaseClient.rpc('competition_delete', { p_competition_id: competitionId });
+    if (error || !ok) {
+        alert(t('competition_error') + (error?.message ? '\n' + error.message : ''));
+        return;
+    }
+    const schoolId = state.competitionSchoolId || state.currentSchool?.id;
+    if (schoolId) window.fetchCompetitionList(schoolId);
+    if (state.competitionId === competitionId) {
+        state.competitionId = null;
+        state.currentCompetition = null;
+        state.competitionRegistrations = [];
+        state.competitionTab = 'edit';
+    }
+    renderView();
+};
+
+window.openRegistrationAnswers = (regId) => {
+    const reg = (state.competitionRegistrations || []).find(r => r.id === regId);
+    const questions = state.currentCompetition?.questions || [];
+    const answers = (reg?.answers && typeof reg.answers === 'object') ? reg.answers : {};
+    const titleEl = document.getElementById('registration-answers-title');
+    const bodyEl = document.getElementById('registration-answers-body');
+    const modalEl = document.getElementById('registration-answers-modal');
+    if (!titleEl || !bodyEl || !modalEl) return;
+    const t = window.t;
+    titleEl.textContent = (reg?.student_name || reg?.student_id || t.competition_answers || 'Answers');
+    if (questions.length === 0) {
+        bodyEl.innerHTML = `<p style="color: var(--text-secondary); font-size: 15px;">${t.competition_no_answers}</p>`;
+    } else {
+        bodyEl.innerHTML = questions.map((q, i) => {
+            const ans = answers[i] ?? answers[String(i)] ?? '';
+            const qEsc = (q || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const ansEsc = (ans || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            return `<div style="margin-bottom: 16px;"><div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${qEsc}</div><div style="font-size: 16px; color: var(--text-primary); line-height: 1.4;">${ansEsc || '—'}</div></div>`;
+        }).join('');
+    }
+    const closeBtn = document.getElementById('registration-answers-close-btn');
+    if (closeBtn) closeBtn.textContent = t('close') || 'Close';
+    modalEl.classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
 let _competitionDraftSaveTimer = null;
@@ -1427,7 +1615,7 @@ function renderView() {
                                         <div style="font-size: 11px; font-weight: 800; color: var(--system-blue); background: rgba(0, 122, 255, 0.08); padding: 5px 12px; border-radius: 14px; letter-spacing: 0.02em; border: 1px solid rgba(0, 122, 255, 0.1);">
                                             ${schoolStudents} ${t.dev_students_label.toUpperCase()}
                                         </div>
-                                        <button class="btn-icon" onclick="window.deleteSchool('${s.id}', '${s.name}')" style="color: var(--system-red); opacity: 0.3; padding: 6px; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255, 59, 48, 0.1)'" onmouseout="this.style.opacity='0.3'; this.style.background='transparent'">
+                                        <button type="button" class="btn-icon" data-action="delete-school" data-school-id="${s.id}" style="color: var(--system-red); opacity: 0.85; padding: 6px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255, 59, 48, 0.15)'" onmouseout="this.style.opacity='0.85'; this.style.background='transparent'" title="${(t.delete_school_btn || 'Delete School').replace(/"/g, '&quot;')}">
                                             <i data-lucide="trash-2" size="18"></i>
                                         </button>
                                     </div>
@@ -1513,7 +1701,7 @@ function renderView() {
 
                 <!-- ACTIONS -->
                 <div style="padding: 0 0.5rem;">
-                    <button class="btn-primary" onclick="window.submitNewSchoolWithAdmin()" style="width: 100%; border-radius: 20px; height: 60px; font-size: 17px; font-weight: 900; box-shadow: var(--shadow-lg); background: var(--text-primary); color: var(--bg-body); transition: all 0.3s;" onmouseover="this.style.transform='scale(1.01)'; this.style.filter='brightness(1.1)'" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)'">
+                    <button type="button" class="btn-primary" data-action="submit-new-school" style="width: 100%; border-radius: 20px; height: 60px; font-size: 17px; font-weight: 900; box-shadow: var(--shadow-lg); background: var(--text-primary); color: var(--bg-body); transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='scale(1.01)'; this.style.filter='brightness(1.1)'" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)'">
                         <i data-lucide="sparkles" size="18" style="margin-right: 10px;"></i> ${t.create_school_btn}
                     </button>
                     <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="width: 100%; background: transparent; border: none; color: var(--system-red); font-weight: 700; margin-top: 1.2rem; font-size: 15px; opacity: 0.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">
@@ -1847,10 +2035,47 @@ function renderView() {
         });
         html += `</div>`;
     } else if (view === 'qr') {
+        const compBlockHtml = state.currentCompetitionForStudent ? (() => {
+            const comp = state.currentCompetitionForStudent;
+            const reg = state.studentCompetitionRegistration;
+            const eventName = (comp.name || '').substring(0, 40);
+            const signInOpen = !!comp.is_sign_in_active;
+            if (reg && reg.status === 'SUBMITTED' && !comp.decisions_published_at) {
+                return `<div style="margin-bottom: 2rem; padding: 1rem; border-radius: 16px; background: var(--system-gray6); text-align: center;"><span style="font-size: 14px; font-weight: 600;">${t.reviewing_application}</span></div>`;
+            }
+            if (reg && comp.decisions_published_at) {
+                const accepted = reg.status === 'APPROVED';
+                const eventNameEsc = (comp.name || '').replace(/"/g, '&quot;');
+                const msg = (accepted ? (t.competition_approved_message || 'Congratulations! You will compete in "{eventName}"') : (t.competition_declined_message || 'This time you cannot compete, but we hope to see you next time.')).replace('{eventName}', eventNameEsc);
+                const cardBg = accepted ? 'linear-gradient(145deg, rgba(52, 199, 89, 0.12), rgba(52, 199, 89, 0.06))' : 'linear-gradient(145deg, rgba(142, 142, 147, 0.1), rgba(142, 142, 147, 0.04))';
+                const cardBorder = accepted ? '1px solid rgba(52, 199, 89, 0.4)' : '1px solid rgba(142, 142, 147, 0.2)';
+                const badgeBg = accepted ? 'var(--system-green)' : 'rgba(142, 142, 147, 0.2)';
+                const badgeColor = accepted ? 'white' : 'var(--text-secondary)';
+                return `
+                <div style="margin-bottom: 2rem;">
+                    <div style="background: ${cardBg}; border: ${cardBorder}; border-radius: 20px; padding: 1.5rem; text-align: center; max-width: 320px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+                        <div style="margin-bottom: 1rem;">
+                            <span style="display: inline-flex; align-items: center; justify-content: center; background: ${badgeBg}; color: ${badgeColor}; padding: 10px 24px; border-radius: 24px; font-weight: 800; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase;">${accepted ? '<i data-lucide="check-circle" size="18" style="margin-right: 8px; vertical-align: middle;"></i>' : ''}${accepted ? t.accepted : t.declined}</span>
+                        </div>
+                        <p style="font-size: 16px; line-height: 1.5; color: var(--text-primary); margin: 0; font-weight: 500;">${msg.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                    </div>
+                </div>`;
+            }
+            if (!signInOpen) {
+                return `<div style="margin-bottom: 2rem; padding: 1rem; border-radius: 16px; background: var(--system-gray6); text-align: center;"><span style="font-size: 14px; font-weight: 600;">${eventName}</span><br><span style="font-size: 12px; color: var(--text-secondary);">${t.competition_reg_opens_soon || 'Registration opens soon'}</span></div>`;
+            }
+            return `<div style="margin-bottom: 2rem; display: flex; justify-content: center;">
+                <button type="button" onclick="navigateToStudentJackAndJill('${comp.id}')" style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; max-width: 320px; padding: 18px 28px; border-radius: 18px; border: none; background: linear-gradient(135deg, var(--system-blue), #0051D5); color: white; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 122, 255, 0.35); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px rgba(0, 122, 255, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(0, 122, 255, 0.35)'">
+                    <i data-lucide="trophy" size="22"></i>
+                    <span>${(t.register_for_event || 'Register for {eventName}').replace('{eventName}', eventName)}</span>
+                </button>
+            </div>`;
+        })() : '';
         html += `
             <div class="text-center">
                 <h1 style="margin-bottom: 0.5rem;">${t.qr_title}</h1>
-                <p class="text-muted" style="margin-bottom: 2rem;">${t.qr_subtitle}</p>
+                <p class="text-muted" style="margin-bottom: ${compBlockHtml ? '1rem' : '2rem'};">${t.qr_subtitle}</p>
+                ${compBlockHtml}
                 <div class="qr-outer" style="margin: 0 auto 1.5rem;"><div id="qr-code"></div></div>
                 <div>
                     <div style="font-size: 0.8rem; margin-bottom: 1rem; letter-spacing: 0.05em; font-weight: 600;">
@@ -1931,20 +2156,6 @@ function renderView() {
                         </div>
                     </div>
 
-                    ${state.currentCompetitionForStudent ? (() => {
-                        const comp = state.currentCompetitionForStudent;
-                        const reg = state.studentCompetitionRegistration;
-                        const eventName = (comp.name || '').substring(0, 40);
-                        if (reg && reg.status === 'SUBMITTED' && !comp.decisions_published_at) {
-                            return `<div style="margin-top: 1.5rem; padding: 1rem; border-radius: 16px; background: var(--system-gray6); text-align: center;"><span style="font-size: 14px; font-weight: 600;">${t.reviewing_application}</span></div>`;
-                        }
-                        if (reg && comp.decisions_published_at) {
-                            const accepted = reg.status === 'APPROVED';
-                            return `<div style="margin-top: 1.5rem;"><span class="status-badge ${accepted ? 'status-approved' : 'status-declined'}" style="display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 14px;">${accepted ? t.accepted : t.declined}</span></div>`;
-                        }
-                        return `<div style="margin-top: 1.5rem;"><button class="btn-primary" onclick="navigateToStudentJackAndJill('${comp.id}')" style="width: 100%; max-width: 280px; border-radius: 14px; height: 48px;">${(t.register_for_event || 'Register for {eventName}').replace('{eventName}', eventName)}</button></div>`;
-                    })() : ''}
-
                 </div>
             </div>
         `;
@@ -1978,7 +2189,7 @@ function renderView() {
 
         html += `
             <div class="ios-header" style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn-icon" onclick="window.location.hash=''; state.currentView='qr'; state.studentCompetitionDetail=null; state.studentCompetitionRegDetail=null; saveState(); renderView();" style="padding: 8px;"><i data-lucide="arrow-left" size="20"></i></button>
+                <button class="btn-icon" onclick="window.location.hash=''; state.currentView='qr'; state.competitionId=null; state.studentCompetitionDetail=null; state.studentCompetitionRegDetail=null; saveState(); renderView();" style="padding: 8px;"><i data-lucide="arrow-left" size="20"></i></button>
                 <div class="ios-large-title">${t.jack_and_jill}</div>
             </div>
             <div style="padding: 1.2rem;">
@@ -2028,9 +2239,9 @@ function renderView() {
                     <button class="btn-primary" onclick="createNewStudent()" style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px;">
                         <i data-lucide="plus" size="14"></i> ${t.add_student}
                     </button>
-                    <button class="btn-secondary" ${hasActiveEvent ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, \'registrations\')"' : 'disabled'} style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px; ${!hasActiveEvent ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                    ${comps.length > 0 ? `<button class="btn-secondary" ${hasActiveEvent ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, \'registrations\')"' : 'disabled'} style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px; ${!hasActiveEvent ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
                         <i data-lucide="trophy" size="14"></i> ${t.jack_and_jill}
-                    </button>
+                    </button>` : ''}
                     ${currentComp ? `
                     <div style="display: flex; align-items: center; gap: 12px; margin-left: 4px; padding: 6px 12px; background: var(--system-gray6); border-radius: 12px;">
                         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer;">
@@ -2359,16 +2570,16 @@ function renderView() {
                     <input type="text" id="set-bank-name" value="${state.adminSettings.bank_name || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
                 <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">CBU</span>
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.account_number_label}</span>
                     <input type="text" id="set-bank-cbu" value="${state.adminSettings.bank_cbu || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
-                </div>
-                <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">Alias</span>
-                    <input type="text" id="set-bank-alias" value="${state.adminSettings.bank_alias || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
                 <div class="ios-list-item" style="padding: 12px 16px;">
                     <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.holder_name_label}</span>
                     <input type="text" id="set-bank-holder" value="${state.adminSettings.bank_holder || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                </div>
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.asunto_label}</span>
+                    <input type="text" id="set-bank-alias" value="${state.adminSettings.bank_alias || ''}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                 </div>
                 <div class="ios-list-item" onclick="saveBankSettings(this)" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
                     <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_bank_btn}
@@ -2430,38 +2641,42 @@ function renderView() {
             <div style="padding: 24px 20px 40px; max-width: 560px; margin: 0 auto;">
                 ${!schoolId ? `<p style="color: var(--text-secondary); font-size: 15px;">${t.not_found_msg}</p>` : formOpen ? `
                 <div class="jandj-form-card" style="background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
-                    <div style="padding: 24px 24px 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div style="padding: 28px 24px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
                             <h2 style="font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); margin: 0;">${current ? t.competition_edit_tab : t.add_new_event}</h2>
-                            <button type="button" onclick="closeCompetitionForm()" style="padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 15px; font-weight: 600; cursor: pointer;">${t.cancel}</button>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <span id="comp-autosave-status" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); min-width: 60px;"></span>
+                                <button type="button" onclick="closeCompetitionForm()" style="padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 15px; font-weight: 600; cursor: pointer;">${t.cancel}</button>
+                            </div>
                         </div>
                         <input type="hidden" id="comp-id" value="${(current && current.id) || ''}">
-                        <div style="margin-bottom: 24px;">
-                            <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 0.01em;">${t.competition_name}</label>
-                            <input type="text" id="comp-name" value="${(current && current.name) || ''}" placeholder="${t.competition_name}" style="width: 100%; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box;">
+                        <div style="margin-bottom: 28px;">
+                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_name}</label>
+                            <input type="text" id="comp-name" value="${(current && current.name) || ''}" placeholder="${t.competition_name}" oninput="debouncedAutosaveCompetition()" style="width: 100%; min-width: 0; padding: 16px 18px; height: 50px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px;">
                             <div>
-                                <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 0.01em;">${t.competition_date}</label>
-                                <input type="date" id="comp-date" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" style="width: 100%; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box;">
+                                <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_date}</label>
+                                <input type="date" id="comp-date" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" onchange="debouncedAutosaveCompetition()" style="width: 100%; padding: 16px 18px; height: 50px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
                             </div>
                             <div>
-                                <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 0.01em;">${t.competition_time}</label>
-                                <input type="time" id="comp-time" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" style="width: 100%; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box;">
+                                <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_time}</label>
+                                <input type="time" id="comp-time" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" onchange="debouncedAutosaveCompetition()" style="width: 100%; padding: 16px 18px; height: 50px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
                             </div>
-                        </div>
-                        <div style="margin-bottom: 24px;">
-                            <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 0.01em;">${t.competition_questions}</label>
-                            <div id="comp-questions-container"></div>
-                            <button type="button" onclick="addCompetitionQuestion()" style="margin-top: 12px; padding: 14px 20px; border-radius: 14px; border: 1px dashed var(--border); background: transparent; color: var(--system-blue); font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;"><i data-lucide="plus" size="20"></i>${t.competition_add_question}</button>
                         </div>
                         <div style="margin-bottom: 28px;">
-                            <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 10px; letter-spacing: 0.01em;">${t.competition_next_steps}</label>
-                            <textarea id="comp-next-steps" rows="4" style="width: 100%; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; line-height: 1.45; resize: vertical; outline: none; box-sizing: border-box; font-family: inherit;">${(current && current.next_steps_text) || ''}</textarea>
+                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_questions}</label>
+                            <div id="comp-questions-container"></div>
+                            <button type="button" onclick="addCompetitionQuestion()" style="margin-top: 14px; padding: 16px 22px; border-radius: 14px; border: 2px dashed var(--border); background: transparent; color: var(--system-blue); font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: background 0.2s, border-color 0.2s;" onmouseover="this.style.background='rgba(0,122,255,0.06)'; this.style.borderColor='var(--system-blue)'" onmouseout="this.style.background='transparent'; this.style.borderColor='var(--border)'"><i data-lucide="plus" size="20"></i>${t.competition_add_question}</button>
+                        </div>
+                        <div style="margin-bottom: 32px;">
+                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_next_steps}</label>
+                            <textarea id="comp-next-steps" rows="4" placeholder="${t.competition_next_steps_placeholder || ''}" oninput="debouncedAutosaveCompetition()" style="width: 100%; min-height: 120px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; line-height: 1.5; resize: vertical; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">${(current && current.next_steps_text) || ''}</textarea>
                         </div>
                     </div>
-                    <div style="padding: 20px 24px 28px; background: var(--system-gray6); border-top: 1px solid var(--border);">
-                        <button type="button" onclick="saveCompetition()" style="width: 100%; padding: 18px; border-radius: 14px; border: none; background: var(--system-blue); color: white; font-size: 17px; font-weight: 600; cursor: pointer;">${t.competition_save}</button>
+                    <div style="padding: 20px 24px 28px; background: var(--system-gray6); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                        <span id="comp-autosave-status-footer" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);"></span>
+                        <button type="button" onclick="closeCompetitionForm()" style="flex: 1; max-width: 200px; padding: 16px 24px; border-radius: 14px; border: none; background: var(--system-blue); color: white; font-size: 17px; font-weight: 600; cursor: pointer;">${t.competition_done}</button>
                     </div>
                 </div>
                 ` : `
@@ -2476,20 +2691,22 @@ function renderView() {
                             : `<button type="button" onclick="if(confirm(t('competition_confirm_publish'))) publishCompetitionDecisions('${state.competitionId}');" style="width: 100%; padding: 14px 20px; border: none; background: var(--system-blue); color: white; font-size: 16px; font-weight: 600; cursor: pointer;">${t.competition_publish_decisions}</button>`
                         }
                         <div style="padding: 8px 0;">
-                            ${regs.length === 0 ? `<div style="padding: 32px 20px; text-align: center; color: var(--text-secondary); font-size: 15px;">No registrations yet.</div>` : regs.map(r => `
+                            ${regs.length === 0 ? `<div style="padding: 32px 20px; text-align: center; color: var(--text-secondary); font-size: 15px;">No registrations yet.</div>` : regs.map(r => {
+                                const canDecide = ['SUBMITTED', 'APPROVED', 'DECLINED'].includes(r.status || '');
+                                return `
                                 <div style="padding: 16px 20px; border-bottom: 1px solid var(--border);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${r.status === 'SUBMITTED' ? '12px' : '0'};">
-                                        <span style="font-size: 17px; font-weight: 600;">${(r.student_name || r.student_id || '').substring(0, 30)}</span>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${canDecide ? '12px' : '0'};">
+                                        <button type="button" data-action="openRegistrationAnswers" data-reg-id="${r.id}" style="background: none; border: none; padding: 0; font-size: 17px; font-weight: 600; color: var(--system-blue); cursor: pointer; text-align: left;">${((r.student_name || r.student_id || '') + '').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 30)}</button>
                                         <span class="status-badge status-${(r.status || '').toLowerCase()}" style="font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">${r.status === 'APPROVED' ? t.accepted : r.status === 'DECLINED' ? t.declined : r.status === 'SUBMITTED' ? t.pending : 'Draft'}</span>
                                     </div>
-                                    ${r.status === 'SUBMITTED' ? `
+                                    ${canDecide ? `
                                     <div style="display: flex; gap: 10px;">
-                                        <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: none; background: var(--system-green); color: white; font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'APPROVED');">${t.competition_approve}</button>
-                                        <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'DECLINED');">${t.competition_decline}</button>
+                                        <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: ${r.status === 'APPROVED' ? '2px solid var(--system-green)' : 'none'}; background: ${r.status === 'APPROVED' ? 'transparent' : 'var(--system-green)'}; color: ${r.status === 'APPROVED' ? 'var(--system-green)' : 'white'}; font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'APPROVED');">${t.competition_approve}</button>
+                                        <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: ${r.status === 'DECLINED' ? '2px solid var(--system-red)' : '1px solid var(--border)'}; background: ${r.status === 'DECLINED' ? 'transparent' : 'var(--system-gray6)'}; color: ${r.status === 'DECLINED' ? 'var(--system-red)' : 'var(--text-primary)'}; font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'DECLINED');">${t.competition_decline}</button>
                                     </div>
                                     ` : ''}
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
                     `;
@@ -2507,7 +2724,10 @@ function renderView() {
                                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">${(c.name || '').replace(/</g, '&lt;').substring(0, 40)}${(c.name || '').length > 40 ? '…' : ''}</div>
                                     <div style="font-size: 15px; color: var(--text-secondary);">${c.starts_at ? new Date(c.starts_at).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</div>
                                 </div>
-                                <a href="#" data-action="openRegistrations" data-competition-id="${c.id}" style="font-size: 15px; font-weight: 600; color: var(--system-blue);">${t.competition_registrations}</a>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <a href="#" data-action="openRegistrations" data-competition-id="${c.id}" style="font-size: 15px; font-weight: 600; color: var(--system-blue);">${t.competition_registrations}</a>
+                                    <button type="button" data-action="deleteCompetition" data-competition-id="${c.id}" title="${t.competition_delete_confirm || 'Delete event'}" style="background: none; border: none; padding: 6px; cursor: pointer; color: var(--system-red); opacity: 0.8; border-radius: 8px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'"><i data-lucide="trash-2" size="18"></i></button>
+                                </div>
                             </div>
                             <div style="padding: 14px 20px; background: var(--system-gray6); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px;">
                                 <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
@@ -2542,9 +2762,10 @@ function renderView() {
                 const container = document.getElementById('comp-questions-container');
                 if (container) {
                     container.innerHTML = questions.map((q, i) => `
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
-                            <input type="text" value="${String(q || '').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" data-qidx="${i}" onchange="updateCompetitionQuestion(${i}, this.value)" style="flex:1; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px;">
-                            <button type="button" onclick="removeCompetitionQuestion(${i})" style="padding: 10px; color: var(--system-red); border: none; background: transparent; cursor: pointer;"><i data-lucide="trash-2" size="18"></i></button>
+                        <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: center;">
+                            <span style="flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; background: var(--system-gray6); color: var(--text-secondary); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;">${i + 1}</span>
+                            <input type="text" value="${String(q || '').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" data-qidx="${i}" oninput="updateCompetitionQuestion(${i}, this.value)" style="flex: 1; min-width: 0; padding: 14px 16px; height: 48px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
+                            <button type="button" onclick="removeCompetitionQuestion(${i})" title="Remove question" style="flex-shrink: 0; padding: 10px; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; border-radius: 8px; opacity: 0.7; transition: opacity 0.2s, color 0.2s;" onmouseover="this.style.opacity='1'; this.style.color='var(--system-red)'" onmouseout="this.style.opacity='0.7'; this.style.color='var(--text-secondary)'"><i data-lucide="trash-2" size="18"></i></button>
                         </div>
                     `).join('');
                     if (window.lucide) window.lucide.createIcons();
@@ -2853,8 +3074,10 @@ window.signUpStudent = async () => {
     state.isAdmin = false;
     state.currentSchool = state.schools.find(s => s.id === newStudent.school_id) || state.currentSchool;
     state.currentView = 'qr';
+    clearSchoolData();
+    _lastFetchEndTime = 0;
     saveState();
-    renderView();
+    fetchAllData();
 };
 
 window.loginStudent = async () => {
@@ -2918,8 +3141,10 @@ window.loginStudent = async () => {
         state.isAdmin = false;
         state.currentSchool = state.schools.find(s => s.id === student.school_id) || { id: student.school_id, name: 'School' };
         state.currentView = 'qr';
+        clearSchoolData();
+        _lastFetchEndTime = 0;
         saveState();
-        renderView();
+        fetchAllData();
     } else {
         alert(t('invalid_login'));
     }
@@ -3159,6 +3384,9 @@ window.linkPlatformAdminAccount = async () => {
 };
 
 window.loginDeveloper = async (user, pass) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:entry',message:'loginDeveloper called',data:{userPrefix:(user||'').substring(0,2)+'..',looksLikeEmail:!!(typeof user==='string'&&user.includes('@'))},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     if (!supabaseClient) {
         alert("Database connection not initialized.");
         return;
@@ -3197,15 +3425,25 @@ window.loginDeveloper = async (user, pass) => {
         p_username: user,
         p_password: pass
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterRpc',message:'after get_platform_admin_by_credentials',data:{hasLegacyRows:!!(legacyRows&&legacyRows.length>0),rpcError:rpcError?String(rpcError.message):null},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
         const platformUsername = legacyRows[0].username || user;
         const pseudoEmail = `${String(platformUsername).replace(/\s+/g, '_').toLowerCase()}@platform.bailadmin.local`;
         const errMsg = (e) => (e && e.message ? String(e.message) : '');
         try {
             let { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
-            const isInvalidCreds = signInErr && (errMsg(signInErr).toLowerCase().includes('invalid') || errMsg(signInErr).includes('Invalid login'));
+            // #region agent log
+            const _isInv = signInErr && (errMsg(signInErr).toLowerCase().includes('invalid') || errMsg(signInErr).includes('Invalid login'));
+            fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterSignIn',message:'after signInWithPassword',data:{signInErr:signInErr?errMsg(signInErr):null,isInvalidCreds:_isInv,pseudoEmail},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+            // #endregion
+            const isInvalidCreds = _isInv;
             if (signInErr && isInvalidCreds) {
                 const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterSignUp',message:'after signUp',data:{signUpErr:signUpErr?errMsg(signUpErr):null},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+                // #endregion
                 if (signUpErr && (errMsg(signUpErr).includes('already registered') || errMsg(signUpErr).includes('already exists'))) {
                     signInErr = (await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass })).error;
                 } else {
@@ -3215,6 +3453,10 @@ window.loginDeveloper = async (user, pass) => {
             if (!signInErr) await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: pass });
         } catch (e) { console.warn('Platform dev Auth link:', e); }
         const { data: sessionData } = await supabaseClient.auth.getSession();
+        // #region agent log
+        const _hasSession = !!(sessionData?.session?.user);
+        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterGetSession',message:'after getSession',data:{hasSession:_hasSession},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
         if (!sessionData?.session?.user) {
             state.loading = false;
             renderView();
@@ -3237,8 +3479,11 @@ window.loginDeveloper = async (user, pass) => {
     alert("Invalid Developer credentials.");
 };
 
-window.deleteSchool = async (schoolId, schoolName) => {
+window.deleteSchool = async (schoolId, schoolNameParam) => {
     const t = DANCE_LOCALES[state.language] || DANCE_LOCALES.en;
+    const schools = state.platformData?.schools || state.schools || [];
+    const school = schools.find(s => s.id === schoolId);
+    const schoolName = schoolNameParam != null ? String(schoolNameParam) : (school?.name || schoolId);
     if (!confirm(`${t.delete_school_confirm}\n\nSchool: ${schoolName}`)) return;
 
     try {
@@ -3247,29 +3492,35 @@ window.deleteSchool = async (schoolId, schoolName) => {
             return;
         }
         const { data: sessionData } = await supabaseClient.auth.getSession();
+        // #region agent log
+        const _delHasSession = !!(sessionData?.session?.user);
+        const _delLog = {location:'app.js:deleteSchool:sessionCheck',data:{hasSession:_delHasSession},hypothesisId:'del-H1'};
+        console.log('[DEBUG deleteSchool session]', _delLog);
+        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._delLog,message:'delete school session check',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (!sessionData?.session?.user) {
             alert("Your Dev session is missing or expired. Log out and log in again with your Dev credentials (username + password, or the email + password you used in \"Link account\") so you have permission to delete schools.");
             return;
         }
 
-        // 1. Delete all related data for this school
-        // We'll run them in parallel for speed, though order might matter with DB constraints.
-        // Usually, deleting the child records first is safer.
-        await Promise.all([
-            supabaseClient.from('payments').delete().eq('school_id', schoolId),
-            supabaseClient.from('classes').delete().eq('school_id', schoolId),
-            supabaseClient.from('subscriptions').delete().eq('school_id', schoolId),
-            supabaseClient.from('students').delete().eq('school_id', schoolId),
-            supabaseClient.from('admins').delete().eq('school_id', schoolId)
-        ]);
+        // Use RPC to bypass RLS (platform admin user_id may not be linked for direct table delete)
+        const { data: rpcResult, error } = await supabaseClient.rpc('school_delete_by_platform', { p_school_id: schoolId });
+        const deletedRows = rpcResult?.deleted ? [{ id: schoolId }] : [];
 
-        // 2. Delete the school itself (RLS may block with 0 rows and no error)
-        const { data: deletedRows, error } = await supabaseClient.from('schools').delete().eq('id', schoolId).select('id');
-
+        // #region agent log
+        const _delResLog = {location:'app.js:deleteSchool:afterDelete',data:{error:error?String(error.message):null,deletedCount:deletedRows?deletedRows.length:0},hypothesisId:'del-H2'};
+        console.log('[DEBUG deleteSchool result]', _delResLog);
+        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._delResLog,message:'after school delete',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (error) {
-            alert(`Error deleting school: ${error.message}`);
+            const msg = error.message || '';
+            if (msg.includes('Permission denied') && msg.includes('platform admin')) {
+                alert('Permission denied. Your platform admin account is not linked to this session.\n\n1. Use the "Enable username login" card on this dashboard to enter your password and link.\n2. Or log out and log in again with your username and password.');
+            } else {
+                alert(`Error deleting school: ${msg}`);
+            }
         } else if (!deletedRows || deletedRows.length === 0) {
-            alert('Delete did not go through. Log in with your linked platform admin account (email + password from the link step) so the app has permission, then try again.');
+            alert('Permission denied. Your platform admin account is not linked to this session.\n\n1. Use the "Enable username login" card on this dashboard to enter your password and link.\n2. Or log out and log in again with your username and password.');
         } else {
             alert(t.delete_school_success);
             await fetchPlatformData(); // Refresh the list
@@ -3324,9 +3575,7 @@ async function fetchPlatformData() {
             const uid = sessionData?.session?.user?.id;
             const admins = state.platformData?.platform_admins || [];
             const sessionLinked = !!(uid && admins.some(pa => pa.user_id === uid));
-            const currentDevUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : '';
-            const rowAlreadyLinked = !!currentDevUsername && admins.some(pa => (pa.username || '').trim() === currentDevUsername && pa.user_id != null);
-            state.platformAdminLinked = sessionLinked || rowAlreadyLinked;
+            state.platformAdminLinked = sessionLinked;
         }
 
         state.loading = false;
@@ -3384,12 +3633,28 @@ window.createNewStudent = async () => {
     alert(t('student_created'));
 };
 
+function clearSchoolData() {
+    state.classes = [];
+    state.subscriptions = [];
+    state.students = [];
+    state.currentCompetitionForStudent = null;
+    state.studentCompetitionRegistration = null;
+    state.paymentRequests = [];
+    state.adminSettings = {};
+    state.competitions = [];
+    state.competitionRegistrations = [];
+    state.currentCompetition = null;
+    state.competitionId = null;
+    state.competitionSchoolId = null;
+}
+
 window.logout = () => {
     state.currentUser = null;
     state.isAdmin = false;
     state.currentView = 'school-selection';
     state.currentSchool = null;
     state.lastActivity = Date.now();
+    clearSchoolData();
     saveState();
     renderView();
 };
@@ -3407,11 +3672,16 @@ window.confirmSchoolSelection = () => {
 window.selectSchool = (id) => {
     const school = state.schools.find(s => s.id === id);
     if (school) {
+        const prevSchoolId = state.currentSchool?.id;
         state.currentSchool = school;
-        state.adminSettings = {}; // PROACTIVE CLEAR
+        state.adminSettings = {};
         state.currentView = 'auth';
+        if (prevSchoolId !== id) {
+            clearSchoolData();
+            _lastFetchEndTime = 0;
+        }
         saveState();
-        fetchAllData(); // Fetch school specific data
+        fetchAllData();
     }
 };
 
@@ -3419,6 +3689,7 @@ window.backToSchoolSelection = () => {
     state.currentSchool = null;
     state.isAdmin = false;
     state.currentView = 'school-selection';
+    clearSchoolData();
     saveState();
     renderView();
 };
@@ -3466,8 +3737,19 @@ window.submitNewSchoolWithAdmin = async () => {
         return;
     }
 
-    if (supabaseClient) {
+    if (!supabaseClient) {
+        alert("Database connection not available. Refresh the page and try again.");
+        return;
+    }
+
+    {
         const { data: sessionData } = await supabaseClient.auth.getSession();
+        // #region agent log
+        const _hasSession = !!(sessionData?.session?.user);
+        const _createLog = {location:'app.js:submitNewSchoolWithAdmin:sessionCheck',data:{hasSession:_hasSession},hypothesisId:'create-H1'};
+        console.log('[DEBUG create school session]', _createLog);
+        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._createLog,message:'create school session check',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (!sessionData?.session?.user) {
             alert("Your Dev session is missing or expired. Log out and log in again with your Dev credentials (username + password, or the email + password you used in \"Link account\") so you have permission to create schools.");
             return;
@@ -3476,25 +3758,33 @@ window.submitNewSchoolWithAdmin = async () => {
         renderView();
 
         try {
-            // 1. Create School
-            const { data: schoolData, error: schoolError } = await supabaseClient
-                .from('schools')
-                .insert([{ name: schoolName }])
-                .select();
+            // 1. Create School (use RPC to bypass RLS when platform admin user_id may not be linked)
+            const { data: schoolRow, error: schoolError } = await supabaseClient.rpc('school_insert_by_platform', { p_name: schoolName });
 
+            // #region agent log
+            const _schoolLog = {location:'app.js:submitNewSchoolWithAdmin:schoolInsert',data:{schoolError:schoolError?String(schoolError.message):null,hasSchoolRow:!!schoolRow},hypothesisId:'create-H2'};
+            console.log('[DEBUG create school insert]', _schoolLog);
+            fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._schoolLog,message:'after school insert',timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             if (schoolError) throw schoolError;
-            const schoolId = schoolData[0].id;
+            const schoolId = schoolRow?.id;
+            if (!schoolId) throw new Error('School was not created');
 
             // 2. Create Auth user for admin (pseudo-email) then insert admin with user_id (platform-only RPC for first admin)
             let adminUserId = null;
             const pseudoEmail = `${String(adminUser).replace(/\s+/g, '_').toLowerCase()}+${schoolId}@admins.bailadmin.local`;
+            let sessBefore = null;
             try {
+                const res = await supabaseClient.auth.getSession();
+                sessBefore = res?.data?.session;
                 const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
                 if (tempClient) {
                     const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password: adminPass });
                     if (!signUpErr && signUpData?.user) adminUserId = signUpData.user.id;
                 }
-            } catch (e) { console.warn('Admin Auth signUp:', e); }
+            } catch (e) { console.warn('Admin Auth signUp:', e); } finally {
+                if (sessBefore) await supabaseClient.auth.setSession({ access_token: sessBefore.access_token, refresh_token: sessBefore.refresh_token });
+            }
             const adminPayload = { p_school_id: schoolId, p_username: adminUser.trim(), p_password: adminPass };
             if (adminUserId) adminPayload.p_user_id = adminUserId;
             let { error: adminError } = await supabaseClient.rpc('admin_insert_for_school_by_platform', adminPayload);
@@ -3502,6 +3792,11 @@ window.submitNewSchoolWithAdmin = async () => {
                 const res2 = await supabaseClient.rpc('admin_insert_for_school', adminPayload);
                 adminError = res2.error;
             }
+            // #region agent log
+            const _adminLog = {location:'app.js:submitNewSchoolWithAdmin:adminInsert',data:{adminError:adminError?String(adminError.message):null},hypothesisId:'create-H3'};
+            console.log('[DEBUG create admin insert]', _adminLog);
+            fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._adminLog,message:'after admin insert',timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             if (adminError) {
                 const fallbackPayload = {
                     id: "ADM-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
@@ -3533,11 +3828,17 @@ window.submitNewSchoolWithAdmin = async () => {
         } catch (err) {
             console.error("Creation Error:", err);
             const t = DANCE_LOCALES[state.language] || DANCE_LOCALES.en;
-            if (err.message && err.message.includes('admins_username_key')) {
+            const msg = err && (err.message || String(err));
+            if (msg && msg.includes('Permission denied') && msg.includes('platform admin')) {
+                alert('Permission denied. Your platform admin account is not linked to this session.\n\n1. Use the "Enable username login" card on this dashboard to enter your password and link.\n2. Or log out and log in again with your username and password.');
+            } else if (msg && msg.includes('admins_username_key')) {
                 alert(t.username_exists_msg);
             } else {
-                alert("Failed to create school/admin: " + err.message);
+                alert("Failed to create school/admin: " + (msg || "Unknown error"));
             }
+            state.loading = false;
+            renderView();
+        } finally {
             state.loading = false;
             renderView();
         }
@@ -3661,19 +3962,47 @@ window.openPaymentModal = async (subId) => {
     const bankHolder = state.adminSettings?.bank_holder || 'N/A';
 
     content.innerHTML = `
-        <h2 style="margin-bottom: 1.5rem;">${t('payment_instructions')}</h2>
-        <div class="card" style="margin-bottom: 1.5rem; text-align: left;">
-            <p><strong>${sub.name}</strong> - MXD ${sub.price}</p>
-            <hr style="margin: 1rem 0; opacity: 0.1;">
-            <p style="font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>${bankName}</strong></p>
-            <p style="font-size: 0.8rem;">CBU: ${bankCbu}</p>
-            <p style="font-size: 0.8rem;">Alias: ${bankAlias}</p>
-            <p style="font-size: 0.8rem;">${t('holder_name_label')}: ${bankHolder}</p>
+        <div class="payment-modal-header">
+            <div class="payment-modal-icon">
+                <i data-lucide="credit-card" size="28"></i>
+            </div>
+            <h2 class="payment-modal-title">${t('payment_instructions')}</h2>
+            <div class="payment-modal-package">
+                <span class="payment-modal-package-name">${sub.name}</span>
+                <span class="payment-modal-package-price">MXD ${sub.price}</span>
+            </div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:0.8rem;">
-            <button class="btn-primary w-full" onclick="submitPaymentRequest('${sub.id}', 'transfer')">${t('i_have_paid')} (${t('transfer')})</button>
-            <button class="btn-secondary w-full" onclick="submitPaymentRequest('${sub.id}', 'cash')">${t('pay_cash')}</button>
-            <button class="btn-icon w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t('close')}</button>
+        <div class="payment-modal-bank ios-list">
+            <div class="ios-list-item payment-modal-bank-row">
+                <span class="payment-modal-label">${t('bank_name_label')}</span>
+                <span class="payment-modal-value">${bankName}</span>
+            </div>
+            <div class="ios-list-item payment-modal-bank-row">
+                <span class="payment-modal-label">${t('account_number_label')}</span>
+                <span class="payment-modal-value payment-modal-value-monospace">${bankCbu}</span>
+            </div>
+            <div class="ios-list-item payment-modal-bank-row">
+                <span class="payment-modal-label">${t('holder_name_label')}</span>
+                <span class="payment-modal-value">${bankHolder}</span>
+            </div>
+            <div class="ios-list-item payment-modal-bank-row">
+                <span class="payment-modal-label">${t('asunto_label')}</span>
+                <span class="payment-modal-value">${bankAlias}</span>
+            </div>
+        </div>
+        <div class="payment-modal-actions">
+            <button class="btn-primary w-full payment-modal-btn" onclick="submitPaymentRequest('${sub.id}', 'transfer')">
+                <i data-lucide="check-circle" size="20"></i>
+                ${t('i_have_paid')} (${t('transfer')})
+            </button>
+            <button class="btn-secondary w-full payment-modal-btn" onclick="submitPaymentRequest('${sub.id}', 'cash')">
+                <i data-lucide="banknote" size="20"></i>
+                ${t('pay_cash')}
+            </button>
+            <button class="btn-icon w-full payment-modal-btn payment-modal-close" onclick="document.getElementById('payment-modal').classList.add('hidden')">
+                <i data-lucide="x" size="20"></i>
+                ${t('close')}
+            </button>
         </div>
     `;
     modal.classList.remove('hidden');
@@ -3715,10 +4044,17 @@ window.submitPaymentRequest = async (subId, method) => {
     // Show success message
     const content = document.getElementById('payment-modal-content');
     content.innerHTML = `
-        <i data-lucide="check-circle" size="48" style="color: var(--secondary); margin-bottom: 1rem;"></i>
-        <h2>${t('request_sent_title')}</h2>
-        <p class="text-muted" style="margin: 1rem 0;">${t('request_sent_msg')}</p>
-        <button class="btn-primary w-full" onclick="document.getElementById('payment-modal').classList.add('hidden')">${t('close')}</button>
+        <div class="payment-modal-header">
+            <div class="payment-modal-icon" style="background: rgba(52, 199, 89, 0.15); color: var(--system-green);">
+                <i data-lucide="check-circle" size="32"></i>
+            </div>
+            <h2 class="payment-modal-title">${t('request_sent_title')}</h2>
+            <p class="text-muted" style="margin: 0 0 1.5rem 0; font-size: 0.95rem; line-height: 1.5;">${t('request_sent_msg')}</p>
+            <button class="btn-primary w-full payment-modal-btn" onclick="document.getElementById('payment-modal').classList.add('hidden')">
+                <i data-lucide="x" size="20"></i>
+                ${t('close')}
+            </button>
+        </div>
     `;
     if (window.lucide) lucide.createIcons();
 };
@@ -4598,6 +4934,9 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         }
         saveState();
         renderView();
+        if (view === 'qr' && state.currentUser && !state.isAdmin && state.currentUser.id && (state.currentUser.school_id || state.currentSchool?.id) && supabaseClient) {
+            fetchAllData();
+        }
     });
 });
 
@@ -4687,6 +5026,27 @@ logoEl.addEventListener('click', () => {
     if (saved.currentView && saved.currentView === 'student-competition-register' && !window.location.hash) {
         state.competitionId = saved.competitionId || null;
     }
+    // Student refresh fix: if student refreshes while on QR, avoid restoring competition form (hash would be empty)
+    if (saved.currentUser && !saved.isAdmin && saved.currentView === 'student-competition-register' && !window.location.hash) {
+        state.currentView = 'qr';
+        state.competitionId = null;
+        state.studentCompetitionDetail = null;
+        state.studentCompetitionRegDetail = null;
+    }
+
+    // SECURITY: Never show admin views to students - prevents access to admin dashboard on reload or shared URLs
+    const isStudent = state.currentUser && state.currentUser.school_id && state.currentUser.role !== 'admin' && state.currentUser.role !== 'platform-dev' && !state.isPlatformDev;
+    const adminViews = ['admin-competition-jack-and-jill', 'admin-students', 'admin-scanner', 'admin-memberships', 'admin-revenue', 'admin-settings'];
+    const isAdminView = adminViews.includes(state.currentView) || (state.currentView && state.currentView.startsWith('admin-'));
+    if (isStudent && isAdminView) {
+        state.isAdmin = false;
+        state.currentView = (saved.currentView === 'qr' || saved.currentView === 'shop' || saved.currentView === 'schedule') ? saved.currentView : 'qr';
+        state.competitionId = null;
+        state.competitionSchoolId = null;
+        state.competitionTab = 'edit';
+        window.location.hash = '';
+        if (local) saveState();
+    }
 
     updateI18n();
     document.body.setAttribute('data-theme', state.theme);
@@ -4702,6 +5062,21 @@ logoEl.addEventListener('click', () => {
     });
 
     document.addEventListener('click', (e) => {
+        const delSchoolBtn = e.target.closest('[data-action="delete-school"]');
+        if (delSchoolBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = delSchoolBtn.getAttribute('data-school-id');
+            if (id && typeof window.deleteSchool === 'function') window.deleteSchool(id);
+            return;
+        }
+        const submitSchoolBtn = e.target.closest('[data-action="submit-new-school"]');
+        if (submitSchoolBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof window.submitNewSchoolWithAdmin === 'function') window.submitNewSchoolWithAdmin();
+            return;
+        }
         const btn = e.target.closest('[data-action="openCreateNewCompetition"]');
         if (btn) {
             e.preventDefault();
@@ -4722,6 +5097,22 @@ logoEl.addEventListener('click', () => {
                 saveState();
                 renderView();
             }
+            return;
+        }
+        const answersBtn = e.target.closest('[data-action="openRegistrationAnswers"]');
+        if (answersBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const regId = answersBtn.getAttribute('data-reg-id');
+            if (regId && typeof window.openRegistrationAnswers === 'function') window.openRegistrationAnswers(regId);
+            return;
+        }
+        const deleteCompBtn = e.target.closest('[data-action="deleteCompetition"]');
+        if (deleteCompBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = deleteCompBtn.getAttribute('data-competition-id');
+            if (id && typeof window.deleteCompetition === 'function') window.deleteCompetition(id);
         }
     });
 
