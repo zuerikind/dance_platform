@@ -3305,7 +3305,10 @@ async function fetchPlatformData() {
             const { data: sessionData } = await supabaseClient.auth.getSession();
             const uid = sessionData?.session?.user?.id;
             const admins = state.platformData?.platform_admins || [];
-            state.platformAdminLinked = !!(uid && admins.some(pa => pa.user_id === uid));
+            const sessionLinked = !!(uid && admins.some(pa => pa.user_id === uid));
+            const currentDevUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : '';
+            const rowAlreadyLinked = !!currentDevUsername && admins.some(pa => (pa.username || '').trim() === currentDevUsername && pa.user_id != null);
+            state.platformAdminLinked = sessionLinked || rowAlreadyLinked;
         }
 
         state.loading = false;
