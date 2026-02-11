@@ -4894,10 +4894,10 @@ window.startScanner = async () => {
             window.handleScan(id);
         };
 
-        // Try cameras in order: user (front/laptop) → environment (rear/phone) → any available
+        // Try cameras in order: environment (back/rear) first, then user (front) → any available
         const constraints = [
-            { facingMode: "user" },
             { facingMode: "environment" },
+            { facingMode: "user" },
             { video: true }
         ];
         let lastErr;
