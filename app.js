@@ -734,6 +734,7 @@ let state = {
     showWeeklyPreview: false,
     isPlatformDev: false,
     platformAdminLinked: false,
+    schoolAdminLinked: false,
     platformData: { schools: [], students: [], admins: [] },
     loading: false,
     // Jack and Jill competitions (hash routing)
@@ -936,6 +937,12 @@ async function fetchAllData() {
         } else if (state.isAdmin && supabaseClient) {
             const { data: rpcAdmins } = await supabaseClient.rpc('get_school_admins', { p_school_id: sid });
             if (rpcAdmins && Array.isArray(rpcAdmins)) state.admins = rpcAdmins;
+        }
+        if (state.isAdmin && supabaseClient) {
+            const { data: sessionData } = await supabaseClient.auth.getSession();
+            const uid = sessionData?.session?.user?.id;
+            const admins = state.admins || [];
+            state.schoolAdminLinked = !!(uid && admins.some(a => a.user_id === uid));
         }
         if (isStudent && state.currentUser?.id && supabaseClient) {
             try {
@@ -1380,9 +1387,11 @@ function renderView() {
                     ${!state.platformAdminLinked ? `
                     <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, transparent 100%);">
                         <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;"><i data-lucide="link" size="14" style="vertical-align: middle; margin-right: 6px;"></i> Link platform admin (one-time)</div>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">So you can create schools: enter an email and your current password. We create a login and link it to "${(state.currentUser && state.currentUser.name ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : 'you')}".</p>
-                        <input type="text" id="platform-link-email" placeholder="e.g. omid@bailadmin.lat" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 8px; box-sizing: border-box;" />
-                        <input type="password" id="platform-link-password" placeholder="Your current platform admin password" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">We will link &quot;${(state.currentUser && state.currentUser.name ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : 'you')}&quot; to a new login. Use the <strong>exact same password</strong> you used to log in here.</p>
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Email (for your new login)</label>
+                        <input type="email" id="platform-link-email" placeholder="e.g. omid@bailadmin.lat" autocomplete="off" value="" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Current Dev password (same as login)</label>
+                        <input type="password" id="platform-link-password" placeholder="Same password you used to open this dashboard" autocomplete="off" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
                         <button type="button" class="btn-primary" onclick="window.linkPlatformAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Link account</button>
                     </div>
                     ` : ''}
@@ -2003,7 +2012,19 @@ function renderView() {
         const comps = Array.isArray(state.competitions) ? state.competitions : [];
         const currentComp = comps.find(c => c.is_active) || comps.sort((a, b) => new Date(b.starts_at || 0) - new Date(a.starts_at || 0))[0] || null;
         const hasActiveEvent = comps.some(c => c.is_active);
+        const adminUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Admin\)\s*$/i, '').trim() : '';
         html += `
+            ${!state.schoolAdminLinked ? `
+            <div class="card" style="margin: 1.2rem 1.2rem 1rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, transparent 100%);">
+                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;"><i data-lucide="link" size="14" style="vertical-align: middle; margin-right: 6px;"></i> Link admin account (one-time)</div>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">We will link &quot;${adminUsername || 'you'}&quot; to a new login so you can create events and use all features. Use the <strong>exact same password</strong> you used to log in here.</p>
+                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Email (for your new login)</label>
+                <input type="email" id="school-admin-link-email" placeholder="e.g. admin@myschool.com" autocomplete="off" value="" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
+                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Current admin password (same as login)</label>
+                <input type="password" id="school-admin-link-password" placeholder="Same password you used to open this dashboard" autocomplete="off" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
+                <button type="button" class="btn-primary" onclick="window.linkSchoolAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Link account</button>
+            </div>
+            ` : ''}
             <div class="ios-header" style="background: transparent;">
                 <div class="ios-large-title">${t.nav_students}</div>
                 <div style="margin-top: -5px; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
@@ -3032,6 +3053,63 @@ window.submitDevLogin = () => {
     }
 };
 
+window.linkSchoolAdminAccount = async () => {
+    const emailEl = document.getElementById('school-admin-link-email');
+    const passEl = document.getElementById('school-admin-link-password');
+    const email = (emailEl && emailEl.value && emailEl.value.trim()) || '';
+    const password = (passEl && passEl.value) || '';
+    const adminUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Admin\)\s*$/i, '').trim() : '';
+    const schoolId = state.currentSchool?.id;
+    if (!email || !password) {
+        alert('Please enter both email and your current admin password (the same one you used to log in to this dashboard).');
+        return;
+    }
+    if (!email.includes('@')) {
+        alert('Please enter a real email address (e.g. admin@myschool.com), not your username.');
+        return;
+    }
+    if (!adminUsername || !schoolId) {
+        alert('Could not detect admin or school. Try refreshing.');
+        return;
+    }
+    if (!supabaseClient) {
+        alert('Database connection not initialized.');
+        return;
+    }
+    try {
+        const { error: signUpErr } = await supabaseClient.auth.signUp({ email, password });
+        if (signUpErr && signUpErr.message && !signUpErr.message.includes('already registered')) {
+            alert('Could not create account: ' + (signUpErr.message || ''));
+            return;
+        }
+        if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
+            const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (signInErr) {
+                alert('That email is already used. Sign in with that email and password, or use a different email here.');
+                return;
+            }
+        }
+        const { data: linked, error: rpcErr } = await supabaseClient.rpc('link_school_admin_auth', {
+            p_username: adminUsername,
+            p_password: password,
+            p_school_id: schoolId
+        });
+        if (rpcErr || !linked) {
+            alert('Password did not match. Use the exact same password you used to log in to this dashboard (for ' + adminUsername + ').');
+            return;
+        }
+        state.schoolAdminLinked = true;
+        if (emailEl) emailEl.value = '';
+        if (passEl) passEl.value = '';
+        alert('Account linked. You can use this email and password to log in next time. All features (e.g. Jack and Jill) will work now.');
+        await fetchAllData();
+        renderView();
+    } catch (e) {
+        console.error('Link school admin:', e);
+        alert('Error: ' + (e.message || 'Could not link account.'));
+    }
+};
+
 window.linkPlatformAdminAccount = async () => {
     const emailEl = document.getElementById('platform-link-email');
     const passEl = document.getElementById('platform-link-password');
@@ -3039,7 +3117,11 @@ window.linkPlatformAdminAccount = async () => {
     const password = (passEl && passEl.value) || '';
     const platformUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : '';
     if (!email || !password) {
-        alert('Please enter both email and your current platform admin password.');
+        alert('Please enter both email and your current Dev password (the same one you used to log in to this dashboard).');
+        return;
+    }
+    if (!email.includes('@')) {
+        alert('Please enter a real email address (e.g. omid@bailadmin.lat), not your username.');
         return;
     }
     if (!platformUsername) {
@@ -3063,11 +3145,15 @@ window.linkPlatformAdminAccount = async () => {
                 return;
             }
         }
-        await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: password });
+        const { data: linked, error: rpcErr } = await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: password });
+        if (rpcErr || !linked) {
+            alert('Password did not match. Use the exact same password you used to log in to this dev dashboard (for ' + platformUsername + ').');
+            return;
+        }
         state.platformAdminLinked = true;
         if (emailEl) emailEl.value = '';
         if (passEl) passEl.value = '';
-        alert('Account linked. You can now create schools. Use this email and password in Dev Access next time if you prefer.');
+        alert('Account linked. You can now create schools. You can use this email and password in Dev Access next time.');
         await fetchPlatformData();
         renderView();
     } catch (e) {
@@ -3373,7 +3459,7 @@ window.submitNewSchoolWithAdmin = async () => {
             if (schoolError) throw schoolError;
             const schoolId = schoolData[0].id;
 
-            // 2. Create Auth user for admin (pseudo-email, no real email needed) then insert admin with user_id
+            // 2. Create Auth user for admin (pseudo-email) then insert admin with user_id (platform-only RPC for first admin)
             let adminUserId = null;
             const pseudoEmail = `${String(adminUser).replace(/\s+/g, '_').toLowerCase()}+${schoolId}@admins.bailadmin.local`;
             try {
@@ -3383,16 +3469,22 @@ window.submitNewSchoolWithAdmin = async () => {
                     if (!signUpErr && signUpData?.user) adminUserId = signUpData.user.id;
                 }
             } catch (e) { console.warn('Admin Auth signUp:', e); }
-            const adminPayload = { p_school_id: schoolId, p_username: adminUser, p_password: adminPass };
+            const adminPayload = { p_school_id: schoolId, p_username: adminUser.trim(), p_password: adminPass };
             if (adminUserId) adminPayload.p_user_id = adminUserId;
-            const { error: adminError } = await supabaseClient.rpc('admin_insert_for_school', adminPayload);
+            let { error: adminError } = await supabaseClient.rpc('admin_insert_for_school_by_platform', adminPayload);
             if (adminError) {
-                const fallback = await supabaseClient.from('admins').insert([{
-                    id: "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
-                    username: adminUser,
+                const res2 = await supabaseClient.rpc('admin_insert_for_school', adminPayload);
+                adminError = res2.error;
+            }
+            if (adminError) {
+                const fallbackPayload = {
+                    id: "ADM-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                    username: adminUser.trim(),
                     password: adminPass,
                     school_id: schoolId
-                }]);
+                };
+                if (adminUserId) fallbackPayload.user_id = adminUserId;
+                const fallback = await supabaseClient.from('admins').insert([fallbackPayload]);
                 if (fallback.error) throw adminError;
             }
 
