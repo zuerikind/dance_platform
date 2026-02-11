@@ -229,6 +229,7 @@ const DANCE_LOCALES = {
         competition_next_steps: "Next steps (shown to students)",
         competition_activate_event: "Activate event",
         competition_activate_signin: "Activate sign-in",
+        competition_for_event: "For event",
         competition_save: "Save",
         competition_saved: "Competition saved successfully.",
         competition_error: "Error saving competition.",
@@ -258,6 +259,10 @@ const DANCE_LOCALES = {
         competition_answers: "Answers",
         competition_no_answers: "No answers yet.",
         competition_delete_confirm: "Delete this event? All registrations will be removed.",
+        competition_copy: "Copy",
+        competition_copy_of: "Copy of ",
+        competition_confirm_copy: "Create copy as \"{name}\"? The new event will be inactive.",
+        competition_copy_success: "Event copied.",
         competition_done: "Done",
         competition_saved_indicator: "Saved",
         competition_saving: "Saving...",
@@ -487,6 +492,7 @@ const DANCE_LOCALES = {
         competition_next_steps: "Próximos pasos (para alumnos)",
         competition_activate_event: "Activar evento",
         competition_activate_signin: "Activar registro",
+        competition_for_event: "Para evento",
         competition_save: "Guardar",
         competition_saved: "Competencia guardada correctamente.",
         competition_error: "Error al guardar la competencia.",
@@ -516,6 +522,10 @@ const DANCE_LOCALES = {
         competition_answers: "Respuestas",
         competition_no_answers: "Aún no hay respuestas.",
         competition_delete_confirm: "¿Eliminar este evento? Se borrarán todas las inscripciones.",
+        competition_copy: "Copiar",
+        competition_copy_of: "Copia de ",
+        competition_confirm_copy: "¿Crear copia como \"{name}\"? El nuevo evento estará inactivo.",
+        competition_copy_success: "Evento copiado.",
         competition_done: "Listo",
         competition_saved_indicator: "Guardado",
         competition_saving: "Guardando...",
@@ -738,7 +748,14 @@ const DANCE_LOCALES = {
         competition_view_answers: "Antworten anzeigen",
         competition_answers: "Antworten",
         competition_no_answers: "Noch keine Antworten.",
+        competition_activate_event: "Event aktivieren",
+        competition_activate_signin: "Registrierung aktivieren",
+        competition_for_event: "Für Event",
         competition_delete_confirm: "Dieses Event löschen? Alle Anmeldungen werden entfernt.",
+        competition_copy: "Kopieren",
+        competition_copy_of: "Kopie von ",
+        competition_confirm_copy: "Kopie erstellen als \"{name}\"? Das neue Event ist zunächst inaktiv.",
+        competition_copy_success: "Event kopiert.",
         competition_done: "Fertig",
         competition_saved_indicator: "Gespeichert",
         competition_saving: "Wird gespeichert...",
@@ -788,7 +805,8 @@ let state = {
     studentCompetitionDetail: null,
     studentCompetitionRegDetail: null,
     studentCompetitionAnswers: {},
-    jackAndJillFormOpen: false
+    jackAndJillFormOpen: false,
+    adminStudentsCompetitionId: null  // which event's toggles to show on Students page when multiple exist
 };
 
 // --- DATA FETCHING ---
@@ -1430,6 +1448,29 @@ window.competitionRegistrationDecide = async (regId, status) => {
     if (!supabaseClient) return;
     const { error } = await supabaseClient.rpc('competition_registration_decide', { p_registration_id: regId, p_status: status });
     if (!error && state.competitionId) await fetchCompetitionRegistrations(state.competitionId);
+    renderView();
+};
+
+window.copyCompetition = async (competitionId) => {
+    const t = window.t;
+    const c = (state.competitions || []).find(x => x.id === competitionId);
+    if (!c) { alert(t('competition_error')); return; }
+    const namePrefix = (t('competition_copy_of') || 'Copy of ');
+    const copyName = namePrefix + (c.name || '').trim();
+    const confirmMsg = (t('competition_confirm_copy') || 'Create copy as "{name}"? The new event will be inactive.').replace('{name}', copyName);
+    if (!confirm(confirmMsg)) return;
+    if (!supabaseClient) { alert(t('competition_error')); return; }
+    const { data: newComp, error } = await supabaseClient.rpc('competition_copy', {
+        p_competition_id: competitionId,
+        p_name_prefix: namePrefix
+    });
+    if (error) {
+        alert(t('competition_error') + (error?.message ? '\n' + error.message : ''));
+        return;
+    }
+    const schoolId = state.competitionSchoolId || state.currentSchool?.id;
+    if (schoolId) window.fetchCompetitionList(schoolId);
+    alert(t('competition_copy_success') || 'Event copied.');
     renderView();
 };
 
@@ -2218,7 +2259,9 @@ function renderView() {
         `;
     } else if (view === 'admin-students') {
         const comps = Array.isArray(state.competitions) ? state.competitions : [];
-        const currentComp = comps.find(c => c.is_active) || comps.sort((a, b) => new Date(b.starts_at || 0) - new Date(a.starts_at || 0))[0] || null;
+        const defaultComp = comps.find(c => c.is_active) || comps.sort((a, b) => new Date(b.starts_at || 0) - new Date(a.starts_at || 0))[0] || null;
+        const pickedId = state.adminStudentsCompetitionId && comps.some(c => c.id === state.adminStudentsCompetitionId) ? state.adminStudentsCompetitionId : null;
+        const currentComp = pickedId ? comps.find(c => c.id === pickedId) : defaultComp;
         const hasActiveEvent = comps.some(c => c.is_active);
         const adminUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Admin\)\s*$/i, '').trim() : '';
         html += `
@@ -2243,15 +2286,24 @@ function renderView() {
                         <i data-lucide="trophy" size="14"></i> ${t.jack_and_jill}
                     </button>` : ''}
                     ${currentComp ? `
-                    <div style="display: flex; align-items: center; gap: 12px; margin-left: 4px; padding: 6px 12px; background: var(--system-gray6); border-radius: 12px;">
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer;">
-                            <input type="checkbox" ${currentComp.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${currentComp.id}', this.checked)" style="width: 18px; height: 18px;">
-                            ${t.competition_activate_event}
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer;">
-                            <input type="checkbox" ${currentComp.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${currentComp.id}', this.checked)" style="width: 18px; height: 18px;">
-                            ${t.competition_activate_signin}
-                        </label>
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-left: 4px;">
+                        ${comps.length > 1 ? `
+                        <select onchange="state.adminStudentsCompetitionId=this.value; renderView();" style="padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 12px; font-weight: 600; max-width: 240px;">
+                            ${comps.map(c => `<option value="${c.id}" ${c.id === currentComp.id ? 'selected' : ''}>${(c.name || '').replace(/</g, '&lt;').substring(0, 32)}${(c.name || '').length > 32 ? '…' : ''}</option>`).join('')}
+                        </select>
+                        ` : `<span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${t.competition_for_event}: ${(currentComp.name || '').replace(/</g, '&lt;').substring(0, 30)}${(currentComp.name || '').length > 30 ? '…' : ''}</span>`}
+                        <div style="display: flex; align-items: center; gap: 16px; padding: 6px 12px; background: var(--system-gray6); border-radius: 12px;">
+                            <label class="toggle-switch" style="font-size: 12px; font-weight: 600;">
+                                <input type="checkbox" class="toggle-switch-input" ${currentComp.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${currentComp.id}', this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                <span class="toggle-switch-label">${t.competition_activate_event}</span>
+                            </label>
+                            <label class="toggle-switch" style="font-size: 12px; font-weight: 600;">
+                                <input type="checkbox" class="toggle-switch-input" ${currentComp.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${currentComp.id}', this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                <span class="toggle-switch-label">${t.competition_activate_signin}</span>
+                            </label>
+                        </div>
                     </div>
                     ` : ''}
                 </div>
@@ -2726,17 +2778,24 @@ function renderView() {
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <a href="#" data-action="openRegistrations" data-competition-id="${c.id}" style="font-size: 15px; font-weight: 600; color: var(--system-blue);">${t.competition_registrations}</a>
+                                    <button type="button" data-action="copyCompetition" data-competition-id="${c.id}" title="${t.competition_copy || 'Copy'}" style="background: none; border: none; padding: 6px; cursor: pointer; color: var(--system-blue); opacity: 0.85; border-radius: 8px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"><i data-lucide="copy" size="18"></i></button>
                                     <button type="button" data-action="deleteCompetition" data-competition-id="${c.id}" title="${t.competition_delete_confirm || 'Delete event'}" style="background: none; border: none; padding: 6px; cursor: pointer; color: var(--system-red); opacity: 0.8; border-radius: 8px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'"><i data-lucide="trash-2" size="18"></i></button>
                                 </div>
                             </div>
                             <div style="padding: 14px 20px; background: var(--system-gray6); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px;">
-                                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
-                                    <span style="font-size: 15px; font-weight: 500;">${t.competition_activate_event}</span>
-                                    <input type="checkbox" ${c.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${c.id}', this.checked)" style="width: 51px; height: 31px; accent-color: var(--system-green);">
+                                <label class="toggle-switch" style="justify-content: space-between; width: 100%; font-size: 15px; font-weight: 500;">
+                                    <span class="toggle-switch-label">${t.competition_activate_event}</span>
+                                    <span style="display: flex;">
+                                        <input type="checkbox" class="toggle-switch-input" ${c.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${c.id}', this.checked)">
+                                        <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                    </span>
                                 </label>
-                                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
-                                    <span style="font-size: 15px; font-weight: 500;">${t.competition_activate_signin}</span>
-                                    <input type="checkbox" ${c.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${c.id}', this.checked)" style="width: 51px; height: 31px; accent-color: var(--system-green);">
+                                <label class="toggle-switch" style="justify-content: space-between; width: 100%; font-size: 15px; font-weight: 500;">
+                                    <span class="toggle-switch-label">${t.competition_activate_signin}</span>
+                                    <span style="display: flex;">
+                                        <input type="checkbox" class="toggle-switch-input" ${c.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${c.id}', this.checked)">
+                                        <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                    </span>
                                 </label>
                             </div>
                             <div style="padding: 12px 20px; border-top: 1px solid var(--border);">
@@ -5105,6 +5164,14 @@ logoEl.addEventListener('click', () => {
             e.stopPropagation();
             const regId = answersBtn.getAttribute('data-reg-id');
             if (regId && typeof window.openRegistrationAnswers === 'function') window.openRegistrationAnswers(regId);
+            return;
+        }
+        const copyCompBtn = e.target.closest('[data-action="copyCompetition"]');
+        if (copyCompBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = copyCompBtn.getAttribute('data-competition-id');
+            if (id && typeof window.copyCompetition === 'function') window.copyCompetition(id);
             return;
         }
         const deleteCompBtn = e.target.closest('[data-action="deleteCompetition"]');

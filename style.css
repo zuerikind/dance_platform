@@ -1293,6 +1293,73 @@ select option {
     background: black;
 }
 
+/* TOGGLE SWITCH - pill-shaped, sliding thumb (event/registration activation) */
+.toggle-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+
+.toggle-switch-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.toggle-switch-track {
+    position: relative;
+    flex-shrink: 0;
+    width: 48px;
+    height: 28px;
+    border-radius: 14px;
+    background: var(--system-gray4);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.dark-mode .toggle-switch-track {
+    background: var(--border-color);
+}
+
+.toggle-switch-input:checked + .toggle-switch-track {
+    background: var(--system-blue);
+    border-color: var(--system-blue);
+}
+
+.toggle-switch-input:focus + .toggle-switch-track {
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+}
+
+.toggle-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.toggle-switch-input:checked + .toggle-switch-track .toggle-switch-thumb {
+    transform: translateX(20px);
+}
+
+.toggle-switch-label {
+    color: var(--text-primary);
+}
+
 /* PAYMENT MODAL - Refined design */
 .payment-modal-content {
     max-width: 420px;
