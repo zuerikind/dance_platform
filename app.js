@@ -4358,6 +4358,7 @@ window.updateClass = async (id, field, value) => {
         }
         cls[field] = val;
         saveState();
+        renderView();
     }
 };
 
