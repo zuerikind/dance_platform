@@ -733,6 +733,7 @@ let state = {
     admins: [],
     showWeeklyPreview: false,
     isPlatformDev: false,
+    platformAdminLinked: false,
     platformData: { schools: [], students: [], admins: [] },
     loading: false,
     // Jack and Jill competitions (hash routing)
@@ -1376,6 +1377,15 @@ function renderView() {
             
             <div style="padding: 1.2rem;">
                 ${isDev ? `
+                    ${!state.platformAdminLinked ? `
+                    <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, transparent 100%);">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;"><i data-lucide="link" size="14" style="vertical-align: middle; margin-right: 6px;"></i> Link platform admin (one-time)</div>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">So you can create schools: enter an email and your current password. We create a login and link it to "${(state.currentUser && state.currentUser.name ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : 'you')}".</p>
+                        <input type="text" id="platform-link-email" placeholder="e.g. omid@bailadmin.lat" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 8px; box-sizing: border-box;" />
+                        <input type="password" id="platform-link-password" placeholder="Your current platform admin password" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
+                        <button type="button" class="btn-primary" onclick="window.linkPlatformAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Link account</button>
+                    </div>
+                    ` : ''}
                     <!-- PREMIUM STATS -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2.5rem;">
                         <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
@@ -3022,6 +3032,50 @@ window.submitDevLogin = () => {
     }
 };
 
+window.linkPlatformAdminAccount = async () => {
+    const emailEl = document.getElementById('platform-link-email');
+    const passEl = document.getElementById('platform-link-password');
+    const email = (emailEl && emailEl.value && emailEl.value.trim()) || '';
+    const password = (passEl && passEl.value) || '';
+    const platformUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : '';
+    if (!email || !password) {
+        alert('Please enter both email and your current platform admin password.');
+        return;
+    }
+    if (!platformUsername) {
+        alert('Could not detect platform admin username.');
+        return;
+    }
+    if (!supabaseClient) {
+        alert('Database connection not initialized.');
+        return;
+    }
+    try {
+        const { error: signUpErr } = await supabaseClient.auth.signUp({ email, password });
+        if (signUpErr && signUpErr.message && !signUpErr.message.includes('already registered')) {
+            alert('Could not create account: ' + (signUpErr.message || ''));
+            return;
+        }
+        if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
+            const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (signInErr) {
+                alert('That email is already used. Sign in with that email and password in Dev Access, or use a different email here.');
+                return;
+            }
+        }
+        await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: password });
+        state.platformAdminLinked = true;
+        if (emailEl) emailEl.value = '';
+        if (passEl) passEl.value = '';
+        alert('Account linked. You can now create schools. Use this email and password in Dev Access next time if you prefer.');
+        await fetchPlatformData();
+        renderView();
+    } catch (e) {
+        console.error('Link platform admin:', e);
+        alert('Error: ' + (e.message || 'Could not link account.'));
+    }
+};
+
 window.loginDeveloper = async (user, pass) => {
     if (!supabaseClient) {
         alert("Database connection not initialized.");
@@ -3162,6 +3216,8 @@ async function fetchPlatformData() {
                     platform_admins: Array.isArray(rpcData.platform_admins) ? rpcData.platform_admins : []
                 };
             }
+            const { data: sessionData } = await supabaseClient.auth.getSession();
+            if (sessionData?.session?.user) state.platformAdminLinked = true;
         }
 
         state.loading = false;
