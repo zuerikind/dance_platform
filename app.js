@@ -1386,13 +1386,10 @@ function renderView() {
                 ${isDev ? `
                     ${!state.platformAdminLinked ? `
                     <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, transparent 100%);">
-                        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;"><i data-lucide="link" size="14" style="vertical-align: middle; margin-right: 6px;"></i> Link platform admin (one-time)</div>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">We will link &quot;${(state.currentUser && state.currentUser.name ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : 'you')}&quot; to a new login. Use the <strong>exact same password</strong> you used to log in here.</p>
-                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Email (for your new login)</label>
-                        <input type="email" id="platform-link-email" placeholder="e.g. omid@bailadmin.lat" autocomplete="off" value="" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
-                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Current Dev password (same as login)</label>
-                        <input type="password" id="platform-link-password" placeholder="Same password you used to open this dashboard" autocomplete="off" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
-                        <button type="button" class="btn-primary" onclick="window.linkPlatformAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Link account</button>
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;"><i data-lucide="link" size="14" style="vertical-align: middle; margin-right: 6px;"></i> Enable username + password login (one-time)</div>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">So you can always sign in with &quot;${(state.currentUser && state.currentUser.name ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : 'you')}&quot; and your password (no email needed). Enter your <strong>current password</strong>:</p>
+                        <input type="password" id="platform-link-password" placeholder="Your current Dev password" autocomplete="off" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
+                        <button type="button" class="btn-primary" onclick="window.linkPlatformAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Enable username login</button>
                     </div>
                     ` : ''}
                     <!-- PREMIUM STATS -->
@@ -3111,17 +3108,11 @@ window.linkSchoolAdminAccount = async () => {
 };
 
 window.linkPlatformAdminAccount = async () => {
-    const emailEl = document.getElementById('platform-link-email');
     const passEl = document.getElementById('platform-link-password');
-    const email = (emailEl && emailEl.value && emailEl.value.trim()) || '';
     const password = (passEl && passEl.value) || '';
     const platformUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : '';
-    if (!email || !password) {
-        alert('Please enter both email and your current Dev password (the same one you used to log in to this dashboard).');
-        return;
-    }
-    if (!email.includes('@')) {
-        alert('Please enter a real email address (e.g. omid@bailadmin.lat), not your username.');
+    if (!password) {
+        alert('Please enter your current Dev password.');
         return;
     }
     if (!platformUsername) {
@@ -3132,33 +3123,38 @@ window.linkPlatformAdminAccount = async () => {
         alert('Database connection not initialized.');
         return;
     }
+    const pseudoEmail = `${String(platformUsername).replace(/\s+/g, '_').toLowerCase()}@platform.bailadmin.local`;
     try {
-        const { error: signUpErr } = await supabaseClient.auth.signUp({ email, password });
-        if (signUpErr && signUpErr.message && !signUpErr.message.includes('already registered')) {
-            alert('Could not create account: ' + (signUpErr.message || ''));
-            return;
-        }
-        if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
-            const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (signInErr) {
-                alert('That email is already used. Sign in with that email and password in Dev Access, or use a different email here.');
+        let { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password });
+        if (signInErr) {
+            const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password });
+            if (signUpErr && !String(signUpErr.message || '').match(/already registered|already exists/i)) {
+                alert('Could not create login: ' + (signUpErr.message || ''));
                 return;
             }
+            if (signUpErr && String(signUpErr.message || '').match(/already registered|already exists/i)) {
+                signInErr = (await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password })).error;
+            } else {
+                signInErr = signUpErr;
+            }
+        }
+        if (signInErr) {
+            alert('Password did not match. Use the exact same password you used to log in here (' + platformUsername + ').');
+            return;
         }
         const { data: linked, error: rpcErr } = await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: password });
         if (rpcErr || !linked) {
-            alert('Password did not match. Use the exact same password you used to log in to this dev dashboard (for ' + platformUsername + ').');
+            alert('Password did not match the one in the database. Use the exact same password for ' + platformUsername + '.');
             return;
         }
         state.platformAdminLinked = true;
-        if (emailEl) emailEl.value = '';
         if (passEl) passEl.value = '';
-        alert('Account linked. You can now create schools. You can use this email and password in Dev Access next time.');
+        alert('Done! You can now always sign in with "' + platformUsername + '" and your password (no email needed).');
         await fetchPlatformData();
         renderView();
     } catch (e) {
         console.error('Link platform admin:', e);
-        alert('Error: ' + (e.message || 'Could not link account.'));
+        alert('Error: ' + (e.message || 'Could not enable username login.'));
     }
 };
 
@@ -3188,9 +3184,15 @@ window.loginDeveloper = async (user, pass) => {
             document.getElementById('dev-login-modal').classList.add('hidden');
             return;
         }
+        if (authError) {
+            state.loading = false;
+            renderView();
+            alert("That email isn't linked to a Dev account. Use your username (e.g. Omid7991) and password instead.");
+            return;
+        }
     }
 
-    // 2) Legacy: check platform_admins table (username + password), then get Auth session so is_platform_admin() works (schools RLS)
+    // 2) Legacy: check platform_admins table (username + password), then establish Supabase Auth session so is_platform_admin() works
     const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_platform_admin_by_credentials', {
         p_username: user,
         p_password: pass
@@ -3198,11 +3200,13 @@ window.loginDeveloper = async (user, pass) => {
     if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
         const platformUsername = legacyRows[0].username || user;
         const pseudoEmail = `${String(platformUsername).replace(/\s+/g, '_').toLowerCase()}@platform.bailadmin.local`;
+        const errMsg = (e) => (e && e.message ? String(e.message) : '');
         try {
             let { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
-            if (signInErr && signInErr.message && (signInErr.message.includes('Invalid login') || signInErr.message.includes('invalid'))) {
+            const isInvalidCreds = signInErr && (errMsg(signInErr).toLowerCase().includes('invalid') || errMsg(signInErr).includes('Invalid login'));
+            if (signInErr && isInvalidCreds) {
                 const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
-                if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
+                if (signUpErr && (errMsg(signUpErr).includes('already registered') || errMsg(signUpErr).includes('already exists'))) {
                     signInErr = (await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass })).error;
                 } else {
                     signInErr = signUpErr;
@@ -3210,6 +3214,13 @@ window.loginDeveloper = async (user, pass) => {
             }
             if (!signInErr) await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: pass });
         } catch (e) { console.warn('Platform dev Auth link:', e); }
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (!sessionData?.session?.user) {
+            state.loading = false;
+            renderView();
+            alert("Your username and password are correct, but we couldn't sign you in to the backend (create/delete schools need that).\n\nUse one of these:\n• Log in with the **email + password** you used in \"Link account\" (e.g. omid@bailadmin.lat).\n• Or use the \"Link account\" card on the dashboard to link this user to a new email and password.");
+            return;
+        }
         state.isPlatformDev = true;
         state.currentUser = { name: platformUsername + " (Dev)", role: "platform-dev" };
         state.currentView = 'platform-dev-dashboard';
