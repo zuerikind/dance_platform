@@ -1467,6 +1467,42 @@ select option {
     opacity: 1;
 }
 
+/* Platform School Detail - Professional layout */
+.platform-school-detail-header {
+    background: linear-gradient(180deg, var(--bg-body) 0%, transparent 100%);
+    padding-bottom: 0.5rem;
+}
+
+.platform-school-hero {
+    padding: 1.5rem 1.2rem 1.5rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(0, 122, 255, 0.04) 0%, transparent 50%);
+    border-radius: 0 0 24px 24px;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.platform-school-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.platform-school-back:hover {
+    background: var(--system-gray6) !important;
+}
+
+.platform-school-enter-btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+}
+
+.platform-school-feature-toggle {
+    margin-bottom: 0.5rem;
+}
+
 /* RESPONSIVENESS */
 @media (max-width: 600px) {
     h1 {
@@ -1604,6 +1640,8 @@ select option {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
+    max-height: min(280px, 70vh);
+    overflow-y: auto;
 }
 
 .dropdown-item {

@@ -163,6 +163,11 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Classes",
         dev_view_details: "View Details",
         dev_enter_as_admin: "Enter as Admin",
+        dev_events_feature: "Jack and Jill / Events",
+        dev_events_feature_desc: "Allow this school to create Jack and Jill events (premium feature)",
+        dev_events_enabled: "Enabled",
+        dev_events_disabled: "Disabled",
+        jack_and_jill_upgrade_msg: "To create events you need to upgrade to a package that includes this feature.",
         dev_volver_dashboard: "Back to Dashboard",
         dev_admins_label: "Administrators",
         dev_students_label: "Students",
@@ -187,6 +192,7 @@ const DANCE_LOCALES = {
         class_location: "Location",
         location_placeholder: "e.g. Studio A",
         active_packs_label: "Your Active Packs",
+        expired_classes_label: "Expired Classes",
         no_expiration: "No expiration date",
         expires_in: "Expires in",
         days_left: "days left",
@@ -201,6 +207,7 @@ const DANCE_LOCALES = {
         mgmt_admins_title: "Administrators",
         day_label: "Day",
         hour_label: "Time",
+        level_tag_label: "Level",
         new_class_label: "New Class",
         show_weekly_btn: "Show Weekly Plan",
         hide_weekly_btn: "Hide Weekly Plan",
@@ -431,6 +438,11 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Clases",
         dev_view_details: "Ver Detalles",
         dev_enter_as_admin: "Entrar como Admin",
+        dev_events_feature: "Jack and Jill / Eventos",
+        dev_events_feature_desc: "Permitir a esta escuela crear eventos Jack and Jill (función premium)",
+        dev_events_enabled: "Activado",
+        dev_events_disabled: "Desactivado",
+        jack_and_jill_upgrade_msg: "Para crear eventos necesitas actualizar a un paquete que incluya esta función.",
         dev_volver_dashboard: "Volver al Dashboard",
         dev_admins_label: "Administradores",
         dev_students_label: "Alumnos",
@@ -455,6 +467,7 @@ const DANCE_LOCALES = {
         class_location: "Ubicación",
         location_placeholder: "Ej: Aula A",
         active_packs_label: "Tus Paquetes Activos",
+        expired_classes_label: "Clases Expiradas",
         no_expiration: "Sin fecha de vencimiento",
         expires_in: "Vence en",
         days_left: "días restantes",
@@ -469,6 +482,7 @@ const DANCE_LOCALES = {
         mgmt_admins_title: "Administradores",
         day_label: "Día",
         hour_label: "Hora",
+        level_tag_label: "Nivel",
         new_class_label: "Nueva Clase",
         show_weekly_btn: "Ver Plan Semanal",
         hide_weekly_btn: "Ocultar Plan Semanal",
@@ -700,6 +714,11 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Kurse",
         dev_view_details: "Details anzeigen",
         dev_enter_as_admin: "Als Admin betreten",
+        dev_events_feature: "Jack and Jill / Events",
+        dev_events_feature_desc: "Erlaube dieser Schule Jack and Jill Events zu erstellen (Premium-Funktion)",
+        dev_events_enabled: "Aktiviert",
+        dev_events_disabled: "Deaktiviert",
+        jack_and_jill_upgrade_msg: "Um Events zu erstellen musst du auf ein Paket upgraden, das diese Funktion enthält.",
         dev_volver_dashboard: "Zurück zum Dashboard",
         dev_admins_label: "Administratoren",
         dev_students_label: "Schüler",
@@ -724,6 +743,7 @@ const DANCE_LOCALES = {
         class_location: "Standort",
         location_placeholder: "z.B. Studio A",
         active_packs_label: "Deine aktiven Pakete",
+        expired_classes_label: "Abgelaufene Stunden",
         no_expiration: "Kein Ablaufdatum",
         expires_in: "Läuft ab in",
         days_left: "Tage übrig",
@@ -738,6 +758,7 @@ const DANCE_LOCALES = {
         mgmt_admins_title: "Administratoren",
         day_label: "Tag",
         hour_label: "Uhrzeit",
+        level_tag_label: "Niveau",
         new_class_label: "Neuer Kurs",
         show_weekly_btn: "Wochenplan anzeigen",
         hide_weekly_btn: "Wochenplan ausblenden",
@@ -1046,6 +1067,12 @@ async function fetchAllData() {
 
         // --- NEW: Check for expired memberships ---
         await window.checkExpirations();
+
+        // Re-sync currentUser (student) with updated balance/active_packs after expiration check
+        if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
+            const updated = state.students.find(s => s.id === state.currentUser.id);
+            if (updated) state.currentUser = { ...updated, role: 'student' };
+        }
 
         state.loading = false;
         _lastFetchEndTime = Date.now();
@@ -1689,7 +1716,7 @@ function renderView() {
                                     <button class="btn-secondary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="width: 100%; border-radius: 16px; height: 50px; font-size: 14px; font-weight: 700; background: var(--system-gray6); color: var(--text-primary); border: 1px solid var(--border); box-shadow: none;">
                                         <i data-lucide="info" size="14" style="margin-right: 6px; opacity: 0.6;"></i> ${t.dev_view_details}
                                     </button>
-                                    <button class="btn-primary" onclick="state.currentSchool={id:'${s.id}', name:'${s.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 16px; height: 50px; font-size: 14px; font-weight: 700; background: var(--text-primary); color: var(--bg-body); box-shadow: var(--shadow-sm);">
+                                    <button class="btn-primary" onclick="const sch=state.platformData?.schools?.find(x=>x.id==='${s.id}')||state.schools?.find(x=>x.id==='${s.id}'); state.currentSchool=sch||{id:'${s.id}',name:'${s.name}',jack_and_jill_enabled:false}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 16px; height: 50px; font-size: 14px; font-weight: 700; background: var(--text-primary); color: var(--bg-body); box-shadow: var(--shadow-sm);">
                                         <i data-lucide="external-link" size="14" style="margin-right: 6px;"></i> ${t.dev_enter_as_admin}
                                     </button>
                                 </div>
@@ -1788,46 +1815,67 @@ function renderView() {
                     return (a.time || '').localeCompare(b.time || '');
                 });
             const subs = state.platformData.subscriptions.filter(s => s.school_id === schoolId);
+            const jjEnabled = !!school.jack_and_jill_enabled;
 
             html += `
-                <div class="ios-header" style="background: transparent; padding-bottom: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0 0.5rem;">
-                        <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="border-radius: 50%; width: 36px; height: 36px; padding: 0; border: 1.5px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.transform='translateX(-2px)'" onmouseout="this.style.opacity='0.8'; this.style.transform='translateX(0)'">
-                            <i data-lucide="chevron-left" size="20" style="margin-right: 2px;"></i>
+                <div class="platform-school-detail-header">
+                    <div style="display: flex; align-items: center; gap: 1rem; padding: 0 1.2rem 1rem;">
+                        <button class="btn-icon platform-school-back" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: all 0.2s;">
+                            <i data-lucide="arrow-left" size="20"></i>
                         </button>
-                        <div style="font-size: 11px; color: var(--system-blue); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">${t.dev_school_inspector}</div>
+                        <span style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t.dev_school_inspector}</span>
                     </div>
-                    <div class="ios-large-title" style="letter-spacing: -1.2px;">${school.name}</div>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; font-weight: 500; font-family: monospace; opacity: 0.5; margin-bottom: 2rem; padding: 0 1.2rem;">ID: ${schoolId}</div>
-                    <div style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                        <button class="btn-primary" onclick="state.currentSchool={id:'${school.id}', name:'${school.name}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="width: 100%; border-radius: 16px; height: 52px; font-size: 15px; font-weight: 800; box-shadow: var(--shadow-sm); background: var(--text-primary); color: var(--bg-body);">
-                            <i data-lucide="shield-check" size="18" style="margin-right: 8px;"></i> ${t.dev_enter_as_admin}
+                    <div class="platform-school-hero">
+                        <div style="width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, rgba(0,122,255,0.2) 0%, rgba(0,122,255,0.05) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; border: 1px solid rgba(0,122,255,0.15);">
+                            <i data-lucide="building-2" size="36" style="color: var(--system-blue);"></i>
+                        </div>
+                        <h1 class="platform-school-title">${(school.name || '').replace(/</g, '&lt;')}</h1>
+                        <div style="font-size: 11px; color: var(--text-secondary); font-family: monospace; letter-spacing: 0.05em; opacity: 0.6;">${String(schoolId).slice(0, 8)}…</div>
+                        <button class="btn-primary platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled}}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="margin-top: 1.25rem; padding: 14px 28px; border-radius: 14px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-left: auto; margin-right: auto;">
+                            <i data-lucide="shield-check" size="20"></i> ${t.dev_enter_as_admin}
                         </button>
+                    </div>
+                    <div class="platform-school-feature-toggle">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 149, 0, 0.12); display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="trophy" size="22" style="color: var(--system-orange);"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">${t.dev_events_feature}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">${t.dev_events_feature_desc}</div>
+                                </div>
+                            </div>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${jjEnabled ? 'checked' : ''} onchange="toggleSchoolJackAndJill('${school.id}', this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div style="padding: 1.2rem;">
+                <div style="padding: 0 1.2rem 2rem;">
                     <!-- PREMIUM STATS GRID -->
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 2.5rem;">
-                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-                            <div style="color: var(--system-blue); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="users" size="14"></i></div>
-                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">EST.</div>
-                            <div style="font-size: 20px; font-weight: 900;">${students.length}</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
+                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(0, 122, 255, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="users" size="18" style="color: var(--system-blue);"></i></div>
+                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${students.length}</div>
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_students_label}</div>
                         </div>
-                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-                            <div style="color: var(--system-green); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="credit-card" size="14"></i></div>
-                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">PLAN</div>
-                            <div style="font-size: 20px; font-weight: 900;">${subs.length}</div>
+                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
+                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(52, 199, 89, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="credit-card" size="18" style="color: var(--system-green);"></i></div>
+                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${subs.length}</div>
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_plans_label}</div>
                         </div>
-                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-                            <div style="color: var(--system-orange); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="calendar" size="14"></i></div>
-                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">CLAS.</div>
-                            <div style="font-size: 20px; font-weight: 900;">${classes.length}</div>
+                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
+                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(255, 149, 0, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="calendar" size="18" style="color: var(--system-orange);"></i></div>
+                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${classes.length}</div>
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_classes_label}</div>
                         </div>
-                        <div style="background: var(--bg-card); padding: 1.2rem 0.3rem; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-                            <div style="color: var(--system-red); margin-bottom: 4px; opacity: 0.7;"><i data-lucide="shield" size="14"></i></div>
-                            <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.5; margin-bottom: 4px; letter-spacing: 0.05em;">ADM.</div>
-                            <div style="font-size: 20px; font-weight: 900;">${admins.length}</div>
+                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
+                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(255, 59, 48, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="shield" size="18" style="color: var(--system-red);"></i></div>
+                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${admins.length}</div>
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_admins_label}</div>
                         </div>
                     </div>
 
@@ -2147,7 +2195,9 @@ function renderView() {
                         </div>
                         ${(() => {
                             const packs = state.currentUser.active_packs || [];
-                            const nextExpiry = state.currentUser.package_expires_at || (packs.length > 0 ? packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
+                            const now = new Date();
+                            const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+                            const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
                             if (nextExpiry) {
                                 const d = new Date(nextExpiry);
                                 const days = window.getDaysRemaining(nextExpiry);
@@ -2160,59 +2210,42 @@ function renderView() {
                     </div>
 
                     <div style="margin-top: 2rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; text-align: left;">
-                        <div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">
-                            ${t.active_packs_label || 'Tus Paquetes Activos'}
-                        </div>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            ${(() => {
-                const packs = state.currentUser.active_packs || [];
-                if (packs.length === 0) {
-                    return `
-                                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; text-align: center; border: 1px dashed var(--border);">
-                                            <div style="font-size: 13px; color: var(--text-secondary); opacity: 0.5;">No tienes paquetes activos</div>
-                                        </div>
-                                    `;
-                }
-
-                return packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => {
+                        ${(() => {
+                const allPacks = state.currentUser.active_packs || [];
+                const now = new Date();
+                const activePacks = allPacks.filter(p => new Date(p.expires_at) > now);
+                const expiredPacks = allPacks.filter(p => new Date(p.expires_at) <= now).sort((a, b) => new Date(b.expires_at) - new Date(a.expires_at));
+                const renderPackCard = (p, isExp) => {
                     const days = window.getDaysRemaining(p.expires_at);
-                    const isExpired = days <= 0;
-                    const isSoon = days > 0 && days <= 5;
-
-                    let statusColor = 'var(--system-blue)';
-                    if (isExpired) statusColor = 'var(--system-red)';
-                    else if (isSoon) statusColor = 'var(--system-orange)';
-
-                    return `
-                                        <div class="card" style="padding: 1.2rem; border-radius: 22px; position: relative; overflow: hidden; border: 1px solid var(--border); background: linear-gradient(145deg, var(--bg-card), var(--bg-body));">
-                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                                                <div>
-                                                    <div style="font-size: 15px; font-weight: 700; margin-bottom: 2px;">${p.name}</div>
-                                                    <div style="font-size: 11px; font-weight: 600; opacity: 0.5; text-transform: uppercase;">${new Date(p.created_at).toLocaleDateString()}</div>
-                                                </div>
-                                                <div style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase;">
-                                                   ${isExpired ? 'Expirado' : (isSoon ? `${days}d Restantes` : 'Activo')}
-                                                </div>
-                                            </div>
-                                            
-                                            <div style="display: flex; align-items: flex-end; justify-content: space-between;">
-                                                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);">
-                                                    <i data-lucide="calendar" size="14" style="opacity: 0.6;"></i>
-                                                    <span>${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</span>
-                                                </div>
-                                                <div style="text-align: right;">
-                                                    <div style="font-size: 20px; font-weight: 800; color: var(--primary);">${p.count}</div>
-                                                    <div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">Clases</div>
-                                                </div>
-                                            </div>
-                                            
-                                            ${isSoon ? `<div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--system-orange); opacity: 0.3;"></div>` : ''}
-                                        </div>
-                                    `;
-                }).join('');
+                    const isSoon = !isExp && days > 0 && days <= 5;
+                    const sc = isExp ? 'var(--system-red)' : (isSoon ? 'var(--system-orange)' : 'var(--system-blue)');
+                    const bg = isExp ? 'var(--system-gray6)' : 'linear-gradient(145deg, var(--bg-card), var(--bg-body))';
+                    const statusText = isExp ? 'Expirado' : (isSoon ? (days + 'd Restantes') : 'Activo');
+                    return '<div class="card" style="padding: 1.2rem; border-radius: 22px; border: 1px solid var(--border); background: ' + bg + '; opacity: ' + (isExp ? 0.7 : 1) + ';">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">' +
+                        '<div><div style="font-size: 15px; font-weight: 700;">' + (p.name || '').replace(/</g, '&lt;') + '</div>' +
+                        '<div style="font-size: 11px; font-weight: 600; opacity: 0.5; text-transform: uppercase;">' + (p.created_at ? new Date(p.created_at).toLocaleDateString() : '') + '</div></div>' +
+                        '<div style="background: ' + sc + '; color: white; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase;">' + statusText + '</div></div>' +
+                        '<div style="display: flex; align-items: flex-end; justify-content: space-between;">' +
+                        '<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);">' +
+                        '<i data-lucide="calendar" size="14" style="opacity: 0.6;"></i><span>' + t.expires_label + ': ' + new Date(p.expires_at).toLocaleDateString() + '</span></div>' +
+                        '<div style="text-align: right;"><div style="font-size: 20px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + p.count + '</div>' +
+                        '<div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">Clases</div></div></div></div>';
+                };
+                let out = '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">' + (t.active_packs_label || 'Tus Paquetes Activos') + '</div>';
+                out += '<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: ' + (expiredPacks.length > 0 ? '2rem' : '0') + ';">';
+                if (activePacks.length === 0 && expiredPacks.length === 0) {
+                    out += '<div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; text-align: center; border: 1px dashed var(--border);"><div style="font-size: 13px; color: var(--text-secondary); opacity: 0.5;">No tienes paquetes activos</div></div>';
+                } else {
+                    out += activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => renderPackCard(p, false)).join('');
+                }
+                out += '</div>';
+                if (expiredPacks.length > 0) {
+                    out += '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">' + t.expired_classes_label + '</div>';
+                    out += '<div style="display: flex; flex-direction: column; gap: 12px;">' + expiredPacks.map(p => renderPackCard(p, true)).join('') + '</div>';
+                }
+                return out;
             })()}
-                        </div>
                     </div>
 
                 </div>
@@ -2300,10 +2333,10 @@ function renderView() {
                     <button class="btn-primary" onclick="createNewStudent()" style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px;">
                         <i data-lucide="plus" size="14"></i> ${t.add_student}
                     </button>
-                    ${comps.length > 0 ? `<button class="btn-secondary" ${hasActiveEvent ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, \'registrations\')"' : 'disabled'} style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px; ${!hasActiveEvent ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                    ${(comps.length > 0 && (state.currentSchool?.jack_and_jill_enabled === true)) ? `<button class="btn-secondary" ${hasActiveEvent ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, \'registrations\')"' : 'disabled'} style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px; ${!hasActiveEvent ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
                         <i data-lucide="trophy" size="14"></i> ${t.jack_and_jill}
                     </button>` : ''}
-                    ${currentComp ? `
+                    ${(currentComp && state.currentSchool?.jack_and_jill_enabled === true) ? `
                     <div style="display: flex; flex-direction: column; gap: 6px; margin-left: 4px;">
                         ${comps.length > 1 ? `
                         <select onchange="state.adminStudentsCompetitionId=this.value; renderView();" style="padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 12px; font-weight: 600; max-width: 240px;">
@@ -2474,11 +2507,8 @@ function renderView() {
     `;
     } else if (view === 'admin-settings') {
         const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const classesList = [...(Array.isArray(state.classes) ? state.classes : [])].sort((a, b) => {
-            const dayDiff = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
-            if (dayDiff !== 0) return dayDiff;
-            return (a.time || '').localeCompare(b.time || '');
-        });
+        // Sort by id so new classes (pushed with highest id) appear at bottom for nicer UX
+        const classesList = [...(Array.isArray(state.classes) ? state.classes : [])].sort((a, b) => (a.id || 0) - (b.id || 0));
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
             if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
@@ -2497,13 +2527,13 @@ function renderView() {
             <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.mgmt_classes_title}
             </div>
-            <div class="ios-list">
+            <div class="ios-list" style="overflow: visible;">
                 ${classesList.map(c => `
-                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;">
+                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; overflow: visible;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                                 <i data-lucide="music" size="16" style="opacity: 0.3;"></i>
-                                <input type="text" value="${c.name}" onchange="updateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 85%; color: var(--text-primary); outline: none;">
+                                <input type="text" value="${c.name}" oninput="debouncedUpdateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 17px; font-weight: 600; width: 85%; color: var(--text-primary); outline: none;">
                             </div>
                             <button onclick="removeClass(${c.id})" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 5px; cursor: pointer;">
                                 <i data-lucide="trash-2" size="18"></i>
@@ -2511,9 +2541,9 @@ function renderView() {
                         </div>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; position: relative;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; position: relative; overflow: visible;">
                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.day_label}</label>
-                                <div class="custom-dropdown-container">
+                                <div class="custom-dropdown-container" style="overflow: visible;">
                                     <div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('${c.id}')" style="background: transparent; border: none; padding: 0; min-height: auto; width: 100%; justify-content: space-between;">
                                         <span style="font-size: 14px; font-weight: 600;">${t[c.day.toLowerCase()]}</span>
                                         <i data-lucide="chevron-down" size="12" style="opacity: 0.4;"></i>
@@ -2530,18 +2560,18 @@ function renderView() {
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.hour_label}</label>
-                                <input type="time" value="${c.time || '09:00'}" onchange="updateClass(${c.id}, 'time', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
+                                <input type="time" value="${c.time || '09:00'}" onblur="scheduleTimeBlurSave(${c.id}, this)" onfocus="cancelTimeBlurSave(this)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
                             </div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; opacity: 0.8;">
                                  <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.class_location}</label>
-                                 <input type="text" value="${c.location || ''}" onchange="updateClass(${c.id}, 'location', this.value)" placeholder="${t.location_placeholder}" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
+                                 <input type="text" value="${c.location || ''}" oninput="debouncedUpdateClass(${c.id}, 'location', this.value)" placeholder="${t.location_placeholder}" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; opacity: 0.8;">
                                  <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.level_tag_label}</label>
-                                 <input type="text" value="${c.tag || 'Clase'}" onchange="updateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
+                                 <input type="text" value="${c.tag || 'Clase'}" oninput="debouncedUpdateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
                             </div>
                         </div>
                     </div>
@@ -2680,10 +2710,11 @@ function renderView() {
                 </div>
                 ${state.additionalFeaturesExpanded ? `
                 <div class="expandable-section-content" style="padding: 1rem 0;">
-                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${t.create_new_competition}</div>
-                    <button class="btn-primary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${state.currentSchool?.jack_and_jill_enabled === true ? t.create_new_competition : ''}</div>
+                    <button class="btn-primary" ${state.currentSchool?.jack_and_jill_enabled === true ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)"' : 'disabled'} style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600; ${state.currentSchool?.jack_and_jill_enabled !== true ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
                         <i data-lucide="trophy" size="16" style="margin-right: 8px;"></i> ${t.jack_and_jill}
                     </button>
+                    ${state.currentSchool?.jack_and_jill_enabled !== true ? `<p style="font-size: 13px; color: var(--text-secondary); padding: 10px 0 0; margin: 0;">${t.jack_and_jill_upgrade_msg}</p>` : ''}
                 </div>
                 ` : ''}
             </div>
@@ -2931,19 +2962,25 @@ window.checkExpirations = async () => {
     for (let s of state.students) {
         let changed = false;
 
-        // Handle Multi-Batch Expiration
+        // Handle Multi-Batch Expiration: keep expired packs for display, but balance only counts active
         if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
-            const initialCount = s.active_packs.length;
-            s.active_packs = s.active_packs.filter(p => new Date(p.expires_at) > now);
-
-            if (s.active_packs.length !== initialCount) {
-                s.balance = s.active_packs.reduce((sum, p) => sum + p.count, 0);
-                if (s.active_packs.length === 0) {
-                    s.package = null;
-                    s.paid = false;
-                    s.package_expires_at = null;
-                }
+            const activeOnly = s.active_packs.filter(p => new Date(p.expires_at) > now);
+            const activeBalance = activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
+            if (s.balance !== activeBalance) {
+                s.balance = activeBalance;
                 changed = true;
+            }
+            if (activeOnly.length === 0 && s.paid) {
+                s.package = null;
+                s.paid = false;
+                s.package_expires_at = null;
+                changed = true;
+            } else if (activeOnly.length > 0) {
+                const nextExp = activeOnly.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
+                if (s.package_expires_at !== nextExp) {
+                    s.package_expires_at = nextExp;
+                    changed = true;
+                }
             }
         } else if (s.package_expires_at && s.balance > 0) {
             // Legacy/Single Fallback Expiration
@@ -2988,6 +3025,17 @@ window.toggleCustomDropdown = (id) => {
     if (!isOpen) {
         list.classList.add('open');
     }
+};
+
+window.scheduleTimeBlurSave = (classId, inputEl) => {
+    if (inputEl._timeBlurT) clearTimeout(inputEl._timeBlurT);
+    inputEl._timeBlurT = setTimeout(() => {
+        inputEl._timeBlurT = null;
+        if (inputEl.value && document.activeElement !== inputEl) updateClass(classId, 'time', inputEl.value);
+    }, 400);
+};
+window.cancelTimeBlurSave = (inputEl) => {
+    if (inputEl._timeBlurT) { clearTimeout(inputEl._timeBlurT); inputEl._timeBlurT = null; }
 };
 
 window.selectCustomOption = async (classId, field, value) => {
@@ -3585,6 +3633,31 @@ window.renameSchool = async (schoolId) => {
         state.currentSchool = { ...state.currentSchool, name: updated?.name || newName };
     }
     alert(t('rename_school_success') || 'School name updated.');
+    renderView();
+};
+
+window.toggleSchoolJackAndJill = async (schoolId, enabled) => {
+    if (!supabaseClient) { alert("No database connection"); return; }
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (!sessionData?.session?.user) {
+        alert("Your Dev session is missing or expired. Log in again with your Dev credentials.");
+        return;
+    }
+    const { data, error } = await supabaseClient.rpc('school_update_jack_and_jill_enabled', { p_school_id: schoolId, p_enabled: !!enabled });
+    if (error) {
+        alert("Error: " + (error.message || 'Could not update feature'));
+        return;
+    }
+    const updated = data && (typeof data === 'object' ? data : JSON.parse(data));
+    if (state.platformData?.schools) {
+        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, jack_and_jill_enabled: !!enabled } : s);
+    }
+    if (state.schools) {
+        state.schools = state.schools.map(s => s.id === schoolId ? { ...s, jack_and_jill_enabled: !!enabled } : s);
+    }
+    if (state.currentSchool?.id === schoolId) {
+        state.currentSchool = { ...state.currentSchool, jack_and_jill_enabled: !!enabled };
+    }
     renderView();
 };
 
@@ -4345,18 +4418,51 @@ window.updateBalance = async (studentId, value) => {
     }
 };
 
+// Pending class edits: flush after 3s of no typing to avoid refresh interrupting input
+let _classUpdatePending = new Map();
+let _classUpdateDebounceTimer = null;
+const CLASS_UPDATE_DEBOUNCE_MS = 3000;
+
+window.debouncedUpdateClass = (id, field, value) => {
+    const cls = state.classes.find(c => c.id === id);
+    if (!cls) return;
+    state._lastClassEditAt = Date.now();
+    const val = (field === 'price' ? parseFloat(value) : value);
+    cls[field] = val;
+    const key = id + '::' + field;
+    _classUpdatePending.set(key, { id, field });
+    if (_classUpdateDebounceTimer) clearTimeout(_classUpdateDebounceTimer);
+    _classUpdateDebounceTimer = setTimeout(async () => {
+        _classUpdateDebounceTimer = null;
+        const toFlush = [..._classUpdatePending.values()];
+        _classUpdatePending.clear();
+        for (const { id: classId, field: fieldName } of toFlush) {
+            const c = state.classes.find(x => x.id === classId);
+            if (!c) continue;
+            await window._doClassUpdateOnly(classId, fieldName, c[fieldName]);
+        }
+        if (toFlush.length > 0) { saveState(); renderView(); }
+    }, CLASS_UPDATE_DEBOUNCE_MS);
+};
+
+window._doClassUpdateOnly = async (id, field, value) => {
+    const cls = state.classes.find(c => c.id === id);
+    if (!cls) return;
+    const val = (field === 'price' ? parseFloat(value) : value);
+    if (supabaseClient) {
+        const { error: rpcError } = await supabaseClient.rpc('class_update_field', { p_id: id, p_field: field, p_value: String(val) });
+        if (rpcError) {
+            const { error } = await supabaseClient.from('classes').update({ [field]: val }).eq('id', id);
+            if (error) { console.error(error); return; }
+        }
+    }
+    cls[field] = val;
+};
+
 window.updateClass = async (id, field, value) => {
     const cls = state.classes.find(c => c.id === id);
     if (cls) {
-        const val = (field === 'price' ? parseFloat(value) : value);
-        if (supabaseClient) {
-            const { error: rpcError } = await supabaseClient.rpc('class_update_field', { p_id: id, p_field: field, p_value: String(val) });
-            if (rpcError) {
-                const { error } = await supabaseClient.from('classes').update({ [field]: val }).eq('id', id);
-                if (error) { console.error(error); return; }
-            }
-        }
-        cls[field] = val;
+        await window._doClassUpdateOnly(id, field, (field === 'price' ? parseFloat(value) : value));
         saveState();
         renderView();
     }
@@ -4945,41 +5051,44 @@ window.confirmAttendance = async (studentId, count) => {
             });
             if (!rpcError) {
                 updated = true;
-                const newBalance = (student.balance || 0) - count;
-                student.balance = newBalance;
-                if (Array.isArray(student.active_packs) && student.active_packs.length > 0) {
-                    let remaining = count;
-                    const packs = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-                    for (const pack of packs) {
-                        if (remaining <= 0) break;
-                        const c = (pack.count || 0);
-                        const deduct = Math.min(c, remaining);
-                        pack.count = c - deduct;
-                        remaining -= deduct;
-                    }
-                    student.active_packs = packs.filter(p => (p.count || 0) > 0);
+                const now = new Date();
+                const activeOnly = (student.active_packs || []).filter(p => new Date(p.expires_at) > now);
+                const packs = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+                let remaining = count;
+                for (const pack of packs) {
+                    if (remaining <= 0) break;
+                    if (new Date(pack.expires_at) <= now) continue; // skip expired
+                    const c = (pack.count || 0);
+                    const deduct = Math.min(c, remaining);
+                    pack.count = c - deduct;
+                    remaining -= deduct;
                 }
+                student.active_packs = packs.filter(p => (p.count || 0) > 0 || new Date(p.expires_at) <= now);
+                student.balance = (student.balance || 0) - count;
             }
         }
 
         if (!updated) {
-            const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+            const now = new Date();
+            const allPacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+            const activePacks = allPacks.filter(p => new Date(p.expires_at) > now).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
             let remainingToDeduct = count;
 
             if (activePacks.length > 0) {
-                activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
                 for (let i = 0; i < activePacks.length && remainingToDeduct > 0; i++) {
                     const pack = activePacks[i];
-                    if (pack.count >= remainingToDeduct) {
-                        pack.count -= remainingToDeduct;
+                    const c = pack.count || 0;
+                    if (c >= remainingToDeduct) {
+                        pack.count = c - remainingToDeduct;
                         remainingToDeduct = 0;
                     } else {
-                        remainingToDeduct -= pack.count;
+                        remainingToDeduct -= c;
                         pack.count = 0;
                     }
                 }
-                const updatedPacks = activePacks.filter(p => p.count > 0);
-                const newBalance = updatedPacks.reduce((sum, p) => sum + p.count, 0);
+                const expiredPacks = allPacks.filter(p => new Date(p.expires_at) <= now);
+                const updatedPacks = [...activePacks.filter(p => (p.count || 0) > 0), ...expiredPacks];
+                const newBalance = updatedPacks.filter(p => new Date(p.expires_at) > now).reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
                 if (supabaseClient) {
                     const { error } = await supabaseClient.from('students').update({ balance: newBalance, active_packs: updatedPacks }).eq('id', studentId);
                     if (error) { alert("Error updating balance: " + error.message); return; }
@@ -5262,8 +5371,10 @@ logoEl.addEventListener('click', () => {
     setInterval(() => {
         const isFocussed = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '');
         const isModalOpen = document.querySelector('.modal:not(.hidden)');
+        const isEditingClasses = state.currentView === 'admin-settings';
+        const recentlyEditedClass = state._lastClassEditAt && (Date.now() - state._lastClassEditAt < 15000);
 
-        if (state.currentUser && !isFocussed && !isModalOpen) {
+        if (state.currentUser && !isFocussed && !isModalOpen && !isEditingClasses && !recentlyEditedClass) {
             fetchAllData();
         }
     }, 120000);
