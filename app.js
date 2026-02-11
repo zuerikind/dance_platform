@@ -3217,7 +3217,9 @@ async function fetchPlatformData() {
                 };
             }
             const { data: sessionData } = await supabaseClient.auth.getSession();
-            if (sessionData?.session?.user) state.platformAdminLinked = true;
+            const uid = sessionData?.session?.user?.id;
+            const admins = state.platformData?.platform_admins || [];
+            state.platformAdminLinked = !!(uid && admins.some(pa => pa.user_id === uid));
         }
 
         state.loading = false;
