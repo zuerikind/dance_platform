@@ -3235,6 +3235,11 @@ window.deleteSchool = async (schoolId, schoolName) => {
             alert("No database connection");
             return;
         }
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (!sessionData?.session?.user) {
+            alert("Your Dev session is missing or expired. Log out and log in again with your Dev credentials (username + password, or the email + password you used in \"Link account\") so you have permission to delete schools.");
+            return;
+        }
 
         // 1. Delete all related data for this school
         // We'll run them in parallel for speed, though order might matter with DB constraints.
@@ -3247,11 +3252,13 @@ window.deleteSchool = async (schoolId, schoolName) => {
             supabaseClient.from('admins').delete().eq('school_id', schoolId)
         ]);
 
-        // 2. Delete the school itself
-        const { error } = await supabaseClient.from('schools').delete().eq('id', schoolId);
+        // 2. Delete the school itself (RLS may block with 0 rows and no error)
+        const { data: deletedRows, error } = await supabaseClient.from('schools').delete().eq('id', schoolId).select('id');
 
         if (error) {
             alert(`Error deleting school: ${error.message}`);
+        } else if (!deletedRows || deletedRows.length === 0) {
+            alert('Delete did not go through. Log in with your linked platform admin account (email + password from the link step) so the app has permission, then try again.');
         } else {
             alert(t.delete_school_success);
             await fetchPlatformData(); // Refresh the list
@@ -3449,6 +3456,11 @@ window.submitNewSchoolWithAdmin = async () => {
     }
 
     if (supabaseClient) {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (!sessionData?.session?.user) {
+            alert("Your Dev session is missing or expired. Log out and log in again with your Dev credentials (username + password, or the email + password you used in \"Link account\") so you have permission to create schools.");
+            return;
+        }
         state.loading = true;
         renderView();
 
