@@ -1195,6 +1195,7 @@ window.saveCompetition = async () => {
                 p_is_sign_in_active: !!cur.is_sign_in_active
             });
             if (error) throw new Error(error.message);
+            if (res == null) throw new Error('Update failed. Are you logged in as an admin for this school?');
             state.currentCompetition = res || cur;
             state.competitions = (state.competitions || []).map(c => c.id === id ? (res || c) : c);
         } else {
@@ -1206,10 +1207,9 @@ window.saveCompetition = async () => {
                 p_next_steps_text: nextSteps
             });
             if (error) throw new Error(error.message);
-            const newComp = res && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
-            if (newComp) {
-                state.competitions = [newComp, ...(state.competitions || [])];
-            }
+            const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
+            if (!newComp) throw new Error('Create failed. Are you logged in as an admin for this school?');
+            state.competitions = [newComp, ...(state.competitions || [])];
         }
         state.jackAndJillFormOpen = false;
         state.competitionId = null;
@@ -2936,8 +2936,9 @@ window.loginAdminWithCreds = async () => {
     let adminRow = null;
     if (supabaseClient) {
         try {
-            // 1) Try Supabase Auth (for admins who have user_id set)
             const pseudoEmail = `${user.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
+
+            // 1) Try Supabase Auth (for admins who already have user_id set)
             const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                 email: pseudoEmail,
                 password: pass
@@ -2951,10 +2952,20 @@ window.loginAdminWithCreds = async () => {
                     .eq('school_id', state.currentSchool.id)
                     .single();
                 if (!adminError && row) adminRow = row;
-            }
-
-            // 2) Fallback: check database directly (existing admins with username+password, no Auth user)
-            if (!adminRow && user && pass) {
+                // Signed in but no admin row by user_id: legacy admin, link this Auth user to their row
+                if (!adminRow && user && pass) {
+                    const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_admin_by_credentials', {
+                        p_username: user,
+                        p_password: pass,
+                        p_school_id: state.currentSchool.id
+                    });
+                    if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
+                        adminRow = legacyRows[0];
+                        await supabaseClient.rpc('link_admin_auth');
+                    }
+                }
+            } else {
+                // 2) Legacy: credentials OK but no Auth user yet – create one and link so is_school_admin() works
                 const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_admin_by_credentials', {
                     p_username: user,
                     p_password: pass,
@@ -2962,6 +2973,16 @@ window.loginAdminWithCreds = async () => {
                 });
                 if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
                     adminRow = legacyRows[0];
+                    const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
+                    if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
+                        const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
+                        if (!signInAgain) await supabaseClient.rpc('link_admin_auth');
+                        else adminRow = null;
+                    } else if (!signUpErr) {
+                        await supabaseClient.rpc('link_admin_auth');
+                    } else {
+                        adminRow = null;
+                    }
                 }
             }
         } catch (e) {
@@ -3029,14 +3050,28 @@ window.loginDeveloper = async (user, pass) => {
         }
     }
 
-    // 2) Legacy: check platform_admins table (username + password)
+    // 2) Legacy: check platform_admins table (username + password), then get Auth session so is_platform_admin() works (schools RLS)
     const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_platform_admin_by_credentials', {
         p_username: user,
         p_password: pass
     });
     if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
+        const platformUsername = legacyRows[0].username || user;
+        const pseudoEmail = `${String(platformUsername).replace(/\s+/g, '_').toLowerCase()}@platform.bailadmin.local`;
+        try {
+            let { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
+            if (signInErr && signInErr.message && (signInErr.message.includes('Invalid login') || signInErr.message.includes('invalid'))) {
+                const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
+                if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
+                    signInErr = (await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass })).error;
+                } else {
+                    signInErr = signUpErr;
+                }
+            }
+            if (!signInErr) await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: pass });
+        } catch (e) { console.warn('Platform dev Auth link:', e); }
         state.isPlatformDev = true;
-        state.currentUser = { name: (legacyRows[0].username || user) + " (Dev)", role: "platform-dev" };
+        state.currentUser = { name: platformUsername + " (Dev)", role: "platform-dev" };
         state.currentView = 'platform-dev-dashboard';
         state.loading = false;
         saveState();
@@ -3280,17 +3315,28 @@ window.submitNewSchoolWithAdmin = async () => {
             if (schoolError) throw schoolError;
             const schoolId = schoolData[0].id;
 
-            // 2. Create Admin
-            const { error: adminError } = await supabaseClient
-                .from('admins')
-                .insert([{
+            // 2. Create Auth user for admin (pseudo-email, no real email needed) then insert admin with user_id
+            let adminUserId = null;
+            const pseudoEmail = `${String(adminUser).replace(/\s+/g, '_').toLowerCase()}+${schoolId}@admins.bailadmin.local`;
+            try {
+                const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+                if (tempClient) {
+                    const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password: adminPass });
+                    if (!signUpErr && signUpData?.user) adminUserId = signUpData.user.id;
+                }
+            } catch (e) { console.warn('Admin Auth signUp:', e); }
+            const adminPayload = { p_school_id: schoolId, p_username: adminUser, p_password: adminPass };
+            if (adminUserId) adminPayload.p_user_id = adminUserId;
+            const { error: adminError } = await supabaseClient.rpc('admin_insert_for_school', adminPayload);
+            if (adminError) {
+                const fallback = await supabaseClient.from('admins').insert([{
                     id: "ADMIN-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
                     username: adminUser,
                     password: adminPass,
                     school_id: schoolId
                 }]);
-
-            if (adminError) throw adminError;
+                if (fallback.error) throw adminError;
+            }
 
             // 3. Create Default "Clase Suelta" Pass
             const { error: subError } = await supabaseClient
@@ -3627,11 +3673,18 @@ window.createNewAdmin = async () => {
     if (!password) return;
 
     if (supabaseClient && state.currentSchool?.id) {
-        const { data: row, error: rpcError } = await supabaseClient.rpc('admin_insert_for_school', {
-            p_school_id: state.currentSchool.id,
-            p_username: username,
-            p_password: password
-        });
+        let userId = null;
+        const pseudoEmail = `${String(username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
+        try {
+            const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+            if (tempClient) {
+                const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password });
+                if (!signUpErr && signUpData?.user) userId = signUpData.user.id;
+            }
+        } catch (e) { console.warn('Admin Auth signUp:', e); }
+        const payload = { p_school_id: state.currentSchool.id, p_username: username, p_password: password };
+        if (userId) payload.p_user_id = userId;
+        const { data: row, error: rpcError } = await supabaseClient.rpc('admin_insert_for_school', payload);
         if (rpcError) {
             const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
             const { error } = await supabaseClient.from('admins').insert([{ id: newId, username, password, school_id: state.currentSchool.id }]);
