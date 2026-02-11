@@ -27,6 +27,8 @@ const DANCE_LOCALES = {
         no_subs: "No active memberships found",
         scan_success: "Verification Successful",
         scan_fail: "Membership Inactive",
+        camera_not_found: "No camera found. Please connect a camera or use a device with a built-in camera.",
+        camera_permission_denied: "Camera access denied. Please allow camera in your browser settings.",
         switch_to_admin: "Go to Admin",
         switch_to_student: "Go to Student",
         auth_subtitle: "Precision in every step.",
@@ -288,6 +290,8 @@ const DANCE_LOCALES = {
         no_subs: "Sin membresías activas",
         scan_success: "Verificación Exitosa",
         scan_fail: "Membresía Inactiva",
+        camera_not_found: "No se encontró ninguna cámara. Conecta una cámara o usa un dispositivo con cámara integrada.",
+        camera_permission_denied: "Acceso a la cámara denegado. Permite la cámara en la configuración del navegador.",
         switch_to_admin: "Ir a Admin",
         switch_to_student: "Ir a Alumno",
         auth_subtitle: "Eleva tu baile.",
@@ -552,6 +556,8 @@ const DANCE_LOCALES = {
         no_subs: "Keine aktiven Mitgliedschaften gefunden",
         scan_success: "Verifizierung erfolgreich",
         scan_fail: "Mitgliedschaft inaktiv",
+        camera_not_found: "Keine Kamera gefunden. Verbinde eine Kamera oder verwende ein Gerät mit integrierter Kamera.",
+        camera_permission_denied: "Kamerazugriff verweigert. Bitte erlaube die Kamera in den Browser-Einstellungen.",
         switch_to_admin: "Zum Admin",
         switch_to_student: "Zum Schüler",
         auth_subtitle: "Präzision in jedem Schritt.",
@@ -4723,8 +4729,6 @@ window.startScanner = async () => {
             html5QrCode = null;
         }
 
-        html5QrCode = new Html5Qrcode("reader");
-
         const config = {
             fps: 15,
             qrbox: { width: 250, height: 250 },
@@ -4733,25 +4737,40 @@ window.startScanner = async () => {
 
         const scanSuccess = (id) => {
             console.log("QR Scanned successfully. ID:", id);
-            // PAUSE so we don't scan 50 times a second while choosing
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.pause(false);
             }
             window.handleScan(id);
         };
 
-        await html5QrCode.start(
+        // Try cameras in order: user (front/laptop) → environment (rear/phone) → any available
+        const constraints = [
+            { facingMode: "user" },
             { facingMode: "environment" },
-            config,
-            scanSuccess,
-            () => { }
-        ).catch(err => {
-            console.error("Scanner start error (environment):", err);
-            return html5QrCode.start({ facingMode: "user" }, config, scanSuccess, () => { });
-        }).catch(e => {
-            console.error("Scanner setup error:", e);
-            alert("Camera error: " + e);
-        });
+            { video: true }
+        ];
+        let lastErr;
+        for (const c of constraints) {
+            try {
+                html5QrCode = new Html5Qrcode("reader");
+                await html5QrCode.start(c, config, scanSuccess, () => { });
+                return;
+            } catch (err) {
+                console.warn("Scanner start attempt failed:", c, err);
+                lastErr = err;
+                if (html5QrCode) {
+                    try { await html5QrCode.stop(); } catch (_) {}
+                    html5QrCode = null;
+                }
+            }
+        }
+        const msg = (lastErr?.message || String(lastErr)).toLowerCase();
+        const friendlyMsg = msg.includes("not found") || msg.includes("notfound")
+            ? (typeof window.t === 'function' ? window.t('camera_not_found') : "No camera found. Please connect a camera or use a device with a built-in camera.")
+            : msg.includes("permission") || msg.includes("denied")
+                ? (typeof window.t === 'function' ? window.t('camera_permission_denied') : "Camera access denied. Please allow camera in your browser settings.")
+                : "Camera error: " + (lastErr?.message || lastErr);
+        alert(friendlyMsg);
     } catch (err) {
         console.error("Scanner setup error:", err);
         alert("Camera access denied or error: " + err);
