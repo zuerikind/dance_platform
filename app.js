@@ -174,6 +174,9 @@ const DANCE_LOCALES = {
         dev_no_classes: "No classes configured",
         password_label: "Password",
         delete_school_btn: "Delete School",
+        rename_school_btn: "Rename",
+        rename_school_prompt: "Enter new name for this school:",
+        rename_school_success: "School name updated.",
         delete_school_confirm: "Are you sure you want to delete this school? ALL data (students, admins, payments, classes) will be permanently lost.",
         delete_school_success: "School deleted successfully",
         add_school_title: "Create New School",
@@ -439,6 +442,9 @@ const DANCE_LOCALES = {
         dev_no_classes: "Sin clases configuradas",
         password_label: "Contraseña",
         delete_school_btn: "Eliminar Escuela",
+        rename_school_btn: "Renombrar",
+        rename_school_prompt: "Ingresa el nuevo nombre de la escuela:",
+        rename_school_success: "Nombre de escuela actualizado.",
         delete_school_confirm: "¿Estás seguro de que quieres eliminar esta escuela? TODOS los datos (alumnos, admins, pagos, clases) se perderán permanentemente.",
         delete_school_success: "Escuela eliminada con éxito",
         add_school_title: "Crear Nueva Escuela",
@@ -705,6 +711,9 @@ const DANCE_LOCALES = {
         dev_no_classes: "Keine Kurse konfiguriert",
         password_label: "Passwort",
         delete_school_btn: "Schule löschen",
+        rename_school_btn: "Umbenennen",
+        rename_school_prompt: "Neuer Name für diese Schule:",
+        rename_school_success: "Schulname aktualisiert.",
         delete_school_confirm: "Bist du sicher? ALLE Daten (Schüler, Admins, Zahlungen, Kurse) werden unwiderruflich gelöscht.",
         delete_school_success: "Schule erfolgreich gelöscht",
         add_school_title: "Neue Schule erstellen",
@@ -1662,6 +1671,9 @@ function renderView() {
                                         <div style="font-size: 11px; font-weight: 800; color: var(--system-blue); background: rgba(0, 122, 255, 0.08); padding: 5px 12px; border-radius: 14px; letter-spacing: 0.02em; border: 1px solid rgba(0, 122, 255, 0.1);">
                                             ${schoolStudents} ${t.dev_students_label.toUpperCase()}
                                         </div>
+                                        <button type="button" class="btn-icon" data-action="rename-school" data-school-id="${s.id}" data-school-name="${(s.name || '').replace(/"/g, '&quot;')}" style="color: var(--system-blue); opacity: 0.85; padding: 6px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(0, 122, 255, 0.15)'" onmouseout="this.style.opacity='0.85'; this.style.background='transparent'" title="${(t.rename_school_btn || 'Rename').replace(/"/g, '&quot;')}">
+                                            <i data-lucide="pencil" size="18"></i>
+                                        </button>
                                         <button type="button" class="btn-icon" data-action="delete-school" data-school-id="${s.id}" style="color: var(--system-red); opacity: 0.85; padding: 6px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.background='rgba(255, 59, 48, 0.15)'" onmouseout="this.style.opacity='0.85'; this.style.background='transparent'" title="${(t.delete_school_btn || 'Delete School').replace(/"/g, '&quot;')}">
                                             <i data-lucide="trash-2" size="18"></i>
                                         </button>
@@ -3544,6 +3556,38 @@ window.loginDeveloper = async (user, pass) => {
     alert("Invalid Developer credentials.");
 };
 
+window.renameSchool = async (schoolId) => {
+    const t = typeof window.t === 'function' ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
+    const schools = state.platformData?.schools || state.schools || [];
+    const school = schools.find(s => s.id === schoolId);
+    if (!school) return;
+    const newName = prompt(t('rename_school_prompt') || t('enter_school_name'), school.name || '');
+    if (newName == null || !newName.trim()) return;
+    if (!supabaseClient) { alert("No database connection"); return; }
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (!sessionData?.session?.user) {
+        alert("Your Dev session is missing or expired. Log out and log in again with your Dev credentials.");
+        return;
+    }
+    const { data, error } = await supabaseClient.rpc('school_update_by_platform', { p_school_id: schoolId, p_name: newName.trim() });
+    if (error) {
+        alert("Error: " + (error.message || 'Could not update school name'));
+        return;
+    }
+    const updated = data && (typeof data === 'object' ? data : JSON.parse(data));
+    if (state.platformData?.schools) {
+        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, name: updated?.name || newName } : s);
+    }
+    if (state.schools) {
+        state.schools = state.schools.map(s => s.id === schoolId ? { ...s, name: updated?.name || newName } : s);
+    }
+    if (state.currentSchool?.id === schoolId) {
+        state.currentSchool = { ...state.currentSchool, name: updated?.name || newName };
+    }
+    alert(t('rename_school_success') || 'School name updated.');
+    renderView();
+};
+
 window.deleteSchool = async (schoolId, schoolNameParam) => {
     const t = DANCE_LOCALES[state.language] || DANCE_LOCALES.en;
     const schools = state.platformData?.schools || state.schools || [];
@@ -5140,6 +5184,14 @@ logoEl.addEventListener('click', () => {
     });
 
     document.addEventListener('click', (e) => {
+        const renameSchoolBtn = e.target.closest('[data-action="rename-school"]');
+        if (renameSchoolBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = renameSchoolBtn.getAttribute('data-school-id');
+            if (id && typeof window.renameSchool === 'function') window.renameSchool(id);
+            return;
+        }
         const delSchoolBtn = e.target.closest('[data-action="delete-school"]');
         if (delSchoolBtn) {
             e.preventDefault();
