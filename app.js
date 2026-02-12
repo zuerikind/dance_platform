@@ -267,6 +267,7 @@ const DANCE_LOCALES = {
         competition_create_new: "Create new",
         competition_edit_tab: "Edit",
         no_existing_events: "No existing events.",
+        no_events_linked_hint: "If you created events before, link your admin account: go to Students → use the \"Link account\" card, or log out and log in again with your admin username and password.",
         add_new_event: "Add new event",
         competition_view_answers: "View answers",
         competition_answers: "Answers",
@@ -287,7 +288,12 @@ const DANCE_LOCALES = {
         competition_video_size_error: "File too large (max 50 MB)",
         competition_video_uploading: "Uploading...",
         competition_video_uploaded: "Video uploaded",
-        competition_video_unavailable: "Video unavailable"
+        competition_video_unavailable: "Video unavailable",
+        competition_event_logo: "Event logo / image",
+        competition_logo_after_save: "Save the event first to add a logo.",
+        competition_logo_too_large: "Image is too large. Max 15 MB. Try resizing or compressing the screenshot.",
+        competition_logo_permission_hint: "Ensure you are logged in as a school admin.",
+        competition_logo_rls_hint: "Your admin account is not linked to this session. Fix: 1) Go to Students / Jack and Jill. 2) If you see \"Link admin account\", enter your email and current password there. 3) Or log out and log in again with your admin username and password."
     },
     es: {
         nav_schedule: "Horario",
@@ -552,6 +558,7 @@ const DANCE_LOCALES = {
         competition_create_new: "Crear nuevo",
         competition_edit_tab: "Editar",
         no_existing_events: "No hay eventos.",
+        no_events_linked_hint: "Si creaste eventos antes, vincula tu cuenta: ve a Alumnos → usa la tarjeta \"Link account\", o cierra sesión e inicia de nuevo con tu usuario y contraseña de admin.",
         add_new_event: "Añadir nuevo evento",
         competition_view_answers: "Ver respuestas",
         competition_answers: "Respuestas",
@@ -572,7 +579,12 @@ const DANCE_LOCALES = {
         competition_video_size_error: "Archivo demasiado grande (máx. 50 MB)",
         competition_video_uploading: "Subiendo...",
         competition_video_uploaded: "Video subido",
-        competition_video_unavailable: "Video no disponible"
+        competition_video_unavailable: "Video no disponible",
+        competition_event_logo: "Logo / imagen del evento",
+        competition_logo_after_save: "Guarda el evento primero para añadir un logo.",
+        competition_logo_too_large: "La imagen es demasiado grande. Máx. 15 MB. Intenta redimensionar o comprimir la captura.",
+        competition_logo_permission_hint: "Asegúrate de haber iniciado sesión como admin de la escuela.",
+        competition_logo_rls_hint: "Tu cuenta de admin no está vinculada a esta sesión. Solución: 1) Ve a Alumnos / Jack and Jill. 2) Si ves \"Link admin account\", introduce tu email y contraseña actual. 3) O cierra sesión e inicia de nuevo con tu usuario y contraseña de admin."
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -811,6 +823,8 @@ const DANCE_LOCALES = {
         competition_delete_confirm: "Dieses Event löschen? Alle Anmeldungen werden entfernt.",
         competition_copy: "Kopieren",
         competition_copy_of: "Kopie von ",
+        no_existing_events: "Keine Events vorhanden.",
+        no_events_linked_hint: "Wenn du zuvor Events erstellt hast, verknüpfe dein Admin-Konto: Gehe zu Schüler → nutze die Karte \"Link account\", oder melde dich ab und mit Benutzername + Passwort wieder an.",
         competition_confirm_copy: "Kopie erstellen als \"{name}\"? Das neue Event ist zunächst inaktiv.",
         competition_copy_success: "Event kopiert.",
         competition_done: "Fertig",
@@ -825,6 +839,11 @@ const DANCE_LOCALES = {
         competition_video_uploading: "Wird hochgeladen...",
         competition_video_uploaded: "Video hochgeladen",
         competition_video_unavailable: "Video nicht verfügbar",
+        competition_event_logo: "Event-Logo / Bild",
+        competition_logo_after_save: "Speichere zuerst das Event, um ein Logo hinzuzufügen.",
+        competition_logo_too_large: "Bild ist zu groß. Max. 15 MB. Versuche die Bildschirmaufnahme zu verkleinern oder zu komprimieren.",
+        competition_logo_permission_hint: "Stelle sicher, dass du als Schuladmin angemeldet bist.",
+        competition_logo_rls_hint: "Dein Admin-Konto ist nicht mit dieser Sitzung verknüpft. Lösung: 1) Gehe zu Schüler / Jack and Jill. 2) Wenn du \"Link admin account\" siehst, gib E-Mail und Passwort ein. 3) Oder melde dich ab und mit Benutzername + Passwort wieder an.",
         competition_approved_message: "Herzlichen Glückwunsch! Du wirst an \"{eventName}\" teilnehmen.",
         competition_declined_message: "Dieses Mal kannst du nicht teilnehmen, aber wir freuen uns auf dich beim nächsten Mal."
     }
@@ -900,7 +919,7 @@ async function fetchAllData() {
         return;
     }
     state.loading = true;
-    renderView();
+    if (state.currentView !== 'auth') renderView();
 
     try {
         // First, always fetch schools (anon can read via RLS "schools_select_all")
@@ -1087,8 +1106,12 @@ async function fetchAllData() {
         }
         if (state.isAdmin && sid && supabaseClient) {
             try {
+                const sess = await supabaseClient.auth.getSession();
                 const { data: compList, error: compListErr } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: sid });
                 state.competitions = !compListErr && Array.isArray(compList) ? compList : [];
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:fetchAllData:competitions',message:'competition_list_for_admin from fetchAllData',data:{sid,compCount:Array.isArray(compList)?compList.length:0,rpcError:compListErr?.message||null,authUserId:sess?.data?.session?.user?.id||null,currentSchoolId:state.currentSchool?.id},timestamp:Date.now(),hypothesisId:'H1,H2,H3'})}).catch(()=>{});
+                // #endregion
             } catch (_) {
                 state.competitions = [];
             }
@@ -1105,7 +1128,7 @@ async function fetchAllData() {
 
         state.loading = false;
         _lastFetchEndTime = Date.now();
-        renderView();
+        if (state.currentView !== 'auth') renderView();
         if (window._fetchAllDataNeeded) {
             window._fetchAllDataNeeded = false;
             setTimeout(() => fetchAllData(), 100);
@@ -1114,7 +1137,7 @@ async function fetchAllData() {
         state.loading = false;
         _lastFetchEndTime = Date.now();
         console.error("Error fetching data:", err);
-        renderView();
+        if (state.currentView !== 'auth') renderView();
         if (window._fetchAllDataNeeded) {
             window._fetchAllDataNeeded = false;
             setTimeout(() => fetchAllData(), 100);
@@ -1264,6 +1287,7 @@ window.openCreateNewCompetition = () => {
     state.competitionRegistrations = [];
     state.competitionTab = 'edit';
     state.competitionFormQuestions = [];
+    if (state.currentSchool?.id) state.competitionSchoolId = state.currentSchool.id;
     state.jackAndJillFormOpen = true;
     saveState();
     renderView();
@@ -1271,6 +1295,7 @@ window.openCreateNewCompetition = () => {
 window.openEditCompetition = (id) => {
     state.competitionId = id;
     state.currentCompetition = (state.competitions || []).find(c => c.id === id) || null;
+    if (state.currentCompetition?.school_id) state.competitionSchoolId = state.currentCompetition.school_id;
     state.competitionFormQuestions = state.currentCompetition && Array.isArray(state.currentCompetition.questions) ? [...state.currentCompetition.questions] : [];
     state.jackAndJillFormOpen = true;
     saveState();
@@ -1295,8 +1320,15 @@ window.selectCompetition = async (id) => {
 
 window.fetchCompetitionList = async (schoolId) => {
     if (!supabaseClient || !schoolId) return;
-    const { data } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: schoolId });
-    state.competitions = Array.isArray(data) ? data : [];
+    // #region agent log
+    const sess = await supabaseClient.auth.getSession();
+    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:fetchCompetitionList:before',message:'fetchCompetitionList called',data:{schoolId,authUserId:sess?.data?.session?.user?.id||null,currentUserName:state.currentUser?.name},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
+    const { data, error } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: schoolId });
+    state.competitions = !error && Array.isArray(data) ? data : [];
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:fetchCompetitionList:after',message:'competition_list_for_admin result',data:{schoolId,count:Array.isArray(data)?data.length:0,rpcError:error?.message||null,authUserId:sess?.data?.session?.user?.id||null},timestamp:Date.now(),hypothesisId:'H1,H3'})}).catch(()=>{});
+    // #endregion
     if (state.competitionId) state.currentCompetition = state.competitions.find(c => c.id === state.competitionId) || null;
     else state.currentCompetition = null;
     renderView();
@@ -1641,16 +1673,39 @@ window.getCompetitionImageUrl = (pathOrUrl) => {
     return SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/competition-logos/${pathOrUrl}` : pathOrUrl;
 };
 
+const COMPETITION_LOGO_MAX_SIZE = 15 * 1024 * 1024; // 15 MB (screenshots can be large)
 window.handleCompetitionImageSelect = async (fileInput) => {
     const file = fileInput?.files?.[0];
     if (!file || !supabaseClient) return;
     const schoolId = state.competitionSchoolId || state.currentSchool?.id;
     const compId = (document.getElementById('comp-id') || {}).value;
     if (!schoolId || !compId) return;
+    if (file.size > COMPETITION_LOGO_MAX_SIZE) {
+        const mb = (file.size / (1024 * 1024)).toFixed(1);
+        alert((window.t('competition_error') || 'Error saving competition') + '\n\n' + (window.t('competition_logo_too_large') || `Image is too large (${mb} MB). Max 15 MB. Try resizing or compressing the screenshot.`));
+        fileInput.value = '';
+        return;
+    }
     const ext = (file.name.match(/\.(jpe?g|png|gif|webp)$/i) || ['', 'jpg'])[1]?.toLowerCase() || 'jpg';
     const path = `${schoolId}/${compId}/logo.${ext}`;
-    const { error } = await supabaseClient.storage.from('competition-logos').upload(path, file, { upsert: true });
-    if (error) { alert(window.t('competition_error') || 'Upload failed: ' + error.message); return; }
+    const contentType = file.type && /^image\/(jpeg|png|gif|webp)$/i.test(file.type) ? file.type : (ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
+    // Refresh session so Storage API receives valid JWT (fix: storage RLS auth.uid() was null)
+    await supabaseClient.auth.refreshSession();
+    // #region agent log
+    const uploadSess = await supabaseClient.auth.getSession();
+    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:handleCompetitionImageSelect:before',message:'Logo upload attempt',data:{schoolId,compId,path,authUserId:uploadSess?.data?.session?.user?.id||null,compSchoolId:state.currentCompetition?.school_id},timestamp:Date.now(),hypothesisId:'H7,H9',runId:'post-fix'})}).catch(()=>{});
+    // #endregion
+    const { error } = await supabaseClient.storage.from('competition-logos').upload(path, file, { upsert: true, contentType });
+    if (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:handleCompetitionImageSelect:error',message:'Storage upload failed',data:{path,errorMsg:error.message,authUserId:uploadSess?.data?.session?.user?.id||null,schoolId},timestamp:Date.now(),hypothesisId:'H6,H8'})}).catch(()=>{});
+        // #endregion
+        const msg = error.message || '';
+        const hint = (msg.toLowerCase().includes('policy') || msg.toLowerCase().includes('row-level') || msg.toLowerCase().includes('permission')) ? '\n\n' + (window.t('competition_logo_rls_hint') || 'Your admin account is not linked to this session. Fix: 1) Go to Students / Jack and Jill. 2) If you see "Link admin account", enter your email and current password there. 3) Or log out and log in again with your admin username and password.') : '';
+        alert((window.t('competition_error') || 'Error saving competition') + '\n\n' + msg + hint);
+        fileInput.value = '';
+        return;
+    }
     const urlEl = document.getElementById('comp-image-url');
     if (urlEl) urlEl.value = path;
     const preview = document.getElementById('comp-image-preview');
@@ -1751,17 +1806,31 @@ window.submitStudentCompetitionRegistration = async () => {
     renderView();
 };
 
+let _renderViewScheduled = false;
+let _lastRenderedView = null;
+
 function renderView() {
+    if (_renderViewScheduled) return;
+    _renderViewScheduled = true;
+    requestAnimationFrame(() => {
+        _renderViewScheduled = false;
+        _renderViewImpl();
+    });
+}
+
+function _renderViewImpl() {
     const root = document.getElementById('app-root');
     const view = state.currentView;
     const isSignup = state.authMode === 'signup';
+    const viewChanged = view !== _lastRenderedView;
+    _lastRenderedView = view;
 
     // Magic Proxy: supports both t.key and t('key')
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
-    let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} slide-in">`;
+    let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${viewChanged ? 'slide-in' : ''}">`;
 
     if (view === 'school-selection') {
         html += `
@@ -1892,7 +1961,7 @@ function renderView() {
         html += `
             <div class="ios-header" style="background: transparent; padding-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0 0.5rem;">
-                    <button class="btn-secondary" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="border-radius: 50%; width: 36px; height: 36px; padding: 0; border: 1.5px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: all 0.3s;" onmouseover="this.style.opacity='1'; this.style.transform='translateX(-2px)'" onmouseout="this.style.opacity='0.8'; this.style.transform='translateX(0)'">
+                    <button type="button" class="btn-back" onclick="state.currentView='platform-dev-dashboard'; renderView();">
                         <i data-lucide="chevron-left" size="20" style="margin-right: 2px;"></i>
                     </button>
                     <div style="font-size: 11px; color: var(--system-blue); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">${t.dev_dashboard_title}</div>
@@ -1970,7 +2039,7 @@ function renderView() {
             html += `
                 <div class="platform-school-detail-header">
                     <div style="display: flex; align-items: center; gap: 1rem; padding: 0 1.2rem 1rem;">
-                        <button class="btn-icon platform-school-back" onclick="state.currentView='platform-dev-dashboard'; renderView();" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: all 0.2s;">
+                        <button type="button" class="btn-back" onclick="state.currentView='platform-dev-dashboard'; renderView();">
                             <i data-lucide="arrow-left" size="20"></i>
                         </button>
                         <span style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t.dev_school_inspector}</span>
@@ -2435,18 +2504,21 @@ function renderView() {
         const isPublished = comp && comp.decisions_published_at;
         const answers = state.studentCompetitionAnswers || {};
 
+        const compImageUrl = comp && comp.image_url ? (comp.image_url.startsWith('http') ? comp.image_url : (typeof getCompetitionImageUrl !== 'undefined' ? getCompetitionImageUrl(comp.image_url) : (SUPABASE_URL || '') + '/storage/v1/object/public/competition-logos/' + comp.image_url)) : '';
         html += `
-            <div class="ios-header" style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn-icon" onclick="window.location.hash=''; state.currentView='qr'; state.competitionId=null; state.studentCompetitionDetail=null; state.studentCompetitionRegDetail=null; saveState(); renderView();" style="padding: 8px;"><i data-lucide="arrow-left" size="20"></i></button>
-                <div class="ios-large-title">${t.jack_and_jill}</div>
+            <div class="student-comp-header ${compImageUrl ? 'student-comp-header-with-hero' : ''}">
+                ${compImageUrl ? `<div class="student-comp-hero"><img class="student-comp-hero-img" src="${compImageUrl}" alt="" loading="eager" decoding="async" onerror="this.style.display='none'; this.parentElement.classList.add('student-comp-hero-no-img');"></div>` : ''}
+                <div class="student-comp-header-bar">
+                    <button type="button" class="btn-back" onclick="window.location.hash=''; state.currentView='qr'; state.competitionId=null; state.studentCompetitionDetail=null; state.studentCompetitionRegDetail=null; saveState(); renderView();"><i data-lucide="arrow-left" size="20"></i></button>
+                    <div class="ios-large-title">${t.jack_and_jill}</div>
+                </div>
             </div>
-            <div style="padding: 1.2rem;">
+            <div class="student-comp-body">
                 ${!comp ? `<p style="color: var(--text-secondary);">${t.loading}</p>` : `
-                <div style="margin-bottom: 1.5rem;">
-                    ${comp.image_url ? `<img src="${(comp.image_url.startsWith('http') ? comp.image_url : (typeof getCompetitionImageUrl !== 'undefined' ? getCompetitionImageUrl(comp.image_url) : (SUPABASE_URL || '') + '/storage/v1/object/public/competition-logos/' + comp.image_url))}" alt="Event" style="width: 100%; max-width: 320px; max-height: 200px; object-fit: contain; border-radius: 12px; margin-bottom: 1rem; display: block;">` : ''}
-                    <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem;">${(comp.name || '').replace(/</g, '&lt;')}</h2>
-                    <p style="font-size: 14px; color: var(--text-secondary);">${comp.starts_at ? new Date(comp.starts_at).toLocaleString() : ''}</p>
-                    ${comp.next_steps_text ? `<div style="margin-top: 1rem; padding: 1rem; background: var(--system-gray6); border-radius: 12px; font-size: 14px; white-space: pre-wrap;">${(comp.next_steps_text || '').replace(/</g, '&lt;')}</div>` : ''}
+                <div class="student-comp-info">
+                    <h2 class="student-comp-title">${(comp.name || '').replace(/</g, '&lt;')}</h2>
+                    <p class="student-comp-date">${comp.starts_at ? new Date(comp.starts_at).toLocaleString() : ''}</p>
+                    ${comp.next_steps_text ? `<div class="student-comp-next-steps scroll-nice">${(comp.next_steps_text || '').replace(/</g, '&lt;')}</div>` : ''}
                 </div>
                 ${isSubmitted ? `
                     ${isPublished && reg ? `<div style="text-align: center; padding: 1.5rem;"><span class="status-badge ${reg.status === 'APPROVED' ? 'status-approved' : 'status-declined'}" style="display: inline-block; padding: 10px 20px; border-radius: 20px; font-weight: 700; font-size: 16px;">${reg.status === 'APPROVED' ? t.accepted : t.declined}</span></div>` : `<p style="text-align: center; font-weight: 600;">${t.reviewing_application}</p>`}
@@ -2503,39 +2575,46 @@ function renderView() {
                             <i data-lucide="plus" size="18"></i> ${t.add_student}
                         </button>
                         ${(comps.length > 0 && (state.currentSchool?.jack_and_jill_enabled === true)) ? `
-                        <div class="students-jackblock">
+                        <details class="students-jackblock" ${(typeof window !== 'undefined' && window.innerWidth >= 600) ? 'open' : ''}>
+                            <summary class="students-jack-summary">
+                                <span class="students-jack-summary-icon"><i data-lucide="trophy" size="18"></i></span>
+                                <span class="students-jack-summary-text">${t.jack_and_jill}</span>
+                                ${currentComp ? `<span class="students-jack-summary-badge">${currentComp.is_active && currentComp.is_sign_in_active ? '●' : '○'}</span>` : ''}
+                            </summary>
                             <div class="students-jackblock-inner">
-                                <div class="students-jack-header">
-                                    <button type="button" class="students-jack-btn" ${hasActiveEvent ? `onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, 'registrations')"` : 'disabled'}>
-                                        <i data-lucide="trophy" size="18"></i> ${t.jack_and_jill}
-                                    </button>
-                                    ${currentComp ? `<span class="students-jack-for-event">${t.competition_for_event}</span>` : ''}
-                                </div>
                                 ${currentComp ? `
-                                ${comps.length > 1 ? `
-                                <select class="students-jack-select" onchange="state.adminStudentsCompetitionId=this.value; renderView();">
-                                    ${comps.map(c => `<option value="${c.id}" ${c.id === currentComp.id ? 'selected' : ''}>${(c.name || '').replace(/</g, '&lt;').substring(0, 36)}${(c.name || '').length > 36 ? '…' : ''}</option>`).join('')}
-                                </select>
-                                ` : `<span class="students-jack-for-event" style="margin-top: -4px;">${(currentComp.name || '').replace(/</g, '&lt;').substring(0, 40)}${(currentComp.name || '').length > 40 ? '…' : ''}</span>`}
-                                <div class="students-jack-toggles">
-                                    <label class="toggle-switch">
-                                        <span class="toggle-switch-label">${t.competition_activate_event}</span>
-                                        <span style="display: flex;">
-                                            <input type="checkbox" class="toggle-switch-input" ${currentComp.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${currentComp.id}', this.checked)">
-                                            <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                                        </span>
-                                    </label>
-                                    <label class="toggle-switch">
-                                        <span class="toggle-switch-label">${t.competition_activate_signin}</span>
-                                        <span style="display: flex;">
-                                            <input type="checkbox" class="toggle-switch-input" ${currentComp.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${currentComp.id}', this.checked)">
-                                            <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                                        </span>
-                                    </label>
+                                <div class="students-jack-step">
+                                    <label class="students-jack-label">${t.competition_for_event}</label>
+                                    ${comps.length > 1 ? `
+                                    <select class="students-jack-select" onchange="state.adminStudentsCompetitionId=this.value; renderView();">
+                                        ${comps.map(c => `<option value="${c.id}" ${c.id === currentComp.id ? 'selected' : ''}>${(c.name || '').replace(/</g, '&lt;').substring(0, 42)}${(c.name || '').length > 42 ? '…' : ''}</option>`).join('')}
+                                    </select>
+                                    ` : `<div class="students-jack-event-name">${(currentComp.name || '').replace(/</g, '&lt;').substring(0, 50)}${(currentComp.name || '').length > 50 ? '…' : ''}</div>`}
                                 </div>
+                                <div class="students-jack-step">
+                                    <div class="students-jack-toggles">
+                                        <label class="toggle-switch">
+                                            <span class="toggle-switch-label">${t.competition_activate_event}</span>
+                                            <span style="display: flex;">
+                                                <input type="checkbox" class="toggle-switch-input" ${currentComp.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${currentComp.id}', this.checked)">
+                                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                            </span>
+                                        </label>
+                                        <label class="toggle-switch">
+                                            <span class="toggle-switch-label">${t.competition_activate_signin}</span>
+                                            <span style="display: flex;">
+                                                <input type="checkbox" class="toggle-switch-input" ${currentComp.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${currentComp.id}', this.checked)">
+                                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" class="students-jack-btn" ${hasActiveEvent ? `onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, 'registrations')"` : 'disabled'}>
+                                    <i data-lucide="users" size="18"></i> ${t.competition_registrations}
+                                </button>
                                 ` : ''}
                             </div>
-                        </div>
+                        </details>
                         ` : ''}
                     </div>
                 </div>
@@ -2904,6 +2983,9 @@ function renderView() {
     `;
     } else if (view === 'admin-competition-jack-and-jill') {
         const schoolId = state.competitionSchoolId || state.currentSchool?.id;
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:renderView:admin-competition-jack-and-jill',message:'Jack and Jill view render',data:{schoolId,competitionSchoolId:state.competitionSchoolId,currentSchoolId:state.currentSchool?.id,compsLength:state.competitions?.length||0,willFetch:!!(schoolId&&state._competitionListSchoolId!==schoolId)},timestamp:Date.now(),hypothesisId:'H2,H4'})}).catch(()=>{});
+        // #endregion
         if (schoolId && state._competitionListSchoolId !== schoolId) {
             state._competitionListSchoolId = schoolId;
             window.fetchCompetitionList(schoolId);
@@ -2917,74 +2999,76 @@ function renderView() {
         html += `
             <div class="jandj-page" style="min-height: 100vh; background: var(--bg-body);">
             <div class="ios-header" style="display: flex; align-items: center; gap: 16px; padding: 14px 20px 18px; border-bottom: 1px solid var(--border);">
-                <button type="button" onclick="window.location.hash=''; state.currentView='admin-settings'; saveState(); renderView();" style="width: 36px; height: 36px; border-radius: 50%; background: var(--system-gray6); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--system-blue);"><i data-lucide="chevron-left" size="22"></i></button>
+                <button type="button" class="btn-back" onclick="window.location.hash=''; state.currentView='admin-settings'; saveState(); renderView();"><i data-lucide="chevron-left" size="22"></i></button>
                 <h1 style="font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t.jack_and_jill}</h1>
             </div>
-            <div style="padding: 24px 20px 40px; max-width: 560px; margin: 0 auto;">
+            <div class="jandj-form-page">
                 ${!schoolId ? `<p style="color: var(--text-secondary); font-size: 15px;">${t.not_found_msg}</p>` : formOpen ? `
-                <div class="jandj-form-card" style="background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
-                    <div style="padding: 28px 24px 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
-                            <h2 style="font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); margin: 0;">${current ? t.competition_edit_tab : t.add_new_event}</h2>
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <span id="comp-autosave-status" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); min-width: 60px;"></span>
-                                <button type="button" onclick="closeCompetitionForm()" style="padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 15px; font-weight: 600; cursor: pointer;">${t.cancel}</button>
+                <div class="jandj-form-card">
+                    <div class="jandj-form-body">
+                        <div class="jandj-form-header">
+                            <h2 class="jandj-form-title">${current ? t.competition_edit_tab : t.add_new_event}</h2>
+                            <div class="jandj-form-header-actions">
+                                <span id="comp-autosave-status" class="jandj-form-autosave"></span>
+                                <button type="button" class="jandj-form-cancel" onclick="closeCompetitionForm()">${t.cancel}</button>
                             </div>
                         </div>
                         <input type="hidden" id="comp-id" value="${(current && current.id) || ''}">
-                        <div style="margin-bottom: 28px;">
-                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_name}</label>
-                            <input type="text" id="comp-name" value="${(current && current.name) || ''}" placeholder="${t.competition_name}" oninput="debouncedAutosaveCompetition()" style="width: 100%; min-width: 0; padding: 16px 18px; height: 50px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
+                        <div class="jandj-form-group">
+                            <label class="jandj-form-label">${t.competition_name}</label>
+                            <input type="text" id="comp-name" class="jandj-form-input" value="${(current && current.name) || ''}" placeholder="${t.competition_name}" oninput="debouncedAutosaveCompetition()">
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px;">
-                            <div>
-                                <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_date}</label>
-                                <input type="date" id="comp-date" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" onchange="debouncedAutosaveCompetition()" style="width: 100%; padding: 16px 18px; height: 50px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
+                        <div class="jandj-form-group">
+                            <div class="jandj-form-row">
+                                <div>
+                                    <label class="jandj-form-label">${t.competition_date}</label>
+                                    <input type="date" id="comp-date" class="jandj-form-input" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" onchange="debouncedAutosaveCompetition()">
+                                </div>
+                                <div>
+                                    <label class="jandj-form-label">${t.competition_time}</label>
+                                    <input type="time" id="comp-time" class="jandj-form-input" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" onchange="debouncedAutosaveCompetition()">
+                                </div>
                             </div>
-                            <div>
-                                <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_time}</label>
-                                <input type="time" id="comp-time" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" onchange="debouncedAutosaveCompetition()" style="width: 100%; padding: 16px 18px; height: 50px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 17px; outline: none; box-sizing: border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
-                            </div>
                         </div>
-                        <div style="margin-bottom: 28px;">
-                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_questions}</label>
-                            <div id="comp-questions-container"></div>
-                            <button type="button" onclick="addCompetitionQuestion()" style="margin-top: 14px; padding: 16px 22px; border-radius: 14px; border: 2px dashed var(--border); background: transparent; color: var(--system-blue); font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: background 0.2s, border-color 0.2s;" onmouseover="this.style.background='rgba(0,122,255,0.06)'; this.style.borderColor='var(--system-blue)'" onmouseout="this.style.background='transparent'; this.style.borderColor='var(--border)'"><i data-lucide="plus" size="20"></i>${t.competition_add_question}</button>
+                        <div class="jandj-form-group">
+                            <label class="jandj-form-label">${t.competition_questions}</label>
+                            <div id="comp-questions-container" class="jandj-form-questions-list"></div>
+                            <button type="button" class="jandj-form-add-question" onclick="addCompetitionQuestion()"><i data-lucide="plus" size="20"></i>${t.competition_add_question}</button>
                         </div>
-                        <div style="margin-bottom: 32px;">
-                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_next_steps}</label>
-                            <textarea id="comp-next-steps" rows="4" placeholder="${t.competition_next_steps_placeholder || ''}" oninput="debouncedAutosaveCompetition()" style="width: 100%; min-height: 120px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; line-height: 1.5; resize: vertical; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">${(current && current.next_steps_text) || ''}</textarea>
+                        <div class="jandj-form-group">
+                            <label class="jandj-form-label">${t.competition_next_steps}</label>
+                            <textarea id="comp-next-steps" class="jandj-form-textarea scroll-nice" rows="6" placeholder="${t.competition_next_steps_placeholder || ''}" oninput="debouncedAutosaveCompetition()">${(current && current.next_steps_text) || ''}</textarea>
                         </div>
-                        <div style="margin-bottom: 28px;">
-                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px;">${t.competition_event_logo || 'Event logo / image'}</label>
+                        <div class="jandj-form-group">
+                            <label class="jandj-form-label">${t.competition_event_logo || 'Event logo / image'}</label>
                             ${current && current.id ? `
                             <input type="hidden" id="comp-image-url" value="${(current && current.image_url) || ''}">
-                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                                ${(current && current.image_url) ? `<img id="comp-image-preview" src="${getCompetitionImageUrl(current.image_url)}" alt="Logo" style="max-width: 120px; max-height: 80px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border);">` : ''}
+                            <div class="jandj-form-logo-wrap">
+                                ${(current && current.image_url) ? `<img id="comp-image-preview" class="jandj-form-logo-preview" src="${getCompetitionImageUrl(current.image_url)}" alt="Logo">` : ''}
                                 <div>
-                                    <input type="file" id="comp-image-input" accept="image/jpeg,image/png,image/gif,image/webp" onchange="handleCompetitionImageSelect(this)" style="font-size: 14px;">
-                                    ${(current && current.image_url) ? `<button type="button" onclick="document.getElementById('comp-image-url').value=''; document.getElementById('comp-image-input').value=''; const p=document.getElementById('comp-image-preview'); if(p)p.remove(); debouncedAutosaveCompetition();" style="margin-left: 8px; padding: 6px 12px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer;">${t.remove || 'Remove'}</button>` : ''}
+                                    <input type="file" id="comp-image-input" class="jandj-form-logo-file" accept="image/jpeg,image/png,image/gif,image/webp" onchange="handleCompetitionImageSelect(this)">
+                                    ${(current && current.image_url) ? `<button type="button" class="jandj-form-logo-remove" onclick="document.getElementById('comp-image-url').value=''; document.getElementById('comp-image-input').value=''; const p=document.getElementById('comp-image-preview'); if(p)p.remove(); debouncedAutosaveCompetition();">${t.remove || 'Remove'}</button>` : ''}
                                 </div>
                             </div>
                             ` : `<p style="font-size: 13px; color: var(--text-secondary);">${t.competition_logo_after_save || 'Save the event first to add a logo.'}</p>`}
                         </div>
-                        <div style="margin-bottom: 28px;">
-                            <label class="toggle-switch" style="justify-content: space-between; width: 100%; font-size: 15px; font-weight: 500; margin-bottom: 12px;">
+                        <div class="jandj-form-group jandj-form-toggle-wrap">
+                            <label class="toggle-switch">
                                 <span class="toggle-switch-label">${t.competition_video_submission_toggle || 'Include video submission?'}</span>
                                 <span style="display: flex;">
                                     <input type="checkbox" id="comp-video-enabled" class="toggle-switch-input" ${(current && current.video_submission_enabled) ? 'checked' : ''} onchange="debouncedAutosaveCompetition(); const p=document.getElementById('comp-video-prompt-wrap'); if(p)p.style.display=this.checked?'block':'none';">
                                     <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
                                 </span>
                             </label>
-                            <div id="comp-video-prompt-wrap" style="display: ${(current && current.video_submission_enabled) ? 'block' : 'none'}; margin-top: 12px;">
-                                <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">${t.competition_video_prompt_label || 'Video question text'}</label>
-                                <input type="text" id="comp-video-prompt" value="${(current && current.video_submission_prompt) || ''}" placeholder="${t.competition_video_prompt_placeholder || 'Upload your demo video (2-3 minutes)'}" oninput="debouncedAutosaveCompetition()" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                            <div id="comp-video-prompt-wrap" class="jandj-form-video-wrap" style="display: ${(current && current.video_submission_enabled) ? 'block' : 'none'};">
+                                <label class="jandj-form-label" style="margin-bottom: 8px;">${t.competition_video_prompt_label || 'Video question text'}</label>
+                                <textarea id="comp-video-prompt" class="jandj-form-video-prompt scroll-nice" rows="5" placeholder="${t.competition_video_prompt_placeholder || 'Upload your demo video'}" oninput="debouncedAutosaveCompetition()">${((current && current.video_submission_prompt) || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
                             </div>
                         </div>
                     </div>
-                    <div style="padding: 20px 24px 28px; background: var(--system-gray6); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px;">
-                        <span id="comp-autosave-status-footer" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);"></span>
-                        <button type="button" onclick="closeCompetitionForm()" style="flex: 1; max-width: 200px; padding: 16px 24px; border-radius: 14px; border: none; background: var(--system-blue); color: white; font-size: 17px; font-weight: 600; cursor: pointer;">${t.competition_done}</button>
+                    <div class="jandj-form-footer">
+                        <span id="comp-autosave-status-footer" class="jandj-form-autosave"></span>
+                        <button type="button" class="jandj-form-done" onclick="closeCompetitionForm()">${t.competition_done}</button>
                     </div>
                 </div>
                 ` : `
@@ -2993,7 +3077,7 @@ function renderView() {
                     const cur = state.currentCompetition;
                     const statusClass = (s) => s === 'APPROVED' ? 'approved' : s === 'DECLINED' ? 'declined' : s === 'SUBMITTED' ? 'pending' : 'draft';
                     return `
-                    <button type="button" class="comp-reg-back" onclick="state.competitionTab='edit'; state.competitionId=null; state.currentCompetition=null; state.competitionRegistrations=[]; renderView();"><i data-lucide="chevron-left" size="20"></i> Back to events</button>
+                    <button type="button" class="comp-reg-back btn-back" onclick="state.competitionTab='edit'; state.competitionId=null; state.currentCompetition=null; state.competitionRegistrations=[]; renderView();" style="width: auto; min-width: auto; height: auto; min-height: 40px; padding: 0 18px; gap: 8px; border-radius: 50px; font-size: 15px; font-weight: 600;"><i data-lucide="chevron-left" size="20"></i> Back to events</button>
                     <div class="comp-reg-card">
                         ${cur && cur.decisions_published_at
                             ? `<button type="button" class="comp-reg-header comp-reg-header-secondary" onclick="if(confirm(t('competition_confirm_publish'))) republishCompetitionDecisions('${state.competitionId}');">${t.competition_republish_decisions}</button>`
@@ -3026,6 +3110,7 @@ function renderView() {
                     <h2 class="jandj-events-title">Events</h2>
                     ${comps.length === 0 ? `
                     <p class="jandj-empty-state">${t.no_existing_events}</p>
+                    ${state.currentUser ? `<p class="jandj-empty-hint" style="font-size: 13px; color: var(--text-secondary); margin-top: 8px; padding: 0 0.5rem;">${t.no_events_linked_hint || ''}</p>` : ''}
                     ` : `
                     <div class="jandj-events-list">
                         ${comps.map(c => {
@@ -3085,10 +3170,10 @@ function renderView() {
                 const container = document.getElementById('comp-questions-container');
                 if (container) {
                     container.innerHTML = questions.map((q, i) => `
-                        <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: center;">
-                            <span style="flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; background: var(--system-gray6); color: var(--text-secondary); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;">${i + 1}</span>
-                            <input type="text" value="${String(q || '').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" data-qidx="${i}" oninput="updateCompetitionQuestion(${i}, this.value)" style="flex: 1; min-width: 0; padding: 14px 16px; height: 48px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">
-                            <button type="button" onclick="removeCompetitionQuestion(${i})" title="Remove question" style="flex-shrink: 0; padding: 10px; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; border-radius: 8px; opacity: 0.7; transition: opacity 0.2s, color 0.2s;" onmouseover="this.style.opacity='1'; this.style.color='var(--system-red)'" onmouseout="this.style.opacity='0.7'; this.style.color='var(--text-secondary)'"><i data-lucide="trash-2" size="18"></i></button>
+                        <div class="jandj-form-question-row">
+                            <span class="jandj-form-question-num">${i + 1}</span>
+                            <input type="text" class="jandj-form-question-input" value="${String(q || '').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" data-qidx="${i}" oninput="updateCompetitionQuestion(${i}, this.value)">
+                            <button type="button" class="jandj-form-question-remove" onclick="removeCompetitionQuestion(${i})" title="Remove question"><i data-lucide="trash-2" size="18"></i></button>
                         </div>
                     `).join('');
                     if (window.lucide) window.lucide.createIcons();
@@ -3503,6 +3588,7 @@ window.loginStudent = async () => {
         clearSchoolData();
         _lastFetchEndTime = 0;
         saveState();
+        renderView();
         fetchAllData();
     } else {
         alert(t('invalid_login'));
@@ -3603,6 +3689,10 @@ window.loginAdminWithCreds = async () => {
     }
 
     if (adminRow) {
+        const sess = await supabaseClient.auth.getSession();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginAdminWithCreds:success',message:'Admin login success',data:{adminUsername:adminRow.username,adminUserId:adminRow.user_id,authUserId:sess?.data?.session?.user?.id||null,match:adminRow.user_id===sess?.data?.session?.user?.id,schoolId:adminRow.school_id},timestamp:Date.now(),hypothesisId:'H1,H5'})}).catch(()=>{});
+        // #endregion
         state.currentUser = {
             name: adminRow.username + " (Admin)",
             role: "admin"
@@ -3610,6 +3700,7 @@ window.loginAdminWithCreds = async () => {
         state.isAdmin = true;
         state.currentView = 'admin-students';
         saveState();
+        renderView();
         await fetchAllData();
     } else {
         alert(t('invalid_login'));
@@ -4097,6 +4188,7 @@ window.selectSchool = (id) => {
             _lastFetchEndTime = 0;
         }
         saveState();
+        renderView();
         fetchAllData();
     }
 };

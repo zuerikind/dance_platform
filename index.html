@@ -115,7 +115,7 @@
 
     <div id="student-modal" class="modal hidden">
         <div class="modal-content" id="student-modal-content" style="width: min(450px, calc(100vw - 2rem)); max-width: 100%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box;">
-            <div id="student-modal-scroll" style="overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; padding-right: 4px; box-sizing: border-box;">
+            <div id="student-modal-scroll" class="scroll-nice" style="overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; padding-right: 4px; box-sizing: border-box;">
                 <!-- Content injected via app.js -->
             </div>
         </div>
@@ -155,7 +155,7 @@
                 <h3 id="registration-answers-title" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Answers</h3>
                 <button type="button" onclick="document.getElementById('registration-answers-modal').classList.add('hidden')" style="background: none; border: none; padding: 8px; cursor: pointer; color: var(--text-secondary);"><i data-lucide="x" size="22"></i></button>
             </div>
-            <div id="registration-answers-body" style="max-height: 60vh; overflow-y: auto;"></div>
+            <div id="registration-answers-body" class="scroll-nice" style="max-height: 60vh; overflow-y: auto;"></div>
             <button type="button" id="registration-answers-close-btn" onclick="document.getElementById('registration-answers-modal').classList.add('hidden')" class="btn-primary" style="width: 100%; margin-top: 1.25rem;">Close</button>
         </div>
     </div>

@@ -1,3 +1,139 @@
+/* --- Global back button: Apple/Tesla style --- */
+.btn-back {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  background: rgba(91, 141, 217, 0.12);
+  color: #5B8FD9;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-back:hover { background: rgba(91, 141, 217, 0.22); color: #3A7BC8; }
+.btn-back:active { transform: scale(0.95); }
+.dark-mode .btn-back {
+  background: rgba(123, 171, 232, 0.15);
+  color: #7BABE8;
+}
+.dark-mode .btn-back:hover {
+  background: rgba(123, 171, 232, 0.28);
+  color: #9BC4F0;
+}
+
+/* --- Apple/Tesla scrollbars --- */
+.scroll-nice,
+.scroll-nice::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-nice::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-nice::-webkit-scrollbar-thumb {
+  background: rgba(142, 142, 147, 0.4);
+  border-radius: 4px;
+}
+.scroll-nice::-webkit-scrollbar-thumb:hover {
+  background: rgba(142, 142, 147, 0.6);
+}
+.dark-mode .scroll-nice::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+.dark-mode .scroll-nice::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* --- Student competition registration page --- */
+.student-comp-header {
+  position: relative;
+}
+.student-comp-hero {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 220px;
+  max-height: min(55vh, 400px);
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(142, 142, 147, 0.2) 0%, rgba(142, 142, 147, 0.08) 100%);
+  position: relative;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.student-comp-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  background: transparent;
+}
+.dark-mode .student-comp-hero {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+.student-comp-hero-no-img {
+  background: linear-gradient(145deg, rgba(142, 142, 147, 0.2) 0%, rgba(142, 142, 147, 0.08) 100%) !important;
+}
+.dark-mode .student-comp-hero-no-img {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+}
+.student-comp-header-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 1.2rem;
+}
+.student-comp-header-with-hero .student-comp-header-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%);
+  color: #fff;
+}
+.student-comp-header-with-hero .student-comp-header-bar .ios-large-title { color: #fff; }
+.student-comp-header-with-hero .student-comp-header-bar .btn-back {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+.student-comp-header-with-hero .student-comp-header-bar .btn-back:hover {
+  background: rgba(255,255,255,0.4);
+}
+.student-comp-body {
+  padding: 1.2rem;
+}
+.student-comp-info {
+  margin-bottom: 1.5rem;
+}
+.student-comp-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.3px;
+}
+.student-comp-date {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+.student-comp-next-steps {
+  padding: 1rem 1.25rem;
+  background: var(--system-gray6);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.dark-mode .student-comp-next-steps {
+  background: rgba(255,255,255,0.06);
+}
+
 :root {
     /* Senior Designer Palette: Strictly Monochrome + Sophisticated Accent */
     --primary: #000000;
@@ -56,6 +192,41 @@ body.dark-mode {
     --border-color: #38383A;
     --system-gray6: #1C1C1E;
     /* Grouped background in dark mode */
+}
+
+/* Apple/Tesla-style scrollbars: thin, rounded, subtle */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(142, 142, 147, 0.4) transparent;
+}
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+    background: rgba(142, 142, 147, 0.35);
+    border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(142, 142, 147, 0.55);
+}
+*::-webkit-scrollbar-thumb:active {
+    background: rgba(142, 142, 147, 0.7);
+}
+body.dark-mode * {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+body.dark-mode *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+body.dark-mode *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+body.dark-mode *::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.45);
 }
 
 .hidden {
@@ -980,17 +1151,16 @@ select option {
     color: var(--text-muted);
 }
 
-/* ANIMATIONS */
+/* ANIMATIONS - only applied on view change to avoid flickering */
 .slide-in {
-    animation: fadeIn 0.8s var(--transition);
+    animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(6px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1692,6 +1862,329 @@ select option {
 .jandj-page button[onclick*="openCreateNewCompetition"]:hover { background: rgba(0, 122, 255, 0.08); }
 .jandj-page .jandj-segmented:hover { opacity: 0.9; }
 
+/* --- Jack and Jill Event Edit Form: Apple/Tesla, mobile-first --- */
+.jandj-form-page {
+  padding: clamp(16px, 4vw, 24px) clamp(16px, 4vw, 24px) calc(48px + env(safe-area-inset-bottom, 0px));
+  max-width: min(600px, calc(100vw - 32px));
+  margin: 0 auto;
+}
+.jandj-form-card {
+  background: var(--bg-card);
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+.dark-mode .jandj-form-card {
+  background: rgba(28, 28, 30, 0.6);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+.jandj-form-body {
+  padding: clamp(20px, 5vw, 28px) clamp(20px, 5vw, 28px) 0;
+}
+.jandj-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: clamp(20px, 5vw, 28px);
+}
+.jandj-form-title {
+  font-size: clamp(20px, 5vw, 24px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+.jandj-form-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.jandj-form-cancel {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(142, 142, 147, 0.35);
+  background: rgba(142, 142, 147, 0.08);
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.jandj-form-cancel:hover { background: rgba(142, 142, 147, 0.15); }
+.dark-mode .jandj-form-cancel {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+.dark-mode .jandj-form-cancel:hover { background: rgba(255, 255, 255, 0.1); }
+.jandj-form-autosave {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 60px;
+}
+.jandj-form-group {
+  margin-bottom: clamp(20px, 5vw, 28px);
+}
+.jandj-form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+.jandj-form-input,
+.jandj-form-textarea {
+  width: 100%;
+  min-width: 0;
+  padding: clamp(14px, 3vw, 18px) clamp(16px, 4vw, 20px);
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  font-size: clamp(15px, 2.5vw, 17px);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+.jandj-form-input:focus,
+.jandj-form-textarea:focus {
+  border-color: rgba(91, 141, 217, 0.5);
+  box-shadow: 0 0 0 3px rgba(91, 141, 217, 0.12);
+}
+.dark-mode .jandj-form-input,
+.dark-mode .jandj-form-textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.dark-mode .jandj-form-input:focus,
+.dark-mode .jandj-form-textarea:focus {
+  border-color: rgba(123, 171, 232, 0.45);
+  box-shadow: 0 0 0 3px rgba(123, 171, 232, 0.1);
+}
+.jandj-form-textarea {
+  min-height: clamp(180px, 30vh, 320px);
+  resize: vertical;
+  line-height: 1.5;
+}
+.jandj-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(14px, 4vw, 20px);
+}
+@media (max-width: 400px) {
+  .jandj-form-row { grid-template-columns: 1fr; }
+}
+.jandj-form-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.jandj-form-question-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.jandj-form-question-num {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(142, 142, 147, 0.15);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dark-mode .jandj-form-question-num {
+  background: rgba(255, 255, 255, 0.08);
+}
+.jandj-form-question-input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+.jandj-form-question-input:focus {
+  border-color: rgba(91, 141, 217, 0.5);
+}
+.dark-mode .jandj-form-question-input {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.jandj-form-question-remove {
+  flex-shrink: 0;
+  padding: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--text-secondary);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 10px;
+  opacity: 0.8;
+  transition: opacity 0.2s, color 0.2s, background 0.2s;
+}
+.jandj-form-question-remove:hover {
+  opacity: 1;
+  color: #B85C5C;
+  background: rgba(184, 92, 92, 0.1);
+}
+.dark-mode .jandj-form-question-remove:hover { color: #C47878; }
+.jandj-form-add-question {
+  margin-top: 14px;
+  padding: clamp(14px, 3vw, 18px) clamp(18px, 4vw, 24px);
+  border-radius: 14px;
+  border: 2px dashed rgba(91, 141, 217, 0.4);
+  background: rgba(91, 141, 217, 0.04);
+  color: #5B8FD9;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+}
+.jandj-form-add-question:hover {
+  background: rgba(91, 141, 217, 0.1);
+  border-color: rgba(91, 141, 217, 0.6);
+  color: #3A7BC8;
+}
+.dark-mode .jandj-form-add-question {
+  border-color: rgba(123, 171, 232, 0.35);
+  background: rgba(123, 171, 232, 0.06);
+  color: #7BABE8;
+}
+.dark-mode .jandj-form-add-question:hover {
+  background: rgba(123, 171, 232, 0.12);
+  border-color: rgba(123, 171, 232, 0.55);
+  color: #9BC4F0;
+}
+.jandj-form-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.jandj-form-logo-preview {
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+.jandj-form-logo-file {
+  font-size: 14px;
+  min-height: 44px;
+}
+.jandj-form-logo-remove {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(142, 142, 147, 0.35);
+  background: rgba(142, 142, 147, 0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.jandj-form-logo-remove:hover { background: rgba(142, 142, 147, 0.15); }
+.jandj-form-video-wrap {
+  margin-top: 12px;
+}
+.jandj-form-video-prompt {
+  width: 100%;
+  padding: 14px 16px;
+  min-height: clamp(140px, 22vh, 240px);
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 16px;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 1.5;
+}
+.jandj-form-video-prompt:focus { border-color: rgba(91, 141, 217, 0.5); }
+.dark-mode .jandj-form-video-prompt {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.jandj-form-toggle-wrap {
+  margin-bottom: 28px;
+}
+.jandj-form-toggle-wrap .toggle-switch {
+  justify-content: space-between;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 500;
+  min-height: 48px;
+}
+.jandj-form-footer {
+  padding: clamp(18px, 4vw, 24px) clamp(20px, 5vw, 28px) clamp(24px, 6vw, 32px);
+  background: rgba(142, 142, 147, 0.06);
+  border-top: 0.5px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.dark-mode .jandj-form-footer {
+  background: rgba(255, 255, 255, 0.03);
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+.jandj-form-done {
+  flex: 1;
+  min-width: 140px;
+  max-width: 220px;
+  padding: clamp(14px, 3vw, 18px) clamp(20px, 4vw, 28px);
+  min-height: 48px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(91, 141, 217, 0.2);
+  color: #5B8FD9;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.jandj-form-done:hover {
+  background: rgba(91, 141, 217, 0.35);
+  color: #3A7BC8;
+}
+.jandj-form-done:active { transform: scale(0.98); }
+.dark-mode .jandj-form-done {
+  background: rgba(123, 171, 232, 0.2);
+  color: #7BABE8;
+}
+.dark-mode .jandj-form-done:hover {
+  background: rgba(123, 171, 232, 0.35);
+  color: #9BC4F0;
+}
+@media (max-width: 480px) {
+  .jandj-form-done { max-width: none; }
+}
+
 /* --- Competition Registrations: Refined, Soft Palette (Senior Designer) --- */
 /* Philosophy: Muted tones, no neon, gentle depth. Works harmoniously in light and dark. */
 
@@ -2214,35 +2707,51 @@ select option {
   color: #9BC4F0;
 }
 
-/* --- Admin Students Page: Apple/Tesla refined + mobile optimized --- */
+/* --- Admin Students Page: Senior designer, mobile-first, Apple/Tesla --- */
+/* Fluid typography, 44pt tap targets, clear hierarchy, responsive grid */
+
 .students-page {
-  padding: 0 20px 40px;
-  max-width: 560px;
+  --students-gap: clamp(12px, 3vw, 20px);
+  --students-pad: clamp(16px, 4vw, 24px);
+  padding: 0 var(--students-pad) calc(40px + var(--safe-bottom));
+  max-width: 640px;
   margin: 0 auto;
 }
-@media (max-width: 480px) {
-  .students-page { padding: 0 16px 32px; }
+@media (max-width: 360px) {
+  .students-page { padding: 0 14px 36px; }
+}
+@media (min-width: 768px) {
+  .students-page { max-width: 600px; padding-left: 24px; padding-right: 24px; }
 }
 
 .students-header {
-  padding-bottom: 20px;
+  padding-bottom: var(--students-gap);
 }
 .students-title {
-  font-size: 34px;
+  font-size: clamp(28px, 5vw + 1rem, 34px);
   font-weight: 700;
   letter-spacing: -0.04em;
+  line-height: 1.1;
   color: var(--text-primary);
-  margin: 0 0 20px 0;
+  margin: 0 0 clamp(16px, 4vw, 24px) 0;
 }
 
+/* Mobile: stack, Add button natural width. Tablet+: Add + Jack side by side */
 .students-actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: var(--students-gap);
+  align-items: stretch;
 }
-@media (max-width: 480px) {
-  .students-actions { gap: 10px; }
+.students-btn-add { align-self: flex-start; }
+@media (min-width: 600px) {
+  .students-actions {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+  }
+  .students-btn-add { align-self: auto; justify-self: start; }
+  .students-jackblock { min-width: 0; }
 }
 .students-btn-add {
   min-height: 44px;
@@ -2274,60 +2783,116 @@ select option {
   background: rgba(65, 155, 95, 0.3);
 }
 
-/* Jack and Jill block: unified card with event + activation */
+/* Jack and Jill block: collapsible on mobile, intuitive steps */
 .students-jackblock {
-  margin-top: 16px;
+  margin-top: 0;
   background: rgba(91, 141, 217, 0.06);
   border: 1px solid rgba(91, 141, 217, 0.15);
   border-radius: 16px;
   overflow: hidden;
   transition: border-color 0.2s;
 }
-.students-jackblock:hover {
-  border-color: rgba(91, 141, 217, 0.25);
-}
+.students-jackblock:hover { border-color: rgba(91, 141, 217, 0.25); }
 .dark-mode .students-jackblock {
   background: rgba(123, 171, 232, 0.08);
   border-color: rgba(123, 171, 232, 0.12);
 }
-.dark-mode .students-jackblock:hover {
-  border-color: rgba(123, 171, 232, 0.2);
-}
-.students-jackblock-inner {
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-@media (max-width: 480px) {
-  .students-jackblock-inner { padding: 14px 16px; }
-}
-.students-jack-header {
+.dark-mode .students-jackblock:hover { border-color: rgba(123, 171, 232, 0.2); }
+.students-jackblock summary {
+  list-style: none;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.students-jackblock summary::-webkit-details-marker,
+.students-jackblock summary::marker { display: none; }
+.students-jackblock summary::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.7;
+  transition: transform 0.25s ease;
+}
+.students-jackblock[open] summary::after { transform: rotate(180deg); }
+.students-jack-summary-icon {
+  color: #5B8FD9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dark-mode .students-jack-summary-icon { color: #7BABE8; }
+.students-jack-summary-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+.students-jack-summary-badge {
+  font-size: 10px;
+  color: rgba(55, 135, 80, 0.9);
+}
+.students-jackblock[open] .students-jack-summary-badge { color: #2E7D4A; }
+.dark-mode .students-jack-summary-badge { color: #5BB87A; }
+.students-jackblock-inner {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (max-width: 480px) {
+  .students-jackblock-inner { padding: 0 16px 16px; }
+}
+.students-jack-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.students-jack-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.9;
+}
+.dark-mode .students-jack-label { color: var(--system-gray2); }
+.students-jack-event-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 10px 14px;
+  background: rgba(142, 142, 147, 0.08);
+  border-radius: 10px;
+}
+.dark-mode .students-jack-event-name {
+  background: rgba(255, 255, 255, 0.06);
 }
 .students-jack-btn {
   min-height: 44px;
-  padding: 10px 18px;
+  padding: 12px 18px;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 600;
   border: none;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: rgba(91, 141, 217, 0.12);
+  background: rgba(91, 141, 217, 0.15);
   color: #5B8FD9;
-  border: 1px solid rgba(91, 141, 217, 0.25);
+  border: 1px solid rgba(91, 141, 217, 0.3);
   transition: all 0.2s;
+  width: 100%;
 }
 .students-jack-btn:hover:not(:disabled) {
-  background: rgba(91, 141, 217, 0.2);
-  border-color: rgba(91, 141, 217, 0.4);
+  background: rgba(91, 141, 217, 0.25);
+  border-color: rgba(91, 141, 217, 0.45);
   color: #3A7BC8;
 }
 .students-jack-btn:disabled {
@@ -2336,21 +2901,14 @@ select option {
 }
 .students-jack-btn:active:not(:disabled) { transform: scale(0.98); }
 .dark-mode .students-jack-btn {
-  background: rgba(123, 171, 232, 0.12);
+  background: rgba(123, 171, 232, 0.15);
   color: #7BABE8;
-  border-color: rgba(123, 171, 232, 0.25);
+  border-color: rgba(123, 171, 232, 0.3);
 }
 .dark-mode .students-jack-btn:hover:not(:disabled) {
-  background: rgba(123, 171, 232, 0.22);
+  background: rgba(123, 171, 232, 0.25);
   color: #9BC4F0;
 }
-.students-jack-for-event {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  opacity: 0.95;
-}
-.dark-mode .students-jack-for-event { color: var(--system-gray2); }
 .students-jack-select {
   padding: 10px 14px;
   border-radius: 12px;
@@ -2385,10 +2943,10 @@ select option {
   min-height: 44px;
 }
 
-/* Search bar */
+/* Search bar - sticky with safe area, smooth scroll on iOS */
 .students-search-wrap {
   position: sticky;
-  top: 60px;
+  top: calc(60px + env(safe-area-inset-top, 0px));
   z-index: 90;
   background: var(--bg-body);
   padding-bottom: 12px;
@@ -2400,14 +2958,17 @@ select option {
 }
 .students-search {
   width: 100%;
-  padding: 14px 18px;
+  padding: clamp(12px, 3vw, 16px) clamp(16px, 4vw, 20px);
+  min-height: 48px;
   border-radius: 14px;
   border: 1px solid var(--border-color);
   background: rgba(142, 142, 147, 0.08);
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: clamp(15px, 2.5vw, 16px);
   font-family: inherit;
   transition: border-color 0.2s, background 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .students-search::placeholder {
   color: var(--text-secondary);
@@ -2427,13 +2988,14 @@ select option {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* Student list */
+/* Student list - smooth scroll on iOS */
 .students-list {
   margin-top: 8px;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
+  -webkit-overflow-scrolling: touch;
 }
 .dark-mode .students-list {
   border-color: rgba(255, 255, 255, 0.06);
@@ -2454,11 +3016,12 @@ select option {
 .student-card:active { background: rgba(0, 0, 0, 0.04); }
 .dark-mode .student-card:hover { background: rgba(255, 255, 255, 0.04); }
 .dark-mode .student-card:active { background: rgba(255, 255, 255, 0.07); }
-@media (max-width: 480px) {
-  .student-card { padding: 14px 16px; gap: 14px; min-height: 68px; }
-  .students-jack-header { flex-direction: column; align-items: stretch; }
-  .students-jack-btn { width: 100%; justify-content: center; }
-  .students-jack-for-event { text-align: center; }
+@media (max-width: 400px) {
+  .student-card { padding: 12px 14px; gap: 12px; min-height: 64px; }
+  .student-card-avatar { width: 44px; height: 44px; min-width: 44px; font-size: 16px; }
+  .student-card-name { font-size: 16px; }
+  .student-card-meta { font-size: 13px; }
+  .student-card-meta .packs { font-size: 11px; padding: 2px 6px; }
 }
 .student-card-avatar {
   width: 48px;
