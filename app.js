@@ -271,7 +271,9 @@ const DANCE_LOCALES = {
         add_new_event: "Add new event",
         competition_view_answers: "View answers",
         competition_answers: "Answers",
+        competition_answer: "Answer",
         competition_no_answers: "No answers yet.",
+        competition_registration_not_found: "Registration not found. Try going back and opening Registros again.",
         competition_delete_confirm: "Delete this event? All registrations will be removed.",
         competition_copy: "Copy",
         competition_copy_of: "Copy of ",
@@ -289,11 +291,6 @@ const DANCE_LOCALES = {
         competition_video_uploading: "Uploading...",
         competition_video_uploaded: "Video uploaded",
         competition_video_unavailable: "Video unavailable",
-        competition_event_logo: "Event logo / image",
-        competition_logo_after_save: "Save the event first to add a logo.",
-        competition_logo_too_large: "Image is too large. Max 15 MB. Try resizing or compressing the screenshot.",
-        competition_logo_permission_hint: "Ensure you are logged in as a school admin.",
-        competition_logo_rls_hint: "Your admin account is not linked to this session. Fix: 1) Go to Students / Jack and Jill. 2) If you see \"Link admin account\", enter your email and current password there. 3) Or log out and log in again with your admin username and password."
     },
     es: {
         nav_schedule: "Horario",
@@ -562,7 +559,9 @@ const DANCE_LOCALES = {
         add_new_event: "Añadir nuevo evento",
         competition_view_answers: "Ver respuestas",
         competition_answers: "Respuestas",
+        competition_answer: "Respuesta",
         competition_no_answers: "Aún no hay respuestas.",
+        competition_registration_not_found: "Registro no encontrado. Vuelve atrás y abre Registros de nuevo.",
         competition_delete_confirm: "¿Eliminar este evento? Se borrarán todas las inscripciones.",
         competition_copy: "Copiar",
         competition_copy_of: "Copia de ",
@@ -580,11 +579,6 @@ const DANCE_LOCALES = {
         competition_video_uploading: "Subiendo...",
         competition_video_uploaded: "Video subido",
         competition_video_unavailable: "Video no disponible",
-        competition_event_logo: "Logo / imagen del evento",
-        competition_logo_after_save: "Guarda el evento primero para añadir un logo.",
-        competition_logo_too_large: "La imagen es demasiado grande. Máx. 15 MB. Intenta redimensionar o comprimir la captura.",
-        competition_logo_permission_hint: "Asegúrate de haber iniciado sesión como admin de la escuela.",
-        competition_logo_rls_hint: "Tu cuenta de admin no está vinculada a esta sesión. Solución: 1) Ve a Alumnos / Jack and Jill. 2) Si ves \"Link admin account\", introduce tu email y contraseña actual. 3) O cierra sesión e inicia de nuevo con tu usuario y contraseña de admin."
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -816,7 +810,9 @@ const DANCE_LOCALES = {
         error_removing_admin: "Fehler beim Entfernen des Administrators:",
         competition_view_answers: "Antworten anzeigen",
         competition_answers: "Antworten",
+        competition_answer: "Antwort",
         competition_no_answers: "Noch keine Antworten.",
+        competition_registration_not_found: "Registrierung nicht gefunden. Gehe zurück und öffne Registros erneut.",
         competition_activate_event: "Event aktivieren",
         competition_activate_signin: "Registrierung aktivieren",
         competition_for_event: "Für Event",
@@ -839,11 +835,6 @@ const DANCE_LOCALES = {
         competition_video_uploading: "Wird hochgeladen...",
         competition_video_uploaded: "Video hochgeladen",
         competition_video_unavailable: "Video nicht verfügbar",
-        competition_event_logo: "Event-Logo / Bild",
-        competition_logo_after_save: "Speichere zuerst das Event, um ein Logo hinzuzufügen.",
-        competition_logo_too_large: "Bild ist zu groß. Max. 15 MB. Versuche die Bildschirmaufnahme zu verkleinern oder zu komprimieren.",
-        competition_logo_permission_hint: "Stelle sicher, dass du als Schuladmin angemeldet bist.",
-        competition_logo_rls_hint: "Dein Admin-Konto ist nicht mit dieser Sitzung verknüpft. Lösung: 1) Gehe zu Schüler / Jack and Jill. 2) Wenn du \"Link admin account\" siehst, gib E-Mail und Passwort ein. 3) Oder melde dich ab und mit Benutzername + Passwort wieder an.",
         competition_approved_message: "Herzlichen Glückwunsch! Du wirst an \"{eventName}\" teilnehmen.",
         competition_declined_message: "Dieses Mal kannst du nicht teilnehmen, aber wir freuen uns auf dich beim nächsten Mal."
     }
@@ -1109,6 +1100,10 @@ async function fetchAllData() {
                 const sess = await supabaseClient.auth.getSession();
                 const { data: compList, error: compListErr } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: sid });
                 state.competitions = !compListErr && Array.isArray(compList) ? compList : [];
+                if (state.competitionTab === 'registrations' && state.competitionId) {
+                    state.currentCompetition = state.competitions.find(c => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;
+                    await window.fetchCompetitionRegistrations(state.competitionId);
+                }
             } catch (_) {
                 state.competitions = [];
             }
@@ -1352,7 +1347,6 @@ window.saveCompetition = async () => {
             const cur = state.currentCompetition || {};
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
-            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_update', {
                 p_competition_id: id,
                 p_name: name,
@@ -1363,7 +1357,7 @@ window.saveCompetition = async () => {
                 p_is_sign_in_active: !!cur.is_sign_in_active,
                 p_video_submission_enabled: videoEnabled,
                 p_video_submission_prompt: videoPrompt,
-                p_image_url: imageUrl
+                p_image_url: ''
             });
             if (error) throw new Error(error.message);
             if (res == null) throw new Error('Update failed. Are you logged in as an admin for this school?');
@@ -1372,7 +1366,6 @@ window.saveCompetition = async () => {
         } else {
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
-            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_create', {
                 p_school_id: schoolId,
                 p_name: name,
@@ -1381,7 +1374,7 @@ window.saveCompetition = async () => {
                 p_next_steps_text: nextSteps,
                 p_video_submission_enabled: videoEnabled,
                 p_video_submission_prompt: videoPrompt,
-                p_image_url: imageUrl
+                p_image_url: ''
             });
             if (error) throw new Error(error.message);
             const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
@@ -1413,7 +1406,7 @@ window.debouncedAutosaveCompetition = () => {
     }, 800);
 };
 
-window.autosaveCompetition = async (optImageUrl) => {
+window.autosaveCompetition = async () => {
     const statusEl = document.getElementById('comp-autosave-status') || document.getElementById('comp-autosave-status-footer');
     const setStatus = (text, isError = false) => {
         ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => {
@@ -1438,8 +1431,6 @@ window.autosaveCompetition = async (optImageUrl) => {
     const nextSteps = (document.getElementById('comp-next-steps') || {}).value || '';
     const container = document.getElementById('comp-questions-container');
     const questions = container ? Array.from(container.querySelectorAll('input[data-qidx]')).sort((a, b) => parseInt(a.getAttribute('data-qidx'), 10) - parseInt(b.getAttribute('data-qidx'), 10)).map(inp => inp.value?.trim() || '') : (state.competitionFormQuestions || []);
-    const imageUrlFromForm = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
-    const imageUrlToUse = (optImageUrl != null && String(optImageUrl).trim() !== '') ? String(optImageUrl).trim() : imageUrlFromForm;
     try {
         if (id) {
             const cur = state.currentCompetition || {};
@@ -1455,7 +1446,7 @@ window.autosaveCompetition = async (optImageUrl) => {
                 p_is_sign_in_active: !!cur.is_sign_in_active,
                 p_video_submission_enabled: videoEnabled,
                 p_video_submission_prompt: videoPrompt,
-                p_image_url: imageUrlToUse
+                p_image_url: ''
             });
             if (error) throw new Error(error.message);
             if (res) {
@@ -1479,7 +1470,7 @@ window.autosaveCompetition = async (optImageUrl) => {
                 p_next_steps_text: nextSteps,
                 p_video_submission_enabled: videoEnabled,
                 p_video_submission_prompt: videoPrompt,
-                p_image_url: imageUrlToUse
+                p_image_url: ''
             });
             if (error) throw new Error(error.message);
             const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
@@ -1610,47 +1601,101 @@ window.deleteCompetition = async (competitionId) => {
 };
 
 window.openRegistrationAnswers = async (regId) => {
-    const reg = (state.competitionRegistrations || []).find(r => r.id === regId);
-    const questions = state.currentCompetition?.questions || [];
-    const answers = (reg?.answers && typeof reg.answers === 'object') ? reg.answers : {};
-    const titleEl = document.getElementById('registration-answers-title');
-    const bodyEl = document.getElementById('registration-answers-body');
     const modalEl = document.getElementById('registration-answers-modal');
-    if (!titleEl || !bodyEl || !modalEl) return;
+    const bodyEl = document.getElementById('registration-answers-body');
+    const titleEl = document.getElementById('registration-answers-title');
+    if (!modalEl || !bodyEl) return;
+    // Use original DOM from index.html - do NOT replace. Avoids flex/min-width rendering bugs.
+    if (titleEl) titleEl.textContent = '…';
+    bodyEl.innerHTML = '<p style="font-size: 15px; margin: 0; color: #8e8e93;">Loading...</p>';
+    modalEl.classList.remove('hidden');
+    if (!state.currentCompetition && state.competitionId && (state.competitions || []).length > 0) {
+        state.currentCompetition = state.competitions.find(c => String(c.id) === String(state.competitionId)) || null;
+    }
+    const regs = state.competitionRegistrations || [];
+    let reg = regs.find(r => String(r.id) === String(regId));
+    if (!reg && regId && state.competitionId && supabaseClient) {
+        const { data: refetched } = await supabaseClient.rpc('competition_registrations_list', { p_competition_id: state.competitionId });
+        if (refetched && Array.isArray(refetched)) {
+            state.competitionRegistrations = refetched;
+            reg = refetched.find(r => String(r.id) === String(regId)) || null;
+        }
+    }
+    // Always fetch full row via get_by_id_admin - list may omit answers; get_by_id returns complete row
+    if (reg && regId && supabaseClient) {
+        try {
+            const { data: byId } = await supabaseClient.rpc('competition_registration_get_by_id_admin', { p_registration_id: regId });
+            const row = Array.isArray(byId) ? byId[0] : byId;
+            if (row) reg = { ...reg, answers: row.answers ?? reg.answers };
+        } catch (_) { /* RPC may not exist */ }
+    }
+    let questions = state.currentCompetition?.questions;
+    if (!Array.isArray(questions)) {
+        if (typeof questions === 'string') { try { const p = JSON.parse(questions); questions = Array.isArray(p) ? p : []; } catch (_) { questions = []; } }
+        else questions = [];
+    }
+    let answers = {};
+    if (reg?.answers) {
+        if (typeof reg.answers === 'object') answers = reg.answers;
+        else if (typeof reg.answers === 'string') { try { answers = JSON.parse(reg.answers) || {}; } catch (_) { answers = {}; } }
+    }
     const t = window.t;
-    titleEl.textContent = (reg?.student_name || reg?.student_id || t.competition_answers || 'Answers');
+    const esc = (s) => (String(s || '')).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    // Use explicit colors - dark mode: white/gray; light: black/gray. Avoids CSS variable resolution issues.
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#ffffff' : '#000000';
+    const secondaryColor = '#8e8e93';
+    const labelStyle = `font-size: 13px; font-weight: 600; color: ${secondaryColor}; margin-bottom: 6px; display: block;`;
+    const valueStyle = `font-size: 16px; color: ${textColor}; line-height: 1.4; display: block;`;
+    const pStyle = `color: ${secondaryColor}; font-size: 15px; margin: 0;`;
     let html = '';
-    if (questions.length === 0) {
-        html = `<p style="color: var(--text-secondary); font-size: 15px;">${t.competition_no_answers}</p>`;
-    } else {
-        html = questions.map((q, i) => {
+    if (!reg) {
+        html = `<div style="padding: 16px; width: 100%; box-sizing: border-box;"><p style="${pStyle}">${t('competition_registration_not_found') || 'Registration not found. Try going back and opening Registros again.'}</p></div>`;
+    } else if (questions.length > 0) {
+        html = `<div style="padding: 16px; color: ${textColor}; width: 100%; box-sizing: border-box;">` + questions.map((q, i) => {
             const ans = answers[i] ?? answers[String(i)] ?? '';
-            const qEsc = (q || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const ansEsc = (ans || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-            return `<div style="margin-bottom: 16px;"><div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${qEsc}</div><div style="font-size: 16px; color: var(--text-primary); line-height: 1.4;">${ansEsc || '—'}</div></div>`;
-        }).join('');
+            const qEsc = esc(q);
+            const ansEsc = esc(ans) || '—';
+            return `<div style="margin-bottom: 16px;"><div style="${labelStyle}">${qEsc}</div><div style="${valueStyle}">${ansEsc}</div></div>`;
+        }).join('') + `</div>`;
+    }
+    const answerEntries = Object.entries(answers).filter(([k]) => k !== 'video' && String(k).trim() !== '');
+    if (html === '' && answerEntries.length > 0) {
+        html = `<div style="padding: 16px; color: ${textColor}; width: 100%; box-sizing: border-box;">` + answerEntries.map(([key, val]) =>
+            `<div style="margin-bottom: 14px;"><div style="${labelStyle}">${(t('competition_answer') || 'Answer')} ${esc(key)}</div><div style="${valueStyle}">${esc(val)}</div></div>`
+        ).join('') + `</div>`;
+    }
+    // Ultimate fallback: show raw answers when we have data but no questions matched
+    if (html === '' && reg && answers && Object.keys(answers).filter(k => k !== 'video').length > 0) {
+        html = `<div style="padding: 16px; width: 100%; box-sizing: border-box;"><pre style="font-size: 13px; white-space: pre-wrap; word-break: break-all; color: ${textColor};">${esc(JSON.stringify(answers, null, 2))}</pre></div>`;
+    }
+    if (html === '') {
+        const diag = reg ? ` (reg keys: ${Object.keys(reg || {}).join(', ')}; answers type: ${typeof reg?.answers})` : '';
+        html = `<div style="padding: 16px; width: 100%; box-sizing: border-box;"><p style="${pStyle}">${t('competition_no_answers') || 'No answers yet.'}${diag}</p></div>`;
     }
     const comp = state.currentCompetition;
     const videoPath = answers.video || answers['video'];
     if (comp?.video_submission_enabled && videoPath && supabaseClient) {
-        const prompt = (comp.video_submission_prompt || t.competition_video_prompt_placeholder || 'Video').replace(/</g, '&lt;');
-        html += `<div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);"><div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">${prompt}</div>`;
+        const prompt = (comp.video_submission_prompt || t('competition_video_prompt_placeholder') || 'Video').replace(/</g, '&lt;');
+        html += `<div style="margin-top: 20px; padding-top: 16px; padding-left: 16px; padding-right: 16px; border-top: 1px solid #38383a;"><div style="font-size: 13px; font-weight: 600; color: ${secondaryColor}; margin-bottom: 8px;">${prompt}</div>`;
         try {
             const { data: signed } = await supabaseClient.storage.from('competition-videos').createSignedUrl(videoPath, 3600);
             if (signed?.signedUrl) {
-                html += `<video src="${signed.signedUrl.replace(/"/g, '&quot;')}" controls style="max-width: 100%; border-radius: 12px; background: var(--system-gray6);" preload="metadata"></video>`;
+                html += `<video src="${signed.signedUrl.replace(/"/g, '&quot;')}" controls style="max-width: 100%; border-radius: 12px; background: #1c1c1e;" preload="metadata"></video>`;
             } else {
-                html += `<p style="color: var(--text-secondary); font-size: 14px;">${t.competition_video_unavailable || 'Video unavailable'}</p>`;
+                html += `<p style="color: ${secondaryColor}; font-size: 14px;">${t.competition_video_unavailable || 'Video unavailable'}</p>`;
             }
         } catch (_) {
-            html += `<p style="color: var(--text-secondary); font-size: 14px;">${t.competition_video_unavailable || 'Video unavailable'}</p>`;
+            html += `<p style="color: ${secondaryColor}; font-size: 14px;">${t.competition_video_unavailable || 'Video unavailable'}</p>`;
         }
         html += '</div>';
     }
+    // Write to body (original DOM element from index.html)
     bodyEl.innerHTML = html;
+    bodyEl.scrollTop = 0;
+    if (titleEl) titleEl.textContent = (reg?.student_name || reg?.student_id || t('competition_answers') || 'Answers');
     const closeBtn = document.getElementById('registration-answers-close-btn');
     if (closeBtn) closeBtn.textContent = t('close') || 'Close';
-    modalEl.classList.remove('hidden');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
@@ -1664,76 +1709,6 @@ window.formatPrice = (price, currency) => {
     const n = p;
     const formatted = Number.isInteger(n) ? n.toLocaleString() : parseFloat(n.toFixed(2)).toLocaleString();
     return sym + formatted;
-};
-
-window.getCompetitionImageUrl = (pathOrUrl) => {
-    if (!pathOrUrl) return '';
-    if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl;
-    const SUPABASE_URL = typeof window !== 'undefined' && window.supabase ? 'https://fziyybqhecfxhkagknvg.supabase.co' : '';
-    return SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/competition-logos/${pathOrUrl}` : pathOrUrl;
-};
-
-const COMPETITION_LOGO_MAX_SIZE = 15 * 1024 * 1024; // 15 MB (screenshots can be large)
-window.handleCompetitionImageSelect = async (fileInput) => {
-    const file = fileInput?.files?.[0];
-    if (!file || !supabaseClient) return;
-    const schoolId = state.competitionSchoolId || state.currentSchool?.id;
-    const compId = (document.getElementById('comp-id') || {}).value;
-    if (!schoolId || !compId) return;
-    if (file.size > COMPETITION_LOGO_MAX_SIZE) {
-        const mb = (file.size / (1024 * 1024)).toFixed(1);
-        alert((window.t('competition_error') || 'Error saving competition') + '\n\n' + (window.t('competition_logo_too_large') || `Image is too large (${mb} MB). Max 15 MB. Try resizing or compressing the screenshot.`));
-        fileInput.value = '';
-        return;
-    }
-    await supabaseClient.auth.refreshSession();
-    const uploadSess = await supabaseClient.auth.getSession();
-    const accessToken = uploadSess?.data?.session?.access_token;
-    if (!accessToken) {
-        alert((window.t('competition_error') || 'Error saving competition') + '\n\n' + (window.t('competition_logo_rls_hint') || 'Your admin account is not linked to this session. Go to Students / Jack and Jill, use "Link admin account", or log out and log in again with your admin credentials.'));
-        fileInput.value = '';
-        return;
-    }
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('schoolId', schoolId);
-    formData.append('compId', compId);
-    const fnRes = await fetch(`${SUPABASE_URL}/functions/v1/upload-competition-logo`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            apikey: SUPABASE_KEY
-        },
-        body: formData
-    });
-    const fnJson = await fnRes.json().catch(() => ({}));
-    if (!fnRes.ok) {
-        const msg = fnJson?.error || fnRes.statusText || 'Upload failed';
-        const hint = (msg.toLowerCase().includes('policy') || msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied')) ? '\n\n' + (window.t('competition_logo_rls_hint') || 'Your admin account is not linked. Go to Students / Jack and Jill, use "Link admin account", or log out and log in again.') : '';
-        alert((window.t('competition_error') || 'Error saving competition') + '\n\n' + msg + hint);
-        fileInput.value = '';
-        return;
-    }
-    const path = fnJson?.path || `${schoolId}/${compId}/logo.${(file.name.match(/\.(jpe?g|png|gif|webp)$/i) || ['', 'jpg'])[1]?.toLowerCase() || 'jpg'}`;
-    const urlEl = document.getElementById('comp-image-url');
-    if (urlEl) urlEl.value = path;
-    const preview = document.getElementById('comp-image-preview');
-    if (preview) preview.src = window.getCompetitionImageUrl(path);
-    else {
-        const wrap = fileInput.closest('div')?.parentElement;
-        if (wrap) {
-            const img = document.createElement('img');
-            img.id = 'comp-image-preview';
-            img.src = window.getCompetitionImageUrl(path);
-            img.alt = 'Logo';
-            img.style.cssText = 'max-width: 120px; max-height: 80px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border);';
-            wrap.insertBefore(img, wrap.firstChild);
-        }
-    }
-    // Save immediately so image_url is persisted (pass path explicitly so it's never missed)
-    const setLogoStatus = (t) => { ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = t; }); };
-    setLogoStatus(window.t('competition_saving') || 'Saving logo...');
-    if (typeof window.autosaveCompetition === 'function') await window.autosaveCompetition(path);
 };
 
 window.handleCompetitionVideoSelect = async (fileInput) => {
@@ -2533,10 +2508,8 @@ function _renderViewImpl() {
         const isPublished = comp && comp.decisions_published_at;
         const answers = state.studentCompetitionAnswers || {};
 
-        const compImageUrl = comp && comp.image_url ? (comp.image_url.startsWith('http') ? comp.image_url : (typeof getCompetitionImageUrl !== 'undefined' ? getCompetitionImageUrl(comp.image_url) : (SUPABASE_URL || '') + '/storage/v1/object/public/competition-logos/' + comp.image_url)) : '';
         html += `
-            <div class="student-comp-header ${compImageUrl ? 'student-comp-header-with-hero' : ''}">
-                ${compImageUrl ? `<div class="student-comp-hero"><img class="student-comp-hero-img" src="${compImageUrl}" alt="" loading="eager" decoding="async" onerror="this.style.display='none'; this.parentElement.classList.add('student-comp-hero-no-img');"></div>` : ''}
+            <div class="student-comp-header">
                 <div class="student-comp-header-bar">
                     <button type="button" class="btn-back" onclick="window.location.hash=''; state.currentView='qr'; state.competitionId=null; state.studentCompetitionDetail=null; state.studentCompetitionRegDetail=null; saveState(); renderView();"><i data-lucide="arrow-left" size="20"></i></button>
                     <div class="ios-large-title">${t.jack_and_jill}</div>
@@ -3064,19 +3037,6 @@ function _renderViewImpl() {
                         <div class="jandj-form-group">
                             <label class="jandj-form-label">${t.competition_next_steps}</label>
                             <textarea id="comp-next-steps" class="jandj-form-textarea scroll-nice" rows="6" placeholder="${t.competition_next_steps_placeholder || ''}" oninput="debouncedAutosaveCompetition()">${(current && current.next_steps_text) || ''}</textarea>
-                        </div>
-                        <div class="jandj-form-group">
-                            <label class="jandj-form-label">${t.competition_event_logo || 'Event logo / image'}</label>
-                            ${current && current.id ? `
-                            <input type="hidden" id="comp-image-url" value="${(current && current.image_url) || ''}">
-                            <div class="jandj-form-logo-wrap">
-                                ${(current && current.image_url) ? `<img id="comp-image-preview" class="jandj-form-logo-preview" src="${getCompetitionImageUrl(current.image_url)}" alt="Logo">` : ''}
-                                <div>
-                                    <input type="file" id="comp-image-input" class="jandj-form-logo-file" accept="image/jpeg,image/png,image/gif,image/webp" onchange="handleCompetitionImageSelect(this)">
-                                    ${(current && current.image_url) ? `<button type="button" class="jandj-form-logo-remove" onclick="document.getElementById('comp-image-url').value=''; document.getElementById('comp-image-input').value=''; const p=document.getElementById('comp-image-preview'); if(p)p.remove(); debouncedAutosaveCompetition();">${t.remove || 'Remove'}</button>` : ''}
-                                </div>
-                            </div>
-                            ` : `<p style="font-size: 13px; color: var(--text-secondary);">${t.competition_logo_after_save || 'Save the event first to add a logo.'}</p>`}
                         </div>
                         <div class="jandj-form-group jandj-form-toggle-wrap">
                             <label class="toggle-switch">
@@ -5653,6 +5613,10 @@ logoEl.addEventListener('click', () => {
         if (parseHashRoute()) {
             saveState();
             renderView();
+            if (state.currentView === 'admin-competition-jack-and-jill' && state.competitionTab === 'registrations' && state.competitionId && supabaseClient) {
+                state.currentCompetition = (state.competitions || []).find(c => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;
+                window.fetchCompetitionRegistrations(state.competitionId);
+            }
         }
     });
 

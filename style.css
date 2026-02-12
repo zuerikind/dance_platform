@@ -1463,6 +1463,13 @@ select option {
     background: black;
 }
 
+/* Registration answers modal: ensure content is visible (fixes invisible-content bug) */
+#registration-answers-body {
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100%;
+}
+
 /* TOGGLE SWITCH - pill-shaped, sliding thumb (event/registration activation) */
 .toggle-switch {
     display: inline-flex;
@@ -2077,34 +2084,6 @@ select option {
   border-color: rgba(123, 171, 232, 0.55);
   color: #9BC4F0;
 }
-.jandj-form-logo-wrap {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.jandj-form-logo-preview {
-  max-width: 120px;
-  max-height: 80px;
-  object-fit: contain;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-.jandj-form-logo-file {
-  font-size: 14px;
-  min-height: 44px;
-}
-.jandj-form-logo-remove {
-  padding: 8px 14px;
-  font-size: 13px;
-  border-radius: 10px;
-  border: 1px solid rgba(142, 142, 147, 0.35);
-  background: rgba(142, 142, 147, 0.08);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.jandj-form-logo-remove:hover { background: rgba(142, 142, 147, 0.15); }
 .jandj-form-video-wrap {
   margin-top: 12px;
 }
