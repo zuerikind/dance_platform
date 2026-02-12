@@ -282,7 +282,7 @@ const DANCE_LOCALES = {
         competition_next_steps_placeholder: "E.g. No cuts, fixed camera, good lighting...",
         competition_video_submission_toggle: "Include video submission?",
         competition_video_prompt_label: "Video question text",
-        competition_video_prompt_placeholder: "Upload your demo video (2-3 minutes)",
+        competition_video_prompt_placeholder: "Upload your demo video",
         competition_video_duration_error: "Video must be 2-3 minutes",
         competition_video_size_error: "File too large (max 50 MB)",
         competition_video_uploading: "Uploading...",
@@ -567,7 +567,7 @@ const DANCE_LOCALES = {
         competition_next_steps_placeholder: "Ej: Sin cortes, cámara fija, buena iluminación...",
         competition_video_submission_toggle: "¿Incluir envío de video?",
         competition_video_prompt_label: "Texto de la pregunta de video",
-        competition_video_prompt_placeholder: "Sube tu video demo (2-3 minutos)",
+        competition_video_prompt_placeholder: "Sube tu video demo",
         competition_video_duration_error: "El video debe durar 2-3 minutos",
         competition_video_size_error: "Archivo demasiado grande (máx. 50 MB)",
         competition_video_uploading: "Subiendo...",
@@ -819,7 +819,7 @@ const DANCE_LOCALES = {
         competition_next_steps_placeholder: "Z.B. Keine Schnitte, feste Kamera, gute Beleuchtung...",
         competition_video_submission_toggle: "Video-Einreichung einschließen?",
         competition_video_prompt_label: "Video-Fragentext",
-        competition_video_prompt_placeholder: "Lade dein Demo-Video hoch (2-3 Minuten)",
+        competition_video_prompt_placeholder: "Lade dein Demo-Video hoch",
         competition_video_duration_error: "Video muss 2-3 Minuten dauern",
         competition_video_size_error: "Datei zu groß (max. 50 MB)",
         competition_video_uploading: "Wird hochgeladen...",
@@ -1332,6 +1332,7 @@ window.saveCompetition = async () => {
             const cur = state.currentCompetition || {};
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
+            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_update', {
                 p_competition_id: id,
                 p_name: name,
@@ -1341,7 +1342,8 @@ window.saveCompetition = async () => {
                 p_is_active: !!cur.is_active,
                 p_is_sign_in_active: !!cur.is_sign_in_active,
                 p_video_submission_enabled: videoEnabled,
-                p_video_submission_prompt: videoPrompt
+                p_video_submission_prompt: videoPrompt,
+                p_image_url: imageUrl
             });
             if (error) throw new Error(error.message);
             if (res == null) throw new Error('Update failed. Are you logged in as an admin for this school?');
@@ -1350,6 +1352,7 @@ window.saveCompetition = async () => {
         } else {
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
+            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_create', {
                 p_school_id: schoolId,
                 p_name: name,
@@ -1357,7 +1360,8 @@ window.saveCompetition = async () => {
                 p_questions: questions,
                 p_next_steps_text: nextSteps,
                 p_video_submission_enabled: videoEnabled,
-                p_video_submission_prompt: videoPrompt
+                p_video_submission_prompt: videoPrompt,
+                p_image_url: imageUrl
             });
             if (error) throw new Error(error.message);
             const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
@@ -1419,6 +1423,7 @@ window.autosaveCompetition = async () => {
             const cur = state.currentCompetition || {};
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
+            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_update', {
                 p_competition_id: id,
                 p_name: name || (cur.name || 'Event'),
@@ -1428,7 +1433,8 @@ window.autosaveCompetition = async () => {
                 p_is_active: !!cur.is_active,
                 p_is_sign_in_active: !!cur.is_sign_in_active,
                 p_video_submission_enabled: videoEnabled,
-                p_video_submission_prompt: videoPrompt
+                p_video_submission_prompt: videoPrompt,
+                p_image_url: imageUrl
             });
             if (error) throw new Error(error.message);
             if (res) {
@@ -1444,6 +1450,7 @@ window.autosaveCompetition = async () => {
         } else {
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
+            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_create', {
                 p_school_id: schoolId,
                 p_name: name || 'New Event',
@@ -1451,7 +1458,8 @@ window.autosaveCompetition = async () => {
                 p_questions: questions,
                 p_next_steps_text: nextSteps,
                 p_video_submission_enabled: videoEnabled,
-                p_video_submission_prompt: videoPrompt
+                p_video_submission_prompt: videoPrompt,
+                p_image_url: imageUrl
             });
             if (error) throw new Error(error.message);
             const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
@@ -1626,6 +1634,41 @@ window.openRegistrationAnswers = async (regId) => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
+window.getCompetitionImageUrl = (pathOrUrl) => {
+    if (!pathOrUrl) return '';
+    if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl;
+    const SUPABASE_URL = typeof window !== 'undefined' && window.supabase ? 'https://fziyybqhecfxhkagknvg.supabase.co' : '';
+    return SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/competition-logos/${pathOrUrl}` : pathOrUrl;
+};
+
+window.handleCompetitionImageSelect = async (fileInput) => {
+    const file = fileInput?.files?.[0];
+    if (!file || !supabaseClient) return;
+    const schoolId = state.competitionSchoolId || state.currentSchool?.id;
+    const compId = (document.getElementById('comp-id') || {}).value;
+    if (!schoolId || !compId) return;
+    const ext = (file.name.match(/\.(jpe?g|png|gif|webp)$/i) || ['', 'jpg'])[1]?.toLowerCase() || 'jpg';
+    const path = `${schoolId}/${compId}/logo.${ext}`;
+    const { error } = await supabaseClient.storage.from('competition-logos').upload(path, file, { upsert: true });
+    if (error) { alert(window.t('competition_error') || 'Upload failed: ' + error.message); return; }
+    const urlEl = document.getElementById('comp-image-url');
+    if (urlEl) urlEl.value = path;
+    const preview = document.getElementById('comp-image-preview');
+    if (preview) preview.src = window.getCompetitionImageUrl(path);
+    else {
+        const wrap = fileInput.closest('div')?.parentElement;
+        if (wrap) {
+            const img = document.createElement('img');
+            img.id = 'comp-image-preview';
+            img.src = window.getCompetitionImageUrl(path);
+            img.alt = 'Logo';
+            img.style.cssText = 'max-width: 120px; max-height: 80px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border);';
+            wrap.insertBefore(img, wrap.firstChild);
+        }
+    }
+    debouncedAutosaveCompetition();
+};
+
 window.handleCompetitionVideoSelect = async (fileInput) => {
     const file = fileInput?.files?.[0];
     if (!file || !supabaseClient || !state.competitionId || !state.currentUser?.id) return;
@@ -1648,12 +1691,6 @@ window.handleCompetitionVideoSelect = async (fileInput) => {
         v.src = URL.createObjectURL(file);
     });
     if (duration < 0) { setStatus(window.t('competition_video_duration_error') || 'Could not read video', true); return; }
-    const minSec = 120, maxSec = 180;
-    if (duration < minSec || duration > maxSec) {
-        setStatus((window.t('competition_video_duration_error') || 'Video must be 2-3 minutes').replace('2-3', `${Math.floor(minSec/60)}-${Math.floor(maxSec/60)}`), true);
-        fileInput.value = '';
-        return;
-    }
     setStatus(window.t('competition_video_uploading') || 'Uploading...');
     const ext = (file.name.match(/\.(mp4|mov|webm)$/i) || ['', 'mp4'])[1] || 'mp4';
     const path = `${schoolId}/${state.competitionId}/${state.currentUser.id}/${crypto.randomUUID()}.${ext}`;
@@ -2398,6 +2435,7 @@ function renderView() {
             <div style="padding: 1.2rem;">
                 ${!comp ? `<p style="color: var(--text-secondary);">${t.loading}</p>` : `
                 <div style="margin-bottom: 1.5rem;">
+                    ${comp.image_url ? `<img src="${(comp.image_url.startsWith('http') ? comp.image_url : (typeof getCompetitionImageUrl !== 'undefined' ? getCompetitionImageUrl(comp.image_url) : (SUPABASE_URL || '') + '/storage/v1/object/public/competition-logos/' + comp.image_url))}" alt="Event" style="width: 100%; max-width: 320px; max-height: 200px; object-fit: contain; border-radius: 12px; margin-bottom: 1rem; display: block;">` : ''}
                     <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem;">${(comp.name || '').replace(/</g, '&lt;')}</h2>
                     <p style="font-size: 14px; color: var(--text-secondary);">${comp.starts_at ? new Date(comp.starts_at).toLocaleString() : ''}</p>
                     ${comp.next_steps_text ? `<div style="margin-top: 1rem; padding: 1rem; background: var(--system-gray6); border-radius: 12px; font-size: 14px; white-space: pre-wrap;">${(comp.next_steps_text || '').replace(/</g, '&lt;')}</div>` : ''}
@@ -2894,6 +2932,19 @@ function renderView() {
                         <div style="margin-bottom: 32px;">
                             <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_next_steps}</label>
                             <textarea id="comp-next-steps" rows="4" placeholder="${t.competition_next_steps_placeholder || ''}" oninput="debouncedAutosaveCompetition()" style="width: 100%; min-height: 120px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; line-height: 1.5; resize: vertical; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">${(current && current.next_steps_text) || ''}</textarea>
+                        </div>
+                        <div style="margin-bottom: 28px;">
+                            <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px;">${t.competition_event_logo || 'Event logo / image'}</label>
+                            ${current && current.id ? `
+                            <input type="hidden" id="comp-image-url" value="${(current && current.image_url) || ''}">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                ${(current && current.image_url) ? `<img id="comp-image-preview" src="${getCompetitionImageUrl(current.image_url)}" alt="Logo" style="max-width: 120px; max-height: 80px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border);">` : ''}
+                                <div>
+                                    <input type="file" id="comp-image-input" accept="image/jpeg,image/png,image/gif,image/webp" onchange="handleCompetitionImageSelect(this)" style="font-size: 14px;">
+                                    ${(current && current.image_url) ? `<button type="button" onclick="document.getElementById('comp-image-url').value=''; document.getElementById('comp-image-input').value=''; const p=document.getElementById('comp-image-preview'); if(p)p.remove(); debouncedAutosaveCompetition();" style="margin-left: 8px; padding: 6px 12px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer;">${t.remove || 'Remove'}</button>` : ''}
+                                </div>
+                            </div>
+                            ` : `<p style="font-size: 13px; color: var(--text-secondary);">${t.competition_logo_after_save || 'Save the event first to add a logo.'}</p>`}
                         </div>
                         <div style="margin-bottom: 28px;">
                             <label class="toggle-switch" style="justify-content: space-between; width: 100%; font-size: 15px; font-weight: 500; margin-bottom: 12px;">
