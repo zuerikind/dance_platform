@@ -1162,6 +1162,44 @@ function saveState() {
     }));
 }
 
+// Session identity (tab-scoped): prevents showing another user's data when restoring from localStorage after reload or when multiple tabs use the app
+const SESSION_IDENTITY_KEY = 'dance_session_identity';
+
+function setSessionIdentity() {
+    const user = state.currentUser;
+    const school = state.currentSchool;
+    const isAdmin = state.isAdmin;
+    const isPlatformDev = state.isPlatformDev;
+    let ident = null;
+    if (isPlatformDev) {
+        ident = { t: 'd' };
+    } else if (isAdmin && school?.id) {
+        ident = { t: 'a', sid: school.id };
+    } else if (user?.id && (user.school_id || school?.id)) {
+        ident = { t: 's', uid: user.id, sid: user.school_id || school?.id };
+    }
+    if (ident) {
+        try { sessionStorage.setItem(SESSION_IDENTITY_KEY, JSON.stringify(ident)); } catch (_) {}
+    }
+}
+
+function clearSessionIdentity() {
+    try { sessionStorage.removeItem(SESSION_IDENTITY_KEY); } catch (_) {}
+}
+
+function sessionIdentityMatches(saved) {
+    if (!saved) return false;
+    try {
+        const raw = sessionStorage.getItem(SESSION_IDENTITY_KEY);
+        if (!raw) return false;
+        const ident = JSON.parse(raw);
+        if (ident.t === 'd') return !!(saved.isPlatformDev);
+        if (ident.t === 'a') return !!(saved.isAdmin && saved.currentSchool?.id === ident.sid);
+        if (ident.t === 's') return !!(saved.currentUser?.id === ident.uid && (saved.currentUser?.school_id || saved.currentSchool?.id) === ident.sid);
+    } catch (_) {}
+    return false;
+}
+
 // Security: Session Timeout Logic
 const INACTIVITY_LIMIT = 12 * 60 * 60 * 1000; // 12 Hours
 
@@ -3490,6 +3528,7 @@ window.signUpStudent = async () => {
     state.currentView = 'qr';
     clearSchoolData();
     _lastFetchEndTime = 0;
+    setSessionIdentity();
     saveState();
     fetchAllData();
 };
@@ -3575,6 +3614,7 @@ window.loginStudent = async () => {
         state.currentView = 'qr';
         clearSchoolData();
         _lastFetchEndTime = 0;
+        setSessionIdentity();
         saveState();
         renderView();
         fetchAllData();
@@ -3684,6 +3724,7 @@ window.loginAdminWithCreds = async () => {
         };
         state.isAdmin = true;
         state.currentView = 'admin-students';
+        setSessionIdentity();
         saveState();
         renderView();
         await fetchAllData();
@@ -3839,6 +3880,7 @@ window.loginDeveloper = async (user, pass) => {
             state.currentUser = { name: authData.user.email + " (Dev)", role: "platform-dev" };
             state.currentView = 'platform-dev-dashboard';
             state.loading = false;
+            setSessionIdentity();
             saveState();
             await fetchPlatformData();
             document.getElementById('dev-login-modal').classList.add('hidden');
@@ -3885,6 +3927,7 @@ window.loginDeveloper = async (user, pass) => {
         state.currentUser = { name: platformUsername + " (Dev)", role: "platform-dev" };
         state.currentView = 'platform-dev-dashboard';
         state.loading = false;
+        setSessionIdentity();
         saveState();
         document.getElementById('dev-login-modal').classList.add('hidden');
         await fetchPlatformData();
@@ -4141,6 +4184,7 @@ window.logout = async () => {
     if (supabaseClient) {
         await supabaseClient.auth.signOut();
     }
+    clearSessionIdentity();
     state.currentUser = null;
     state.isAdmin = false;
     state.isPlatformDev = false;
@@ -4181,7 +4225,9 @@ window.selectSchool = (id) => {
 };
 
 window.backToSchoolSelection = () => {
+    clearSessionIdentity();
     state.currentSchool = null;
+    state.currentUser = null;
     state.isAdmin = false;
     state.currentView = 'school-selection';
     clearSchoolData();
@@ -4982,77 +5028,80 @@ window.updateStudentPrompt = async (id) => {
 
     const modal = document.getElementById('student-modal');
     const content = document.getElementById('student-modal-scroll') || document.getElementById('student-modal-content');
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#ffffff' : '#000000';
+    const bgColor = isDark ? '#1c1c1e' : '#f2f2f7';
 
     content.innerHTML = `
-        <div style="text-align: left; max-width: 100%; min-width: 0;">
+        <div style="text-align: left; width: 100%; min-width: 280px; color: ${textColor}; box-sizing: border-box;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
-                <div style="width: 50px; height: 50px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--system-blue); font-size: 20px;">
+                <div style="width: 50px; height: 50px; background: ${bgColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #007aff; font-size: 20px;">
                     ${s.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                    <h2 style="margin: 0; font-size: 20px; letter-spacing: -0.5px;">${s.name}</h2>
-                    <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">${s.id}</p>
+                    <h2 style="margin: 0; font-size: 20px; letter-spacing: -0.5px; color: ${textColor};">${s.name}</h2>
+                    <p style="margin: 0; font-size: 12px; color: #8e8e93;">${s.id}</p>
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('full_name_label')}</label>
-                    <input type="text" id="edit-student-name" class="minimal-input" value="${(s.name || '').replace(/"/g, '&quot;')}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; flex-direction: column; gap: 1.2rem; width: 100%; min-width: 260px;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('full_name_label')}</label>
+                    <input type="text" id="edit-student-name" class="minimal-input" value="${(s.name || '').replace(/"/g, '&quot;')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('username')}</label>
-                    <input type="text" id="edit-student-username" class="minimal-input" value="${(s.username || '').replace(/"/g, '&quot;')}" placeholder="${t('username')}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('username')}</label>
+                    <input type="text" id="edit-student-username" class="minimal-input" value="${(s.username || '').replace(/"/g, '&quot;')}" placeholder="${t('username')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('email_placeholder') || 'Email'}</label>
-                    <input type="text" id="edit-student-email" class="minimal-input" value="${(s.email || '').replace(/"/g, '&quot;')}" placeholder="email@example.com" inputmode="email" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('email_placeholder') || 'Email'}</label>
+                    <input type="text" id="edit-student-email" class="minimal-input" value="${(s.email || '').replace(/"/g, '&quot;')}" placeholder="email@example.com" inputmode="email" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('phone')}</label>
-                    <input type="text" id="edit-student-phone" class="minimal-input" value="${(s.phone || '').replace(/"/g, '&quot;')}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('phone')}</label>
+                    <input type="text" id="edit-student-phone" class="minimal-input" value="${(s.phone || '').replace(/"/g, '&quot;')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('password_label')} (${t('leave_blank_keep') || 'leave blank to keep'})</label>
-                    <input type="password" id="edit-student-password" class="minimal-input" placeholder="••••••••" autocomplete="new-password" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('password_label')} (${t('leave_blank_keep') || 'leave blank to keep'})</label>
+                    <input type="password" id="edit-student-password" class="minimal-input" placeholder="••••••••" autocomplete="new-password" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('total_classes_label')}</label>
-                    <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('total_classes_label')}</label>
+                    <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.05em;">${t('pack_details_title')}</label>
-                    <div style="display: flex; flex-direction: column; gap: 8px; background: var(--system-gray6); border-radius: 14px; padding: 4px;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 8px; letter-spacing: 0.05em;">${t('pack_details_title')}</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px; background: ${bgColor}; border-radius: 14px; padding: 4px;">
                         ${(s.active_packs || []).length > 0 ? s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => `
-                            <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                            <div style="padding: 12px; border-bottom: 1px solid rgba(142,142,147,0.3); display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="font-size: 13px; font-weight: 700;">${p.name}</div>
-                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase;">${(p.count == null || p.count === 'null') ? '∞' : p.count} Clases • ${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: ${textColor};">${p.name}</div>
+                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${(p.count == null || p.count === 'null') ? '∞' : p.count} Clases • ${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
                                 </div>
-                                <button onclick="window.removeStudentPack('${s.id}', '${p.id}')" style="background: transparent; border: none; color: var(--system-red); padding: 8px; cursor: pointer; opacity: 0.5;">
+                                <button onclick="window.removeStudentPack('${s.id}', '${p.id}')" style="background: transparent; border: none; color: #ff3b30; padding: 8px; cursor: pointer; opacity: 0.5;">
                                     <i data-lucide="minus-circle" size="16"></i>
                                 </button>
                             </div>
-                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div style="padding: 16px; font-size: 12px; opacity: 0.5; text-align: center;">${t('no_classes_msg')}</div>`}
+                        `).join('') : `<div style="padding: 16px; font-size: 12px; opacity: 0.5; text-align: center; color: ${textColor};">${t('no_classes_msg')}</div>`}
                     </div>
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('reg_date_label')}</label>
-                    <div style="background: var(--system-gray6); padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('reg_date_label')}</label>
+                    <div style="background: ${bgColor}; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: ${textColor};">
                         ${s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A'}
                     </div>
                 </div>
 
-                <div class="ios-input-group">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.05em;">${t('next_expiry_label')} (Main Timer)</label>
-                    <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? new Date(s.package_expires_at).toISOString().split('T')[0] : ''}" style="background: var(--system-gray6); border: none; width: 100%; box-sizing: border-box;">
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('next_expiry_label')} (Main Timer)</label>
+                    <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? new Date(s.package_expires_at).toISOString().split('T')[0] : ''}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
             </div>
 
@@ -5061,8 +5110,8 @@ window.updateStudentPrompt = async (id) => {
                 <button class="btn-primary" onclick="window.saveStudentDetails('${s.id}')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('save_btn')}</button>
             </div>
 
-            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
-                <button onclick="window.deleteStudent('${s.id}')" style="background: rgba(255, 59, 48, 0.05); color: var(--system-red); border: none; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(142,142,147,0.3);">
+                <button onclick="window.deleteStudent('${s.id}')" style="background: rgba(255, 59, 48, 0.05); color: #ff3b30; border: none; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <i data-lucide="user-minus" size="14"></i> ${t('delete_perm_label')}
                 </button>
             </div>
@@ -5548,6 +5597,21 @@ logoEl.addEventListener('click', () => {
         if (saved.currentUser?.school_id && !saved.isAdmin) {
             const match = saved.currentSchool && saved.currentSchool.id === saved.currentUser.school_id;
             state.currentSchool = match ? saved.currentSchool : { id: saved.currentUser.school_id, name: saved.currentSchool?.name || 'School' };
+        }
+        // SECURITY: Never show another user's page. sessionStorage is tab-scoped; if missing or mismatched, another tab overwrote localStorage.
+        const hasUserState = !!(saved.currentUser || saved.isAdmin || saved.isPlatformDev);
+        if (hasUserState && !sessionIdentityMatches(saved)) {
+            clearSessionIdentity();
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.isPlatformDev = false;
+            state.currentView = 'school-selection';
+            state.currentSchool = null;
+            state.competitionId = null;
+            state.competitionSchoolId = null;
+            state.competitionTab = null;
+            clearSchoolData();
+            saveState();
         }
     }
 

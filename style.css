@@ -1470,6 +1470,19 @@ select option {
     width: 100%;
 }
 
+/* Student modal: ensure content is visible and has proper width */
+#student-modal-scroll {
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 280px !important;
+}
+#student-modal-scroll .ios-input-group {
+    min-width: 200px;
+}
+#student-modal-scroll .minimal-input {
+    min-width: 150px;
+}
+
 /* TOGGLE SWITCH - pill-shaped, sliding thumb (event/registration activation) */
 .toggle-switch {
     display: inline-flex;
