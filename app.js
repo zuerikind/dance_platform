@@ -279,7 +279,15 @@ const DANCE_LOCALES = {
         competition_done: "Done",
         competition_saved_indicator: "Saved",
         competition_saving: "Saving...",
-        competition_next_steps_placeholder: "E.g. No cuts, fixed camera, good lighting..."
+        competition_next_steps_placeholder: "E.g. No cuts, fixed camera, good lighting...",
+        competition_video_submission_toggle: "Include video submission?",
+        competition_video_prompt_label: "Video question text",
+        competition_video_prompt_placeholder: "Upload your demo video (2-3 minutes)",
+        competition_video_duration_error: "Video must be 2-3 minutes",
+        competition_video_size_error: "File too large (max 50 MB)",
+        competition_video_uploading: "Uploading...",
+        competition_video_uploaded: "Video uploaded",
+        competition_video_unavailable: "Video unavailable"
     },
     es: {
         nav_schedule: "Horario",
@@ -556,7 +564,15 @@ const DANCE_LOCALES = {
         competition_done: "Listo",
         competition_saved_indicator: "Guardado",
         competition_saving: "Guardando...",
-        competition_next_steps_placeholder: "Ej: Sin cortes, cámara fija, buena iluminación..."
+        competition_next_steps_placeholder: "Ej: Sin cortes, cámara fija, buena iluminación...",
+        competition_video_submission_toggle: "¿Incluir envío de video?",
+        competition_video_prompt_label: "Texto de la pregunta de video",
+        competition_video_prompt_placeholder: "Sube tu video demo (2-3 minutos)",
+        competition_video_duration_error: "El video debe durar 2-3 minutos",
+        competition_video_size_error: "Archivo demasiado grande (máx. 50 MB)",
+        competition_video_uploading: "Subiendo...",
+        competition_video_uploaded: "Video subido",
+        competition_video_unavailable: "Video no disponible"
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -801,6 +817,14 @@ const DANCE_LOCALES = {
         competition_saved_indicator: "Gespeichert",
         competition_saving: "Wird gespeichert...",
         competition_next_steps_placeholder: "Z.B. Keine Schnitte, feste Kamera, gute Beleuchtung...",
+        competition_video_submission_toggle: "Video-Einreichung einschließen?",
+        competition_video_prompt_label: "Video-Fragentext",
+        competition_video_prompt_placeholder: "Lade dein Demo-Video hoch (2-3 Minuten)",
+        competition_video_duration_error: "Video muss 2-3 Minuten dauern",
+        competition_video_size_error: "Datei zu groß (max. 50 MB)",
+        competition_video_uploading: "Wird hochgeladen...",
+        competition_video_uploaded: "Video hochgeladen",
+        competition_video_unavailable: "Video nicht verfügbar",
         competition_approved_message: "Herzlichen Glückwunsch! Du wirst an \"{eventName}\" teilnehmen.",
         competition_declined_message: "Dieses Mal kannst du nicht teilnehmen, aber wir freuen uns auf dich beim nächsten Mal."
     }
@@ -1306,6 +1330,8 @@ window.saveCompetition = async () => {
     try {
         if (id) {
             const cur = state.currentCompetition || {};
+            const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
+            const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_update', {
                 p_competition_id: id,
                 p_name: name,
@@ -1313,19 +1339,25 @@ window.saveCompetition = async () => {
                 p_questions: questions,
                 p_next_steps_text: nextSteps,
                 p_is_active: !!cur.is_active,
-                p_is_sign_in_active: !!cur.is_sign_in_active
+                p_is_sign_in_active: !!cur.is_sign_in_active,
+                p_video_submission_enabled: videoEnabled,
+                p_video_submission_prompt: videoPrompt
             });
             if (error) throw new Error(error.message);
             if (res == null) throw new Error('Update failed. Are you logged in as an admin for this school?');
             state.currentCompetition = res || cur;
             state.competitions = (state.competitions || []).map(c => c.id === id ? (res || c) : c);
         } else {
+            const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
+            const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_create', {
                 p_school_id: schoolId,
                 p_name: name,
                 p_starts_at: startsAt,
                 p_questions: questions,
-                p_next_steps_text: nextSteps
+                p_next_steps_text: nextSteps,
+                p_video_submission_enabled: videoEnabled,
+                p_video_submission_prompt: videoPrompt
             });
             if (error) throw new Error(error.message);
             const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
@@ -1385,6 +1417,8 @@ window.autosaveCompetition = async () => {
     try {
         if (id) {
             const cur = state.currentCompetition || {};
+            const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
+            const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_update', {
                 p_competition_id: id,
                 p_name: name || (cur.name || 'Event'),
@@ -1392,7 +1426,9 @@ window.autosaveCompetition = async () => {
                 p_questions: questions,
                 p_next_steps_text: nextSteps,
                 p_is_active: !!cur.is_active,
-                p_is_sign_in_active: !!cur.is_sign_in_active
+                p_is_sign_in_active: !!cur.is_sign_in_active,
+                p_video_submission_enabled: videoEnabled,
+                p_video_submission_prompt: videoPrompt
             });
             if (error) throw new Error(error.message);
             if (res) {
@@ -1406,12 +1442,16 @@ window.autosaveCompetition = async () => {
                 setTimeout(() => { ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = ''; }); }, 2000);
             }
         } else {
+            const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
+            const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_create', {
                 p_school_id: schoolId,
                 p_name: name || 'New Event',
                 p_starts_at: startsAt,
                 p_questions: questions,
-                p_next_steps_text: nextSteps
+                p_next_steps_text: nextSteps,
+                p_video_submission_enabled: videoEnabled,
+                p_video_submission_prompt: videoPrompt
             });
             if (error) throw new Error(error.message);
             const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
@@ -1541,7 +1581,7 @@ window.deleteCompetition = async (competitionId) => {
     renderView();
 };
 
-window.openRegistrationAnswers = (regId) => {
+window.openRegistrationAnswers = async (regId) => {
     const reg = (state.competitionRegistrations || []).find(r => r.id === regId);
     const questions = state.currentCompetition?.questions || [];
     const answers = (reg?.answers && typeof reg.answers === 'object') ? reg.answers : {};
@@ -1551,20 +1591,79 @@ window.openRegistrationAnswers = (regId) => {
     if (!titleEl || !bodyEl || !modalEl) return;
     const t = window.t;
     titleEl.textContent = (reg?.student_name || reg?.student_id || t.competition_answers || 'Answers');
+    let html = '';
     if (questions.length === 0) {
-        bodyEl.innerHTML = `<p style="color: var(--text-secondary); font-size: 15px;">${t.competition_no_answers}</p>`;
+        html = `<p style="color: var(--text-secondary); font-size: 15px;">${t.competition_no_answers}</p>`;
     } else {
-        bodyEl.innerHTML = questions.map((q, i) => {
+        html = questions.map((q, i) => {
             const ans = answers[i] ?? answers[String(i)] ?? '';
             const qEsc = (q || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const ansEsc = (ans || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
             return `<div style="margin-bottom: 16px;"><div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${qEsc}</div><div style="font-size: 16px; color: var(--text-primary); line-height: 1.4;">${ansEsc || '—'}</div></div>`;
         }).join('');
     }
+    const comp = state.currentCompetition;
+    const videoPath = answers.video || answers['video'];
+    if (comp?.video_submission_enabled && videoPath && supabaseClient) {
+        const prompt = (comp.video_submission_prompt || t.competition_video_prompt_placeholder || 'Video').replace(/</g, '&lt;');
+        html += `<div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);"><div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">${prompt}</div>`;
+        try {
+            const { data: signed } = await supabaseClient.storage.from('competition-videos').createSignedUrl(videoPath, 3600);
+            if (signed?.signedUrl) {
+                html += `<video src="${signed.signedUrl.replace(/"/g, '&quot;')}" controls style="max-width: 100%; border-radius: 12px; background: var(--system-gray6);" preload="metadata"></video>`;
+            } else {
+                html += `<p style="color: var(--text-secondary); font-size: 14px;">${t.competition_video_unavailable || 'Video unavailable'}</p>`;
+            }
+        } catch (_) {
+            html += `<p style="color: var(--text-secondary); font-size: 14px;">${t.competition_video_unavailable || 'Video unavailable'}</p>`;
+        }
+        html += '</div>';
+    }
+    bodyEl.innerHTML = html;
     const closeBtn = document.getElementById('registration-answers-close-btn');
     if (closeBtn) closeBtn.textContent = t('close') || 'Close';
     modalEl.classList.remove('hidden');
     if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+window.handleCompetitionVideoSelect = async (fileInput) => {
+    const file = fileInput?.files?.[0];
+    if (!file || !supabaseClient || !state.competitionId || !state.currentUser?.id) return;
+    const schoolId = state.currentUser.school_id || state.currentSchool?.id;
+    if (!schoolId) return;
+    const statusEl = document.getElementById('student-comp-video-status');
+    const setStatus = (msg, isErr = false) => { if (statusEl) { statusEl.textContent = msg; statusEl.style.color = isErr ? 'var(--system-red)' : 'var(--text-secondary)'; } };
+    const MAX_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+        setStatus(window.t('competition_video_size_error') || 'File too large (max 50 MB)', true);
+        fileInput.value = '';
+        return;
+    }
+    setStatus(window.t('competition_video_uploading') || 'Validating duration...');
+    const duration = await new Promise((resolve) => {
+        const v = document.createElement('video');
+        v.preload = 'metadata';
+        v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
+        v.onerror = () => { URL.revokeObjectURL(v.src); resolve(-1); };
+        v.src = URL.createObjectURL(file);
+    });
+    if (duration < 0) { setStatus(window.t('competition_video_duration_error') || 'Could not read video', true); return; }
+    const minSec = 120, maxSec = 180;
+    if (duration < minSec || duration > maxSec) {
+        setStatus((window.t('competition_video_duration_error') || 'Video must be 2-3 minutes').replace('2-3', `${Math.floor(minSec/60)}-${Math.floor(maxSec/60)}`), true);
+        fileInput.value = '';
+        return;
+    }
+    setStatus(window.t('competition_video_uploading') || 'Uploading...');
+    const ext = (file.name.match(/\.(mp4|mov|webm)$/i) || ['', 'mp4'])[1] || 'mp4';
+    const path = `${schoolId}/${state.competitionId}/${state.currentUser.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabaseClient.storage.from('competition-videos').upload(path, file, { upsert: true });
+    if (error) { setStatus(window.t('competition_error') || 'Upload failed: ' + error.message, true); return; }
+    state.studentCompetitionAnswers = state.studentCompetitionAnswers || {};
+    state.studentCompetitionAnswers.video = path;
+    setStatus('');
+    saveStudentCompetitionDraft();
+    renderView();
 };
 
 let _competitionDraftSaveTimer = null;
@@ -1585,6 +1684,7 @@ window.saveStudentCompetitionDraft = async () => {
         const i = inp.getAttribute('data-qidx');
         answers[i] = inp.value || '';
     });
+    if (state.studentCompetitionAnswers?.video) answers.video = state.studentCompetitionAnswers.video;
     state.studentCompetitionAnswers = answers;
     const { data } = await supabaseClient.rpc('competition_registration_upsert_draft', {
         p_competition_id: state.competitionId,
@@ -2312,6 +2412,16 @@ function renderView() {
                             <input type="text" name="q${i}" data-qidx="${i}" value="${(answers[i] || answers[String(i)] || '').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" oninput="debouncedSaveCompetitionDraft()" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
                         </div>
                     `).join('')}
+                    ${comp.video_submission_enabled ? `
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">${(comp.video_submission_prompt || t.competition_video_prompt_placeholder || 'Upload your demo video (2-3 minutes)').replace(/</g, '&lt;')}</label>
+                        <div id="student-comp-video-upload-area">
+                            <input type="file" id="student-comp-video-input" accept="video/mp4,video/quicktime,video/webm" onchange="handleCompetitionVideoSelect(this)" style="width: 100%; padding: 10px; font-size: 14px;">
+                            <div id="student-comp-video-status" style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;"></div>
+                            ${answers.video ? `<div style="margin-top: 8px; font-size: 13px; color: var(--system-green); font-weight: 600;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ${t.competition_video_uploaded || 'Video uploaded'}</div>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
                     <button type="button" class="btn-primary" id="student-comp-submit-btn" onclick="submitStudentCompetitionRegistration()" style="width: 100%; border-radius: 14px; height: 50px; font-size: 16px; font-weight: 600; margin-top: 1rem;">${t.submit_registration}</button>
                 </form>
                 `}
@@ -2784,6 +2894,19 @@ function renderView() {
                         <div style="margin-bottom: 32px;">
                             <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 12px; letter-spacing: 0.02em;">${t.competition_next_steps}</label>
                             <textarea id="comp-next-steps" rows="4" placeholder="${t.competition_next_steps_placeholder || ''}" oninput="debouncedAutosaveCompetition()" style="width: 100%; min-height: 120px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; line-height: 1.5; resize: vertical; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--system-blue)'" onblur="this.style.borderColor='var(--border)'">${(current && current.next_steps_text) || ''}</textarea>
+                        </div>
+                        <div style="margin-bottom: 28px;">
+                            <label class="toggle-switch" style="justify-content: space-between; width: 100%; font-size: 15px; font-weight: 500; margin-bottom: 12px;">
+                                <span class="toggle-switch-label">${t.competition_video_submission_toggle || 'Include video submission?'}</span>
+                                <span style="display: flex;">
+                                    <input type="checkbox" id="comp-video-enabled" class="toggle-switch-input" ${(current && current.video_submission_enabled) ? 'checked' : ''} onchange="debouncedAutosaveCompetition(); const p=document.getElementById('comp-video-prompt-wrap'); if(p)p.style.display=this.checked?'block':'none';">
+                                    <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                </span>
+                            </label>
+                            <div id="comp-video-prompt-wrap" style="display: ${(current && current.video_submission_enabled) ? 'block' : 'none'}; margin-top: 12px;">
+                                <label style="font-size: 14px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">${t.competition_video_prompt_label || 'Video question text'}</label>
+                                <input type="text" id="comp-video-prompt" value="${(current && current.video_submission_prompt) || ''}" placeholder="${t.competition_video_prompt_placeholder || 'Upload your demo video (2-3 minutes)'}" oninput="debouncedAutosaveCompetition()" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                            </div>
                         </div>
                     </div>
                     <div style="padding: 20px 24px 28px; background: var(--system-gray6); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px;">
