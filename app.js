@@ -4189,7 +4189,8 @@ window.logout = async () => {
     state.lastActivity = Date.now();
     clearSchoolData();
     saveState();
-    renderView();
+    // Navigate to clean root URL (no hash, no user/school info) - full reload for complete logout
+    window.location.replace(window.location.origin + '/');
 };
 
 window.confirmSchoolSelection = () => {
