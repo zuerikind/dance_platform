@@ -1,6 +1,9 @@
 -- Run this in Supabase Dashboard → SQL Editor
 -- Fixes: "Bucket not found", "function competition_update not found", and "row-level security" / events not showing
 -- Creates bucket, policies, updates RPC functions, and helps link admin accounts
+--
+-- NOTE: Logo upload now uses Edge Function (upload-competition-logo) which bypasses Storage RLS.
+-- Deploy the Edge Function: supabase functions deploy upload-competition-logo
 
 -- ========== OPTIONAL: Link admin "Chris" to their Auth session (if events don't show) ==========
 -- Run this ONLY if you're logged in as Chris in the app and don't see events.
@@ -16,6 +19,19 @@ WHERE school_id = 'PASTE_MEXA_FLOW_SCHOOL_UUID_HERE'::uuid
 
 -- 0. Add image_url column if missing
 ALTER TABLE public.competitions ADD COLUMN IF NOT EXISTS image_url text DEFAULT '';
+
+-- 0b. RPC for Edge Function to verify school admin (bypasses Storage RLS auth.uid() bug)
+CREATE OR REPLACE FUNCTION public.check_school_admin_for_upload(p_school_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.is_school_admin(p_school_id) OR public.is_platform_admin();
+$$;
+GRANT EXECUTE ON FUNCTION public.check_school_admin_for_upload(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.check_school_admin_for_upload(uuid) TO anon;
 
 -- 1. Create the bucket (if it doesn't exist)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

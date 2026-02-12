@@ -1109,9 +1109,6 @@ async function fetchAllData() {
                 const sess = await supabaseClient.auth.getSession();
                 const { data: compList, error: compListErr } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: sid });
                 state.competitions = !compListErr && Array.isArray(compList) ? compList : [];
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:fetchAllData:competitions',message:'competition_list_for_admin from fetchAllData',data:{sid,compCount:Array.isArray(compList)?compList.length:0,rpcError:compListErr?.message||null,authUserId:sess?.data?.session?.user?.id||null,currentSchoolId:state.currentSchool?.id},timestamp:Date.now(),hypothesisId:'H1,H2,H3'})}).catch(()=>{});
-                // #endregion
             } catch (_) {
                 state.competitions = [];
             }
@@ -1199,8 +1196,6 @@ window.t = function (key) {
     const lang = state.language || 'en';
     const dict = DANCE_LOCALES[lang] || DANCE_LOCALES.en;
     const val = dict[key] || DANCE_LOCALES.en[key] || `[${key}]`;
-    console.log(`[T] ${key} (${lang}) => ${val}`);
-    if (!dict[key]) console.warn(`Translation missing: ${key} for lang: ${lang}`);
     return val;
 };
 
@@ -1320,15 +1315,8 @@ window.selectCompetition = async (id) => {
 
 window.fetchCompetitionList = async (schoolId) => {
     if (!supabaseClient || !schoolId) return;
-    // #region agent log
-    const sess = await supabaseClient.auth.getSession();
-    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:fetchCompetitionList:before',message:'fetchCompetitionList called',data:{schoolId,authUserId:sess?.data?.session?.user?.id||null,currentUserName:state.currentUser?.name},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     const { data, error } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: schoolId });
     state.competitions = !error && Array.isArray(data) ? data : [];
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:fetchCompetitionList:after',message:'competition_list_for_admin result',data:{schoolId,count:Array.isArray(data)?data.length:0,rpcError:error?.message||null,authUserId:sess?.data?.session?.user?.id||null},timestamp:Date.now(),hypothesisId:'H1,H3'})}).catch(()=>{});
-    // #endregion
     if (state.competitionId) state.currentCompetition = state.competitions.find(c => c.id === state.competitionId) || null;
     else state.currentCompetition = null;
     renderView();
@@ -1425,7 +1413,7 @@ window.debouncedAutosaveCompetition = () => {
     }, 800);
 };
 
-window.autosaveCompetition = async () => {
+window.autosaveCompetition = async (optImageUrl) => {
     const statusEl = document.getElementById('comp-autosave-status') || document.getElementById('comp-autosave-status-footer');
     const setStatus = (text, isError = false) => {
         ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => {
@@ -1437,25 +1425,26 @@ window.autosaveCompetition = async () => {
         });
     };
     const schoolId = state.competitionSchoolId || state.currentSchool?.id;
-    if (!schoolId || !supabaseClient) return;
+    if (!schoolId || !supabaseClient) { setStatus('', false); return; }
     const { data: sess } = await supabaseClient.auth.getSession();
-    if (!sess?.session?.user) return;
+    if (!sess?.session?.user) { setStatus(window.t('competition_session_expired') || 'Session expired. Link your admin account or log in again.', true); return; }
     const name = (document.getElementById('comp-name') || {}).value?.trim() || '';
     const date = (document.getElementById('comp-date') || {}).value || '';
     const time = (document.getElementById('comp-time') || {}).value || '19:00';
     const id = (document.getElementById('comp-id') || {}).value || '';
-    if (!id && (!name || !date)) return;
+    if (!id && (!name || !date)) { setStatus('', false); return; }
     setStatus(window.t('competition_saving') || 'Saving...');
     const startsAt = date ? new Date(date + 'T' + time + ':00').toISOString() : new Date().toISOString();
     const nextSteps = (document.getElementById('comp-next-steps') || {}).value || '';
     const container = document.getElementById('comp-questions-container');
     const questions = container ? Array.from(container.querySelectorAll('input[data-qidx]')).sort((a, b) => parseInt(a.getAttribute('data-qidx'), 10) - parseInt(b.getAttribute('data-qidx'), 10)).map(inp => inp.value?.trim() || '') : (state.competitionFormQuestions || []);
+    const imageUrlFromForm = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
+    const imageUrlToUse = (optImageUrl != null && String(optImageUrl).trim() !== '') ? String(optImageUrl).trim() : imageUrlFromForm;
     try {
         if (id) {
             const cur = state.currentCompetition || {};
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
-            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_update', {
                 p_competition_id: id,
                 p_name: name || (cur.name || 'Event'),
@@ -1466,7 +1455,7 @@ window.autosaveCompetition = async () => {
                 p_is_sign_in_active: !!cur.is_sign_in_active,
                 p_video_submission_enabled: videoEnabled,
                 p_video_submission_prompt: videoPrompt,
-                p_image_url: imageUrl
+                p_image_url: imageUrlToUse
             });
             if (error) throw new Error(error.message);
             if (res) {
@@ -1482,7 +1471,6 @@ window.autosaveCompetition = async () => {
         } else {
             const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
             const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
-            const imageUrl = (document.getElementById('comp-image-url') || {}).value?.trim() || '';
             const { data: res, error } = await supabaseClient.rpc('competition_create', {
                 p_school_id: schoolId,
                 p_name: name || 'New Event',
@@ -1491,7 +1479,7 @@ window.autosaveCompetition = async () => {
                 p_next_steps_text: nextSteps,
                 p_video_submission_enabled: videoEnabled,
                 p_video_submission_prompt: videoPrompt,
-                p_image_url: imageUrl
+                p_image_url: imageUrlToUse
             });
             if (error) throw new Error(error.message);
             const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
@@ -1686,26 +1674,35 @@ window.handleCompetitionImageSelect = async (fileInput) => {
         fileInput.value = '';
         return;
     }
-    const ext = (file.name.match(/\.(jpe?g|png|gif|webp)$/i) || ['', 'jpg'])[1]?.toLowerCase() || 'jpg';
-    const path = `${schoolId}/${compId}/logo.${ext}`;
-    const contentType = file.type && /^image\/(jpeg|png|gif|webp)$/i.test(file.type) ? file.type : (ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
-    // Refresh session so Storage API receives valid JWT (fix: storage RLS auth.uid() was null)
     await supabaseClient.auth.refreshSession();
-    // #region agent log
     const uploadSess = await supabaseClient.auth.getSession();
-    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:handleCompetitionImageSelect:before',message:'Logo upload attempt',data:{schoolId,compId,path,authUserId:uploadSess?.data?.session?.user?.id||null,compSchoolId:state.currentCompetition?.school_id},timestamp:Date.now(),hypothesisId:'H7,H9',runId:'post-fix'})}).catch(()=>{});
-    // #endregion
-    const { error } = await supabaseClient.storage.from('competition-logos').upload(path, file, { upsert: true, contentType });
-    if (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:handleCompetitionImageSelect:error',message:'Storage upload failed',data:{path,errorMsg:error.message,authUserId:uploadSess?.data?.session?.user?.id||null,schoolId},timestamp:Date.now(),hypothesisId:'H6,H8'})}).catch(()=>{});
-        // #endregion
-        const msg = error.message || '';
-        const hint = (msg.toLowerCase().includes('policy') || msg.toLowerCase().includes('row-level') || msg.toLowerCase().includes('permission')) ? '\n\n' + (window.t('competition_logo_rls_hint') || 'Your admin account is not linked to this session. Fix: 1) Go to Students / Jack and Jill. 2) If you see "Link admin account", enter your email and current password there. 3) Or log out and log in again with your admin username and password.') : '';
+    const accessToken = uploadSess?.data?.session?.access_token;
+    if (!accessToken) {
+        alert((window.t('competition_error') || 'Error saving competition') + '\n\n' + (window.t('competition_logo_rls_hint') || 'Your admin account is not linked to this session. Go to Students / Jack and Jill, use "Link admin account", or log out and log in again with your admin credentials.'));
+        fileInput.value = '';
+        return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('schoolId', schoolId);
+    formData.append('compId', compId);
+    const fnRes = await fetch(`${SUPABASE_URL}/functions/v1/upload-competition-logo`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: SUPABASE_KEY
+        },
+        body: formData
+    });
+    const fnJson = await fnRes.json().catch(() => ({}));
+    if (!fnRes.ok) {
+        const msg = fnJson?.error || fnRes.statusText || 'Upload failed';
+        const hint = (msg.toLowerCase().includes('policy') || msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied')) ? '\n\n' + (window.t('competition_logo_rls_hint') || 'Your admin account is not linked. Go to Students / Jack and Jill, use "Link admin account", or log out and log in again.') : '';
         alert((window.t('competition_error') || 'Error saving competition') + '\n\n' + msg + hint);
         fileInput.value = '';
         return;
     }
+    const path = fnJson?.path || `${schoolId}/${compId}/logo.${(file.name.match(/\.(jpe?g|png|gif|webp)$/i) || ['', 'jpg'])[1]?.toLowerCase() || 'jpg'}`;
     const urlEl = document.getElementById('comp-image-url');
     if (urlEl) urlEl.value = path;
     const preview = document.getElementById('comp-image-preview');
@@ -1721,7 +1718,10 @@ window.handleCompetitionImageSelect = async (fileInput) => {
             wrap.insertBefore(img, wrap.firstChild);
         }
     }
-    debouncedAutosaveCompetition();
+    // Save immediately so image_url is persisted (pass path explicitly so it's never missed)
+    const setLogoStatus = (t) => { ['comp-autosave-status', 'comp-autosave-status-footer'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = t; }); };
+    setLogoStatus(window.t('competition_saving') || 'Saving logo...');
+    if (typeof window.autosaveCompetition === 'function') await window.autosaveCompetition(path);
 };
 
 window.handleCompetitionVideoSelect = async (fileInput) => {
@@ -2983,9 +2983,6 @@ function _renderViewImpl() {
     `;
     } else if (view === 'admin-competition-jack-and-jill') {
         const schoolId = state.competitionSchoolId || state.currentSchool?.id;
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:renderView:admin-competition-jack-and-jill',message:'Jack and Jill view render',data:{schoolId,competitionSchoolId:state.competitionSchoolId,currentSchoolId:state.currentSchool?.id,compsLength:state.competitions?.length||0,willFetch:!!(schoolId&&state._competitionListSchoolId!==schoolId)},timestamp:Date.now(),hypothesisId:'H2,H4'})}).catch(()=>{});
-        // #endregion
         if (schoolId && state._competitionListSchoolId !== schoolId) {
             state._competitionListSchoolId = schoolId;
             window.fetchCompetitionList(schoolId);
@@ -3188,9 +3185,11 @@ function _renderViewImpl() {
 
     // Global UI Updates
     const isDevView = ['platform-dev-dashboard', 'platform-school-details'].includes(view);
-    const showNav = state.currentUser !== null && !['school-selection', 'auth'].includes(view) && !isDevView;
-
-    document.getElementById('logout-btn').classList.toggle('hidden', state.currentUser === null);
+    const isAdminView = (view && view.startsWith('admin-'));
+    const hasSession = state.currentUser !== null || (state.isAdmin && isAdminView) || state.isPlatformDev;
+    const showNav = hasSession && !['school-selection', 'auth'].includes(view) && !isDevView;
+    // Show logout when logged in OR when clearly in admin context (e.g. after refresh on Jack and Jill)
+    document.getElementById('logout-btn').classList.toggle('hidden', !hasSession);
     document.getElementById('dev-login-trigger').classList.toggle('hidden', state.currentUser !== null);
     document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
     document.getElementById('admin-nav').classList.toggle('hidden', !showNav || !state.isAdmin);
@@ -3689,10 +3688,6 @@ window.loginAdminWithCreds = async () => {
     }
 
     if (adminRow) {
-        const sess = await supabaseClient.auth.getSession();
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginAdminWithCreds:success',message:'Admin login success',data:{adminUsername:adminRow.username,adminUserId:adminRow.user_id,authUserId:sess?.data?.session?.user?.id||null,match:adminRow.user_id===sess?.data?.session?.user?.id,schoolId:adminRow.school_id},timestamp:Date.now(),hypothesisId:'H1,H5'})}).catch(()=>{});
-        // #endregion
         state.currentUser = {
             name: adminRow.username + " (Admin)",
             role: "admin"
@@ -3834,9 +3829,6 @@ window.linkPlatformAdminAccount = async () => {
 };
 
 window.loginDeveloper = async (user, pass) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:entry',message:'loginDeveloper called',data:{userPrefix:(user||'').substring(0,2)+'..',looksLikeEmail:!!(typeof user==='string'&&user.includes('@'))},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     if (!supabaseClient) {
         alert("Database connection not initialized.");
         return;
@@ -3875,25 +3867,15 @@ window.loginDeveloper = async (user, pass) => {
         p_username: user,
         p_password: pass
     });
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterRpc',message:'after get_platform_admin_by_credentials',data:{hasLegacyRows:!!(legacyRows&&legacyRows.length>0),rpcError:rpcError?String(rpcError.message):null},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
     if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
         const platformUsername = legacyRows[0].username || user;
         const pseudoEmail = `${String(platformUsername).replace(/\s+/g, '_').toLowerCase()}@platform.bailadmin.local`;
         const errMsg = (e) => (e && e.message ? String(e.message) : '');
         try {
             let { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
-            // #region agent log
-            const _isInv = signInErr && (errMsg(signInErr).toLowerCase().includes('invalid') || errMsg(signInErr).includes('Invalid login'));
-            fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterSignIn',message:'after signInWithPassword',data:{signInErr:signInErr?errMsg(signInErr):null,isInvalidCreds:_isInv,pseudoEmail},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-            // #endregion
-            const isInvalidCreds = _isInv;
+            const isInvalidCreds = signInErr && (errMsg(signInErr).toLowerCase().includes('invalid') || errMsg(signInErr).includes('Invalid login'));
             if (signInErr && isInvalidCreds) {
                 const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterSignUp',message:'after signUp',data:{signUpErr:signUpErr?errMsg(signUpErr):null},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-                // #endregion
                 if (signUpErr && (errMsg(signUpErr).includes('already registered') || errMsg(signUpErr).includes('already exists'))) {
                     signInErr = (await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass })).error;
                 } else {
@@ -3903,10 +3885,6 @@ window.loginDeveloper = async (user, pass) => {
             if (!signInErr) await supabaseClient.rpc('link_platform_admin_auth', { p_username: platformUsername, p_password: pass });
         } catch (e) { console.warn('Platform dev Auth link:', e); }
         const { data: sessionData } = await supabaseClient.auth.getSession();
-        // #region agent log
-        const _hasSession = !!(sessionData?.session?.user);
-        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:loginDeveloper:afterGetSession',message:'after getSession',data:{hasSession:_hasSession},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
-        // #endregion
         if (!sessionData?.session?.user) {
             state.loading = false;
             renderView();
@@ -3999,12 +3977,6 @@ window.deleteSchool = async (schoolId, schoolNameParam) => {
             return;
         }
         const { data: sessionData } = await supabaseClient.auth.getSession();
-        // #region agent log
-        const _delHasSession = !!(sessionData?.session?.user);
-        const _delLog = {location:'app.js:deleteSchool:sessionCheck',data:{hasSession:_delHasSession},hypothesisId:'del-H1'};
-        console.log('[DEBUG deleteSchool session]', _delLog);
-        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._delLog,message:'delete school session check',timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (!sessionData?.session?.user) {
             alert("Your Dev session is missing or expired. Log out and log in again with your Dev credentials (username + password, or the email + password you used in \"Link account\") so you have permission to delete schools.");
             return;
@@ -4014,11 +3986,6 @@ window.deleteSchool = async (schoolId, schoolNameParam) => {
         const { data: rpcResult, error } = await supabaseClient.rpc('school_delete_by_platform', { p_school_id: schoolId });
         const deletedRows = rpcResult?.deleted ? [{ id: schoolId }] : [];
 
-        // #region agent log
-        const _delResLog = {location:'app.js:deleteSchool:afterDelete',data:{error:error?String(error.message):null,deletedCount:deletedRows?deletedRows.length:0},hypothesisId:'del-H2'};
-        console.log('[DEBUG deleteSchool result]', _delResLog);
-        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._delResLog,message:'after school delete',timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (error) {
             const msg = error.message || '';
             if (msg.includes('Permission denied') && msg.includes('platform admin')) {
@@ -4252,12 +4219,6 @@ window.submitNewSchoolWithAdmin = async () => {
 
     {
         const { data: sessionData } = await supabaseClient.auth.getSession();
-        // #region agent log
-        const _hasSession = !!(sessionData?.session?.user);
-        const _createLog = {location:'app.js:submitNewSchoolWithAdmin:sessionCheck',data:{hasSession:_hasSession},hypothesisId:'create-H1'};
-        console.log('[DEBUG create school session]', _createLog);
-        fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._createLog,message:'create school session check',timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (!sessionData?.session?.user) {
             alert("Your Dev session is missing or expired. Log out and log in again with your Dev credentials (username + password, or the email + password you used in \"Link account\") so you have permission to create schools.");
             return;
@@ -4269,11 +4230,6 @@ window.submitNewSchoolWithAdmin = async () => {
             // 1. Create School (use RPC to bypass RLS when platform admin user_id may not be linked)
             const { data: schoolRow, error: schoolError } = await supabaseClient.rpc('school_insert_by_platform', { p_name: schoolName });
 
-            // #region agent log
-            const _schoolLog = {location:'app.js:submitNewSchoolWithAdmin:schoolInsert',data:{schoolError:schoolError?String(schoolError.message):null,hasSchoolRow:!!schoolRow},hypothesisId:'create-H2'};
-            console.log('[DEBUG create school insert]', _schoolLog);
-            fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._schoolLog,message:'after school insert',timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
             if (schoolError) throw schoolError;
             const schoolId = schoolRow?.id;
             if (!schoolId) throw new Error('School was not created');
@@ -4300,11 +4256,6 @@ window.submitNewSchoolWithAdmin = async () => {
                 const res2 = await supabaseClient.rpc('admin_insert_for_school', adminPayload);
                 adminError = res2.error;
             }
-            // #region agent log
-            const _adminLog = {location:'app.js:submitNewSchoolWithAdmin:adminInsert',data:{adminError:adminError?String(adminError.message):null},hypothesisId:'create-H3'};
-            console.log('[DEBUG create admin insert]', _adminLog);
-            fetch('http://127.0.0.1:7242/ingest/554879e0-2f99-4513-aec0-55304c96fd3b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({..._adminLog,message:'after admin insert',timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
             if (adminError) {
                 const fallbackPayload = {
                     id: "ADM-" + Math.random().toString(36).substr(2, 6).toUpperCase(),

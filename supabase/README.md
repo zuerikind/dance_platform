@@ -19,6 +19,18 @@ Run this so the app works for **students** (schedule, shop, buy pack, bank detai
 
 This adds: login credential checks, `get_school_classes`, `get_school_subscriptions`, `get_school_admin_settings`, `create_payment_request`, `get_school_payment_requests`, `update_payment_request_status`, `delete_payment_request`, plus **admin management** (`admin_insert_for_school`, `admin_delete_for_school`), **classes** (`class_insert_for_school`, `class_update_field`, `class_delete_for_school`), **plans** (`subscription_insert_for_school`, `subscription_update_field`, `subscription_delete_for_school`), and **transfer details** (`admin_setting_upsert`) so legacy admins can add admins, edit classes, edit plans, and save bank details. If you see "Could not find the function" in the app, this migration was not run or needs to be re-run.
 
+### Competition logo upload (Edge Function)
+
+Logo upload uses an Edge Function to bypass the Storage RLS `auth.uid()` bug.
+
+1. **RPC**: Run `supabase/migrations/20260212800000_check_school_admin_rpc.sql` in the SQL Editor (creates `check_school_admin_for_upload`).
+2. **Deploy Edge Function** (requires [Supabase CLI](https://supabase.com/docs/guides/cli)):
+   ```bash
+   supabase login
+   supabase link --project-ref fziyybqhecfxhkagknvg
+   supabase functions deploy upload-competition-logo
+   ```
+
 ## What the migration does
 
 - Adds `user_id` (references `auth.users`) to `students` and `admins`.
