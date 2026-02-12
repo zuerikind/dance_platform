@@ -111,6 +111,7 @@ const DANCE_LOCALES = {
         add_label: "Add",
         plans_label: "Plans",
         limit_classes_label: "Class Limit",
+        limit_classes_placeholder: "Classes (0 = Unlimited)",
         price_mxd_label: "Price MXD",
         transfer_details_label: "Transfer Details",
         bank_name_label: "Nombre del banco",
@@ -386,6 +387,8 @@ const DANCE_LOCALES = {
         add_label: "Añadir",
         plans_label: "Planes",
         limit_classes_label: "Límite de Clases",
+        limit_classes_placeholder: "Clases (0 = Ilimitado)",
+        limit_classes_placeholder: "Clases (0 = Ilimitado)",
         price_mxd_label: "Precio MXD",
         transfer_details_label: "Detalles de Transferencia",
         bank_name_label: "Nombre del banco",
@@ -662,6 +665,8 @@ const DANCE_LOCALES = {
         add_label: "Hinzufügen",
         plans_label: "Pläne",
         limit_classes_label: "Stundenlimit",
+        limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
+        limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
         price_mxd_label: "Preis MXD",
         transfer_details_label: "Überweisungsdaten",
         bank_name_label: "Nombre del banco",
@@ -2116,7 +2121,7 @@ function renderView() {
     } else if (view === 'shop') {
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
-            if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
+            if (name.includes('ilimitad') || name.includes('unlimited') || s.limit_count === 0 || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
             const n = parseInt(s.limit_count, 10);
             if (!isNaN(n)) return n;
             const m = (s.name || '').match(/\d+/);
@@ -2191,7 +2196,13 @@ function renderView() {
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
                     <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">${t.remaining_classes}</div>
                         <div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">
-                            ${state.currentUser.balance === null ? t.unlimited : state.currentUser.balance}
+                            ${(() => {
+                                const packs = state.currentUser.active_packs || [];
+                                const now = new Date();
+                                const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+                                const hasUnlimited = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
+                                return hasUnlimited ? '∞' : (state.currentUser.balance ?? 0);
+                            })()}
                         </div>
                         ${(() => {
                             const packs = state.currentUser.active_packs || [];
@@ -2229,7 +2240,7 @@ function renderView() {
                         '<div style="display: flex; align-items: flex-end; justify-content: space-between;">' +
                         '<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);">' +
                         '<i data-lucide="calendar" size="14" style="opacity: 0.6;"></i><span>' + t.expires_label + ': ' + new Date(p.expires_at).toLocaleDateString() + '</span></div>' +
-                        '<div style="text-align: right;"><div style="font-size: 20px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + p.count + '</div>' +
+                        '<div style="text-align: right;"><div style="font-size: 20px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + (p.count == null || p.count === 'null' ? '∞' : p.count) + '</div>' +
                         '<div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">Clases</div></div></div></div>';
                 };
                 let out = '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">' + (t.active_packs_label || 'Tus Paquetes Activos') + '</div>';
@@ -2511,7 +2522,7 @@ function renderView() {
         const classesList = [...(Array.isArray(state.classes) ? state.classes : [])].sort((a, b) => (a.id || 0) - (b.id || 0));
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
-            if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
+            if (name.includes('ilimitad') || name.includes('unlimited') || s.limit_count === 0 || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
             const n = parseInt(s.limit_count, 10);
             if (!isNaN(n)) return n;
             const m = (s.name || '').match(/\d+/);
@@ -2647,7 +2658,7 @@ function renderView() {
                             </div>
                             <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
-                                <input type="number" value="${s.limit_count || ''}" onchange="updateSub('${s.id}', 'limit_count', this.value)" placeholder="Clases" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="flex: 1; min-width: 56px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
@@ -2965,7 +2976,8 @@ window.checkExpirations = async () => {
         // Handle Multi-Batch Expiration: keep expired packs for display, but balance only counts active
         if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
             const activeOnly = s.active_packs.filter(p => new Date(p.expires_at) > now);
-            const activeBalance = activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
+            const hasUnlimited = activeOnly.some(p => p.count == null || p.count === 'null');
+            const activeBalance = hasUnlimited ? null : activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
             if (s.balance !== activeBalance) {
                 s.balance = activeBalance;
                 changed = true;
@@ -4058,9 +4070,12 @@ window.activatePackage = async (studentId, packageName) => {
     let newBalance;
     const incomingLimit = pkg ? parseInt(pkg.limit_count, 10) : 0;
     const effectiveLimit = isNaN(incomingLimit) ? 0 : incomingLimit;
+    const isUnlimited = pkg && effectiveLimit === 0;
 
-    if (!pkg || effectiveLimit === 0) {
+    if (!pkg) {
         newBalance = student.balance ?? 0;
+    } else if (isUnlimited) {
+        newBalance = null;
     } else if (student.balance === null) {
         newBalance = null;
     } else {
@@ -4074,13 +4089,13 @@ window.activatePackage = async (studentId, packageName) => {
     const newPack = {
         id: "PACK-" + Date.now().toString(36).toUpperCase(),
         name: pkg ? pkg.name : packageName,
-        count: effectiveLimit,
+        count: isUnlimited ? null : effectiveLimit,
         expires_at: expiry.toISOString(),
         created_at: new Date().toISOString()
     };
 
     const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
-    if (pkg && effectiveLimit > 0) activePacks.push(newPack);
+    if (pkg && (effectiveLimit > 0 || isUnlimited)) activePacks.push(newPack);
 
     const updates = {
         package: pkg ? pkg.name : null,
@@ -4517,7 +4532,11 @@ window.removeClass = async (id) => {
 window.updateSub = async (id, field, value) => {
     const sub = state.subscriptions.find(s => s.id === id);
     if (sub) {
-        const val = (field === 'price' ? parseFloat(value) : (['limit_count', 'validity_days'].includes(field) ? parseInt(value) : value));
+        let val;
+        if (field === 'price') val = parseFloat(value);
+        else if (field === 'limit_count') val = value === '' ? 0 : (parseInt(value, 10) || 0);
+        else if (field === 'validity_days') val = parseInt(value, 10) || 30;
+        else val = value;
         if (supabaseClient) {
             const { error: rpcError } = await supabaseClient.rpc('subscription_update_field', { p_id: String(id), p_field: field, p_value: String(val) });
             if (rpcError) {
@@ -4628,7 +4647,13 @@ window.renderAdminStudentCard = (s) => {
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                     <div style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">
-                        ${t('remaining_classes')}: <span style="color: var(--system-blue); font-weight: 700;">${s.balance === null ? '∞' : s.balance}</span>
+                        ${t('remaining_classes')}: <span style="color: var(--system-blue); font-weight: 700;">${(() => {
+                        const packs = s.active_packs || [];
+                        const now = new Date();
+                        const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+                        const hasUnlimited = s.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
+                        return hasUnlimited ? '∞' : (s.balance ?? 0);
+                    })()}</span>
                     </div>
                     ${Array.isArray(s.active_packs) && s.active_packs.length > 0 ? `
                         <div style="font-size: 11px; background: var(--system-gray6); padding: 2px 6px; border-radius: 6px; color: var(--text-secondary); font-weight: 600;">
@@ -4736,7 +4761,7 @@ window.updateStudentPrompt = async (id) => {
                             <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700;">${p.name}</div>
-                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase;">${p.count} Clases • ${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
+                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase;">${(p.count == null || p.count === 'null') ? '∞' : p.count} Clases • ${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
                                 </div>
                                 <button onclick="window.removeStudentPack('${s.id}', '${p.id}')" style="background: transparent; border: none; color: var(--system-red); padding: 8px; cursor: pointer; opacity: 0.5;">
                                     <i data-lucide="minus-circle" size="16"></i>
@@ -4964,8 +4989,13 @@ window.handleScan = async (scannedId) => {
         return;
     }
 
-    const hasValidPass = student.paid && (student.balance === null || student.balance > 0);
-    const hasNoClasses = student.paid && student.balance !== null && student.balance < 1;
+    const packs = student.active_packs || [];
+    const now = new Date();
+    const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+    const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
+    const isUnlimited = student.balance === null || hasUnlimitedPack;
+    const hasValidPass = student.paid && (isUnlimited || (student.balance != null && student.balance > 0));
+    const hasNoClasses = student.paid && !isUnlimited && (student.balance == null || student.balance < 1);
 
     if (hasNoClasses) {
         resultEl.innerHTML = `
@@ -5034,12 +5064,18 @@ window.confirmAttendance = async (studentId, count) => {
     });
     const resultEl = document.getElementById('inline-scan-result');
 
-    if (student.balance !== null && student.balance < count) {
+    const packs = student.active_packs || [];
+    const now = new Date();
+    const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+    const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
+    const isUnlimited = student.balance === null || hasUnlimitedPack;
+
+    if (!isUnlimited && student.balance !== null && student.balance < count) {
         alert(t('not_enough_balance'));
         return;
     }
 
-    if (student.balance !== null) {
+    if (!isUnlimited && student.balance !== null) {
         const schoolId = student.school_id || state.currentSchool?.id;
         let updated = false;
 
@@ -5109,7 +5145,7 @@ window.confirmAttendance = async (studentId, count) => {
         await fetchAllData();
     }
 
-    const newRemaining = student.balance === null ? t('unlimited') : student.balance;
+    const newRemaining = isUnlimited ? t('unlimited') : (student.balance ?? 0);
     resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
