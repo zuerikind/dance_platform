@@ -1694,8 +1694,16 @@ window.handleCompetitionVideoSelect = async (fileInput) => {
     setStatus(window.t('competition_video_uploading') || 'Uploading...');
     const ext = (file.name.match(/\.(mp4|mov|webm)$/i) || ['', 'mp4'])[1] || 'mp4';
     const path = `${schoolId}/${state.competitionId}/${state.currentUser.id}/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabaseClient.storage.from('competition-videos').upload(path, file, { upsert: true });
-    if (error) { setStatus(window.t('competition_error') || 'Upload failed: ' + error.message, true); return; }
+    const { error } = await supabaseClient.storage.from('competition-videos').upload(path, file);
+    if (error) {
+        console.error('Competition video upload error:', error);
+        const msg = (error.message || '').toLowerCase();
+        const hint = (msg.includes('row-level security') || msg.includes('policy') || msg.includes('permission'))
+            ? ' ' + (window.t('competition_video_auth_hint') || '(Ensure you are logged in with your student account.)')
+            : '';
+        setStatus((window.t('competition_error') || 'Upload failed') + ': ' + error.message + hint, true);
+        return;
+    }
     state.studentCompetitionAnswers = state.studentCompetitionAnswers || {};
     state.studentCompetitionAnswers.video = path;
     setStatus('');
@@ -2486,48 +2494,62 @@ function renderView() {
                 <button type="button" class="btn-primary" onclick="window.linkSchoolAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Link account</button>
             </div>
             ` : ''}
-            <div class="ios-header" style="background: transparent;">
-                <div class="ios-large-title">${t.nav_students}</div>
-                <div style="margin-top: -5px; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
-                    <button class="btn-primary" onclick="createNewStudent()" style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px;">
-                        <i data-lucide="plus" size="14"></i> ${t.add_student}
-                    </button>
-                    ${(comps.length > 0 && (state.currentSchool?.jack_and_jill_enabled === true)) ? `<button class="btn-secondary" ${hasActiveEvent ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, \'registrations\')"' : 'disabled'} style="border-radius: 12px; padding: 8px 16px; font-size: 14px; min-height: 36px; height: 36px; ${!hasActiveEvent ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-                        <i data-lucide="trophy" size="14"></i> ${t.jack_and_jill}
-                    </button>` : ''}
-                    ${(currentComp && state.currentSchool?.jack_and_jill_enabled === true) ? `
-                    <div style="display: flex; flex-direction: column; gap: 6px; margin-left: 4px;">
-                        ${comps.length > 1 ? `
-                        <select onchange="state.adminStudentsCompetitionId=this.value; renderView();" style="padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 12px; font-weight: 600; max-width: 240px;">
-                            ${comps.map(c => `<option value="${c.id}" ${c.id === currentComp.id ? 'selected' : ''}>${(c.name || '').replace(/</g, '&lt;').substring(0, 32)}${(c.name || '').length > 32 ? '…' : ''}</option>`).join('')}
-                        </select>
-                        ` : `<span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${t.competition_for_event}: ${(currentComp.name || '').replace(/</g, '&lt;').substring(0, 30)}${(currentComp.name || '').length > 30 ? '…' : ''}</span>`}
-                        <div style="display: flex; align-items: center; gap: 16px; padding: 6px 12px; background: var(--system-gray6); border-radius: 12px;">
-                            <label class="toggle-switch" style="font-size: 12px; font-weight: 600;">
-                                <input type="checkbox" class="toggle-switch-input" ${currentComp.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${currentComp.id}', this.checked)">
-                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                                <span class="toggle-switch-label">${t.competition_activate_event}</span>
-                            </label>
-                            <label class="toggle-switch" style="font-size: 12px; font-weight: 600;">
-                                <input type="checkbox" class="toggle-switch-input" ${currentComp.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${currentComp.id}', this.checked)">
-                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                                <span class="toggle-switch-label">${t.competition_activate_signin}</span>
-                            </label>
+            <div class="ios-header" style="background: transparent;"></div>
+            <div class="students-page">
+                <div class="students-header">
+                    <h1 class="students-title">${t.nav_students}</h1>
+                    <div class="students-actions">
+                        <button type="button" class="students-btn-add" onclick="createNewStudent()">
+                            <i data-lucide="plus" size="18"></i> ${t.add_student}
+                        </button>
+                        ${(comps.length > 0 && (state.currentSchool?.jack_and_jill_enabled === true)) ? `
+                        <div class="students-jackblock">
+                            <div class="students-jackblock-inner">
+                                <div class="students-jack-header">
+                                    <button type="button" class="students-jack-btn" ${hasActiveEvent ? `onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null, 'registrations')"` : 'disabled'}>
+                                        <i data-lucide="trophy" size="18"></i> ${t.jack_and_jill}
+                                    </button>
+                                    ${currentComp ? `<span class="students-jack-for-event">${t.competition_for_event}</span>` : ''}
+                                </div>
+                                ${currentComp ? `
+                                ${comps.length > 1 ? `
+                                <select class="students-jack-select" onchange="state.adminStudentsCompetitionId=this.value; renderView();">
+                                    ${comps.map(c => `<option value="${c.id}" ${c.id === currentComp.id ? 'selected' : ''}>${(c.name || '').replace(/</g, '&lt;').substring(0, 36)}${(c.name || '').length > 36 ? '…' : ''}</option>`).join('')}
+                                </select>
+                                ` : `<span class="students-jack-for-event" style="margin-top: -4px;">${(currentComp.name || '').replace(/</g, '&lt;').substring(0, 40)}${(currentComp.name || '').length > 40 ? '…' : ''}</span>`}
+                                <div class="students-jack-toggles">
+                                    <label class="toggle-switch">
+                                        <span class="toggle-switch-label">${t.competition_activate_event}</span>
+                                        <span style="display: flex;">
+                                            <input type="checkbox" class="toggle-switch-input" ${currentComp.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${currentComp.id}', this.checked)">
+                                            <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                        </span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <span class="toggle-switch-label">${t.competition_activate_signin}</span>
+                                        <span style="display: flex;">
+                                            <input type="checkbox" class="toggle-switch-input" ${currentComp.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${currentComp.id}', this.checked)">
+                                            <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                        </span>
+                                    </label>
+                                </div>
+                                ` : ''}
+                            </div>
                         </div>
+                        ` : ''}
                     </div>
-                    ` : ''}
                 </div>
-            </div>
-            <div style="position: sticky; top: 60px; z-index: 90; background: var(--bg-body); padding-bottom: 5px; opacity: 0.98; backdrop-filter: blur(10px);">
-                <input type="text" class="ios-search-bar" placeholder="${t.search_students}" oninput="filterStudents(this.value)" style="margin-bottom: 1.5rem;">
-            </div>
-            <div class="ios-list" id="admin-student-list" style="margin-top: 0;">
-                ${state.loading && state.students.length === 0 ? `
-                    <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
-                        <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
-                        <p style="font-size: 15px; font-weight: 500;">${t.loading_students_msg}</p>
+                <div class="students-search-wrap">
+                    <input type="text" class="students-search" placeholder="${t.search_students}" oninput="filterStudents(this.value)">
+                </div>
+                <div class="students-list" id="admin-student-list">
+                    ${state.loading && state.students.length === 0 ? `
+                    <div class="students-loading">
+                        <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
+                        <p>${t.loading_students_msg}</p>
                     </div>
-                ` : state.students.map(s => renderAdminStudentCard(s)).join('')}
+                    ` : state.students.map(s => renderAdminStudentCard(s)).join('')}
+                </div>
             </div>
         `;
     } else if (view === 'admin-memberships') {
@@ -2969,26 +2991,29 @@ function renderView() {
                 ${state.competitionTab === 'registrations' && state.competitionId ? (() => {
                     const regs = Array.isArray(state.competitionRegistrations) ? state.competitionRegistrations : [];
                     const cur = state.currentCompetition;
+                    const statusClass = (s) => s === 'APPROVED' ? 'approved' : s === 'DECLINED' ? 'declined' : s === 'SUBMITTED' ? 'pending' : 'draft';
                     return `
-                    <button type="button" onclick="state.competitionTab='edit'; state.competitionId=null; state.currentCompetition=null; state.competitionRegistrations=[]; renderView();" style="margin-bottom: 20px; padding: 10px 0; border: none; background: none; color: var(--system-blue); font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i data-lucide="chevron-left" size="20"></i> Back to events</button>
-                    <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <button type="button" class="comp-reg-back" onclick="state.competitionTab='edit'; state.competitionId=null; state.currentCompetition=null; state.competitionRegistrations=[]; renderView();"><i data-lucide="chevron-left" size="20"></i> Back to events</button>
+                    <div class="comp-reg-card">
                         ${cur && cur.decisions_published_at
-                            ? `<button type="button" onclick="if(confirm(t('competition_confirm_publish'))) republishCompetitionDecisions('${state.competitionId}');" style="width: 100%; padding: 14px 20px; border: none; background: var(--system-gray6); color: var(--text-primary); font-size: 16px; font-weight: 600; cursor: pointer;">${t.competition_republish_decisions}</button>`
-                            : `<button type="button" onclick="if(confirm(t('competition_confirm_publish'))) publishCompetitionDecisions('${state.competitionId}');" style="width: 100%; padding: 14px 20px; border: none; background: var(--system-blue); color: white; font-size: 16px; font-weight: 600; cursor: pointer;">${t.competition_publish_decisions}</button>`
+                            ? `<button type="button" class="comp-reg-header comp-reg-header-secondary" onclick="if(confirm(t('competition_confirm_publish'))) republishCompetitionDecisions('${state.competitionId}');">${t.competition_republish_decisions}</button>`
+                            : `<button type="button" class="comp-reg-header" onclick="if(confirm(t('competition_confirm_publish'))) publishCompetitionDecisions('${state.competitionId}');">${t.competition_publish_decisions}</button>`
                         }
-                        <div style="padding: 8px 0;">
-                            ${regs.length === 0 ? `<div style="padding: 32px 20px; text-align: center; color: var(--text-secondary); font-size: 15px;">No registrations yet.</div>` : regs.map(r => {
+                        <div class="comp-reg-list">
+                            ${regs.length === 0 ? `<div class="comp-reg-empty">No registrations yet.</div>` : regs.map(r => {
                                 const canDecide = ['SUBMITTED', 'APPROVED', 'DECLINED'].includes(r.status || '');
+                                const nameEsc = ((r.student_name || r.student_id || '') + '').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 30);
+                                const statusLabel = r.status === 'APPROVED' ? t.accepted : r.status === 'DECLINED' ? t.declined : r.status === 'SUBMITTED' ? t.pending : 'Draft';
                                 return `
-                                <div style="padding: 16px 20px; border-bottom: 1px solid var(--border);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${canDecide ? '12px' : '0'};">
-                                        <button type="button" data-action="openRegistrationAnswers" data-reg-id="${r.id}" style="background: none; border: none; padding: 0; font-size: 17px; font-weight: 600; color: var(--system-blue); cursor: pointer; text-align: left;">${((r.student_name || r.student_id || '') + '').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 30)}</button>
-                                        <span class="status-badge status-${(r.status || '').toLowerCase()}" style="font-size: 12px; padding: 5px 12px; border-radius: 20px; font-weight: 600;">${r.status === 'APPROVED' ? t.accepted : r.status === 'DECLINED' ? t.declined : r.status === 'SUBMITTED' ? t.pending : 'Draft'}</span>
+                                <div class="comp-reg-item">
+                                    <div class="comp-reg-top">
+                                        <button type="button" class="comp-reg-name" data-action="openRegistrationAnswers" data-reg-id="${r.id}">${nameEsc}</button>
+                                        <span class="comp-reg-status comp-reg-status-${statusClass(r.status)}">${statusLabel}</span>
                                     </div>
                                     ${canDecide ? `
-                                    <div style="display: flex; gap: 10px;">
-                                        <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: ${r.status === 'APPROVED' ? '2px solid var(--system-green)' : 'none'}; background: ${r.status === 'APPROVED' ? 'transparent' : 'var(--system-green)'}; color: ${r.status === 'APPROVED' ? 'var(--system-green)' : 'white'}; font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'APPROVED');">${t.competition_approve}</button>
-                                        <button type="button" style="flex:1; padding: 10px; border-radius: 10px; border: ${r.status === 'DECLINED' ? '2px solid var(--system-red)' : '1px solid var(--border)'}; background: ${r.status === 'DECLINED' ? 'transparent' : 'var(--system-gray6)'}; color: ${r.status === 'DECLINED' ? 'var(--system-red)' : 'var(--text-primary)'}; font-size: 15px; font-weight: 600; cursor: pointer;" onclick="competitionRegistrationDecide('${r.id}', 'DECLINED');">${t.competition_decline}</button>
+                                    <div class="comp-reg-actions">
+                                        <button type="button" class="comp-reg-btn comp-reg-btn-approve ${r.status === 'APPROVED' ? 'selected' : ''}" onclick="competitionRegistrationDecide('${r.id}', 'APPROVED');">${t.competition_approve}</button>
+                                        <button type="button" class="comp-reg-btn comp-reg-btn-decline ${r.status === 'DECLINED' ? 'selected' : ''}" onclick="competitionRegistrationDecide('${r.id}', 'DECLINED');">${t.competition_decline}</button>
                                     </div>
                                     ` : ''}
                                 </div>
@@ -2997,34 +3022,38 @@ function renderView() {
                     </div>
                     `;
                 })() : `
-                <section style="margin-bottom: 28px;">
-                    <h2 style="font-size: 13px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 16px 0;">Events</h2>
+                <section class="jandj-events-section">
+                    <h2 class="jandj-events-title">Events</h2>
                     ${comps.length === 0 ? `
-                    <p style="font-size: 17px; color: var(--text-secondary); padding: 32px 24px; text-align: center; margin: 0; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);">${t.no_existing_events}</p>
+                    <p class="jandj-empty-state">${t.no_existing_events}</p>
                     ` : `
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${comps.map(c => `
-                        <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                            <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div class="jandj-events-list">
+                        ${comps.map(c => {
+                            const nameEsc = (c.name || '').replace(/</g, '&lt;');
+                            const nameTrunc = nameEsc.substring(0, 40) + (nameEsc.length > 40 ? '…' : '');
+                            const dateStr = c.starts_at ? new Date(c.starts_at).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                            return `
+                        <div class="jandj-event-card">
+                            <div class="jandj-event-card-header">
                                 <div>
-                                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">${(c.name || '').replace(/</g, '&lt;').substring(0, 40)}${(c.name || '').length > 40 ? '…' : ''}</div>
-                                    <div style="font-size: 15px; color: var(--text-secondary);">${c.starts_at ? new Date(c.starts_at).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</div>
+                                    <div class="jandj-event-card-title">${nameTrunc}</div>
+                                    <div class="jandj-event-card-date">${dateStr}</div>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <a href="#" data-action="openRegistrations" data-competition-id="${c.id}" style="font-size: 15px; font-weight: 600; color: var(--system-blue);">${t.competition_registrations}</a>
-                                    <button type="button" data-action="copyCompetition" data-competition-id="${c.id}" title="${t.competition_copy || 'Copy'}" style="background: none; border: none; padding: 6px; cursor: pointer; color: var(--system-blue); opacity: 0.85; border-radius: 8px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"><i data-lucide="copy" size="18"></i></button>
-                                    <button type="button" data-action="deleteCompetition" data-competition-id="${c.id}" title="${t.competition_delete_confirm || 'Delete event'}" style="background: none; border: none; padding: 6px; cursor: pointer; color: var(--system-red); opacity: 0.8; border-radius: 8px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'"><i data-lucide="trash-2" size="18"></i></button>
+                                <div class="jandj-event-card-actions">
+                                    <a href="#" class="jandj-event-card-link" data-action="openRegistrations" data-competition-id="${c.id}">${t.competition_registrations}</a>
+                                    <button type="button" class="jandj-event-card-icon-btn" data-action="copyCompetition" data-competition-id="${c.id}" title="${t.competition_copy || 'Copy'}"><i data-lucide="copy" size="18"></i></button>
+                                    <button type="button" class="jandj-event-card-icon-btn jandj-event-card-delete" data-action="deleteCompetition" data-competition-id="${c.id}" title="${t.competition_delete_confirm || 'Delete event'}"><i data-lucide="trash-2" size="18"></i></button>
                                 </div>
                             </div>
-                            <div style="padding: 14px 20px; background: var(--system-gray6); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px;">
-                                <label class="toggle-switch" style="justify-content: space-between; width: 100%; font-size: 15px; font-weight: 500;">
+                            <div class="jandj-event-card-toggles">
+                                <label class="toggle-switch">
                                     <span class="toggle-switch-label">${t.competition_activate_event}</span>
                                     <span style="display: flex;">
                                         <input type="checkbox" class="toggle-switch-input" ${c.is_active ? 'checked' : ''} onchange="toggleCompetitionActiveFromStudents('${c.id}', this.checked)">
                                         <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
                                     </span>
                                 </label>
-                                <label class="toggle-switch" style="justify-content: space-between; width: 100%; font-size: 15px; font-weight: 500;">
+                                <label class="toggle-switch">
                                     <span class="toggle-switch-label">${t.competition_activate_signin}</span>
                                     <span style="display: flex;">
                                         <input type="checkbox" class="toggle-switch-input" ${c.is_sign_in_active ? 'checked' : ''} onchange="toggleCompetitionSignInFromStudents('${c.id}', this.checked)">
@@ -3032,15 +3061,16 @@ function renderView() {
                                     </span>
                                 </label>
                             </div>
-                            <div style="padding: 12px 20px; border-top: 1px solid var(--border);">
-                                <button type="button" onclick="openEditCompetition('${c.id}')" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-size: 15px; font-weight: 600; cursor: pointer;">${t.competition_edit_tab}</button>
+                            <div class="jandj-event-card-edit-wrap">
+                                <button type="button" class="jandj-event-card-edit-btn" onclick="openEditCompetition('${c.id}')">${t.competition_edit_tab}</button>
                             </div>
                         </div>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </div>
                     `}
                 </section>
-                <button type="button" data-action="openCreateNewCompetition" style="width: 100%; padding: 20px 24px; border-radius: 16px; border: 2px dashed var(--border); background: transparent; color: var(--system-blue); font-size: 17px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                <button type="button" class="jandj-add-event-btn" data-action="openCreateNewCompetition">
                     <i data-lucide="plus" size="22"></i> ${t.add_new_event}
                 </button>
                 `}
@@ -3411,7 +3441,14 @@ window.loginStudent = async () => {
                 if (!usernameErr && Array.isArray(usernameRows) && usernameRows.length > 0) {
                     student = usernameRows[0];
                     const usernameEmail = `${String(student.username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
-                    await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput });
+                    let err = (await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput })).error;
+                    if (err) {
+                        await supabaseClient.auth.signUp({ email: usernameEmail, password: passInput });
+                        err = (await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput })).error;
+                    }
+                    if (!err && student.id && student.school_id && student.user_id == null) {
+                        await supabaseClient.rpc('link_student_auth', { p_student_id: student.id, p_school_id: student.school_id });
+                    }
                 }
                 if (!student) {
                     const { data: nameRows, error: nameErr } = await supabaseClient.rpc('get_student_by_credentials', {
@@ -3419,7 +3456,18 @@ window.loginStudent = async () => {
                         p_password: passInput,
                         p_school_id: state.currentSchool.id
                     });
-                    if (!nameErr && Array.isArray(nameRows) && nameRows.length > 0) student = nameRows[0];
+                    if (!nameErr && Array.isArray(nameRows) && nameRows.length > 0) {
+                        student = nameRows[0];
+                        const pseudoEmail = `${String(student.name || userInput).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
+                        let { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: passInput });
+                        if (signInErr) {
+                            await supabaseClient.auth.signUp({ email: pseudoEmail, password: passInput });
+                            signInErr = (await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: passInput })).error;
+                        }
+                        if (!signInErr && student.id && student.school_id && student.user_id == null) {
+                            await supabaseClient.rpc('link_student_auth', { p_student_id: student.id, p_school_id: student.school_id });
+                        }
+                    }
                 }
             }
             if (!student) {
@@ -4804,41 +4852,28 @@ window.toggleSchoolDropdown = () => {
 window.renderAdminStudentCard = (s) => {
     const t = (key) => window.t(key);
     const statusLabel = s.paid ? t('status_active') : t('status_unpaid');
-    const statusColor = s.paid ? 'var(--system-green)' : 'var(--system-red)';
-    const statusBg = s.paid ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 59, 48, 0.1)';
-
+    const statusClass = s.paid ? 'student-card-status-active' : 'student-card-status-unpaid';
+    const packs = s.active_packs || [];
+    const now = new Date();
+    const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+    const hasUnlimited = s.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
+    const balanceStr = hasUnlimited ? '∞' : (s.balance ?? 0);
+    const packsHtml = Array.isArray(s.active_packs) && s.active_packs.length > 0
+        ? `<span class="packs">${s.active_packs.length} ${s.active_packs.length === 1 ? 'Pack' : 'Packs'}</span>`
+        : '';
     return `
-        <div class="ios-list-item" onclick="updateStudentPrompt('${s.id}')" style="cursor: pointer; padding: 12px 16px;">
-            <div style="width: 44px; height: 44px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 14px; font-weight: 700; color: var(--text-secondary); font-size: 16px;">
-                ${s.name.charAt(0).toUpperCase()}
-            </div>
-            <div style="flex: 1;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
-                    <div style="font-weight: 600; font-size: 17px; color: var(--text-primary);">${s.name}</div>
-                    <div style="font-size: 10px; font-weight: 700; color: ${statusColor}; background: ${statusBg}; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.02em;">
-                        ${statusLabel}
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <div style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">
-                        ${t('remaining_classes')}: <span style="color: var(--system-blue); font-weight: 700;">${(() => {
-                        const packs = s.active_packs || [];
-                        const now = new Date();
-                        const activePacks = packs.filter(p => new Date(p.expires_at) > now);
-                        const hasUnlimited = s.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
-                        return hasUnlimited ? '∞' : (s.balance ?? 0);
-                    })()}</span>
-                    </div>
-                    ${Array.isArray(s.active_packs) && s.active_packs.length > 0 ? `
-                        <div style="font-size: 11px; background: var(--system-gray6); padding: 2px 6px; border-radius: 6px; color: var(--text-secondary); font-weight: 600;">
-                            ${s.active_packs.length} ${s.active_packs.length === 1 ? 'Pack' : 'Packs'}
-                        </div>
-                    ` : ''}
+        <div class="student-card" onclick="updateStudentPrompt('${s.id}')">
+            <div class="student-card-avatar">${s.name.charAt(0).toUpperCase()}</div>
+            <div class="student-card-body">
+                <div class="student-card-name">${s.name.replace(/</g, '&lt;')}</div>
+                <div class="student-card-meta">
+                    ${t('remaining_classes')}: <span class="balance">${balanceStr}</span>${packsHtml}
                 </div>
             </div>
-            <i data-lucide="chevron-right" size="18" style="color: var(--system-gray4); margin-left: 8px;"></i>
-        </div >
-        `;
+            <span class="student-card-status ${statusClass}">${statusLabel}</span>
+            <i data-lucide="chevron-right" size="18" class="student-card-chevron"></i>
+        </div>
+    `;
 };
 
 window.filterStudents = (query) => {
