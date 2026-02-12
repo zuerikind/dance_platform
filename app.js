@@ -952,7 +952,7 @@ async function fetchAllData() {
         // Critical: when logged in as student, always use THEIR school so we never show another school's data
         if (state.currentUser && !state.isAdmin && state.currentUser.school_id) {
             if (state.currentSchool.id !== state.currentUser.school_id) {
-                state.currentSchool = state.schools.find(s => s.id === state.currentUser.school_id) || { id: state.currentUser.school_id, name: 'School' };
+                state.currentSchool = state.schools.find(s => s.id === state.currentUser.school_id) || { id: state.currentUser.school_id, name: 'School', currency: 'MXN' };
                 saveState();
             }
         }
@@ -1654,6 +1654,18 @@ window.openRegistrationAnswers = async (regId) => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
+const CURRENCY_LABELS = { MXN: 'Mexican Peso (MXN)', CHF: 'Swiss Franc (CHF)', USD: 'US Dollar (USD)', COP: 'Colombian Peso (COP)' };
+const CURRENCY_SYMBOLS = { MXN: 'MX$', CHF: 'CHF ', USD: 'US$', COP: 'COP ' };
+window.formatPrice = (price, currency) => {
+    const c = (currency || 'MXN').toUpperCase();
+    const sym = CURRENCY_SYMBOLS[c] || 'MX$';
+    const p = parseFloat(price);
+    if (isNaN(p)) return sym + '0';
+    const n = p;
+    const formatted = Number.isInteger(n) ? n.toLocaleString() : parseFloat(n.toFixed(2)).toLocaleString();
+    return sym + formatted;
+};
+
 window.getCompetitionImageUrl = (pathOrUrl) => {
     if (!pathOrUrl) return '';
     if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl;
@@ -2050,7 +2062,7 @@ function _renderViewImpl() {
                         </div>
                         <h1 class="platform-school-title">${(school.name || '').replace(/</g, '&lt;')}</h1>
                         <div style="font-size: 11px; color: var(--text-secondary); font-family: monospace; letter-spacing: 0.05em; opacity: 0.6;">${String(schoolId).slice(0, 8)}…</div>
-                        <button class="btn-primary platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled}}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="margin-top: 1.25rem; padding: 14px 28px; border-radius: 14px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-left: auto; margin-right: auto;">
+                        <button class="btn-primary platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="margin-top: 1.25rem; padding: 14px 28px; border-radius: 14px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-left: auto; margin-right: auto;">
                             <i data-lucide="shield-check" size="20"></i> ${t.dev_enter_as_admin}
                         </button>
                     </div>
@@ -2070,6 +2082,23 @@ function _renderViewImpl() {
                                 <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
                             </label>
                         </div>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(52, 199, 89, 0.12); display: flex; align-items: center; justify-content: center;">
+                                <i data-lucide="banknote" size="22" style="color: var(--system-green);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">Currency</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">Plan prices shown in this currency</div>
+                            </div>
+                        </div>
+                        <select onchange="toggleSchoolCurrency('${school.id}', this.value)" style="padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer;">
+                            <option value="MXN" ${(school.currency || 'MXN') === 'MXN' ? 'selected' : ''}>Mexican Peso (MXN)</option>
+                            <option value="CHF" ${(school.currency || 'MXN') === 'CHF' ? 'selected' : ''}>Swiss Franc (CHF)</option>
+                            <option value="USD" ${(school.currency || 'MXN') === 'USD' ? 'selected' : ''}>US Dollar (USD)</option>
+                            <option value="COP" ${(school.currency || 'MXN') === 'COP' ? 'selected' : ''}>Colombian Peso (COP)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -2143,7 +2172,7 @@ function _renderViewImpl() {
                             <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
                                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                     <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${sb.name}</div>
-                                    <div style="font-weight: 900; font-size: 17px; color: var(--system-green); background: rgba(52, 199, 89, 0.08); padding: 6px 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.1); font-family: 'Outfit';">$${sb.price}</div>
+                                    <div style="font-weight: 900; font-size: 17px; color: var(--system-green); background: rgba(52, 199, 89, 0.08); padding: 6px 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.1); font-family: 'Outfit';">${formatPrice(sb.price, school.currency || 'MXN')}</div>
                                 </div>
                             </div>
                         `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_plans}</div>`}
@@ -2170,7 +2199,7 @@ function _renderViewImpl() {
                     <div class="ios-list" style="margin-bottom: 2.5rem;">
                         ${prs.map(pr => `
                             <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border);">
-                                <div style="font-size: 14px; font-weight: 700;">${pr.sub_name || '—'} • $${pr.price} • ${pr.status || '—'}</div>
+                                <div style="font-size: 14px; font-weight: 700;">${pr.sub_name || '—'} • ${formatPrice(pr.price, school.currency || 'MXN')} • ${pr.status || '—'}</div>
                                 <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${pr.payment_method || '—'} • ${pr.created_at ? new Date(pr.created_at).toLocaleDateString() : '—'}</div>
                             </div>
                         `).join('')}
@@ -2353,7 +2382,7 @@ function _renderViewImpl() {
                         <p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
                             ${t.valid_for_days.replace('{days}', s.validity_days || 30)}
                         </p>
-                        <div style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.04em;">MXD ${s.price}</div>
+                        <div style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.04em;">${formatPrice(s.price, state.currentSchool?.currency || 'MXN')}</div>
                     </div>
                     <button class="btn-primary w-full" onclick="openPaymentModal('${s.id}')" style="padding: 0.75rem; font-size: 0.9rem;">${t.buy}</button>
                 </div>
@@ -2656,7 +2685,7 @@ function _renderViewImpl() {
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 17px;">${studentName}</div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} • $${req.price}</div>
+                                        <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} • ${formatPrice(req.price, state.currentSchool?.currency || 'MXN')}</div>
                                         <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
                                             <i data-lucide="${req.payment_method === 'cash' ? 'banknote' : 'send'}" size="10"></i> ${t[req.payment_method] || req.payment_method}
                                         </div>
@@ -2702,11 +2731,11 @@ function _renderViewImpl() {
                 <div style="background: var(--text-primary); padding: 2rem; border-radius: 24px; color: var(--bg-body); box-shadow: 0 15px 35px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
                     <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
                     <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${t.monthly_total}</div>
-                    <div style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">$${thisMonthEarnings.toLocaleString()}</div>
+                    <div style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(thisMonthEarnings, state.currentSchool?.currency || 'MXN')}</div>
                     
                     <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
                         <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
-                        <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">${t.historical_total_label}: $${totalHistorical.toLocaleString()} </span>
+                        <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">${t.historical_total_label}: ${formatPrice(totalHistorical, state.currentSchool?.currency || 'MXN')} </span>
                     </div>
                 </div>
             </div>
@@ -2734,7 +2763,7 @@ function _renderViewImpl() {
                                 </div>
                             </div>
                             <div style="text-align: right; margin-right: 12px;">
-                                <div style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">$${req.price}</div>
+                                <div style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">${formatPrice(req.price, state.currentSchool?.currency || 'MXN')}</div>
                                 <div style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; letter-spacing: 0.02em;">${statusLabel}</div>
                             </div>
                             <button onclick="window.removePaymentRequest('${req.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6;" title="${t.delete_payment_confirm || 'Delete'}">
@@ -2902,7 +2931,7 @@ function _renderViewImpl() {
                         </div>
                          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                             <div style="flex: 1; min-width: 60px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
-                                <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">$</span>
+                                <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || 'MXN'] || '$').trim()}</span>
                                 <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
@@ -3600,7 +3629,8 @@ window.buySubscription = async (id) => {
         return;
     }
     const sub = state.subscriptions.find(s => s.id === id);
-    if (confirm(`Purchase ${sub.name} for $${sub.price} ? `)) {
+    const cur = state.currentSchool?.currency || 'MXN';
+    if (confirm(`Purchase ${sub.name} for ${formatPrice(sub.price, cur)} ?`)) {
         await window.activatePackage(state.currentUser.id, sub.name);
         alert("Plan activated!");
         state.currentView = 'qr';
@@ -3939,6 +3969,31 @@ window.renameSchool = async (schoolId) => {
     renderView();
 };
 
+window.toggleSchoolCurrency = async (schoolId, currency) => {
+    if (!supabaseClient) { alert("No database connection"); return; }
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (!sessionData?.session?.user) {
+        alert("Your Dev session is missing or expired. Log in again with your Dev credentials.");
+        return;
+    }
+    const { data, error } = await supabaseClient.rpc('school_update_currency_by_platform', { p_school_id: schoolId, p_currency: currency });
+    if (error) {
+        alert("Error: " + (error.message || 'Could not update currency'));
+        return;
+    }
+    const updated = data && (typeof data === 'object' ? data : JSON.parse(data));
+    if (state.platformData?.schools) {
+        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, currency } : s);
+    }
+    if (state.schools) {
+        state.schools = state.schools.map(s => s.id === schoolId ? { ...s, currency } : s);
+    }
+    if (state.currentSchool?.id === schoolId) {
+        state.currentSchool = { ...state.currentSchool, currency };
+    }
+    renderView();
+};
+
 window.toggleSchoolJackAndJill = async (schoolId, enabled) => {
     if (!supabaseClient) { alert("No database connection"); return; }
     const { data: sessionData } = await supabaseClient.auth.getSession();
@@ -4122,9 +4177,13 @@ function clearSchoolData() {
     state.competitionSchoolId = null;
 }
 
-window.logout = () => {
+window.logout = async () => {
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
     state.currentUser = null;
     state.isAdmin = false;
+    state.isPlatformDev = false;
     state.currentView = 'school-selection';
     state.currentSchool = null;
     state.lastActivity = Date.now();
@@ -4431,7 +4490,7 @@ window.openPaymentModal = async (subId) => {
             <h2 class="payment-modal-title">${t('payment_instructions')}</h2>
             <div class="payment-modal-package">
                 <span class="payment-modal-package-name">${sub.name}</span>
-                <span class="payment-modal-package-price">MXD ${sub.price}</span>
+                <span class="payment-modal-package-price">${formatPrice(sub.price, state.currentSchool?.currency || 'MXN')}</span>
             </div>
         </div>
         <div class="payment-modal-bank ios-list">
@@ -5511,7 +5570,7 @@ logoEl.addEventListener('click', () => {
 // --- SEED DATA (Temporary) ---
 
 
-(function init() {
+(async function init() {
     const local = localStorage.getItem('dance_app_state');
     const saved = local ? JSON.parse(local) : {};
     if (local) {
@@ -5529,6 +5588,21 @@ logoEl.addEventListener('click', () => {
             const match = saved.currentSchool && saved.currentSchool.id === saved.currentUser.school_id;
             state.currentSchool = match ? saved.currentSchool : { id: saved.currentUser.school_id, name: saved.currentSchool?.name || 'School' };
         }
+    }
+
+    // Reconcile state with Supabase session: prevent stale localStorage from restoring admin after logout
+    const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
+    const sessRes = supabaseClient ? await supabaseClient.auth.getSession() : { data: { session: null } };
+    const hasSupabaseSession = !!sessRes?.data?.session?.user;
+    if (hasAuthState && !hasSupabaseSession) {
+        state.currentUser = null;
+        state.isAdmin = false;
+        state.isPlatformDev = false;
+        state.currentView = 'school-selection';
+        state.currentSchool = null;
+        if (local) saveState();
+    } else if (!hasAuthState && hasSupabaseSession && supabaseClient) {
+        await supabaseClient.auth.signOut();
     }
 
     // Check if session expired while away
