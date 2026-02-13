@@ -161,6 +161,13 @@ const DANCE_LOCALES = {
         dev_stats_schools: "Schools",
         dev_stats_students: "Total Students",
         dev_stats_plans: "Plans",
+        dev_tab_schools: "Schools",
+        dev_tab_account_audit: "Account Audit",
+        dev_audit_students: "Students",
+        dev_audit_admins: "Admins",
+        dev_audit_linked: "Linked",
+        dev_audit_not_linked: "Not linked",
+        dev_audit_user_id: "user_id",
         dev_stats_classes: "Classes",
         dev_view_details: "View Details",
         dev_enter_as_admin: "Enter as Admin",
@@ -239,6 +246,7 @@ const DANCE_LOCALES = {
         remove_admin_confirm: "Are you sure you want to remove this administrator?",
         admin_removed: "Administrator removed successfully!",
         error_creating_admin: "Error creating administrator:",
+        admin_add_need_linked_session: "To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.",
         error_removing_admin: "Error removing administrator:",
         additional_features: "Additional features",
         create_new_competition: "Create new competition",
@@ -458,6 +466,13 @@ const DANCE_LOCALES = {
         dev_stats_schools: "Escuelas",
         dev_stats_students: "Total Alumnos",
         dev_stats_plans: "Planes",
+        dev_tab_schools: "Escuelas",
+        dev_tab_account_audit: "Auditoría de cuentas",
+        dev_audit_students: "Alumnos",
+        dev_audit_admins: "Administradores",
+        dev_audit_linked: "Vinculado",
+        dev_audit_not_linked: "No vinculado",
+        dev_audit_user_id: "user_id",
         dev_stats_classes: "Clases",
         dev_view_details: "Ver Detalles",
         dev_enter_as_admin: "Entrar como Admin",
@@ -536,6 +551,7 @@ const DANCE_LOCALES = {
         remove_admin_confirm: "¿Estás seguro de que quieres eliminar a dieser Administrador?",
         admin_removed: "Administrador eliminado con éxito.",
         error_creating_admin: "Error al crear administrador:",
+        admin_add_need_linked_session: "Para agregar administradores debes iniciar sesión con tu cuenta vinculada. Cierra sesión e inicia de nuevo con tu usuario y contraseña.",
         error_removing_admin: "Error al eliminar administrador:",
         additional_features: "Funciones adicionales",
         create_new_competition: "Crear nueva competencia",
@@ -756,6 +772,13 @@ const DANCE_LOCALES = {
         dev_stats_schools: "Schulen",
         dev_stats_students: "Gesamt Schüler",
         dev_stats_plans: "Pläne",
+        dev_tab_schools: "Schulen",
+        dev_tab_account_audit: "Konto-Audit",
+        dev_audit_students: "Schüler",
+        dev_audit_admins: "Administratoren",
+        dev_audit_linked: "Verknüpft",
+        dev_audit_not_linked: "Nicht verknüpft",
+        dev_audit_user_id: "user_id",
         dev_stats_classes: "Kurse",
         dev_view_details: "Details anzeigen",
         dev_enter_as_admin: "Als Admin betreten",
@@ -834,6 +857,7 @@ const DANCE_LOCALES = {
         remove_admin_confirm: "Sind Sie sicher, dass Sie diesen Administrator entfernen möchten?",
         admin_removed: "Administrator erfolgreich entfernt!",
         error_creating_admin: "Fehler beim Erstellen des Administrators:",
+        admin_add_need_linked_session: "Um Administratoren hinzuzufügen, müssen Sie mit Ihrem verknüpften Konto angemeldet sein. Bitte melden Sie sich ab und mit Benutzername und Passwort wieder an.",
         error_removing_admin: "Fehler beim Entfernen des Administrators:",
         competition_view_answers: "Antworten anzeigen",
         competition_answers: "Antworten",
@@ -913,7 +937,8 @@ let state = {
     adminStudentsFilterPackage: null,
     adminRevenueDateStart: null,
     adminRevenueDateEnd: null,
-    adminRevenuePackageFilter: null
+    adminRevenuePackageFilter: null,
+    devDashboardTab: 'schools'  // 'schools' | 'audit'
 };
 
 // --- DATA FETCHING ---
@@ -1922,14 +1947,51 @@ function _renderViewImpl() {
         const isDev = view === 'platform-dev-dashboard';
         const title = isDev ? t.dev_dashboard_title : "Platform Super Admin";
         const schools = isDev ? state.platformData.schools : state.schools;
+        const devTab = state.devDashboardTab || 'schools';
+        const getSchoolName = (id) => (state.platformData.schools || []).find(s => s.id === id)?.name || id;
 
         html += `
             <div class="ios-header">
                 <div class="ios-large-title" style="letter-spacing: -1.2px;">${title}</div>
                 ${isDev ? '<div style="font-size: 13px; color: var(--system-blue); font-weight: 700; padding: 0 1.2rem; margin-top: -5px; letter-spacing: 0.1em; text-transform: uppercase;">' + t.admin_label + ' (God Mode)</div>' : ''}
             </div>
-            
+            ${isDev ? `
+            <div style="display: flex; gap: 8px; padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);">
+                <button type="button" onclick="state.devDashboardTab='schools'; renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: ${devTab === 'schools' ? 'var(--system-blue)' : 'var(--system-gray6)'}; color: ${devTab === 'schools' ? 'white' : 'var(--text-secondary)'}; transition: all 0.2s;">${t.dev_tab_schools || 'Schools'}</button>
+                <button type="button" onclick="state.devDashboardTab='audit'; renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: ${devTab === 'audit' ? 'var(--system-blue)' : 'var(--system-gray6)'}; color: ${devTab === 'audit' ? 'white' : 'var(--text-secondary)'}; transition: all 0.2s;">${t.dev_tab_account_audit || 'Account Audit'}</button>
+            </div>
+            ` : ''}
             <div style="padding: 1.2rem;">
+                ${devTab === 'audit' && isDev ? `
+                <div style="margin-bottom: 2rem;">
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.8;">${t.dev_audit_students || 'Students'} (${(state.platformData.students || []).length})</div>
+                    <div class="ios-list" style="overflow-x: auto; margin-bottom: 2rem;">
+                        ${((state.platformData.students || []).length === 0 ? '<div style="padding: 2rem; color: var(--text-secondary); text-align: center;">' + (t.no_data_msg || 'No data') + '</div>' : (state.platformData.students || []).map(st => {
+                            const linked = !!(st.user_id);
+                            const schoolName = getSchoolName(st.school_id);
+                            return `<div class="ios-list-item" style="padding: 12px 16px; display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <div><span style="font-weight: 700;">${(st.name || st.id || '').replace(/</g, '&lt;')}</span><span style="font-size: 11px; color: var(--text-secondary); margin-left: 8px;">${schoolName}</span></div>
+                                <div style="font-size: 10px; font-family: monospace; color: var(--text-secondary); max-width: 180px; overflow: hidden; text-overflow: ellipsis;">${linked ? (st.user_id || '').substring(0, 8) + '…' : '—'}</div>
+                                <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; ${linked ? 'background: rgba(52, 199, 89, 0.15); color: var(--system-green);' : 'background: rgba(255, 59, 48, 0.15); color: var(--system-red);'}">${linked ? (t.dev_audit_linked || 'Linked') : (t.dev_audit_not_linked || 'Not linked')}</span>
+                            </div>`;
+                        }).join(''))}
+                    </div>
+                </div>
+                <div>
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.8;">${t.dev_audit_admins || 'Admins'} (${(state.platformData.admins || []).length})</div>
+                    <div class="ios-list" style="overflow-x: auto;">
+                        ${((state.platformData.admins || []).length === 0 ? '<div style="padding: 2rem; color: var(--text-secondary); text-align: center;">' + (t.no_data_msg || 'No data') + '</div>' : (state.platformData.admins || []).map(ad => {
+                            const linked = !!(ad.user_id);
+                            const schoolName = getSchoolName(ad.school_id);
+                            return `<div class="ios-list-item" style="padding: 12px 16px; display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;">
+                                <div><span style="font-weight: 700;">${(ad.username || ad.id || '').replace(/</g, '&lt;')}</span><span style="font-size: 11px; color: var(--text-secondary); margin-left: 8px;">${schoolName}</span></div>
+                                <div style="font-size: 10px; font-family: monospace; color: var(--text-secondary); max-width: 180px; overflow: hidden; text-overflow: ellipsis;">${linked ? (ad.user_id || '').substring(0, 8) + '…' : '—'}</div>
+                                <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; ${linked ? 'background: rgba(52, 199, 89, 0.15); color: var(--system-green);' : 'background: rgba(255, 59, 48, 0.15); color: var(--system-red);'}">${linked ? (t.dev_audit_linked || 'Linked') : (t.dev_audit_not_linked || 'Not linked')}</span>
+                            </div>`;
+                        }).join(''))}
+                    </div>
+                </div>
+                ` : (devTab === 'schools' || !isDev) ? `
                 ${isDev ? `
                     ${!state.platformAdminLinked ? `
                     <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, transparent 100%);">
@@ -2011,6 +2073,7 @@ function _renderViewImpl() {
                         </div>
                     `).join('')}
                 </div>
+                ` : ''}
                 ` : ''}
             </div>
         `;
@@ -2625,19 +2688,7 @@ function _renderViewImpl() {
         const pickedId = state.adminStudentsCompetitionId && comps.some(c => c.id === state.adminStudentsCompetitionId) ? state.adminStudentsCompetitionId : null;
         const currentComp = pickedId ? comps.find(c => c.id === pickedId) : defaultComp;
         const hasActiveEvent = comps.some(c => c.is_active);
-        const adminUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Admin\)\s*$/i, '').trim() : '';
         html += `
-            ${!state.schoolAdminLinked ? `
-            <div class="card" style="margin: 1.2rem 1.2rem 1rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, transparent 100%);">
-                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;"><i data-lucide="link" size="14" style="vertical-align: middle; margin-right: 6px;"></i> Link admin account (one-time)</div>
-                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">We will link &quot;${adminUsername || 'you'}&quot; to a new login so you can create events and use all features. Use the <strong>exact same password</strong> you used to log in here.</p>
-                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Email (for your new login)</label>
-                <input type="email" id="school-admin-link-email" placeholder="e.g. admin@myschool.com" autocomplete="off" value="" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
-                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Current admin password (same as login)</label>
-                <input type="password" id="school-admin-link-password" placeholder="Same password you used to open this dashboard" autocomplete="off" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
-                <button type="button" class="btn-primary" onclick="window.linkSchoolAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Link account</button>
-            </div>
-            ` : ''}
             <div class="ios-header" style="background: transparent;"></div>
             <div class="students-page">
                 <div class="students-header">
@@ -4790,9 +4841,23 @@ window.createNewAdmin = async () => {
         if (userId) payload.p_user_id = userId;
         const { data: row, error: rpcError } = await supabaseClient.rpc('admin_insert_for_school', payload);
         if (rpcError) {
+            const msg = (rpcError.message || '').toLowerCase();
+            const isPermissionDenied = msg.includes('permission denied') || msg.includes('row-level security') || msg.includes('violates row-level security');
+            if (isPermissionDenied) {
+                alert(t('error_creating_admin') + '\n\n' + (t('admin_add_need_linked_session') || 'To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.'));
+                return;
+            }
             const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
             const { error } = await supabaseClient.from('admins').insert([{ id: newId, username, password, school_id: state.currentSchool.id }]);
-            if (error) { alert(t('error_creating_admin') + " " + (error.message || rpcError.message)); return; }
+            if (error) {
+                const errMsg = (error.message || '').toLowerCase();
+                if (errMsg.includes('row-level security') || errMsg.includes('violates row-level security')) {
+                    alert(t('error_creating_admin') + '\n\n' + (t('admin_add_need_linked_session') || 'To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.'));
+                } else {
+                    alert(t('error_creating_admin') + ' ' + (error.message || rpcError.message));
+                }
+                return;
+            }
         }
         alert(t('admin_created'));
         await fetchAllData();
