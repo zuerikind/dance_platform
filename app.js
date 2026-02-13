@@ -199,6 +199,15 @@ const DANCE_LOCALES = {
         days_left: "days left",
         expires_label: "Expires",
         search_students: "Search members...",
+        filter_all: "All",
+        filter_with_pack: "With active pack",
+        filter_no_pack: "No active pack",
+        filter_package_type: "Packages",
+        filter_date_start: "Start date",
+        filter_date_end: "End date",
+        filter_period: "Period",
+        filter_this_month: "This Month",
+        period_total: "Total for period",
         loading_students_msg: "Loading members...",
         no_pending_msg: "No pending payments",
         refresh_btn: "Refresh",
@@ -487,6 +496,15 @@ const DANCE_LOCALES = {
         days_left: "días restantes",
         expires_label: "Vence",
         search_students: "Buscar alumnos...",
+        filter_all: "Todos",
+        filter_with_pack: "Con paquete activo",
+        filter_no_pack: "Sin paquete activo",
+        filter_package_type: "Paquetes",
+        filter_date_start: "Fecha inicio",
+        filter_date_end: "Fecha fin",
+        filter_period: "Período",
+        filter_this_month: "Este mes",
+        period_total: "Total del período",
         loading_students_msg: "Cargando alumnos...",
         no_pending_msg: "Sin pagos pendientes",
         refresh_btn: "Actualizar",
@@ -776,6 +794,15 @@ const DANCE_LOCALES = {
         days_left: "Tage übrig",
         expires_label: "Gültig bis",
         search_students: "Schüler suchen...",
+        filter_all: "Alle",
+        filter_with_pack: "Mit aktivem Paket",
+        filter_no_pack: "Ohne aktives Paket",
+        filter_package_type: "Pakete",
+        filter_date_start: "Startdatum",
+        filter_date_end: "Enddatum",
+        filter_period: "Zeitraum",
+        filter_this_month: "Dieser Monat",
+        period_total: "Gesamt für Zeitraum",
         loading_students_msg: "Schüler werden geladen...",
         no_pending_msg: "Keine ausstehenden Zahlungen",
         refresh_btn: "Aktualisieren",
@@ -881,7 +908,12 @@ let state = {
     studentCompetitionRegDetail: null,
     studentCompetitionAnswers: {},
     jackAndJillFormOpen: false,
-    adminStudentsCompetitionId: null  // which event's toggles to show on Students page when multiple exist
+    adminStudentsCompetitionId: null,  // which event's toggles to show on Students page when multiple exist
+    adminStudentsFilterHasPack: 'all',
+    adminStudentsFilterPackage: null,
+    adminRevenueDateStart: null,
+    adminRevenueDateEnd: null,
+    adminRevenuePackageFilter: null
 };
 
 // --- DATA FETCHING ---
@@ -2658,6 +2690,17 @@ function _renderViewImpl() {
                         ` : ''}
                     </div>
                 </div>
+                <div class="students-filters-wrap" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 0 1.2rem 10px; align-items: center;">
+                    <select class="students-filter-select" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
+                        <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                        <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With active pack'}</option>
+                        <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No active pack'}</option>
+                    </select>
+                    <select class="students-filter-select" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
+                        <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
+                        ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                    </select>
+                </div>
                 <div class="students-search-wrap">
                     <input type="text" class="students-search" placeholder="${t.search_students}" oninput="filterStudents(this.value)">
                 </div>
@@ -2667,7 +2710,7 @@ function _renderViewImpl() {
                         <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
                         <p>${t.loading_students_msg}</p>
                     </div>
-                    ` : state.students.map(s => renderAdminStudentCard(s)).join('')}
+                    ` : getFilteredStudents('').map(s => renderAdminStudentCard(s)).join('')}
                 </div>
             </div>
         `;
@@ -2722,27 +2765,48 @@ function _renderViewImpl() {
 
 
     } else if (view === 'admin-revenue') {
-        const approvedPayments = state.paymentRequests.filter(r => r.status === 'approved');
-        const thisMonth = new Date().getMonth();
-        const thisMonthEarnings = approvedPayments
-            .filter(r => {
-                const d = new Date(r.created_at);
-                return d.getMonth() === thisMonth && d.getFullYear() === new Date().getFullYear();
-            })
-            .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+        const now = new Date();
+        const defaultStart = state.adminRevenueDateStart || (new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
+        const defaultEnd = state.adminRevenueDateEnd || (new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]);
+        const dateStart = state.adminRevenueDateStart ? new Date(state.adminRevenueDateStart) : new Date(now.getFullYear(), now.getMonth(), 1);
+        const dateEnd = state.adminRevenueDateEnd ? new Date(state.adminRevenueDateEnd) : new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const pkgFilter = state.adminRevenuePackageFilter;
 
-        const totalHistorical = approvedPayments.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+        let filteredPayments = [...(state.paymentRequests || [])];
+        filteredPayments = filteredPayments.filter(r => {
+            const d = new Date(r.created_at);
+            if (d < dateStart || d > dateEnd) return false;
+            if (pkgFilter && (r.sub_name || '').toLowerCase().trim() !== String(pkgFilter).toLowerCase().trim()) return false;
+            return true;
+        });
+        filteredPayments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        const periodTotal = filteredPayments.filter(r => r.status === 'approved').reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+        const totalHistorical = (state.paymentRequests || []).filter(r => r.status === 'approved').reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+        const isCurrentMonth = !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
 
         html += `
             <div class="ios-header" style="background: transparent;">
                 <div class="ios-large-title">${t.nav_revenue}</div>
             </div>
+
+            <div class="revenue-filters-wrap" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 0 1.2rem 1rem; align-items: center;">
+                <input type="date" id="revenue-date-start" value="${defaultStart}" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminRevenueDateStart=this.value||null; renderView();">
+                <input type="date" id="revenue-date-end" value="${defaultEnd}" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminRevenueDateEnd=this.value||null; renderView();">
+                <button type="button" style="font-size: 12px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-weight: 600; cursor: pointer;" onclick="const n=new Date(); state.adminRevenueDateStart=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0]; state.adminRevenueDateEnd=new Date(n.getFullYear(),n.getMonth()+1,0).toISOString().split('T')[0]; renderView();">
+                    ${t.filter_this_month || 'This Month'}
+                </button>
+                <select style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
+                    <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
+                    ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminRevenuePackageFilter === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                </select>
+            </div>
             
             <div style="padding: 0 1.2rem; margin-bottom: 2rem;">
                 <div style="background: var(--text-primary); padding: 2rem; border-radius: 24px; color: var(--bg-body); box-shadow: 0 15px 35px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
                     <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
-                    <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${t.monthly_total}</div>
-                    <div style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(thisMonthEarnings, state.currentSchool?.currency || 'MXN')}</div>
+                    <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${isCurrentMonth && !pkgFilter ? (t.monthly_total || 'This Month Total') : (t.period_total || 'Total for period')}</div>
+                    <div style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(periodTotal, state.currentSchool?.currency || 'MXN')}</div>
                     
                     <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
                         <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
@@ -2760,7 +2824,7 @@ function _renderViewImpl() {
                         <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
                         <p style="font-size: 15px; font-weight: 500;">${t.loading || 'Loading...'}</p>
                     </div>
-                ` : (state.paymentRequests.length > 0 ? state.paymentRequests.map(req => {
+                ` : (filteredPayments.length > 0 ? filteredPayments.map(req => {
             const studentName = (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
             const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
             const statusLabel = t[req.status] || req.status;
@@ -4985,13 +5049,38 @@ window.renderAdminStudentCard = (s) => {
     `;
 };
 
+function getFilteredStudents(query) {
+    const q = (query || '').toLowerCase().trim();
+    const hasPackFilter = state.adminStudentsFilterHasPack || 'all';
+    const pkgFilter = state.adminStudentsFilterPackage;
+
+    return state.students.filter(s => {
+        if (q && !(s.name || '').toLowerCase().includes(q)) return false;
+
+        const packs = s.active_packs || [];
+        const now = new Date();
+        const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+        const hasActivePack = activePacks.length > 0;
+
+        if (hasPackFilter === 'yes' && !hasActivePack) return false;
+        if (hasPackFilter === 'no' && hasActivePack) return false;
+
+        if (pkgFilter) {
+            const sub = state.subscriptions.find(x => x.id === pkgFilter || (x.name || '').toLowerCase() === String(pkgFilter).toLowerCase());
+            const pkgName = sub ? sub.name : (typeof pkgFilter === 'string' ? pkgFilter : null);
+            if (!pkgName) return false;
+            const match = activePacks.some(p => (p.name || '').toLowerCase().trim() === pkgName.toLowerCase().trim());
+            if (!match) return false;
+        }
+        return true;
+    });
+}
+
 window.filterStudents = (query) => {
-    const q = query.toLowerCase();
     const list = document.getElementById('admin-student-list');
     if (!list) return;
-
-    const filtered = state.students.filter(s => s.name.toLowerCase().includes(q));
-    // Wrap in ios-list container if not present, but here we just render items
+    const q = query !== undefined ? query : (document.querySelector('.students-search')?.value || '');
+    const filtered = getFilteredStudents(q);
     list.innerHTML = filtered.map(s => renderAdminStudentCard(s)).join('');
     if (window.lucide) lucide.createIcons();
 };
