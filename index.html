@@ -160,6 +160,47 @@
         </div>
     </div>
 
+    <div id="add-admin-modal" class="modal hidden">
+        <div class="modal-content add-admin-modal-content" style="max-width: 380px; width: calc(100vw - 2rem); padding: 0; overflow: hidden; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+            <div id="add-admin-form-view" style="padding: 2rem 1.5rem;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, rgba(52, 199, 89, 0.2) 0%, rgba(52, 199, 89, 0.05) 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; color: var(--system-green);">
+                    <i data-lucide="user-plus" size="28"></i>
+                </div>
+                <h2 id="add-admin-modal-title" style="margin: 0 0 0.5rem; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); text-align: center;">Add administrator</h2>
+                <p style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; line-height: 1.4;">Create a new admin for your school</p>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Username</label>
+                        <input type="text" id="add-admin-username" placeholder="Admin username" autocomplete="off" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Password</label>
+                        <input type="password" id="add-admin-password" placeholder="Password" autocomplete="new-password" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Repeat password</label>
+                        <input type="password" id="add-admin-password-confirm" placeholder="Repeat password" autocomplete="new-password" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                    </div>
+                </div>
+                <p id="add-admin-error" style="display: none; font-size: 13px; color: var(--system-red); margin-bottom: 12px; text-align: center;"></p>
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" id="add-admin-cancel-btn" class="btn-secondary" onclick="window.closeAddAdminModal()" style="flex: 1; border-radius: 14px; height: 50px; font-weight: 600;">Cancel</button>
+                    <button type="button" id="add-admin-submit-btn" class="btn-primary" style="flex: 1; border-radius: 14px; height: 50px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="window.submitAddAdminModal()">
+                        <i data-lucide="user-plus" size="18"></i> <span id="add-admin-submit-label">Add</span>
+                    </button>
+                </div>
+            </div>
+            <div id="add-admin-success-view" class="hidden" style="padding: 2.5rem 1.5rem; text-align: center;">
+                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, rgba(52, 199, 89, 0.25) 0%, rgba(52, 199, 89, 0.08) 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--system-green);">
+                    <i data-lucide="check" size="36"></i>
+                </div>
+                <h3 id="add-admin-success-title" style="margin: 0 0 0.5rem; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary);">Administrator added</h3>
+                <p id="add-admin-success-text" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.5rem;">The new administrator can now sign in with the username and password you set.</p>
+                <button type="button" id="add-admin-done-btn" class="btn-primary" style="width: 100%; border-radius: 14px; height: 50px; font-weight: 600;" onclick="window.closeAddAdminModal(); if(window.fetchAllData) fetchAllData(); if(window.renderView) renderView();">Done</button>
+            </div>
+        </div>
+    </div>
+
     <div id="location-modal" class="modal hidden">
         <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2.5rem 1.5rem;">
             <div

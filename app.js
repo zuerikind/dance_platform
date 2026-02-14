@@ -129,6 +129,11 @@ const DANCE_LOCALES = {
         enter_admin_user: "Enter new admin username:",
         enter_admin_pass: "Enter new admin password:",
         admin_created: "Admin created!",
+        add_admin_modal_title: "Add administrator",
+        add_admin_modal_subtitle: "Create a new admin for your school",
+        add_admin_success_title: "Administrator added",
+        add_admin_success_text: "The new administrator can now sign in with the username and password you set.",
+        add_admin_btn: "Add",
         enter_student_name: "Enter student name:",
         enter_student_phone: "Enter student phone:",
         enter_student_email: "Enter student email (optional):",
@@ -243,7 +248,12 @@ const DANCE_LOCALES = {
         enter_admin_user: "Enter Admin Username:",
         enter_admin_pass: "Enter Admin Password:",
         admin_created: "Administrator created successfully!",
-        remove_admin_confirm: "Are you sure you want to remove this administrator?",
+        add_admin_modal_title: "Agregar administrador",
+        add_admin_modal_subtitle: "Crea un nuevo administrador para tu escuela",
+        add_admin_success_title: "Administrador agregado",
+        add_admin_success_text: "El nuevo administrador ya puede iniciar sesión con el usuario y la contraseña que configuraste.",
+        add_admin_btn: "Agregar",
+        remove_admin_confirm: "¿Estás seguro de que quieres eliminar a este administrador?",
         admin_removed: "Administrator removed successfully!",
         error_creating_admin: "Error creating administrator:",
         admin_add_need_linked_session: "To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.",
@@ -740,6 +750,11 @@ const DANCE_LOCALES = {
         enter_admin_user: "Neuen Admin-Benutzernamen eingeben:",
         enter_admin_pass: "Neues Admin-Passwort eingeben:",
         admin_created: "Admin erstellt!",
+        add_admin_modal_title: "Administrator hinzufügen",
+        add_admin_modal_subtitle: "Einen neuen Administrator für deine Schule anlegen",
+        add_admin_success_title: "Administrator hinzugefügt",
+        add_admin_success_text: "Der neue Administrator kann sich jetzt mit dem von dir festgelegten Benutzernamen und Passwort anmelden.",
+        add_admin_btn: "Hinzufügen",
         enter_student_name: "Name des Schülers eingeben:",
         enter_student_phone: "Telefonnummer eingeben:",
         enter_student_email: "E-Mail des Schülers (optional):",
@@ -3113,7 +3128,7 @@ function _renderViewImpl() {
                         </button>
                     </div>
                 `).join('')}
-                <div class="ios-list-item" onclick="createNewAdmin()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                <div class="ios-list-item" onclick="window.openAddAdminModal()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="user-plus" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_admin || 'Agregar Admin'}
                 </div>
             </div>
@@ -4820,48 +4835,118 @@ window.updateAdminSetting = async (key, value) => {
     saveState();
 };
 
-window.createNewAdmin = async () => {
+window.openAddAdminModal = () => {
+    const modal = document.getElementById('add-admin-modal');
+    const formView = document.getElementById('add-admin-form-view');
+    const successView = document.getElementById('add-admin-success-view');
+    const errEl = document.getElementById('add-admin-error');
     const t = window.t;
-    const username = prompt(t('enter_admin_user'));
-    if (!username) return;
-    const password = prompt(t('enter_admin_pass'));
-    if (!password) return;
+    if (!modal || !formView || !successView) return;
+    formView.classList.remove('hidden');
+    formView.style.display = '';
+    successView.classList.add('hidden');
+    successView.style.display = 'none';
+    document.getElementById('add-admin-modal-title').textContent = t('add_admin_modal_title') || 'Add administrator';
+    const sub = document.querySelector('#add-admin-form-view p');
+    if (sub) sub.textContent = t('add_admin_modal_subtitle') || 'Create a new admin for your school';
+    document.getElementById('add-admin-username').value = '';
+    document.getElementById('add-admin-password').value = '';
+    document.getElementById('add-admin-password-confirm').value = '';
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    const submitLabel = document.getElementById('add-admin-submit-label');
+    if (submitLabel) submitLabel.textContent = t('add_admin_btn') || 'Add';
+    document.getElementById('add-admin-success-title').textContent = t('add_admin_success_title') || 'Administrator added';
+    document.getElementById('add-admin-success-text').textContent = t('add_admin_success_text') || 'The new administrator can now sign in with the username and password you set.';
+    document.getElementById('add-admin-done-btn').textContent = t('close') || 'Done';
+    modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
 
-    if (supabaseClient && state.currentSchool?.id) {
-        let userId = null;
-        const pseudoEmail = `${String(username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
-        try {
-            const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
-            if (tempClient) {
-                const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password });
-                if (!signUpErr && signUpData?.user) userId = signUpData.user.id;
-            }
-        } catch (e) { console.warn('Admin Auth signUp:', e); }
-        const payload = { p_school_id: state.currentSchool.id, p_username: username, p_password: password };
-        if (userId) payload.p_user_id = userId;
-        const { data: row, error: rpcError } = await supabaseClient.rpc('admin_insert_for_school', payload);
-        if (rpcError) {
-            const msg = (rpcError.message || '').toLowerCase();
-            const isPermissionDenied = msg.includes('permission denied') || msg.includes('row-level security') || msg.includes('violates row-level security');
-            if (isPermissionDenied) {
-                alert(t('error_creating_admin') + '\n\n' + (t('admin_add_need_linked_session') || 'To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.'));
-                return;
-            }
-            const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
-            const { error } = await supabaseClient.from('admins').insert([{ id: newId, username, password, school_id: state.currentSchool.id }]);
-            if (error) {
-                const errMsg = (error.message || '').toLowerCase();
-                if (errMsg.includes('row-level security') || errMsg.includes('violates row-level security')) {
-                    alert(t('error_creating_admin') + '\n\n' + (t('admin_add_need_linked_session') || 'To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.'));
-                } else {
-                    alert(t('error_creating_admin') + ' ' + (error.message || rpcError.message));
-                }
-                return;
-            }
-        }
-        alert(t('admin_created'));
-        await fetchAllData();
+window.closeAddAdminModal = () => {
+    const modal = document.getElementById('add-admin-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.submitAddAdminModal = async () => {
+    const t = window.t;
+    const usernameEl = document.getElementById('add-admin-username');
+    const passwordEl = document.getElementById('add-admin-password');
+    const confirmEl = document.getElementById('add-admin-password-confirm');
+    const errEl = document.getElementById('add-admin-error');
+    const submitBtn = document.getElementById('add-admin-submit-btn');
+    const username = (usernameEl && usernameEl.value || '').trim();
+    const password = passwordEl ? passwordEl.value : '';
+    const confirmPassword = confirmEl ? confirmEl.value : '';
+    if (!errEl) return;
+    errEl.style.display = 'none';
+    errEl.textContent = '';
+    if (!username) {
+        errEl.textContent = t('enter_admin_user') || 'Please enter a username.';
+        errEl.style.display = 'block';
+        return;
     }
+    if (!password) {
+        errEl.textContent = t('enter_admin_pass') || 'Please enter a password.';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (password !== confirmPassword) {
+        errEl.textContent = t('signup_passwords_dont_match') || 'Passwords do not match.';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (!supabaseClient || !state.currentSchool?.id) {
+        errEl.textContent = t('error_creating_admin') || 'Error creating administrator.';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.7'; }
+    let userId = null;
+    const pseudoEmail = `${String(username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
+    try {
+        const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+        if (tempClient) {
+            const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password });
+            if (!signUpErr && signUpData?.user) userId = signUpData.user.id;
+        }
+    } catch (e) { console.warn('Admin Auth signUp:', e); }
+    const payload = { p_school_id: state.currentSchool.id, p_username: username, p_password: password };
+    if (userId) payload.p_user_id = userId;
+    const { error: rpcError } = await supabaseClient.rpc('admin_insert_for_school', payload);
+    if (rpcError) {
+        const msg = (rpcError.message || '').toLowerCase();
+        const isPermissionDenied = msg.includes('permission denied') || msg.includes('row-level security') || msg.includes('violates row-level security');
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = ''; }
+        if (isPermissionDenied) {
+            errEl.textContent = (t('admin_add_need_linked_session') || 'To add administrators you must be signed in with your linked account. Please log out and sign in again.');
+            errEl.style.display = 'block';
+            return;
+        }
+        const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
+        const { error } = await supabaseClient.from('admins').insert([{ id: newId, username, password, school_id: state.currentSchool.id }]);
+        if (error) {
+            const errMsg = (error.message || '').toLowerCase();
+            if (errMsg.includes('row-level security') || errMsg.includes('violates row-level security')) {
+                errEl.textContent = (t('admin_add_need_linked_session') || 'To add administrators you must be signed in with your linked account.');
+            } else {
+                errEl.textContent = (t('error_creating_admin') || 'Error') + ' ' + (error.message || rpcError.message);
+            }
+            errEl.style.display = 'block';
+            return;
+        }
+    }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = ''; }
+    document.getElementById('add-admin-form-view').classList.add('hidden');
+    document.getElementById('add-admin-form-view').style.display = 'none';
+    const successView = document.getElementById('add-admin-success-view');
+    successView.classList.remove('hidden');
+    successView.style.display = 'block';
+    if (window.lucide) window.lucide.createIcons();
+    await fetchAllData();
+};
+
+window.createNewAdmin = () => {
+    window.openAddAdminModal();
 };
 
 window.removeAdmin = async (id) => {
