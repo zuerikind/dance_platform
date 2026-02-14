@@ -2611,6 +2611,103 @@ select option {
   margin-top: 0.5rem;
 }
 
+/* Expandable student filters: header row (collapsed by default) */
+.students-filter-expandable {
+  user-select: none;
+}
+.students-filter-header:hover {
+  opacity: 0.85;
+}
+.students-filter-expandable .students-filter-bar {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Student filters: vertical on phone (no squeeze/cut-off), horizontal on larger screens */
+.students-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0;
+  padding: 0.75rem 1rem;
+  margin: 0 1.2rem 12px;
+  align-items: stretch;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-sizing: border-box;
+}
+.students-filter-bar .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+.students-filter-bar .filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+.students-filter-bar .filter-select-wrap {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+.students-filter-bar .filter-control {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 32px 8px 10px;
+  font-size: 14px;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+.students-filter-bar .filter-select-chevron {
+  right: 10px;
+  width: 14px;
+  height: 14px;
+}
+.students-filter-bar .filter-select-wrap .filter-control {
+  padding-right: 32px;
+}
+.students-filter-bar .filter-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  margin-left: 0;
+  width: 100%;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 10px;
+}
+@media (min-width: 600px) {
+  .students-filter-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    padding: 0.6rem 1rem;
+  }
+  .students-filter-bar .filter-group {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    max-width: 160px;
+  }
+  .students-filter-bar .filter-count {
+    width: auto;
+    flex: 0 0 auto;
+    margin-left: auto;
+    margin-top: 0;
+    padding: 6px 12px;
+    border-top: none;
+    border-radius: 10px;
+    background: var(--system-gray6);
+  }
+}
+
 .filter-control {
   appearance: none;
   -webkit-appearance: none;
@@ -2895,8 +2992,21 @@ select.filter-control {
   text-align: center;
   color: var(--text-secondary);
 }
-.students-loading .spin { margin-bottom: 16px; }
+.students-loading .spin {
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: spinRotate 0.9s linear infinite;
+}
+.students-loading .spin svg {
+  display: block;
+}
 .students-loading p { font-size: 15px; font-weight: 500; }
+@keyframes spinRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 /* ============================================================================
    CLASS REGISTRATION STYLES

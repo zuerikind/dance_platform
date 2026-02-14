@@ -216,6 +216,10 @@ const DANCE_LOCALES = {
         filter_unpaid: "Unpaid",
         filter_result_students: "{count} students",
         filter_result_payments: "{count} payments",
+        filter_label_pack: "Pack",
+        filter_label_package: "Package",
+        filter_label_payment: "Payment",
+        filters_label: "Filters",
         period_total: "Total for period",
         loading_students_msg: "Loading members...",
         no_pending_msg: "No pending payments",
@@ -559,6 +563,10 @@ const DANCE_LOCALES = {
         filter_unpaid: "Sin pagar",
         filter_result_students: "{count} alumnos",
         filter_result_payments: "{count} pagos",
+        filter_label_pack: "Paquete",
+        filter_label_package: "Plan",
+        filter_label_payment: "Pago",
+        filters_label: "Filtros",
         period_total: "Total del período",
         loading_students_msg: "Cargando alumnos...",
         no_pending_msg: "Sin pagos pendientes",
@@ -903,6 +911,10 @@ const DANCE_LOCALES = {
         filter_unpaid: "Unbezahlt",
         filter_result_students: "{count} Schüler",
         filter_result_payments: "{count} Zahlungen",
+        filter_label_pack: "Paket",
+        filter_label_package: "Plan",
+        filter_label_payment: "Zahlung",
+        filters_label: "Filter",
         period_total: "Gesamt für Zeitraum",
         loading_students_msg: "Schüler werden geladen...",
         no_pending_msg: "Keine ausstehenden Zahlungen",
@@ -1072,7 +1084,8 @@ let state = {
     todayRegistrations: [],      // today's registrations (used by scanner)
     classRegLoaded: false,       // whether availability data has been loaded
     adminWeekRegistrations: [],  // all registrations for the current week (admin view)
-    adminRegExpanded: false      // whether admin registrations section is expanded (collapsed by default)
+    adminRegExpanded: false,     // whether admin registrations section is expanded (collapsed by default)
+    studentsFilterExpanded: false // student filters section collapsed by default to save space
 };
 
 // --- DATA FETCHING ---
@@ -3040,31 +3053,48 @@ function _renderViewImpl() {
                         ` : ''}
                     </div>`;
                 })() : ''}
-                <div class="filter-bar">
-                    <span class="filter-select-wrap">
-                        <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
-                            <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
-                            <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With active pack'}</option>
-                            <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No active pack'}</option>
-                        </select>
-                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                    </span>
-                    <span class="filter-select-wrap">
-                        <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
-                            <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
-                            ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
-                        </select>
-                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                    </span>
-                    <span class="filter-select-wrap">
-                        <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
-                            <option value="all" ${(state.adminStudentsFilterPaid || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
-                            <option value="paid" ${state.adminStudentsFilterPaid === 'paid' ? 'selected' : ''}>${t.filter_paid || 'Paid'}</option>
-                            <option value="unpaid" ${state.adminStudentsFilterPaid === 'unpaid' ? 'selected' : ''}>${t.filter_unpaid || 'Unpaid'}</option>
-                        </select>
-                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                    </span>
-                    <span class="filter-count" id="students-filter-count"></span>
+                <div class="students-filter-expandable" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
+                    <div class="students-filter-header" onclick="state.studentsFilterExpanded=!state.studentsFilterExpanded; renderView(); if(window.lucide) window.lucide.createIcons();" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
+                        <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.filters_label || 'Filters'}</span>
+                        <i data-lucide="${state.studentsFilterExpanded ? 'chevron-up' : 'chevron-down'}" size="18" style="opacity: 0.5;"></i>
+                    </div>
+                    ${state.studentsFilterExpanded ? `
+                    <div class="filter-bar students-filter-bar" style="margin-bottom: 12px;">
+                        <div class="filter-group">
+                            <span class="filter-label">${t.filter_label_pack || 'Pack'}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
+                                    <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                                    <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With pack'}</option>
+                                    <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No pack'}</option>
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">${t.filter_label_package || 'Package'}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
+                                    <option value="">${t.filter_all || 'All'}</option>
+                                    ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">${t.filter_label_payment || 'Payment'}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
+                                    <option value="all" ${(state.adminStudentsFilterPaid || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                                    <option value="paid" ${state.adminStudentsFilterPaid === 'paid' ? 'selected' : ''}>${t.filter_paid || 'Paid'}</option>
+                                    <option value="unpaid" ${state.adminStudentsFilterPaid === 'unpaid' ? 'selected' : ''}>${t.filter_unpaid || 'Unpaid'}</option>
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <span class="filter-count" id="students-filter-count"></span>
+                    </div>
+                    ` : ''}
                 </div>
                 <div class="students-search-wrap">
                     <input type="text" class="students-search" placeholder="${t.search_students}" value="${(state.adminStudentsSearch || '').replace(/"/g, '&quot;')}" oninput="state.adminStudentsSearch=this.value; filterStudents(this.value)">
@@ -3496,11 +3526,12 @@ function _renderViewImpl() {
                         </div>
                     </div>
 
-                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${state.currentSchool?.jack_and_jill_enabled === true ? t.create_new_competition : ''}</div>
-                    <button class="btn-primary" ${state.currentSchool?.jack_and_jill_enabled === true ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)"' : 'disabled'} style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600; ${state.currentSchool?.jack_and_jill_enabled !== true ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                    ${state.currentSchool?.jack_and_jill_enabled === true ? `
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${t.create_new_competition}</div>
+                    <button class="btn-primary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
                         <i data-lucide="trophy" size="16" style="margin-right: 8px;"></i> ${t.jack_and_jill}
                     </button>
-                    ${state.currentSchool?.jack_and_jill_enabled !== true ? `<p style="font-size: 13px; color: var(--text-secondary); padding: 10px 0 0; margin: 0;">${t.jack_and_jill_upgrade_msg}</p>` : ''}
+                    ` : ''}
                 </div>
                 ` : ''}
             </div>
