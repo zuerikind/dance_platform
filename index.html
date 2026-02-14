@@ -136,9 +136,10 @@
                     <input type="text" id="dev-user-input" data-i18n-placeholder="username" placeholder="Username"
                         style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
                 </div>
-                <div class="ios-list-item" style="padding: 10px 16px;">
+                <div class="ios-list-item password-input-wrap" style="padding: 10px 16px;">
                     <input type="password" id="dev-pass-input" data-i18n-placeholder="password" placeholder="Password"
-                        style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px;">
+                        style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 16px; padding-right: 44px;">
+                    <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password" style="right: 8px;"><i data-lucide="eye" size="20"></i></button>
                 </div>
             </div>
 
@@ -173,13 +174,15 @@
                         <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Username</label>
                         <input type="text" id="add-admin-username" placeholder="Admin username" autocomplete="off" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
                     </div>
-                    <div>
+                    <div class="password-input-wrap">
                         <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Password</label>
-                        <input type="password" id="add-admin-password" placeholder="Password" autocomplete="new-password" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                        <input type="password" id="add-admin-password" placeholder="Password" autocomplete="new-password" class="add-admin-input" style="width: 100%; padding: 14px 44px 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                     </div>
-                    <div>
+                    <div class="password-input-wrap">
                         <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Repeat password</label>
-                        <input type="password" id="add-admin-password-confirm" placeholder="Repeat password" autocomplete="new-password" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                        <input type="password" id="add-admin-password-confirm" placeholder="Repeat password" autocomplete="new-password" class="add-admin-input" style="width: 100%; padding: 14px 44px 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                     </div>
                 </div>
                 <p id="add-admin-error" style="display: none; font-size: 13px; color: var(--system-red); margin-bottom: 12px; text-align: center;"></p>

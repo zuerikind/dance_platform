@@ -1304,6 +1304,20 @@ window.t = function (key) {
     return val;
 };
 
+// Toggle password visibility (eye icon next to password inputs)
+window.togglePasswordVisibility = function (btn) {
+    const wrap = btn && btn.closest && btn.closest('.password-input-wrap');
+    const input = wrap && wrap.querySelector('input');
+    if (!input) return;
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    const icon = btn.querySelector('i');
+    if (icon) {
+        icon.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
+        if (window.lucide) window.lucide.createIcons();
+    }
+};
+
 // Standard static update
 function updateI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -2012,7 +2026,10 @@ function _renderViewImpl() {
                     <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, transparent 100%);">
                         <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;"><i data-lucide="link" size="14" style="vertical-align: middle; margin-right: 6px;"></i> Enable username + password login (one-time)</div>
                         <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">So you can always sign in with &quot;${(state.currentUser && state.currentUser.name ? state.currentUser.name.replace(/\s*\(Dev\)\s*$/i, '').trim() : 'you')}&quot; and your password (no email needed). Enter your <strong>current password</strong>:</p>
-                        <input type="password" id="platform-link-password" placeholder="Your current Dev password" autocomplete="off" style="width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" />
+                        <div class="password-input-wrap" style="margin-bottom: 10px;">
+                            <input type="password" id="platform-link-password" placeholder="Your current Dev password" autocomplete="off" style="width: 100%; padding: 12px 44px 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; box-sizing: border-box;" />
+                            <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password" style="right: 8px;"><i data-lucide="eye" size="18"></i></button>
+                        </div>
                         <button type="button" class="btn-primary" onclick="window.linkPlatformAdminAccount()" style="width: 100%; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700;">Enable username login</button>
                     </div>
                     ` : ''}
@@ -2379,11 +2396,20 @@ function _renderViewImpl() {
                                     <input type="text" id="auth-username" class="minimal-input" placeholder="${window.t('username')}" autocomplete="username">
                                     <input type="text" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email" maxlength="254">
                                     <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}" autocomplete="tel">
-                                    <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
-                                    <input type="password" id="auth-pass-confirm" class="minimal-input" placeholder="${window.t('confirm_password_placeholder')}" autocomplete="new-password">
+                                    <div class="password-input-wrap">
+                                        <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
+                                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                                    </div>
+                                    <div class="password-input-wrap">
+                                        <input type="password" id="auth-pass-confirm" class="minimal-input" placeholder="${window.t('confirm_password_placeholder')}" autocomplete="new-password">
+                                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                                    </div>
                                 ` : `
                                     <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('username')}" autocomplete="username">
-                                    <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
+                                    <div class="password-input-wrap">
+                                        <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
+                                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                                    </div>
                                 `}
                             </div>
 
@@ -2404,7 +2430,10 @@ function _renderViewImpl() {
                                 <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">${window.t('admin_access_trigger')}</button>
                                 <div id="admin-fields" class="hidden slide-in" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
                                     <input type="text" id="admin-user-input" class="minimal-input" placeholder="${window.t('admin_user_placeholder')}" style="margin-bottom: 0.8rem;">
-                                    <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${window.t('admin_pass_placeholder')}" style="margin-bottom: 1rem;">
+                                    <div class="password-input-wrap" style="margin-bottom: 1rem;">
+                                        <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${window.t('admin_pass_placeholder')}">
+                                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                                    </div>
                                     <button id="admin-login-button" class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">
                                         ${window.t('admin_login_btn')}
                                     </button>
@@ -5304,9 +5333,10 @@ window.updateStudentPrompt = async (id) => {
                     <input type="text" id="edit-student-phone" class="minimal-input" value="${(s.phone || '').replace(/"/g, '&quot;')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                <div class="ios-input-group password-input-wrap" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('password_label')} (${t('leave_blank_keep') || 'leave blank to keep'})</label>
                     <input type="password" id="edit-student-password" class="minimal-input" placeholder="••••••••" autocomplete="new-password" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                    <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                 </div>
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">

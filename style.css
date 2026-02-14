@@ -1042,6 +1042,36 @@ select option {
     transform: none;
 }
 
+.password-input-wrap {
+    position: relative;
+    width: 100%;
+}
+.password-input-wrap input {
+    padding-right: 44px;
+    box-sizing: border-box;
+}
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--text-secondary, #8e8e93);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+.password-toggle-btn:hover {
+    color: var(--text-primary, #000);
+}
+.password-toggle-btn:focus {
+    outline: none;
+}
+
 .auth-actions {
     margin-top: 2.5rem;
     display: flex;
