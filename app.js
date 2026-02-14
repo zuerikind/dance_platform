@@ -1072,7 +1072,7 @@ let state = {
     todayRegistrations: [],      // today's registrations (used by scanner)
     classRegLoaded: false,       // whether availability data has been loaded
     adminWeekRegistrations: [],  // all registrations for the current week (admin view)
-    adminRegExpanded: true       // whether admin registrations section is expanded
+    adminRegExpanded: false      // whether admin registrations section is expanded (collapsed by default)
 };
 
 // --- DATA FETCHING ---
@@ -3041,20 +3041,29 @@ function _renderViewImpl() {
                     </div>`;
                 })() : ''}
                 <div class="filter-bar">
-                    <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
-                        <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
-                        <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With active pack'}</option>
-                        <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No active pack'}</option>
-                    </select>
-                    <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
-                        <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
-                        ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
-                    </select>
-                    <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
-                        <option value="all" ${(state.adminStudentsFilterPaid || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
-                        <option value="paid" ${state.adminStudentsFilterPaid === 'paid' ? 'selected' : ''}>${t.filter_paid || 'Paid'}</option>
-                        <option value="unpaid" ${state.adminStudentsFilterPaid === 'unpaid' ? 'selected' : ''}>${t.filter_unpaid || 'Unpaid'}</option>
-                    </select>
+                    <span class="filter-select-wrap">
+                        <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
+                            <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                            <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With active pack'}</option>
+                            <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No active pack'}</option>
+                        </select>
+                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                    </span>
+                    <span class="filter-select-wrap">
+                        <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
+                            <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
+                            ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                        </select>
+                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                    </span>
+                    <span class="filter-select-wrap">
+                        <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
+                            <option value="all" ${(state.adminStudentsFilterPaid || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                            <option value="paid" ${state.adminStudentsFilterPaid === 'paid' ? 'selected' : ''}>${t.filter_paid || 'Paid'}</option>
+                            <option value="unpaid" ${state.adminStudentsFilterPaid === 'unpaid' ? 'selected' : ''}>${t.filter_unpaid || 'Unpaid'}</option>
+                        </select>
+                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                    </span>
                     <span class="filter-count" id="students-filter-count"></span>
                 </div>
                 <div class="students-search-wrap">
@@ -3162,22 +3171,31 @@ function _renderViewImpl() {
                     <i data-lucide="calendar" size="14"></i> ${t.filter_this_month || 'This Month'}
                 </button>
             </div>
-            <div class="filter-bar" style="padding-top: 0;">
-                <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
-                    <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
-                    ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminRevenuePackageFilter === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
-                </select>
-                <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
-                    <option value="" ${!statusFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_status || 'status').toLowerCase()}</option>
-                    <option value="approved" ${statusFilter === 'approved' ? 'selected' : ''}>${t.approved}</option>
-                    <option value="rejected" ${statusFilter === 'rejected' ? 'selected' : ''}>${t.rejected}</option>
-                    <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>${t.pending}</option>
-                </select>
-                <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
-                    <option value="" ${!methodFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_method || 'method').toLowerCase()}</option>
-                    <option value="transfer" ${methodFilter === 'transfer' ? 'selected' : ''}>${t.transfer}</option>
-                    <option value="cash" ${methodFilter === 'cash' ? 'selected' : ''}>${t.cash}</option>
-                </select>
+            <div class="filter-bar">
+                <span class="filter-select-wrap">
+                    <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
+                        <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
+                        ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminRevenuePackageFilter === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                    </select>
+                    <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                </span>
+                <span class="filter-select-wrap">
+                    <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
+                        <option value="" ${!statusFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_status || 'status').toLowerCase()}</option>
+                        <option value="approved" ${statusFilter === 'approved' ? 'selected' : ''}>${t.approved}</option>
+                        <option value="rejected" ${statusFilter === 'rejected' ? 'selected' : ''}>${t.rejected}</option>
+                        <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>${t.pending}</option>
+                    </select>
+                    <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                </span>
+                <span class="filter-select-wrap">
+                    <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
+                        <option value="" ${!methodFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_method || 'method').toLowerCase()}</option>
+                        <option value="transfer" ${methodFilter === 'transfer' ? 'selected' : ''}>${t.transfer}</option>
+                        <option value="cash" ${methodFilter === 'cash' ? 'selected' : ''}>${t.cash}</option>
+                    </select>
+                    <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                </span>
                 <span class="filter-count">${(t.filter_result_payments || '{count} payments').replace('{count}', filteredPayments.length)}</span>
             </div>
             

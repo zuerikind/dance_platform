@@ -2594,90 +2594,141 @@ select option {
   min-height: 44px;
 }
 
-/* Shared filter bar components */
+/* Shared filter bar components – card-style container */
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 1.2rem 12px;
+  gap: 10px;
+  padding: 1rem 1.2rem;
+  margin: 0 1.2rem 12px;
   align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-sizing: border-box;
 }
+.filter-bar:first-of-type {
+  margin-top: 0.5rem;
+}
+
 .filter-control {
   appearance: none;
   -webkit-appearance: none;
-  min-height: 44px;
-  padding: 10px 14px;
-  font-size: 14px;
+  min-height: 48px;
+  min-width: 0;
+  padding: 12px 16px;
+  font-size: 15px;
   font-weight: 500;
   font-family: inherit;
-  border-radius: 12px;
-  border: 1px solid var(--border-color, rgba(0,0,0,0.1));
-  background: var(--bg-body);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-solid, var(--bg-body));
   color: var(--text-primary);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
+input.filter-control[type="date"] {
+  flex: 1;
+  min-width: 120px;
+  max-width: 160px;
+}
+/* Wrapper so we use one Lucide chevron instead of CSS background (avoids duplicate arrows in some browsers) */
+.filter-select-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+}
+.filter-select-wrap .filter-control {
+  width: 100%;
+  padding-right: 44px;
+  cursor: pointer;
+}
+.filter-select-chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+.dark-mode .filter-select-chevron {
+  color: rgba(255,255,255,0.6);
+}
 select.filter-control {
-  padding-right: 32px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 14px;
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+  padding-right: 44px;
   cursor: pointer;
 }
 .filter-control:focus {
   border-color: var(--system-blue);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+.filter-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.8;
 }
 .dark-mode .filter-control {
-  border-color: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.06);
-}
-.dark-mode select.filter-control {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 .dark-mode .filter-control:focus {
   border-color: var(--system-blue);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
 }
+
 .filter-btn {
-  min-height: 44px;
-  padding: 10px 16px;
-  font-size: 13px;
+  min-height: 48px;
+  padding: 12px 18px;
+  font-size: 14px;
   font-weight: 600;
   font-family: inherit;
-  border-radius: 12px;
-  border: 1px solid var(--border-color, rgba(0,0,0,0.1));
+  border-radius: 14px;
+  border: 1px solid var(--border);
   background: var(--system-gray6);
   color: var(--text-primary);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  display: flex;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 .filter-btn:hover {
   background: var(--system-gray5, rgba(0,0,0,0.06));
+  border-color: var(--border);
 }
 .filter-btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 .dark-mode .filter-btn {
-  border-color: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.08);
 }
 .dark-mode .filter-btn:hover {
   background: rgba(255,255,255,0.12);
 }
+
 .filter-count {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-  padding: 6px 12px;
+  padding: 8px 14px;
   margin-left: auto;
   white-space: nowrap;
+  background: var(--system-gray6);
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+.dark-mode .filter-count {
+  background: rgba(255,255,255,0.06);
 }
 
 /* Search bar - sticky with safe area, smooth scroll on iOS */
