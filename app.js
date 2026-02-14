@@ -22,7 +22,6 @@ const DANCE_LOCALES = {
         inactive: "Payment Required",
         pay_status: "Membership Status",
         student_id: "Member ID",
-        admin_title: "Administrator",
         admin_label: "Admin",
         no_subs: "No active memberships found",
         scan_success: "Verification Successful",
@@ -35,7 +34,6 @@ const DANCE_LOCALES = {
         welcome_to: "Welcome to",
         student_signup: "New Student",
         admin_login: "Admin login",
-        enter_name: "How should we call you?",
         full_name_placeholder: "Full name",
         email_placeholder: "Email address",
         signup_require_fields: "Please enter full name, email, phone and password.",
@@ -61,7 +59,6 @@ const DANCE_LOCALES = {
         list_view: "List View",
         weekly_view: "Weekly Plan",
         mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday",
-        valid_month: "Valid for one month",
         valid_for_days: "Valid for {days} days",
         nav_memberships: "Memberships",
         pending_payments: "Pending Payments",
@@ -78,11 +75,9 @@ const DANCE_LOCALES = {
         nav_revenue: 'Revenue',
         monthly_total: 'This Month Total',
         all_payments: 'Payment History',
-        total_earned: 'Total Earned',
         approved: 'Approved',
         rejected: 'Not Approved',
         pending: 'Pending',
-        check_in_title: "Check-In Attendance",
         one_class: "1 Class",
         two_classes: "2 Classes",
         class_unit: "class",
@@ -141,7 +136,6 @@ const DANCE_LOCALES = {
         student_created: "Student created!",
         unknown_student: "Unknown Student",
         delete_payment_confirm: "Delete this payment record forever?",
-        select_school_title: "Welcome to Bailadmin",
         select_school_subtitle: "Please select your school or teacher to continue",
         add_school_btn: "New School",
         enter_school_name: "Enter new school or teacher name:",
@@ -215,10 +209,13 @@ const DANCE_LOCALES = {
         filter_with_pack: "With active pack",
         filter_no_pack: "No active pack",
         filter_package_type: "Packages",
-        filter_date_start: "Start date",
-        filter_date_end: "End date",
-        filter_period: "Period",
         filter_this_month: "This Month",
+        filter_status: "Status",
+        filter_method: "Method",
+        filter_paid: "Paid",
+        filter_unpaid: "Unpaid",
+        filter_result_students: "{count} students",
+        filter_result_payments: "{count} payments",
         period_total: "Total for period",
         loading_students_msg: "Loading members...",
         no_pending_msg: "No pending payments",
@@ -235,7 +232,6 @@ const DANCE_LOCALES = {
         hide_weekly_btn: "Hide Weekly Plan",
         weekly_preview_title: "Weekly Preview",
         full_name_label: "Full Name",
-        password_pin_label: "Password (PIN)",
         total_classes_label: "Classes Remaining (Total)",
         pack_details_title: "Package Details",
         reg_date_label: "Registration Date",
@@ -245,15 +241,7 @@ const DANCE_LOCALES = {
         leave_blank_keep: "leave blank to keep",
         invalid_pass_msg: "Incorrect Admin Password.",
         save_btn: "Save",
-        enter_admin_user: "Enter Admin Username:",
-        enter_admin_pass: "Enter Admin Password:",
-        admin_created: "Administrator created successfully!",
-        add_admin_modal_title: "Agregar administrador",
-        add_admin_modal_subtitle: "Crea un nuevo administrador para tu escuela",
-        add_admin_success_title: "Administrador agregado",
-        add_admin_success_text: "El nuevo administrador ya puede iniciar sesión con el usuario y la contraseña que configuraste.",
-        add_admin_btn: "Agregar",
-        remove_admin_confirm: "¿Estás seguro de que quieres eliminar a este administrador?",
+        remove_admin_confirm: "Are you sure you want to remove this administrator?",
         admin_removed: "Administrator removed successfully!",
         error_creating_admin: "Error creating administrator:",
         admin_add_need_linked_session: "To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.",
@@ -270,7 +258,6 @@ const DANCE_LOCALES = {
         competition_activate_event: "Activate event",
         competition_activate_signin: "Activate sign-in",
         competition_for_event: "For event",
-        competition_save: "Save",
         competition_saved: "Competition saved successfully.",
         competition_error: "Error saving competition.",
         competition_registrations: "Registrations",
@@ -280,18 +267,13 @@ const DANCE_LOCALES = {
         competition_approve: "Approve",
         competition_decline: "Decline",
         register_for_event: "Register for {eventName}",
-        register_for_event_es: "Register for",
         reviewing_application: "We are reviewing your application",
-        reviewing_application_es: "Estamos revisando tu solicitud",
         accepted: "Accepted",
         declined: "Declined",
         competition_approved_message: "Congratulations! You will compete in \"{eventName}\"",
         competition_declined_message: "This time you cannot compete, but we hope to see you next time.",
         submit_registration: "Submit registration",
-        competition_no_events: "No Jack and Jill events yet.",
         competition_reg_opens_soon: "Registration opens soon",
-        competition_select_or_create: "Select an event or create new.",
-        competition_create_new: "Create new",
         competition_edit_tab: "Edit",
         no_existing_events: "No existing events.",
         no_events_linked_hint: "If you created events before, link your admin account: go to Students → use the \"Link account\" card, or log out and log in again with your admin username and password.",
@@ -318,6 +300,55 @@ const DANCE_LOCALES = {
         competition_video_uploading: "Uploading...",
         competition_video_uploaded: "Video uploaded",
         competition_video_unavailable: "Video unavailable",
+        // Class Registration
+        nav_my_classes: "My Classes",
+        register_for_class: "Register for this class",
+        join_class: "Join",
+        cancel_registration: "Cancel Registration",
+        class_full: "Class Full",
+        class_already_started: "Class already started",
+        spots_left: "{n} spots left",
+        only_n_spots: "Only {n} places left!",
+        registered: "Registered",
+        registered_check: "You're registered",
+        cancel_before_deadline: "Cancel up to 4h before class",
+        cannot_cancel_deadline: "Cancellation deadline passed",
+        auto_deducted: "Class deducted automatically",
+        registered_for_class_msg: "Registered for {className} at {time}",
+        no_manual_deduction: "No manual deduction needed",
+        my_classes_title: "My Classes",
+        my_classes_subtitle: "Your upcoming and past registrations",
+        upcoming_classes: "Upcoming",
+        past_classes: "Past Classes",
+        no_upcoming: "No upcoming registrations",
+        no_past_classes: "No past class history",
+        cancelled: "Cancelled",
+        attended: "Attended",
+        no_show: "No-show",
+        registration_enabled: "Class Registration",
+        registration_enabled_desc: "Allow students to register for specific class times",
+        max_students: "Max Students",
+        max_students_placeholder: "e.g. 20",
+        confirm_attendance_registered: "Confirm Attendance",
+        class_will_deduct: "1 class will be deducted from their package",
+        student_registered_for: "Registered for",
+        register_success: "Successfully registered!",
+        register_error: "Could not register. Please try again.",
+        cancel_success: "Registration cancelled.",
+        cancel_error: "Could not cancel. Please try again.",
+        cancel_confirm: "Cancel your registration for this class?",
+        cancel_confirm_full: "You are cancelling this class. If the class gets full, you will not be able to register again.",
+        register_success_4h_note: "If you don't cancel at least 4 hours before the class starts, one class will be deducted from your pass automatically.",
+        got_it: "Got it",
+        cancel_confirm_yes: "Yes, cancel registration",
+        go_back: "Go back",
+        registered_title: "You're registered",
+        unlimited_spots: "Open registration",
+        week_of: "Week of {start} – {end}",
+        class_registrations_title: "Class Registrations",
+        no_registrations_yet: "No registrations this week",
+        registered_count: "{n} registered",
+        past_day: "Past",
     },
     es: {
         nav_schedule: "Horario",
@@ -335,7 +366,6 @@ const DANCE_LOCALES = {
         inactive: "Pago Pendiente",
         pay_status: "Estado de Membresía",
         student_id: "ID de Miembro",
-        admin_title: "Administración",
         no_subs: "Sin membresías activas",
         scan_success: "Verificación Exitosa",
         scan_fail: "Membresía Inactiva",
@@ -347,7 +377,6 @@ const DANCE_LOCALES = {
         welcome_to: "Bienvenido a",
         student_signup: "Nuevo Alumno",
         admin_login: "Acceso Admin",
-        enter_name: "¿Cómo te llamas?",
         full_name_placeholder: "Nombre completo",
         email_placeholder: "Correo electrónico",
         signup_require_fields: "Ingresa nombre completo, correo, teléfono y contraseña.",
@@ -373,7 +402,6 @@ const DANCE_LOCALES = {
         list_view: "Lista",
         weekly_view: "Plan Semanal",
         mon: "Lunes", tue: "Martes", wed: "Miércoles", thu: "Jueves", fri: "Viernes", sat: "Sábado", sun: "Domingo",
-        valid_month: "Válido por un mes",
         valid_for_days: "Válido por {days} días",
         nav_memberships: "Membresías",
         pending_payments: "Pagos Pendientes",
@@ -382,7 +410,6 @@ const DANCE_LOCALES = {
         nav_revenue: 'Ganancias',
         monthly_total: 'Total este mes',
         all_payments: 'Historial de pagos',
-        total_earned: 'Total ganado',
         approved: 'Aprobado',
         rejected: 'No Aprobado',
         pending: 'Pendiente',
@@ -394,7 +421,6 @@ const DANCE_LOCALES = {
         request_sent_title: "¡Gracias por tu pago!",
         request_sent_msg: "Tu acceso será activado una vez que validemos el pago.",
         close: "Cerrar",
-        check_in_title: "Confirmar Asistencia",
         one_class: "1 Clase",
         two_classes: "2 Clases",
         class_unit: "clase",
@@ -402,14 +428,12 @@ const DANCE_LOCALES = {
         cancel: "Cancelar",
         confirm_attendance: "Confirmar Asistencia",
         attendance_success: "¡Asistencia confirmada!",
-        attendance_error: "Error en la asistencia",
         no_classes_buy_package: "Este alumno no tiene clases. Debe comprar un nuevo paquete.",
         admin_user_placeholder: "Usuario Admin",
         admin_pass_placeholder: "Contraseña Admin",
         admin_login_btn: "Inicia Sesión Admin",
         admin_access_trigger: "• ACCESO ADMIN •",
         add_student: "Alumno",
-        add_student_btn: "+ Nuevo Alumno",
         add_admin: "Administrador",
         status_active: "Activo",
         status_unpaid: "Impago",
@@ -425,7 +449,6 @@ const DANCE_LOCALES = {
         add_label: "Añadir",
         plans_label: "Planes",
         limit_classes_label: "Límite de Clases",
-        limit_classes_placeholder: "Clases (0 = Ilimitado)",
         limit_classes_placeholder: "Clases (0 = Ilimitado)",
         price_mxd_label: "Precio MXD",
         transfer_details_label: "Detalles de Transferencia",
@@ -444,6 +467,11 @@ const DANCE_LOCALES = {
         enter_admin_user: "Ingresa el nombre de usuario del admin:",
         enter_admin_pass: "Ingresa la contraseña del admin:",
         admin_created: "¡Admin creado!",
+        add_admin_modal_title: "Agregar administrador",
+        add_admin_modal_subtitle: "Crea un nuevo administrador para tu escuela",
+        add_admin_success_title: "Administrador agregado",
+        add_admin_success_text: "El nuevo administrador ya puede iniciar sesión con el usuario y la contraseña que configuraste.",
+        add_admin_btn: "Agregar",
         enter_student_name: "Ingresa el nombre del alumno:",
         enter_student_phone: "Ingresa el teléfono del alumno:",
         enter_student_email: "Ingresa el email del alumno (opcional):",
@@ -451,7 +479,6 @@ const DANCE_LOCALES = {
         student_created: "¡Alumno creado!",
         unknown_student: "Alumno Desconocido",
         delete_payment_confirm: "¿Eliminar este registro de pago permanentemente?",
-        select_school_title: "Bienvenido a Bailadmin",
         select_school_subtitle: "Por favor selecciona tu escuela o profesor para continuar",
         add_school_btn: "Nueva Escuela",
         enter_school_name: "Ingresa el nombre de la nueva escuela o profesor:",
@@ -525,10 +552,13 @@ const DANCE_LOCALES = {
         filter_with_pack: "Con paquete activo",
         filter_no_pack: "Sin paquete activo",
         filter_package_type: "Paquetes",
-        filter_date_start: "Fecha inicio",
-        filter_date_end: "Fecha fin",
-        filter_period: "Período",
         filter_this_month: "Este mes",
+        filter_status: "Estado",
+        filter_method: "Método",
+        filter_paid: "Pagado",
+        filter_unpaid: "Sin pagar",
+        filter_result_students: "{count} alumnos",
+        filter_result_payments: "{count} pagos",
         period_total: "Total del período",
         loading_students_msg: "Cargando alumnos...",
         no_pending_msg: "Sin pagos pendientes",
@@ -545,7 +575,6 @@ const DANCE_LOCALES = {
         hide_weekly_btn: "Ocultar Plan Semanal",
         weekly_preview_title: "Vista Previa (Semanal)",
         full_name_label: "Nombre Completo",
-        password_pin_label: "Contraseña (PIN)",
         total_classes_label: "Clases Restantes (Total)",
         pack_details_title: "Paquetes Detalles",
         reg_date_label: "Fecha de Registro",
@@ -555,10 +584,7 @@ const DANCE_LOCALES = {
         leave_blank_keep: "dejar en blanco para mantener",
         invalid_pass_msg: "Contraseña Incorrecta.",
         save_btn: "Guardar",
-        enter_admin_user: "Usuario Administrador:",
-        enter_admin_pass: "Contraseña Administrador:",
-        admin_created: "¡Administrador creado con éxito!",
-        remove_admin_confirm: "¿Estás seguro de que quieres eliminar a dieser Administrador?",
+        remove_admin_confirm: "¿Estás seguro de que quieres eliminar a este administrador?",
         admin_removed: "Administrador eliminado con éxito.",
         error_creating_admin: "Error al crear administrador:",
         admin_add_need_linked_session: "Para agregar administradores debes iniciar sesión con tu cuenta vinculada. Cierra sesión e inicia de nuevo con tu usuario y contraseña.",
@@ -575,7 +601,6 @@ const DANCE_LOCALES = {
         competition_activate_event: "Activar evento",
         competition_activate_signin: "Activar registro",
         competition_for_event: "Para evento",
-        competition_save: "Guardar",
         competition_saved: "Competencia guardada correctamente.",
         competition_error: "Error al guardar la competencia.",
         competition_registrations: "Registros",
@@ -585,18 +610,13 @@ const DANCE_LOCALES = {
         competition_approve: "Aprobar",
         competition_decline: "Rechazar",
         register_for_event: "Registrarse para {eventName}",
-        register_for_event_es: "Registrarse para",
         reviewing_application: "Estamos revisando tu solicitud",
-        reviewing_application_es: "Estamos revisando tu solicitud",
         accepted: "Aceptado",
         declined: "Rechazado",
         competition_approved_message: "¡Felicidades! Vas a competir en \"{eventName}\"",
         competition_declined_message: "Esta vez no puedes competir, pero te esperamos la próxima vez.",
         submit_registration: "Enviar registro",
-        competition_no_events: "Aún no hay eventos Jack and Jill.",
         competition_reg_opens_soon: "Inscripciones próximamente",
-        competition_select_or_create: "Selecciona un evento o crea uno nuevo.",
-        competition_create_new: "Crear nuevo",
         competition_edit_tab: "Editar",
         no_existing_events: "No hay eventos.",
         no_events_linked_hint: "Si creaste eventos antes, vincula tu cuenta: ve a Alumnos → usa la tarjeta \"Link account\", o cierra sesión e inicia de nuevo con tu usuario y contraseña de admin.",
@@ -623,6 +643,55 @@ const DANCE_LOCALES = {
         competition_video_uploading: "Subiendo...",
         competition_video_uploaded: "Video subido",
         competition_video_unavailable: "Video no disponible",
+        // Class Registration
+        nav_my_classes: "Mis Clases",
+        register_for_class: "Registrarse en esta clase",
+        join_class: "Unirme",
+        cancel_registration: "Cancelar registro",
+        class_full: "Clase llena",
+        class_already_started: "La clase ya comenzó",
+        spots_left: "{n} lugares disponibles",
+        only_n_spots: "Solo quedan {n} lugares!",
+        registered: "Registrado",
+        registered_check: "Estás registrado/a",
+        cancel_before_deadline: "Cancela hasta 4h antes de la clase",
+        cannot_cancel_deadline: "Plazo de cancelación vencido",
+        auto_deducted: "Clase descontada automáticamente",
+        registered_for_class_msg: "Registrado en {className} a las {time}",
+        no_manual_deduction: "No se necesita descuento manual",
+        my_classes_title: "Mis Clases",
+        my_classes_subtitle: "Tus registros próximos y pasados",
+        upcoming_classes: "Próximas",
+        past_classes: "Clases pasadas",
+        no_upcoming: "No hay registros próximos",
+        no_past_classes: "No hay historial de clases",
+        cancelled: "Cancelado",
+        attended: "Asistió",
+        no_show: "No asistió",
+        registration_enabled: "Registro de clases",
+        registration_enabled_desc: "Permitir que los alumnos se registren para horarios específicos",
+        max_students: "Máx. alumnos",
+        max_students_placeholder: "ej. 20",
+        confirm_attendance_registered: "Confirmar asistencia",
+        class_will_deduct: "Se descontará 1 clase de su paquete",
+        student_registered_for: "Registrado en",
+        register_success: "Registro exitoso!",
+        register_error: "No se pudo registrar. Intenta de nuevo.",
+        cancel_success: "Registro cancelado.",
+        cancel_error: "No se pudo cancelar. Intenta de nuevo.",
+        cancel_confirm: "¿Cancelar tu registro para esta clase?",
+        cancel_confirm_full: "Estás cancelando esta clase. Si la clase se llena, no podrás inscribirte de nuevo.",
+        register_success_4h_note: "Si no cancelas al menos 4 horas antes del inicio de la clase, se descontará una clase de tu pase automáticamente.",
+        got_it: "Entendido",
+        cancel_confirm_yes: "Sí, cancelar registro",
+        go_back: "Volver",
+        registered_title: "Estás registrado/a",
+        unlimited_spots: "Registro abierto",
+        week_of: "Semana del {start} al {end}",
+        class_registrations_title: "Registros de clases",
+        no_registrations_yet: "Sin registros esta semana",
+        registered_count: "{n} registrados",
+        past_day: "Pasado",
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -640,7 +709,6 @@ const DANCE_LOCALES = {
         inactive: "Zahlung erforderlich",
         pay_status: "Mitgliedschaftsstatus",
         student_id: "Mitglieder-ID",
-        admin_title: "Administrator",
         admin_label: "Admin",
         no_subs: "Keine aktiven Mitgliedschaften gefunden",
         scan_success: "Verifizierung erfolgreich",
@@ -653,7 +721,6 @@ const DANCE_LOCALES = {
         welcome_to: "Willkommen bei",
         student_signup: "Neuer Schüler",
         admin_login: "Admin-Login",
-        enter_name: "Wie sollen wir dich nennen?",
         full_name_placeholder: "Vollständiger Name",
         email_placeholder: "E-Mail-Adresse",
         signup_require_fields: "Bitte gib Name, E-Mail, Telefon und Passwort ein.",
@@ -679,7 +746,6 @@ const DANCE_LOCALES = {
         list_view: "Listenansicht",
         weekly_view: "Wochenplan",
         mon: "Montag", tue: "Dienstag", wed: "Mittwoch", thu: "Donnerstag", fri: "Freitag", sat: "Samstag", sun: "Sonntag",
-        valid_month: "Gültig für einen Monat",
         valid_for_days: "Gültig für {days} Tage",
         nav_memberships: "Mitgliedschaften",
         pending_payments: "Ausstehende Zahlungen",
@@ -688,7 +754,6 @@ const DANCE_LOCALES = {
         nav_revenue: 'Einnahmen',
         monthly_total: 'Gesamt diesen Monat',
         all_payments: 'Zahlungsverlauf',
-        total_earned: 'Gesamt verdient',
         approved: 'Bestätigt',
         rejected: 'Abgelehnt',
         pending: 'Ausstehend',
@@ -700,7 +765,6 @@ const DANCE_LOCALES = {
         request_sent_title: "Anfrage gesendet!",
         request_sent_msg: "Dein Zugang wird aktiviert, sobald wir die Zahlung geprüft haben.",
         close: "Schließen",
-        check_in_title: "Check-In Anwesenheit",
         one_class: "1 Stunde",
         two_classes: "2 Stunden",
         class_unit: "Stunde",
@@ -708,14 +772,12 @@ const DANCE_LOCALES = {
         cancel: "Abbrechen",
         confirm_attendance: "Anwesenheit bestätigen",
         attendance_success: "Anwesenheit bestätigt!",
-        attendance_error: "Fehler bei der Anwesenheit",
         no_classes_buy_package: "Dieser Schüler hat keine Stunden mehr. Bitte neues Paket kaufen.",
         admin_user_placeholder: "Admin Benutzername",
         admin_pass_placeholder: "Admin Passwort",
         admin_login_btn: "Admin Login",
         admin_access_trigger: "• ADMIN ZUGANG •",
         add_student: "Schüler",
-        add_student_btn: "+ Neuer Schüler",
         add_admin: "Administrator",
         status_active: "Aktiv",
         status_unpaid: "Unbezahlt",
@@ -731,7 +793,6 @@ const DANCE_LOCALES = {
         add_label: "Hinzufügen",
         plans_label: "Pläne",
         limit_classes_label: "Stundenlimit",
-        limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
         limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
         price_mxd_label: "Preis MXD",
         transfer_details_label: "Überweisungsdaten",
@@ -762,7 +823,6 @@ const DANCE_LOCALES = {
         student_created: "Schüler erstellt!",
         unknown_student: "Unbekannter Schüler",
         delete_payment_confirm: "Diesen Zahlungsbeleg permanent löschen?",
-        select_school_title: "Willkommen bei Bailadmin",
         select_school_subtitle: "Bitte wähle deine Schule oder deinen Lehrer aus",
         add_school_btn: "Neue Schule",
         enter_school_name: "Namen der neuen Schule oder des Lehrers eingeben:",
@@ -836,10 +896,13 @@ const DANCE_LOCALES = {
         filter_with_pack: "Mit aktivem Paket",
         filter_no_pack: "Ohne aktives Paket",
         filter_package_type: "Pakete",
-        filter_date_start: "Startdatum",
-        filter_date_end: "Enddatum",
-        filter_period: "Zeitraum",
         filter_this_month: "Dieser Monat",
+        filter_status: "Status",
+        filter_method: "Methode",
+        filter_paid: "Bezahlt",
+        filter_unpaid: "Unbezahlt",
+        filter_result_students: "{count} Schüler",
+        filter_result_payments: "{count} Zahlungen",
         period_total: "Gesamt für Zeitraum",
         loading_students_msg: "Schüler werden geladen...",
         no_pending_msg: "Keine ausstehenden Zahlungen",
@@ -856,7 +919,6 @@ const DANCE_LOCALES = {
         hide_weekly_btn: "Wochenplan ausblenden",
         weekly_preview_title: "Vorschau (Woche)",
         full_name_label: "Vollständiger Name",
-        password_pin_label: "Passwort (PIN)",
         total_classes_label: "Stunden insgesamt",
         pack_details_title: "Paket-Details",
         reg_date_label: "Registriert am",
@@ -866,9 +928,6 @@ const DANCE_LOCALES = {
         leave_blank_keep: "leer lassen um beizubehalten",
         invalid_pass_msg: "Falsches Admin-Passwort.",
         save_btn: "Speichern",
-        enter_admin_user: "Admin-Benutzername:",
-        enter_admin_pass: "Admin-Passwort:",
-        admin_created: "Administrator erfolgreich erstellt!",
         remove_admin_confirm: "Sind Sie sicher, dass Sie diesen Administrator entfernen möchten?",
         admin_removed: "Administrator erfolgreich entfernt!",
         error_creating_admin: "Fehler beim Erstellen des Administrators:",
@@ -902,7 +961,56 @@ const DANCE_LOCALES = {
         competition_video_uploaded: "Video hochgeladen",
         competition_video_unavailable: "Video nicht verfügbar",
         competition_approved_message: "Herzlichen Glückwunsch! Du wirst an \"{eventName}\" teilnehmen.",
-        competition_declined_message: "Dieses Mal kannst du nicht teilnehmen, aber wir freuen uns auf dich beim nächsten Mal."
+        competition_declined_message: "Dieses Mal kannst du nicht teilnehmen, aber wir freuen uns auf dich beim nächsten Mal.",
+        // Class Registration
+        nav_my_classes: "Meine Kurse",
+        register_for_class: "Für diesen Kurs anmelden",
+        join_class: "Anmelden",
+        cancel_registration: "Anmeldung stornieren",
+        class_full: "Kurs voll",
+        class_already_started: "Kurs hat bereits begonnen",
+        spots_left: "{n} Plätze frei",
+        only_n_spots: "Nur noch {n} Plätze!",
+        registered: "Angemeldet",
+        registered_check: "Du bist angemeldet",
+        cancel_before_deadline: "Stornierung bis 4h vor Kursbeginn",
+        cannot_cancel_deadline: "Stornierungsfrist abgelaufen",
+        auto_deducted: "Kurs automatisch abgezogen",
+        registered_for_class_msg: "Angemeldet für {className} um {time}",
+        no_manual_deduction: "Kein manueller Abzug nötig",
+        my_classes_title: "Meine Kurse",
+        my_classes_subtitle: "Deine kommenden und vergangenen Anmeldungen",
+        upcoming_classes: "Kommende",
+        past_classes: "Vergangene Kurse",
+        no_upcoming: "Keine kommenden Anmeldungen",
+        no_past_classes: "Kein Kursverlauf",
+        cancelled: "Storniert",
+        attended: "Teilgenommen",
+        no_show: "Nicht erschienen",
+        registration_enabled: "Kursanmeldung",
+        registration_enabled_desc: "Schülern erlauben, sich für bestimmte Kurszeiten anzumelden",
+        max_students: "Max. Teilnehmer",
+        max_students_placeholder: "z.B. 20",
+        confirm_attendance_registered: "Anwesenheit bestätigen",
+        class_will_deduct: "1 Kurs wird vom Paket abgezogen",
+        student_registered_for: "Angemeldet für",
+        register_success: "Erfolgreich angemeldet!",
+        register_error: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+        cancel_success: "Anmeldung storniert.",
+        cancel_error: "Stornierung fehlgeschlagen. Bitte erneut versuchen.",
+        cancel_confirm: "Anmeldung für diesen Kurs stornieren?",
+        cancel_confirm_full: "Du stornierst diesen Kurs. Wenn der Kurs voll wird, kannst du dich nicht erneut anmelden.",
+        register_success_4h_note: "Wenn du nicht mindestens 4 Stunden vor Kursbeginn stornierst, wird automatisch eine Klasse von deinem Pass abgezogen.",
+        got_it: "Verstanden",
+        cancel_confirm_yes: "Ja, Anmeldung stornieren",
+        go_back: "Zurück",
+        registered_title: "Du bist angemeldet",
+        unlimited_spots: "Offene Anmeldung",
+        week_of: "Woche vom {start} bis {end}",
+        class_registrations_title: "Kursanmeldungen",
+        no_registrations_yet: "Noch keine Anmeldungen diese Woche",
+        registered_count: "{n} angemeldet",
+        past_day: "Vergangen"
     }
 };
 
@@ -953,7 +1061,18 @@ let state = {
     adminRevenueDateStart: null,
     adminRevenueDateEnd: null,
     adminRevenuePackageFilter: null,
-    devDashboardTab: 'schools'  // 'schools' | 'audit'
+    adminRevenueStatusFilter: null,    // null | 'approved' | 'rejected' | 'pending'
+    adminRevenueMethodFilter: null,    // null | 'transfer' | 'cash'
+    adminStudentsFilterPaid: 'all',    // 'all' | 'paid' | 'unpaid'
+    adminStudentsSearch: '',           // persisted search text
+    devDashboardTab: 'schools',  // 'schools' | 'audit'
+    // Class Registration
+    classAvailability: {},       // { classId: { max_capacity, registered_count, spots_left } }
+    studentRegistrations: [],    // upcoming registrations for the student
+    todayRegistrations: [],      // today's registrations (used by scanner)
+    classRegLoaded: false,       // whether availability data has been loaded
+    adminWeekRegistrations: [],  // all registrations for the current week (admin view)
+    adminRegExpanded: true       // whether admin registrations section is expanded
 };
 
 // --- DATA FETCHING ---
@@ -1184,6 +1303,54 @@ async function fetchAllData() {
         // --- NEW: Check for expired memberships ---
         await window.checkExpirations();
 
+        // --- Class Registration: process expired registrations & load availability ---
+        if (sid && supabaseClient && state.currentSchool?.class_registration_enabled) {
+            try {
+                // Lazy-process expired registrations (idempotent)
+                await supabaseClient.rpc('process_expired_registrations', { p_school_id: sid });
+            } catch (e) { console.warn('process_expired_registrations error:', e); }
+
+            // For students: pre-load availability and registrations
+            if (isStudent && state.currentUser?.id) {
+                state.classRegLoaded = false;
+                // Don't await — let it run in background to not slow down initial render
+                window.loadClassAvailability().then(() => {
+                    renderView();
+                    if (window.lucide) window.lucide.createIcons();
+                }).catch(() => {});
+            }
+
+            // For admins: load registrations for the current week + next occurrences
+            if (state.isAdmin) {
+                const allWeekRegs = [];
+                const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const allDates = new Set();
+                // Current week dates (to see attended/no-show for past days)
+                daysOrder.forEach(d => {
+                    const cwDate = window.getCurrentWeekDate(d);
+                    if (cwDate) allDates.add(window.formatClassDate(cwDate));
+                });
+                // Next occurrence dates (to see upcoming registrations — may be next week for past days)
+                (state.classes || []).forEach(c => {
+                    const nextDate = window.getNextClassDate(c.day);
+                    if (nextDate) allDates.add(window.formatClassDate(nextDate));
+                });
+                for (const dateStr of allDates) {
+                    try {
+                        const { data, error } = await supabaseClient.rpc('get_class_registrations_for_date', {
+                            p_school_id: sid,
+                            p_class_date: dateStr
+                        });
+                        if (!error && data) {
+                            const arr = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+                            arr.forEach(r => allWeekRegs.push(r));
+                        }
+                    } catch (e) { console.warn('Error loading admin registrations for', dateStr, e); }
+                }
+                state.adminWeekRegistrations = allWeekRegs;
+            }
+        }
+
         // Re-sync currentUser (student) with updated balance/active_packs after expiration check
         if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
             const updated = state.students.find(s => s.id === state.currentUser.id);
@@ -1372,15 +1539,6 @@ function parseHashRoute() {
     return false;
 }
 
-function applyHashAndRender() {
-    if (parseHashRoute()) {
-        saveState();
-        renderView();
-        return true;
-    }
-    return false;
-}
-
 function navigateToAdminJackAndJill(schoolId, competitionId, tab) {
     const sid = schoolId || state.currentSchool?.id;
     if (!sid) return;
@@ -1424,14 +1582,6 @@ window.closeCompetitionForm = () => {
     renderView();
 };
 
-window.selectCompetition = async (id) => {
-    state.competitionId = id;
-    state.currentCompetition = (state.competitions || []).find(c => c.id === id) || null;
-    if (id) await fetchCompetitionRegistrations(id);
-    saveState();
-    renderView();
-};
-
 window.fetchCompetitionList = async (schoolId) => {
     if (!supabaseClient || !schoolId) return;
     const { data, error } = await supabaseClient.rpc('competition_list_for_admin', { p_school_id: schoolId });
@@ -1446,79 +1596,6 @@ window.fetchCompetitionRegistrations = async (competitionId) => {
     const { data } = await supabaseClient.rpc('competition_registrations_list', { p_competition_id: competitionId });
     state.competitionRegistrations = Array.isArray(data) ? data : [];
     renderView();
-};
-
-window.saveCompetition = async () => {
-    const t = window.t;
-    const schoolId = state.competitionSchoolId || state.currentSchool?.id;
-    if (!schoolId || !supabaseClient) { alert(t('competition_error') + (schoolId ? '' : ' Missing school.') + (!supabaseClient ? ' No database connection.' : '')); return; }
-    const { data: sess } = await supabaseClient.auth.getSession();
-    if (!sess?.session?.user) {
-        alert(t('competition_error') + ' You are not signed in. Log in as a school admin or platform dev, then try again.');
-        return;
-    }
-    const name = (document.getElementById('comp-name') || {}).value?.trim();
-    const date = (document.getElementById('comp-date') || {}).value;
-    const time = (document.getElementById('comp-time') || {}).value || '19:00';
-    if (!name || !date) { alert(t('competition_error') + ' Please enter event name and date.'); return; }
-    const startsAt = new Date(date + 'T' + time + ':00').toISOString();
-    const nextSteps = (document.getElementById('comp-next-steps') || {}).value || '';
-    const container = document.getElementById('comp-questions-container');
-    const questions = container ? Array.from(container.querySelectorAll('input[data-qidx]')).sort((a, b) => parseInt(a.getAttribute('data-qidx'), 10) - parseInt(b.getAttribute('data-qidx'), 10)).map(inp => inp.value?.trim() || '') : [];
-    const id = (document.getElementById('comp-id') || {}).value;
-    try {
-        if (id) {
-            const cur = state.currentCompetition || {};
-            const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
-            const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
-            const { data: res, error } = await supabaseClient.rpc('competition_update', {
-                p_competition_id: id,
-                p_name: name,
-                p_starts_at: startsAt,
-                p_questions: questions,
-                p_next_steps_text: nextSteps,
-                p_is_active: !!cur.is_active,
-                p_is_sign_in_active: !!cur.is_sign_in_active,
-                p_video_submission_enabled: videoEnabled,
-                p_video_submission_prompt: videoPrompt,
-                p_image_url: ''
-            });
-            if (error) throw new Error(error.message);
-            if (res == null) throw new Error('Update failed. Are you logged in as an admin for this school?');
-            state.currentCompetition = res || cur;
-            state.competitions = (state.competitions || []).map(c => c.id === id ? (res || c) : c);
-        } else {
-            const videoEnabled = !!(document.getElementById('comp-video-enabled') || {}).checked;
-            const videoPrompt = (document.getElementById('comp-video-prompt') || {}).value?.trim() || '';
-            const { data: res, error } = await supabaseClient.rpc('competition_create', {
-                p_school_id: schoolId,
-                p_name: name,
-                p_starts_at: startsAt,
-                p_questions: questions,
-                p_next_steps_text: nextSteps,
-                p_video_submission_enabled: videoEnabled,
-                p_video_submission_prompt: videoPrompt,
-                p_image_url: ''
-            });
-            if (error) throw new Error(error.message);
-            const newComp = res != null && (typeof res === 'object' ? res : (typeof res === 'string' ? JSON.parse(res) : null));
-            if (!newComp) throw new Error('Create failed. Are you logged in as an admin for this school?');
-            state.competitions = [newComp, ...(state.competitions || [])];
-        }
-        state.jackAndJillFormOpen = false;
-        state.competitionId = null;
-        state.currentCompetition = null;
-        if (schoolId) window.fetchCompetitionList(schoolId);
-        alert(t('competition_saved'));
-        renderView();
-    } catch (e) {
-        const msg = e?.message || String(e) || '';
-        if (msg.includes('Permission denied') && msg.includes('admin')) {
-            alert(t('competition_error') + '\n\nYour account is not linked to this session.\n\n• If you are a school admin: use the "Link account" card on your dashboard to enter your password and link.\n• If you are a platform dev: use the "Enable username login" card or log out and log in again with your username and password.');
-        } else {
-            alert(t('competition_error') + '\n\n' + (msg || 'Unknown error'));
-        }
-    }
 };
 
 let _competitionAutosaveTimer = null;
@@ -1638,18 +1715,6 @@ window.removeCompetitionQuestion = (idx) => {
     debouncedAutosaveCompetition();
 };
 
-window.toggleCompetitionActive = async (id, checked) => {
-    if (!supabaseClient) return;
-    const { data } = await supabaseClient.rpc('competition_toggle_active', { p_competition_id: id, p_is_active: checked });
-    if (data) state.currentCompetition = data; state.competitions = (state.competitions || []).map(c => c.id === id ? (data || c) : c);
-    renderView();
-};
-window.toggleCompetitionSignIn = async (id, checked) => {
-    if (!supabaseClient) return;
-    const { data } = await supabaseClient.rpc('competition_toggle_sign_in', { p_competition_id: id, p_is_sign_in_active: checked });
-    if (data) state.currentCompetition = data; state.competitions = (state.competitions || []).map(c => c.id === id ? (data || c) : c);
-    renderView();
-};
 window.toggleCompetitionActiveFromStudents = async (id, checked) => {
     if (!supabaseClient) return;
     const { data } = await supabaseClient.rpc('competition_toggle_active', { p_competition_id: id, p_is_active: checked });
@@ -2446,8 +2511,106 @@ function _renderViewImpl() {
         `;
     }
     else if (view === 'schedule') {
+        const regEnabled = !state.isAdmin && state.currentSchool?.class_registration_enabled;
+        // Trigger async load of availability data if not yet loaded
+        if (regEnabled && !state.classRegLoaded) {
+            window.loadClassAvailability().then(() => { renderView(); if (window.lucide) window.lucide.createIcons(); });
+        }
+
+        // Helper to get registration info for a class
+        const getRegInfo = (classObj) => {
+            if (!regEnabled || !state.classRegLoaded) return null;
+            const nextDate = window.getNextClassDate(classObj.day);
+            if (!nextDate) return null;
+            const dateStr = window.formatClassDate(nextDate);
+            const key = classObj.id + '_' + dateStr;
+            const avail = state.classAvailability[key] || {};
+            const myReg = (state.studentRegistrations || []).find(r => r.class_id === classObj.id && r.class_date === dateStr && r.status === 'registered');
+            const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
+            const isOver = classDateTime.getTime() <= Date.now();
+            return {
+                dateStr,
+                maxCapacity: avail.max_capacity,
+                registeredCount: avail.registered_count || 0,
+                spotsLeft: avail.spots_left,
+                isRegistered: !!myReg,
+                registrationId: myReg?.id,
+                canCancel: myReg ? (classDateTime.getTime() - Date.now()) > 4 * 60 * 60 * 1000 : false,
+                isOver
+            };
+        };
+
+        // Build spots left HTML for list view
+        const buildRegButton = (c, info) => {
+            if (!info) return '';
+            if (info.isOver) {
+                return `<div class="class-reg-status"><div class="reg-past-note">${t.class_already_started}</div></div>`;
+            }
+            let spotsHtml = '';
+            if (info.isRegistered) {
+                return `
+                    <div class="class-reg-status">
+                        <div class="reg-badge reg-badge-registered"><i data-lucide="check-circle" size="14"></i> ${t.registered_check}</div>
+                        ${info.canCancel ? `<button class="reg-cancel-btn" onclick="event.stopPropagation(); window.cancelRegistrationFromSchedule('${info.registrationId}')">${t.cancel_registration}</button>` : `<div class="reg-deadline-note">${t.cannot_cancel_deadline}</div>`}
+                    </div>`;
+            }
+            if (info.maxCapacity !== null && info.maxCapacity !== undefined) {
+                if (info.spotsLeft === 0) {
+                    return `<div class="class-reg-status"><div class="reg-badge reg-badge-full"><i data-lucide="x-circle" size="14"></i> ${t.class_full}</div></div>`;
+                }
+                if (info.spotsLeft <= 10) {
+                    spotsHtml = `<div class="reg-urgency">${(t.only_n_spots || '').replace('{n}', info.spotsLeft)}</div>`;
+                }
+            }
+            return `
+                <div class="class-reg-status">
+                    ${spotsHtml}
+                    <button class="reg-register-btn" onclick="event.stopPropagation(); window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}')">${t.register_for_class}</button>
+                    ${info.maxCapacity != null ? `<div class="reg-spots-info">${(t.spots_left || '').replace('{n}', info.spotsLeft)}</div>` : `<div class="reg-spots-info">${t.unlimited_spots}</div>`}
+                </div>`;
+        };
+
+        // Compact reg info for weekly tile
+        const buildTileReg = (c, info) => {
+            if (!info) return '';
+            if (info.isOver) {
+                return `<div class="tile-reg-past">${t.class_already_started}</div>`;
+            }
+            if (info.isRegistered) {
+                return `<div class="tile-reg-signed-up-row">
+                    <div class="tile-reg-signed-up"><i data-lucide="check" size="12"></i> ${t.registered}</div>
+                    ${info.canCancel ? `<button type="button" class="tile-cancel-btn" onclick="event.stopPropagation(); window.cancelRegistrationFromSchedule('${info.registrationId}')">${t.cancel_registration}</button>` : `<span class="tile-deadline-note">${t.cannot_cancel_deadline}</span>`}
+                </div>`;
+            }
+            if (info.maxCapacity !== null && info.maxCapacity !== undefined && info.spotsLeft === 0) {
+                return `<div class="tile-reg-badge tile-reg-full" title="${t.class_full}"><i data-lucide="x" size="10"></i></div>`;
+            }
+            let urgency = '';
+            if (info.maxCapacity != null && info.spotsLeft <= 10) {
+                urgency = `<div class="tile-reg-urgency">${info.spotsLeft} left</div>`;
+            }
+            return `<div class="tile-reg-actions">
+                ${urgency}
+                <button type="button" class="tile-join-btn" onclick="event.stopPropagation(); window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}')" title="${t.register_for_class}"><i data-lucide="plus" size="12"></i> ${t.join_class}</button>
+            </div>`;
+        };
+
+        // Week context
+        const weekRange = window.getCurrentWeekRange();
+        const weekStartStr = window.formatShortDate(weekRange.start, state.language);
+        const weekEndStr = window.formatShortDate(weekRange.end, state.language);
+        const weekBannerText = (t.week_of || 'Week of {start} – {end}').replace('{start}', weekStartStr).replace('{end}', weekEndStr);
+
         html += `<h1 style="margin-bottom: 0.5rem;">${t.schedule_title}</h1>`;
-        html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.classes_subtitle}</p>`;
+        html += `<p class="text-muted" style="margin-bottom: 0.8rem; font-size: 1.1rem;">${t.classes_subtitle}</p>`;
+
+        // Week banner
+        html += `
+            <div class="week-banner">
+                <i data-lucide="calendar-range" size="16" style="opacity: 0.6;"></i>
+                <span>${weekBannerText}</span>
+            </div>
+        `;
 
         // View Toggle
         html += `
@@ -2468,18 +2631,24 @@ function _renderViewImpl() {
             });
 
             sortedClasses.forEach(c => {
+                const info = getRegInfo(c);
+                const isPast = regEnabled && window.isDayPastInCurrentWeek(c.day);
+                const classDayDate = window.getCurrentWeekDate(c.day);
+                const classDayStr = classDayDate ? window.formatShortDate(classDayDate, state.language) : c.day;
                 html += `
-                    <div class="card" style="padding: 1.2rem; border-radius: 20px;">
+                    <div class="card" style="padding: 1.2rem; border-radius: 20px; ${isPast ? 'opacity: 0.5;' : ''}">
                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
                             <div style="display:flex; gap: 0.5rem;">
                                 <span style="background: var(--text); color: var(--background); padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">${c.tag || 'Class'}</span>
+                                ${isPast ? `<span style="background: var(--system-gray4); color: var(--background); padding: 0.3rem 0.6rem; border-radius: 40px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase;">${t.past_day}</span>` : ''}
                             </div>
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
                         <div class="text-muted" style="display:flex; align-items:center; flex-wrap: wrap; gap:0.4rem; font-size: 0.9rem;">
-                            <i data-lucide="calendar" size="14"></i> ${c.day} • <i data-lucide="clock" size="14"></i> ${c.time}
+                            <i data-lucide="calendar" size="14"></i> ${classDayStr} • <i data-lucide="clock" size="14"></i> ${c.time}
                             ${c.location ? `• <i data-lucide="map-pin" size="14" style="opacity: 0.4;"></i> <span style="opacity: 0.7; font-weight: 500;">${c.location}</span>` : ''}
                         </div>
+                        ${isPast ? '' : buildRegButton(c, info)}
                     </div>
                 `;
             });
@@ -2492,21 +2661,33 @@ function _renderViewImpl() {
             daysOrder.forEach(dayKey => {
                 const aliases = dayAliases[dayKey];
                 const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
+                const isPastDay = regEnabled && window.isDayPastInCurrentWeek(dayKey);
+                const dayDate = window.getCurrentWeekDate(dayKey);
+                const dayDateStr = dayDate ? dayDate.toLocaleDateString(state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short' }) : '';
+                const isToday = dayDate && (() => { const td = new Date(); td.setHours(0,0,0,0); return dayDate.getTime() === td.getTime(); })();
 
                 html += `
-                    <div class="day-tile">
-                        <div class="day-tile-header">${t[dayKey.toLowerCase()]}</div>
+                    <div class="day-tile ${isPastDay ? 'day-tile-past' : ''}">
+                        <div class="day-tile-header">
+                            ${t[dayKey.toLowerCase()]}
+                            <div style="font-size: 0.55rem; font-weight: 600; opacity: 0.7; margin-top: 1px;">${dayDateStr}</div>
+                        </div>
                         <div style="display:flex; flex-direction:column; gap:0.6rem;">
-                            ${dayClasses.length > 0 ? dayClasses.map(c => `
-                                <div class="tile-class-item">
+                            ${dayClasses.length > 0 ? dayClasses.map(c => {
+                                const info = isPastDay ? null : getRegInfo(c);
+                                const isRegistered = info && info.isRegistered;
+                                const showRegisteredHighlight = isRegistered && info && !info.isOver;
+                                return `
+                                <div class="tile-class-item ${showRegisteredHighlight ? 'tile-class-item-registered' : ''}">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
                                         <div class="tile-class-level">${c.tag || 'Open'}</div>
                                         ${c.location ? `<div onclick="window.showLocationDetails(\`${c.location.replace(/'/g, "\\'")}\`)" style="font-size: 7px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8; cursor: pointer;"><i data-lucide="map-pin" style="width: 7px; height: 7px; opacity: 0.5;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
                                     </div>
                                     <div class="tile-class-desc">${c.name}</div>
                                     <div class="tile-class-time">${c.time}</div>
-                                </div>
-                            `).join('') : `<div class="text-muted" style="font-size:0.6rem; font-style:italic;">${t.no_classes_msg}</div>`}
+                                    ${isPastDay ? '' : buildTileReg(c, info)}
+                                </div>`;
+                            }).join('') : `<div class="text-muted" style="font-size:0.6rem; font-style:italic;">${t.no_classes_msg}</div>`}
                         </div>
                     </div>
                 `;
@@ -2785,19 +2966,99 @@ function _renderViewImpl() {
                         ` : ''}
                     </div>
                 </div>
-                <div class="students-filters-wrap" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 0 1.2rem 10px; align-items: center;">
-                    <select class="students-filter-select" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
+                ${state.currentSchool?.class_registration_enabled ? (() => {
+                    const weekRegs = state.adminWeekRegistrations || [];
+                    const activeRegs = weekRegs.filter(r => r.status === 'registered' || r.status === 'attended');
+                    // Group by class_id + class_date
+                    const grouped = {};
+                    activeRegs.forEach(r => {
+                        const key = r.class_id + '_' + r.class_date;
+                        if (!grouped[key]) grouped[key] = { class_name: r.class_name, class_time: r.class_time, class_date: r.class_date, students: [] };
+                        grouped[key].students.push(r);
+                    });
+                    const groupedArr = Object.values(grouped).sort((a, b) => (a.class_date + a.class_time).localeCompare(b.class_date + b.class_time));
+                    // Compute the actual date range from loaded registrations
+                    const allRegDates = activeRegs.map(r => r.class_date).filter(Boolean);
+                    let dateRangeLabel = '';
+                    if (allRegDates.length > 0) {
+                        const sorted = [...new Set(allRegDates)].sort();
+                        const minD = new Date(sorted[0] + 'T00:00:00');
+                        const maxD = new Date(sorted[sorted.length - 1] + 'T00:00:00');
+                        dateRangeLabel = window.formatShortDate(minD, state.language) + ' – ' + window.formatShortDate(maxD, state.language);
+                    } else {
+                        const weekRange = window.getCurrentWeekRange();
+                        dateRangeLabel = window.formatShortDate(weekRange.start, state.language) + ' – ' + window.formatShortDate(weekRange.end, state.language);
+                    }
+
+                    return `
+                    <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
+                        <div class="admin-reg-header" onclick="state.adminRegExpanded=!state.adminRegExpanded; renderView(); if(window.lucide) window.lucide.createIcons();" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="calendar-check" size="16" style="opacity: 0.6;"></i>
+                                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.class_registrations_title}</span>
+                                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500;">${dateRangeLabel}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                ${activeRegs.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${activeRegs.length}</span>` : ''}
+                                <i data-lucide="${state.adminRegExpanded ? 'chevron-up' : 'chevron-down'}" size="16" style="opacity: 0.4;"></i>
+                            </div>
+                        </div>
+                        ${state.adminRegExpanded ? `
+                        <div class="admin-reg-content" style="padding: 0.8rem 0;">
+                            ${groupedArr.length === 0 ? `
+                                <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">
+                                    <i data-lucide="inbox" size="24" style="opacity: 0.2; margin-bottom: 0.3rem;"></i>
+                                    <div>${t.no_registrations_yet}</div>
+                                </div>
+                            ` : groupedArr.map(g => {
+                                const dateObj = new Date(g.class_date + 'T00:00:00');
+                                const dateLabel = window.formatShortDate(dateObj, state.language);
+                                const maxCap = (state.classes || []).find(cl => cl.id === g.students[0]?.class_id)?.max_capacity;
+                                const capLabel = maxCap ? `${g.students.length} / ${maxCap}` : `${g.students.length}`;
+                                return `
+                                <div class="admin-reg-card">
+                                    <div class="admin-reg-card-header">
+                                        <div>
+                                            <div style="font-size: 0.9rem; font-weight: 700;">${g.class_name}</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${dateLabel} • ${g.class_time}</div>
+                                        </div>
+                                        <div class="admin-reg-count">${capLabel}</div>
+                                    </div>
+                                    <div class="admin-reg-students">
+                                        ${g.students.map(s => {
+                                            const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
+                                            return `<div class="admin-reg-student-row">
+                                                ${statusIcon}
+                                                <span style="font-size: 0.8rem; font-weight: 500;">${s.student_name}</span>
+                                                <span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${s.status === 'attended' ? t.attended : t.registered}</span>
+                                            </div>`;
+                                        }).join('')}
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        ` : ''}
+                    </div>`;
+                })() : ''}
+                <div class="filter-bar">
+                    <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
                         <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
                         <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With active pack'}</option>
                         <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No active pack'}</option>
                     </select>
-                    <select class="students-filter-select" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
+                    <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
                         <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
                         ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
                     </select>
+                    <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
+                        <option value="all" ${(state.adminStudentsFilterPaid || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                        <option value="paid" ${state.adminStudentsFilterPaid === 'paid' ? 'selected' : ''}>${t.filter_paid || 'Paid'}</option>
+                        <option value="unpaid" ${state.adminStudentsFilterPaid === 'unpaid' ? 'selected' : ''}>${t.filter_unpaid || 'Unpaid'}</option>
+                    </select>
+                    <span class="filter-count" id="students-filter-count"></span>
                 </div>
                 <div class="students-search-wrap">
-                    <input type="text" class="students-search" placeholder="${t.search_students}" oninput="filterStudents(this.value)">
+                    <input type="text" class="students-search" placeholder="${t.search_students}" value="${(state.adminStudentsSearch || '').replace(/"/g, '&quot;')}" oninput="state.adminStudentsSearch=this.value; filterStudents(this.value)">
                 </div>
                 <div class="students-list" id="admin-student-list">
                     ${state.loading && state.students.length === 0 ? `
@@ -2805,7 +3066,7 @@ function _renderViewImpl() {
                         <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
                         <p>${t.loading_students_msg}</p>
                     </div>
-                    ` : getFilteredStudents('').map(s => renderAdminStudentCard(s)).join('')}
+                    ` : (() => { const _f = getFilteredStudents(state.adminStudentsSearch || ''); setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0); return _f.map(s => renderAdminStudentCard(s)).join(''); })()}
                 </div>
             </div>
         `;
@@ -2863,15 +3124,19 @@ function _renderViewImpl() {
         const now = new Date();
         const defaultStart = state.adminRevenueDateStart || (new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
         const defaultEnd = state.adminRevenueDateEnd || (new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]);
-        const dateStart = state.adminRevenueDateStart ? new Date(state.adminRevenueDateStart) : new Date(now.getFullYear(), now.getMonth(), 1);
-        const dateEnd = state.adminRevenueDateEnd ? new Date(state.adminRevenueDateEnd) : new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const dateStart = state.adminRevenueDateStart ? new Date(state.adminRevenueDateStart + 'T00:00:00') : new Date(now.getFullYear(), now.getMonth(), 1);
+        const dateEnd = state.adminRevenueDateEnd ? new Date(state.adminRevenueDateEnd + 'T23:59:59.999') : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         const pkgFilter = state.adminRevenuePackageFilter;
+        const statusFilter = state.adminRevenueStatusFilter;
+        const methodFilter = state.adminRevenueMethodFilter;
 
         let filteredPayments = [...(state.paymentRequests || [])];
         filteredPayments = filteredPayments.filter(r => {
             const d = new Date(r.created_at);
             if (d < dateStart || d > dateEnd) return false;
             if (pkgFilter && (r.sub_name || '').toLowerCase().trim() !== String(pkgFilter).toLowerCase().trim()) return false;
+            if (statusFilter && r.status !== statusFilter) return false;
+            if (methodFilter && r.payment_method !== methodFilter) return false;
             return true;
         });
         filteredPayments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -2882,19 +3147,38 @@ function _renderViewImpl() {
 
         html += `
             <div class="ios-header" style="background: transparent;">
-                <div class="ios-large-title">${t.nav_revenue}</div>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div class="ios-large-title">${t.nav_revenue}</div>
+                    <button type="button" class="filter-btn" onclick="fetchAllData()" title="${t.refresh_btn}" style="margin-right: 0;">
+                        <i data-lucide="refresh-cw" size="14"></i> ${t.refresh_btn}
+                    </button>
+                </div>
             </div>
 
-            <div class="revenue-filters-wrap" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 0 1.2rem 1rem; align-items: center;">
-                <input type="date" id="revenue-date-start" value="${defaultStart}" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminRevenueDateStart=this.value||null; renderView();">
-                <input type="date" id="revenue-date-end" value="${defaultEnd}" style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminRevenueDateEnd=this.value||null; renderView();">
-                <button type="button" style="font-size: 12px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-weight: 600; cursor: pointer;" onclick="const n=new Date(); state.adminRevenueDateStart=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0]; state.adminRevenueDateEnd=new Date(n.getFullYear(),n.getMonth()+1,0).toISOString().split('T')[0]; renderView();">
-                    ${t.filter_this_month || 'This Month'}
+            <div class="filter-bar">
+                <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueDateStart=this.value||null; renderView();">
+                <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueDateEnd=this.value||null; renderView();">
+                <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueDateStart=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0]; state.adminRevenueDateEnd=new Date(n.getFullYear(),n.getMonth()+1,0).toISOString().split('T')[0]; renderView();">
+                    <i data-lucide="calendar" size="14"></i> ${t.filter_this_month || 'This Month'}
                 </button>
-                <select style="font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
+            </div>
+            <div class="filter-bar" style="padding-top: 0;">
+                <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
                     <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
                     ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminRevenuePackageFilter === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
                 </select>
+                <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
+                    <option value="" ${!statusFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_status || 'status').toLowerCase()}</option>
+                    <option value="approved" ${statusFilter === 'approved' ? 'selected' : ''}>${t.approved}</option>
+                    <option value="rejected" ${statusFilter === 'rejected' ? 'selected' : ''}>${t.rejected}</option>
+                    <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>${t.pending}</option>
+                </select>
+                <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
+                    <option value="" ${!methodFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_method || 'method').toLowerCase()}</option>
+                    <option value="transfer" ${methodFilter === 'transfer' ? 'selected' : ''}>${t.transfer}</option>
+                    <option value="cash" ${methodFilter === 'cash' ? 'selected' : ''}>${t.cash}</option>
+                </select>
+                <span class="filter-count">${(t.filter_result_payments || '{count} payments').replace('{count}', filteredPayments.length)}</span>
             </div>
             
             <div style="padding: 0 1.2rem; margin-bottom: 2rem;">
@@ -3033,6 +3317,14 @@ function _renderViewImpl() {
                                  <input type="text" value="${c.tag || 'Clase'}" oninput="debouncedUpdateClass(${c.id}, 'tag', this.value)" placeholder="Ej: Principiante" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
                             </div>
                         </div>
+                        ${state.currentSchool?.class_registration_enabled ? `
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; opacity: 0.8;">
+                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.max_students}</label>
+                                 <input type="number" min="1" value="${c.max_capacity || ''}" oninput="debouncedUpdateClass(${c.id}, 'max_capacity', this.value)" placeholder="${t.max_students_placeholder}" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
                 `).join('')}
                 
@@ -3169,6 +3461,23 @@ function _renderViewImpl() {
                 </div>
                 ${state.additionalFeaturesExpanded ? `
                 <div class="expandable-section-content" style="padding: 1rem 0;">
+                    <!-- Class Registration Toggle -->
+                    <div class="card" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                    <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
+                                    ${t.registration_enabled}
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; padding-left: 26px;">${t.registration_enabled_desc}</div>
+                            </div>
+                            <label class="toggle-switch" style="flex-shrink: 0; margin-left: 12px;">
+                                <input type="checkbox" class="toggle-switch-input" ${state.currentSchool?.class_registration_enabled ? 'checked' : ''} onchange="window.toggleClassRegistration(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${state.currentSchool?.jack_and_jill_enabled === true ? t.create_new_competition : ''}</div>
                     <button class="btn-primary" ${state.currentSchool?.jack_and_jill_enabled === true ? 'onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)"' : 'disabled'} style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600; ${state.currentSchool?.jack_and_jill_enabled !== true ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
                         <i data-lucide="trophy" size="16" style="margin-right: 8px;"></i> ${t.jack_and_jill}
@@ -3414,6 +3723,253 @@ window.setScheduleView = (v) => {
     renderView();
 };
 
+// --- CLASS REGISTRATION HELPERS ---
+
+window.getNextClassDate = (dayCode) => {
+    const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
+    const dayAliases = { 'Mo': 1, 'Monday': 1, 'Tu': 2, 'Tuesday': 2, 'We': 3, 'Wednesday': 3, 'Th': 4, 'Thursday': 4, 'Fr': 5, 'Friday': 5, 'Sa': 6, 'Saturday': 6, 'Su': 0, 'Sunday': 0 };
+    let targetDay = dayMap[dayCode];
+    if (targetDay === undefined) targetDay = dayAliases[dayCode];
+    if (targetDay === undefined) return null;
+    const now = new Date();
+    const today = now.getDay(); // 0=Sun
+    let daysUntil = targetDay - today;
+    if (daysUntil < 0) daysUntil += 7;
+    if (daysUntil === 0) {
+        // Today: if time not passed yet, use today. Otherwise next week.
+        // For registration, always use today if same day.
+    }
+    const result = new Date(now);
+    result.setDate(result.getDate() + daysUntil);
+    return result;
+};
+
+window.formatClassDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+};
+
+// Returns the Monday of the current week (Mon-Sun week)
+window.getCurrentWeekMonday = () => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const diff = day === 0 ? -6 : 1 - day; // if Sunday, go back 6 days; else go to Monday
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+};
+
+// Returns the date for a given day code within the CURRENT Mon-Sun week (even if that day has passed)
+window.getCurrentWeekDate = (dayCode) => {
+    const dayOffsets = { 'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6 };
+    const dayAliasMap = { 'Mo': 0, 'Monday': 0, 'Tu': 1, 'Tuesday': 1, 'We': 2, 'Wednesday': 2, 'Th': 3, 'Thursday': 3, 'Fr': 4, 'Friday': 4, 'Sa': 5, 'Saturday': 5, 'Su': 6, 'Sunday': 6 };
+    let offset = dayOffsets[dayCode];
+    if (offset === undefined) offset = dayAliasMap[dayCode];
+    if (offset === undefined) return null;
+    const monday = window.getCurrentWeekMonday();
+    const result = new Date(monday);
+    result.setDate(monday.getDate() + offset);
+    return result;
+};
+
+// Returns {start: Date, end: Date} for the current Mon-Sun week
+window.getCurrentWeekRange = () => {
+    const monday = window.getCurrentWeekMonday();
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { start: monday, end: sunday };
+};
+
+// Check if a day code is in the past (before today) within the current week
+window.isDayPastInCurrentWeek = (dayCode) => {
+    const dayDate = window.getCurrentWeekDate(dayCode);
+    if (!dayDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dayDate < today;
+};
+
+// Format a date as short locale string: "Mon, Feb 11"
+window.formatShortDate = (date, lang) => {
+    if (!date) return '';
+    const locale = lang === 'es' ? 'es-ES' : lang === 'de' ? 'de-DE' : 'en-US';
+    return new Date(date).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+window.loadClassAvailability = async () => {
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient || !state.currentSchool?.class_registration_enabled) return;
+
+    // Get availability for each day of the coming week
+    const availability = {};
+    const dates = new Set();
+    (state.classes || []).forEach(c => {
+        const nextDate = window.getNextClassDate(c.day);
+        if (nextDate) dates.add(window.formatClassDate(nextDate));
+    });
+
+    for (const dateStr of dates) {
+        try {
+            const { data, error } = await supabaseClient.rpc('get_class_availability', {
+                p_school_id: schoolId,
+                p_class_date: dateStr
+            });
+            if (!error && data) {
+                const arr = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+                arr.forEach(item => {
+                    availability[item.class_id + '_' + dateStr] = item;
+                });
+            }
+        } catch (e) { console.warn('Error loading availability for', dateStr, e); }
+    }
+
+    // Also load student's own registrations
+    let myRegs = [];
+    if (state.currentUser?.id) {
+        try {
+            const { data, error } = await supabaseClient.rpc('get_student_upcoming_registrations', {
+                p_student_id: String(state.currentUser.id),
+                p_school_id: schoolId
+            });
+            if (!error && data) {
+                myRegs = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+            }
+        } catch (e) { console.warn('Error loading registrations:', e); }
+    }
+
+    state.classAvailability = availability;
+    state.studentRegistrations = myRegs;
+    state.classRegLoaded = true;
+};
+
+window.showMessageModal = (opts) => {
+    const modal = document.getElementById('message-modal');
+    const iconEl = document.getElementById('message-modal-icon');
+    const titleEl = document.getElementById('message-modal-title');
+    const bodyEl = document.getElementById('message-modal-body');
+    const actionsEl = document.getElementById('message-modal-actions');
+    if (!modal || !iconEl || !titleEl || !bodyEl || !actionsEl) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const close = () => {
+        modal.classList.add('hidden');
+    };
+    iconEl.className = 'message-modal-icon message-modal-icon-' + (opts.icon || 'success');
+    iconEl.innerHTML = opts.icon === 'warning' ? '<i data-lucide="alert-circle" size="30"></i>' : '<i data-lucide="check-circle" size="30"></i>';
+    titleEl.textContent = typeof opts.title === 'function' ? opts.title() : (opts.title || '');
+    const bodyText = typeof opts.body === 'function' ? opts.body() : (opts.body || '');
+    bodyEl.textContent = bodyText;
+    bodyEl.style.display = bodyText ? '' : 'none';
+    const primaryLabel = typeof opts.primaryLabel === 'function' ? opts.primaryLabel() : (opts.primaryLabel || t('got_it'));
+    const secondaryLabel = opts.secondaryLabel != null ? (typeof opts.secondaryLabel === 'function' ? opts.secondaryLabel() : opts.secondaryLabel) : null;
+    actionsEl.className = 'message-modal-actions' + (secondaryLabel ? ' message-modal-actions-row' : '');
+    actionsEl.innerHTML = secondaryLabel
+        ? `<button type="button" class="btn-secondary" style="flex:1;">${secondaryLabel}</button><button type="button" class="btn-primary" style="flex:1;">${primaryLabel}</button>`
+        : `<button type="button" class="btn-primary" style="width:100%;">${primaryLabel}</button>`;
+    actionsEl.querySelector('.btn-primary').onclick = () => {
+        if (opts.onPrimary) opts.onPrimary(close);
+        else close();
+    };
+    if (secondaryLabel) {
+        actionsEl.querySelector('.btn-secondary').onclick = () => {
+            if (opts.onSecondary) opts.onSecondary(close);
+            else close();
+        };
+    }
+    modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.showRegisterSuccessModal = () => {
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    window.showMessageModal({
+        icon: 'success',
+        title: t('registered_title'),
+        body: t('register_success_4h_note'),
+        primaryLabel: t('got_it'),
+        onPrimary: (close) => { close(); }
+    });
+};
+
+window.showCancelConfirmModal = (registrationId) => {
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const studentId = state.currentUser?.id;
+    if (!studentId || !supabaseClient) return;
+    window.showMessageModal({
+        icon: 'warning',
+        title: t('cancel_registration'),
+        body: t('cancel_confirm_full'),
+        primaryLabel: t('cancel_confirm_yes'),
+        secondaryLabel: t('go_back'),
+        onSecondary: (close) => { close(); },
+        onPrimary: async (close) => {
+            try {
+                const { error } = await supabaseClient.rpc('cancel_class_registration', {
+                    p_registration_id: registrationId,
+                    p_student_id: String(studentId)
+                });
+                if (error) throw error;
+                await window.loadClassAvailability();
+                renderView();
+                if (window.lucide) window.lucide.createIcons();
+                close();
+            } catch (e) {
+                console.error('Cancel error:', e);
+                close();
+                alert(e.message || t('cancel_error'));
+            }
+        }
+    });
+};
+
+window.registerForClass = async (classId, className) => {
+    const schoolId = state.currentSchool?.id;
+    const studentId = state.currentUser?.id;
+    if (!schoolId || !studentId || !supabaseClient) return;
+
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const classObj = (state.classes || []).find(c => c.id === classId);
+    if (!classObj) return;
+
+    const nextDate = window.getNextClassDate(classObj.day);
+    if (!nextDate) return;
+    const dateStr = window.formatClassDate(nextDate);
+    const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
+    if (classDateTime.getTime() <= Date.now()) {
+        window.showMessageModal({
+            icon: 'warning',
+            title: t('class_already_started'),
+            body: '',
+            primaryLabel: t('got_it')
+        });
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient.rpc('register_for_class', {
+            p_student_id: String(studentId),
+            p_class_id: classId,
+            p_school_id: schoolId,
+            p_class_date: dateStr
+        });
+        if (error) throw error;
+        // Refresh availability
+        await window.loadClassAvailability();
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+        window.showRegisterSuccessModal();
+    } catch (e) {
+        console.error('Registration error:', e);
+        alert(e.message || t('register_error'));
+    }
+};
+
+window.cancelRegistrationFromSchedule = (registrationId) => {
+    if (!state.currentUser?.id || !supabaseClient) return;
+    window.showCancelConfirmModal(registrationId);
+};
+
 // --- LOCATION HELPERS ---
 window.formatLocationLabel = (loc) => {
     if (!loc) return '';
@@ -3481,7 +4037,6 @@ window.checkExpirations = async () => {
         }
 
         if (changed) {
-            console.log(`Student[${s.id}] package(s) expired. Updating profile.`);
             if (supabaseClient) {
                 await supabaseClient.from('students').update({
                     balance: s.balance,
@@ -3782,21 +4337,6 @@ window.loginStudent = async () => {
     }
 };
 
-window.buySubscription = async (id) => {
-    if (!state.currentUser || state.isAdmin) {
-        alert("Please log in as a student to purchase a plan.");
-        return;
-    }
-    const sub = state.subscriptions.find(s => s.id === id);
-    const cur = state.currentSchool?.currency || 'MXN';
-    if (confirm(`Purchase ${sub.name} for ${formatPrice(sub.price, cur)} ?`)) {
-        await window.activatePackage(state.currentUser.id, sub.name);
-        alert("Plan activated!");
-        state.currentView = 'qr';
-        renderView();
-    }
-};
-
 window.deleteStudent = async (id) => {
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
@@ -3910,62 +4450,6 @@ window.submitDevLogin = () => {
     }
 };
 
-window.linkSchoolAdminAccount = async () => {
-    const emailEl = document.getElementById('school-admin-link-email');
-    const passEl = document.getElementById('school-admin-link-password');
-    const email = (emailEl && emailEl.value && emailEl.value.trim()) || '';
-    const password = (passEl && passEl.value) || '';
-    const adminUsername = (state.currentUser && state.currentUser.name) ? state.currentUser.name.replace(/\s*\(Admin\)\s*$/i, '').trim() : '';
-    const schoolId = state.currentSchool?.id;
-    if (!email || !password) {
-        alert('Please enter both email and your current admin password (the same one you used to log in to this dashboard).');
-        return;
-    }
-    if (!email.includes('@')) {
-        alert('Please enter a real email address (e.g. admin@myschool.com), not your username.');
-        return;
-    }
-    if (!adminUsername || !schoolId) {
-        alert('Could not detect admin or school. Try refreshing.');
-        return;
-    }
-    if (!supabaseClient) {
-        alert('Database connection not initialized.');
-        return;
-    }
-    try {
-        const { error: signUpErr } = await supabaseClient.auth.signUp({ email, password });
-        if (signUpErr && signUpErr.message && !signUpErr.message.includes('already registered')) {
-            alert('Could not create account: ' + (signUpErr.message || ''));
-            return;
-        }
-        if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
-            const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (signInErr) {
-                alert('That email is already used. Sign in with that email and password, or use a different email here.');
-                return;
-            }
-        }
-        const { data: linked, error: rpcErr } = await supabaseClient.rpc('link_school_admin_auth', {
-            p_username: adminUsername,
-            p_password: password,
-            p_school_id: schoolId
-        });
-        if (rpcErr || !linked) {
-            alert('Password did not match. Use the exact same password you used to log in to this dashboard (for ' + adminUsername + ').');
-            return;
-        }
-        state.schoolAdminLinked = true;
-        if (emailEl) emailEl.value = '';
-        if (passEl) passEl.value = '';
-        alert('Account linked. You can use this email and password to log in next time. All features (e.g. Jack and Jill) will work now.');
-        await fetchAllData();
-        renderView();
-    } catch (e) {
-        console.error('Link school admin:', e);
-        alert('Error: ' + (e.message || 'Could not link account.'));
-    }
-};
 
 window.linkPlatformAdminAccount = async () => {
     const passEl = document.getElementById('platform-link-password');
@@ -4356,16 +4840,6 @@ window.logout = async () => {
     window.location.replace(window.location.origin + '/');
 };
 
-window.confirmSchoolSelection = () => {
-    const selector = document.getElementById('school-selector');
-    const selectedId = selector.value;
-    if (selectedId) {
-        window.selectSchool(selectedId);
-    } else {
-        alert("Por favor, selecciona una academia primero.");
-    }
-};
-
 window.selectSchool = (id) => {
     const school = state.schools.find(s => s.id === id);
     if (school) {
@@ -4400,6 +4874,26 @@ window.toggleWeeklyPreview = () => {
     // Re-initialize Lucide icons since we just re-rendered or added new elements
     if (window.lucide) {
         window.lucide.createIcons();
+    }
+};
+
+window.toggleClassRegistration = async (enabled) => {
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient.rpc('toggle_class_registration_enabled', {
+            p_school_id: schoolId,
+            p_enabled: enabled
+        });
+        if (error) throw error;
+        if (state.currentSchool) state.currentSchool.class_registration_enabled = enabled;
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        console.error('Error toggling class registration:', e);
+        alert('Error: ' + (e.message || 'Could not update setting'));
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
     }
 };
 
@@ -4526,20 +5020,6 @@ window.submitNewSchoolWithAdmin = async () => {
             state.loading = false;
             renderView();
         }
-    }
-};
-
-window.togglePayment = async (id) => {
-    const student = state.students.find(s => s.id === id);
-    if (student) {
-        const newPaidStatus = !student.paid;
-        if (supabaseClient) {
-            const { error } = await supabaseClient.from('students').update({ paid: newPaidStatus }).eq('id', id);
-            if (error) { alert("Error updating: " + error.message); return; }
-        }
-        student.paid = newPaidStatus;
-        saveState();
-        renderView();
     }
 };
 
@@ -4974,10 +5454,6 @@ window.submitAddAdminModal = async () => {
     await fetchAllData();
 };
 
-window.createNewAdmin = () => {
-    window.openAddAdminModal();
-};
-
 window.removeAdmin = async (id) => {
     const t = window.t;
     if (!confirm(t('remove_admin_confirm'))) return;
@@ -4990,20 +5466,6 @@ window.removeAdmin = async (id) => {
         }
         alert(t('admin_removed'));
         await fetchAllData();
-    }
-};
-
-window.updateBalance = async (studentId, value) => {
-    const student = state.students.find(s => s.id === studentId);
-    if (student) {
-        const newBalance = value === "" ? null : parseInt(value);
-        if (supabaseClient) {
-            const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
-            if (error) { alert("Error updating: " + error.message); return; }
-        }
-        student.balance = newBalance;
-        saveState();
-        renderView();
     }
 };
 
@@ -5232,8 +5694,9 @@ function getFilteredStudents(query) {
     const q = (query || '').toLowerCase().trim();
     const hasPackFilter = state.adminStudentsFilterHasPack || 'all';
     const pkgFilter = state.adminStudentsFilterPackage;
+    const paidFilter = state.adminStudentsFilterPaid || 'all';
 
-    return state.students.filter(s => {
+    return (state.students || []).filter(s => {
         if (q && !(s.name || '').toLowerCase().includes(q)) return false;
 
         const packs = s.active_packs || [];
@@ -5243,6 +5706,9 @@ function getFilteredStudents(query) {
 
         if (hasPackFilter === 'yes' && !hasActivePack) return false;
         if (hasPackFilter === 'no' && hasActivePack) return false;
+
+        if (paidFilter === 'paid' && !s.paid) return false;
+        if (paidFilter === 'unpaid' && s.paid) return false;
 
         if (pkgFilter) {
             const sub = state.subscriptions.find(x => x.id === pkgFilter || (x.name || '').toLowerCase() === String(pkgFilter).toLowerCase());
@@ -5258,9 +5724,16 @@ function getFilteredStudents(query) {
 window.filterStudents = (query) => {
     const list = document.getElementById('admin-student-list');
     if (!list) return;
-    const q = query !== undefined ? query : (document.querySelector('.students-search')?.value || '');
+    const q = query !== undefined ? query : (state.adminStudentsSearch || '');
+    if (query !== undefined) state.adminStudentsSearch = query;
     const filtered = getFilteredStudents(q);
     list.innerHTML = filtered.map(s => renderAdminStudentCard(s)).join('');
+    // Update count
+    const countEl = document.getElementById('students-filter-count');
+    if (countEl) {
+        const t = window.t;
+        countEl.textContent = (t('filter_result_students') || '{count} students').replace('{count}', filtered.length);
+    }
     if (window.lucide) lucide.createIcons();
 };
 
@@ -5413,8 +5886,6 @@ window.removeStudentPack = async (studentId, packId) => {
         s.package_expires_at = s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
     }
 
-    console.log(`Removed pack[${packId}] from student[${studentId}]. New balance: ${s.balance}`);
-
     if (supabaseClient) {
         const { error } = await supabaseClient
             .from('students')
@@ -5502,7 +5973,6 @@ window.startScanner = async () => {
         };
 
         const scanSuccess = (id) => {
-            console.log("QR Scanned successfully. ID:", id);
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.pause(false);
             }
@@ -5560,8 +6030,6 @@ window.stopScanner = async () => {
 
 window.handleScan = async (scannedId) => {
     const id = (scannedId || '').trim();
-    console.log(`Processing scan for ID: [${id}]`);
-
     const student = state.students.find(s => s.id === id);
     const resultEl = document.getElementById('inline-scan-result'); // TARGET INLINE
     const t = new Proxy(window.t, {
@@ -5579,6 +6047,26 @@ window.handleScan = async (scannedId) => {
         return;
     }
 
+    const schoolId = state.currentSchool?.id;
+    const regEnabled = state.currentSchool?.class_registration_enabled;
+
+    // If registration is enabled, check for today's registrations
+    let todayRegs = [];
+    if (regEnabled && supabaseClient && schoolId) {
+        try {
+            // Process any expired registrations first (lazy deduction)
+            await supabaseClient.rpc('process_expired_registrations', { p_school_id: schoolId });
+
+            const { data, error } = await supabaseClient.rpc('get_student_registrations_for_today', {
+                p_student_id: String(id),
+                p_school_id: schoolId
+            });
+            if (!error && data) {
+                todayRegs = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+            }
+        } catch (e) { console.warn('Error checking registrations:', e); }
+    }
+
     const packs = student.active_packs || [];
     const now = new Date();
     const activePacks = packs.filter(p => new Date(p.expires_at) > now);
@@ -5587,7 +6075,45 @@ window.handleScan = async (scannedId) => {
     const hasValidPass = student.paid && (isUnlimited || (student.balance != null && student.balance > 0));
     const hasNoClasses = student.paid && !isUnlimited && (student.balance == null || student.balance < 1);
 
-    if (hasNoClasses) {
+    // If student has today's registrations, show registration-aware scan result
+    if (todayRegs.length > 0 && hasValidPass) {
+        const regsHtml = todayRegs.map(r => `
+            <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                    <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--secondary);">${t('student_registered_for')}</span>
+                </div>
+                <div style="font-size: 0.95rem; font-weight: 600;">${r.class_name} <span class="text-muted">@ ${r.class_time}</span></div>
+            </div>
+        `).join('');
+
+        // Build confirm buttons for each registration
+        const regBtns = todayRegs.map(r => `
+            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${r.id}')" style="padding: 0.8rem; font-size: 0.85rem; margin-bottom: 0.4rem;">
+                <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('confirm_attendance_registered')} – ${r.class_name}
+            </button>
+        `).join('');
+
+        resultEl.innerHTML = `
+            <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
+                <h3 style="font-size: 1rem; margin:0 0 0.5rem;">${student.name}</h3>
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.8rem;">
+                    ${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}
+                </div>
+                ${regsHtml}
+                <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.5rem 0;">
+                    <i data-lucide="info" size="12" style="vertical-align: middle; margin-right: 4px;"></i>${t('class_will_deduct')}
+                </div>
+                ${regBtns}
+                <div style="border-top: 1px solid var(--border); margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.3rem;">${t('no_manual_deduction')}</div>
+                </div>
+                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.3rem; opacity:0.5;">
+                    ${t('cancel')}
+                </button>
+            </div>
+        `;
+    } else if (hasNoClasses) {
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--system-orange); background: rgba(255, 149, 0, 0.1); padding: 1rem; text-align: center;">
                 <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
@@ -5639,10 +6165,52 @@ window.cancelAttendance = () => {
     if (html5QrCode) {
         try {
             html5QrCode.resume();
-            console.log("Scanner resumed after cancel.");
         } catch (e) {
             console.warn("Could not resume scanner:", e);
         }
+    }
+};
+
+window.confirmRegisteredAttendance = async (registrationId) => {
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) return;
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    const resultEl = document.getElementById('inline-scan-result');
+
+    try {
+        const { error } = await supabaseClient.rpc('mark_registration_attended', {
+            p_registration_id: registrationId,
+            p_school_id: schoolId
+        });
+        if (error) throw error;
+
+        // Refresh student data to update balances
+        if (supabaseClient && schoolId) {
+            const { data: freshStudents } = await supabaseClient.rpc('get_school_students', { p_school_id: schoolId });
+            if (freshStudents) state.students = freshStudents;
+        }
+
+        resultEl.innerHTML = `
+            <div class="card" style="border-radius: 20px; padding: 1.5rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.8rem;">
+                    <i data-lucide="check" size="24" style="color: white;"></i>
+                </div>
+                <h3 style="font-size: 1rem; color: var(--secondary); margin: 0;">${t('attendance_success')}</h3>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.3rem 0 1rem;">${t('auto_deducted')}</p>
+                <button class="btn-primary w-full" onclick="cancelAttendance()" style="padding: 0.8rem;">${t('close')}</button>
+            </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error('Error confirming registered attendance:', e);
+        resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <p style="color: var(--danger);">${e.message || 'Error confirming attendance'}</p>
+                <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
+            </div>
+        `;
     }
 };
 
@@ -5751,7 +6319,6 @@ window.confirmAttendance = async (studentId, count) => {
         if (html5QrCode) {
             try {
                 html5QrCode.resume();
-                console.log("Scanner resumed after confirmation.");
             } catch (e) {
                 console.warn("Could not resume scanner:", e);
             }
