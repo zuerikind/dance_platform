@@ -84,6 +84,9 @@ const DANCE_LOCALES = {
         two_classes: "2 Classes",
         class_unit: "class",
         classes_unit: "classes",
+        custom_classes_label: "Custom",
+        deduct_btn: "Deduct",
+        deduct_invalid_amount: "Enter 1 or more classes to deduct.",
         cancel: "Cancel",
         confirm_attendance: "Confirm Attendance",
         attendance_success: "Attendance confirmed!",
@@ -463,6 +466,9 @@ const DANCE_LOCALES = {
         two_classes: "2 Clases",
         class_unit: "clase",
         classes_unit: "clases",
+        custom_classes_label: "Otra cantidad",
+        deduct_btn: "Descontar",
+        deduct_invalid_amount: "Indica 1 o más clases a descontar.",
         cancel: "Cancelar",
         confirm_attendance: "Confirmar Asistencia",
         attendance_success: "¡Asistencia confirmada!",
@@ -843,6 +849,9 @@ const DANCE_LOCALES = {
         two_classes: "2 Stunden",
         class_unit: "Stunde",
         classes_unit: "Stunden",
+        custom_classes_label: "Anzahl",
+        deduct_btn: "Abziehen",
+        deduct_invalid_amount: "Gib 1 oder mehr Stunden zum Abziehen ein.",
         cancel: "Abbrechen",
         confirm_attendance: "Anwesenheit bestätigen",
         attendance_success: "Anwesenheit bestätigt!",
@@ -1277,13 +1286,18 @@ async function fetchAllData() {
             ? supabaseClient.rpc('get_school_subscriptions', { p_school_id: sid }).then(r => ({ data: r.data || [], error: r.error }))
             : supabaseClient.from('subscriptions').select('*').eq('school_id', sid).order('name');
 
-        const [classesRes, subsRes, studentsRes, requestsRes, settingsRes, adminsRes] = await Promise.all([
+        const allEnrollmentsPromise = (isStudent && state.currentUser?.user_id)
+            ? supabaseClient.rpc('get_all_student_enrollments', { p_user_id: state.currentUser.user_id }).then(r => ({ data: r.data }))
+            : Promise.resolve({ data: null });
+
+        const [classesRes, subsRes, studentsRes, requestsRes, settingsRes, adminsRes, allEnrollmentsRes] = await Promise.all([
             classesPromise,
             subsPromise,
             studentsQuery,
             supabaseClient.from('payment_requests').select('*, students(name)').eq('school_id', sid).order('created_at', { ascending: false }),
             supabaseClient.from('admin_settings').select('*').eq('school_id', sid),
-            supabaseClient.from('admins').select('*').eq('school_id', sid).order('username')
+            supabaseClient.from('admins').select('*').eq('school_id', sid).order('username'),
+            allEnrollmentsPromise
         ]);
 
         // When RLS blocks, table returns { data: [], error: null }; treat empty as "no data" and use RPC for admins
@@ -1404,18 +1418,12 @@ async function fetchAllData() {
             state.schoolAdminLinked = !!(uid && admins.some(a => a.user_id === uid));
             state.currentAdmin = admins.find(a => a.user_id === uid) || null;
         }
-        // Fetch all enrollments across schools for multi-school package display
-        if (isStudent && state.currentUser?.user_id && supabaseClient) {
-            try {
-                const { data: allEnroll } = await supabaseClient.rpc('get_all_student_enrollments', {
-                    p_user_id: state.currentUser.user_id
-                });
-                if (allEnroll) {
-                    state.allEnrollments = Array.isArray(allEnroll) ? allEnroll : (typeof allEnroll === 'string' ? JSON.parse(allEnroll) : []);
-                } else {
-                    state.allEnrollments = [];
-                }
-            } catch (_) { state.allEnrollments = []; }
+        // All enrollments across schools (fetched in parallel above) for multi-school package display
+        if (isStudent && allEnrollmentsRes?.data != null) {
+            const allEnroll = allEnrollmentsRes.data;
+            state.allEnrollments = Array.isArray(allEnroll) ? allEnroll : (typeof allEnroll === 'string' ? JSON.parse(allEnroll) : []);
+        } else if (isStudent) {
+            state.allEnrollments = [];
         }
         if (isStudent && state.currentUser?.id && supabaseClient && sid) {
             try {
@@ -2217,7 +2225,7 @@ function _renderViewImpl() {
                 </div>
                 
                 <div class="school-combobox-container custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
-                    <div class="school-combobox-trigger" onclick="openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
+                    <div class="school-combobox-trigger" onclick="var list = document.getElementById('school-dropdown-list'); if (list && list.classList.contains('open')) closeSchoolDropdown(); else openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
                         <span id="school-trigger-label" class="school-combobox-label" style="flex: 1; min-width: 0; font: inherit; color: inherit; text-align: left;">${state.currentSchool?.name || (state.loading ? t.loading_schools : (state.schools.length > 0 ? (t.search_school_placeholder || t.select_school_placeholder) : t.no_schools))}</span>
                         <input type="text" id="school-search-input" class="school-combobox-input school-search-when-open" placeholder="${t.search_school_placeholder || t.select_school_placeholder}" value="" autocomplete="off" oninput="filterSchoolDropdown(this.value)" onkeydown="handleSchoolComboboxKeydown(event)" style="display: none;" ${state.loading || state.schools.length === 0 ? 'disabled' : ''} />
                         <i data-lucide="chevron-down" size="18" class="school-combobox-chevron"></i>
@@ -4731,7 +4739,7 @@ window.loginStudent = async () => {
         setSessionIdentity();
         saveState();
         renderView();
-        fetchAllData();
+        await fetchAllData();
     } else {
         alert(t('invalid_login'));
     }
@@ -6657,6 +6665,7 @@ window.handleScan = async (scannedId) => {
             </div>
         `;
     } else if (hasValidPass) {
+        const maxDeduct = (student.balance === null || student.balance === undefined) ? 99 : Math.max(1, student.balance);
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -6674,6 +6683,14 @@ window.handleScan = async (scannedId) => {
                     </button>
                     <button class="btn-secondary" onclick="confirmAttendance('${student.id}', 2)" style="padding: 0.8rem; font-size: 0.85rem;">
                         ${t('two_classes')}
+                    </button>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                    <input type="number" id="scan-custom-count" min="1" max="${maxDeduct}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                    <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${student.id}', n); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">
+                        ${t('deduct_btn')}
                     </button>
                 </div>
                 
@@ -6755,6 +6772,11 @@ window.confirmAttendance = async (studentId, count) => {
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
+    const countNum = typeof count === 'number' ? count : parseInt(count, 10);
+    if (!Number.isInteger(countNum) || countNum < 1) {
+        alert(t('deduct_invalid_amount'));
+        return;
+    }
     const resultEl = document.getElementById('inline-scan-result');
 
     const packs = student.active_packs || [];
@@ -6763,7 +6785,7 @@ window.confirmAttendance = async (studentId, count) => {
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
     const isUnlimited = student.balance === null || hasUnlimitedPack;
 
-    if (!isUnlimited && student.balance !== null && student.balance < count) {
+    if (!isUnlimited && student.balance !== null && student.balance < countNum) {
         alert(t('not_enough_balance'));
         return;
     }
@@ -6776,14 +6798,14 @@ window.confirmAttendance = async (studentId, count) => {
             const { error: rpcError } = await supabaseClient.rpc('deduct_student_classes', {
                 p_student_id: String(studentId),
                 p_school_id: schoolId,
-                p_count: count
+                p_count: countNum
             });
             if (!rpcError) {
                 updated = true;
                 const now = new Date();
                 const activeOnly = (student.active_packs || []).filter(p => new Date(p.expires_at) > now);
                 const packs = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-                let remaining = count;
+                let remaining = countNum;
                 for (const pack of packs) {
                     if (remaining <= 0) break;
                     if (new Date(pack.expires_at) <= now) continue; // skip expired
@@ -6793,7 +6815,7 @@ window.confirmAttendance = async (studentId, count) => {
                     remaining -= deduct;
                 }
                 student.active_packs = packs.filter(p => (p.count || 0) > 0 || new Date(p.expires_at) <= now);
-                student.balance = (student.balance || 0) - count;
+                student.balance = (student.balance || 0) - countNum;
             }
         }
 
@@ -6801,7 +6823,7 @@ window.confirmAttendance = async (studentId, count) => {
             const now = new Date();
             const allPacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
             const activePacks = allPacks.filter(p => new Date(p.expires_at) > now).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-            let remainingToDeduct = count;
+            let remainingToDeduct = countNum;
 
             if (activePacks.length > 0) {
                 for (let i = 0; i < activePacks.length && remainingToDeduct > 0; i++) {
@@ -6825,7 +6847,7 @@ window.confirmAttendance = async (studentId, count) => {
                 student.balance = newBalance;
                 student.active_packs = updatedPacks;
             } else {
-                const newBalance = student.balance - count;
+                const newBalance = student.balance - countNum;
                 if (supabaseClient) {
                     const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
                     if (error) { alert("Error updating balance: " + error.message); return; }
@@ -6843,7 +6865,7 @@ window.confirmAttendance = async (studentId, count) => {
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
-             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${count} ${count === 1 ? t('class_unit') : t('classes_unit')}</div>
+             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${countNum} ${countNum === 1 ? t('class_unit') : t('classes_unit')}</div>
              <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${t('remaining_classes')}: ${newRemaining}</div>
         </div>
         `;
@@ -7152,7 +7174,13 @@ logoEl.addEventListener('click', () => {
     // Global Click Listener for Custom Dropdowns
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.custom-dropdown-container')) {
-            document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.remove('open'));
+            document.querySelectorAll('.custom-dropdown-list').forEach(el => {
+                if (el.id === 'school-dropdown-list' && el.classList.contains('open') && typeof window.closeSchoolDropdown === 'function') {
+                    window.closeSchoolDropdown();
+                } else {
+                    el.classList.remove('open');
+                }
+            });
         }
     });
 })();
