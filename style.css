@@ -2933,7 +2933,8 @@ select option {
 .admin-reg-section.expanded .admin-reg-header .expandable-chevron,
 .students-filter-expandable.expanded .students-filter-header .expandable-chevron,
 .qr-registrations-expandable.expanded .qr-registrations-header .expandable-chevron,
-.expandable-section.expanded .expandable-section-header .expandable-chevron {
+.expandable-section.expanded .expandable-section-header .expandable-chevron,
+.revenue-filters-expandable.expanded .revenue-filters-header .expandable-chevron {
   transform: rotate(180deg);
 }
 .students-filter-expandable .students-filter-bar {

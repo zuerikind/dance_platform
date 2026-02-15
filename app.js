@@ -1192,7 +1192,8 @@ let state = {
     classRegLoaded: false,       // whether availability data has been loaded
     adminWeekRegistrations: [],  // all registrations for the current week (admin view)
     adminRegExpanded: false,     // whether admin registrations section is expanded (collapsed by default)
-    studentsFilterExpanded: false // student filters section collapsed by default to save space
+    studentsFilterExpanded: false, // student filters section collapsed by default to save space
+    adminRevenueFiltersExpanded: false // revenue page filters collapsed by default
 };
 
 // --- DATA FETCHING ---
@@ -2167,7 +2168,8 @@ window.toggleExpandableNoRender = (key) => {
         'adminReg': ['adminRegExpanded', 'admin-reg-content', 'admin-reg-section'],
         'studentsFilter': ['studentsFilterExpanded', 'students-filter-content', 'students-filter-expandable'],
         'qrRegistrations': ['qrRegistrationsExpanded', 'qr-registrations-content', 'qr-registrations-expandable'],
-        'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section']
+        'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section'],
+        'revenueFilters': ['adminRevenueFiltersExpanded', 'revenue-filters-content', 'revenue-filters-expandable']
     };
     const entry = map[key];
     if (!entry) return;
@@ -3485,39 +3487,47 @@ function _renderViewImpl() {
                 </div>
             </div>
 
-            <div class="filter-bar">
-                <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueDateStart=this.value||null; renderView();">
-                <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueDateEnd=this.value||null; renderView();">
-                <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
-                    <i data-lucide="calendar" size="14"></i> ${t.filter_this_month || 'This Month'}
-                </button>
-            </div>
-            <div class="filter-bar">
-                <span class="filter-select-wrap">
-                    <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
-                        <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
-                        ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminRevenuePackageFilter === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
-                    </select>
-                    <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                </span>
-                <span class="filter-select-wrap">
-                    <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
-                        <option value="" ${!statusFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_status || 'status').toLowerCase()}</option>
-                        <option value="approved" ${statusFilter === 'approved' ? 'selected' : ''}>${t.approved}</option>
-                        <option value="rejected" ${statusFilter === 'rejected' ? 'selected' : ''}>${t.rejected}</option>
-                        <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>${t.pending}</option>
-                    </select>
-                    <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                </span>
-                <span class="filter-select-wrap">
-                    <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
-                        <option value="" ${!methodFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_method || 'method').toLowerCase()}</option>
-                        <option value="transfer" ${methodFilter === 'transfer' ? 'selected' : ''}>${t.transfer}</option>
-                        <option value="cash" ${methodFilter === 'cash' ? 'selected' : ''}>${t.cash}</option>
-                    </select>
-                    <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                </span>
-                <span class="filter-count">${(t.filter_result_payments || '{count} payments').replace('{count}', filteredPayments.length)}</span>
+            <div class="revenue-filters-expandable ${state.adminRevenueFiltersExpanded ? 'expanded' : ''}" style="margin: 0 1.2rem; border-bottom: 1px solid var(--border);">
+                <div class="revenue-filters-header" onclick="toggleExpandableNoRender('revenueFilters')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
+                    <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.filters_label || 'Filters'}</span>
+                    <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                </div>
+                <div id="revenue-filters-content" style="display: ${state.adminRevenueFiltersExpanded ? '' : 'none'}; padding-bottom: 12px;">
+                    <div class="filter-bar">
+                        <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueDateStart=this.value||null; renderView();">
+                        <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueDateEnd=this.value||null; renderView();">
+                        <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
+                            <i data-lucide="calendar" size="14"></i> ${t.filter_this_month || 'This Month'}
+                        </button>
+                    </div>
+                    <div class="filter-bar">
+                        <span class="filter-select-wrap">
+                            <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
+                                <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
+                                ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminRevenuePackageFilter === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                            </select>
+                            <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                        </span>
+                        <span class="filter-select-wrap">
+                            <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
+                                <option value="" ${!statusFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_status || 'status').toLowerCase()}</option>
+                                <option value="approved" ${statusFilter === 'approved' ? 'selected' : ''}>${t.approved}</option>
+                                <option value="rejected" ${statusFilter === 'rejected' ? 'selected' : ''}>${t.rejected}</option>
+                                <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>${t.pending}</option>
+                            </select>
+                            <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                        </span>
+                        <span class="filter-select-wrap">
+                            <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
+                                <option value="" ${!methodFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_method || 'method').toLowerCase()}</option>
+                                <option value="transfer" ${methodFilter === 'transfer' ? 'selected' : ''}>${t.transfer}</option>
+                                <option value="cash" ${methodFilter === 'cash' ? 'selected' : ''}>${t.cash}</option>
+                            </select>
+                            <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                        </span>
+                        <span class="filter-count">${(t.filter_result_payments || '{count} payments').replace('{count}', filteredPayments.length)}</span>
+                    </div>
+                </div>
             </div>
             
             <div style="padding: 0 1.2rem; margin-bottom: 2rem;">
