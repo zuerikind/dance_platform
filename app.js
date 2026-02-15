@@ -144,6 +144,7 @@ const DANCE_LOCALES = {
         welcome_classes: "Welcome to the classes of",
         loading: "Loading...",
         select_school_placeholder: "Choose your school...",
+        search_school_placeholder: "Type or select school...",
         loading_schools: "Loading schools...",
         no_schools: "No schools found",
         could_not_load_schools: "Could not load schools",
@@ -310,6 +311,7 @@ const DANCE_LOCALES = {
         join_class: "Join",
         cancel_registration: "Cancel Registration",
         class_full: "Class Full",
+        full_label: "Full",
         class_already_started: "Class already started",
         spots_left: "{n} spots left",
         only_n_spots: "Only {n} places left!",
@@ -491,6 +493,7 @@ const DANCE_LOCALES = {
         welcome_classes: "Bienvenido a las clases de",
         loading: "Cargando...",
         select_school_placeholder: "Elige tu escuela...",
+        search_school_placeholder: "Escribe o elige escuela...",
         loading_schools: "Cargando academias...",
         no_schools: "No hay academias",
         could_not_load_schools: "No se pudieron cargar las academias",
@@ -657,6 +660,7 @@ const DANCE_LOCALES = {
         join_class: "Unirme",
         cancel_registration: "Cancelar registro",
         class_full: "Clase llena",
+        full_label: "Llena",
         class_already_started: "La clase ya comenzó",
         spots_left: "{n} lugares disponibles",
         only_n_spots: "Solo quedan {n} lugares!",
@@ -839,6 +843,7 @@ const DANCE_LOCALES = {
         welcome_classes: "Willkommen beim Unterricht von",
         loading: "Lädt...",
         select_school_placeholder: "Wähle deine Schule...",
+        search_school_placeholder: "Tippen oder Schule wählen...",
         loading_schools: "Schulen werden geladen...",
         no_schools: "Keine Schulen gefunden",
         could_not_load_schools: "Schulen konnten nicht geladen werden",
@@ -980,6 +985,7 @@ const DANCE_LOCALES = {
         join_class: "Anmelden",
         cancel_registration: "Anmeldung stornieren",
         class_full: "Kurs voll",
+        full_label: "Voll",
         class_already_started: "Kurs hat bereits begonnen",
         spots_left: "{n} Plätze frei",
         only_n_spots: "Nur noch {n} Plätze!",
@@ -2030,21 +2036,19 @@ function _renderViewImpl() {
                     <p class="text-muted" style="font-size: 1rem; opacity: 0.6;">${t.select_school_subtitle}</p>
                 </div>
                 
-                <div class="custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
-                    <!-- Custom Dropdown Trigger -->
-                    <div id="school-dropdown-trigger" class="custom-dropdown-trigger" onclick="toggleSchoolDropdown()" style="width: 100%; box-sizing: border-box;">
-                        <span>${state.loading ? t.loading_schools : (state.schools.length > 0 ? t.select_school_placeholder : t.no_schools)}</span>
-                        <i data-lucide="chevron-down" size="18"></i>
+                <div class="school-combobox-container custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
+                    <div class="school-combobox-trigger" onclick="document.getElementById('school-search-input')?.focus(); openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
+                        <input type="text" id="school-search-input" class="school-combobox-input" placeholder="${state.loading ? t.loading_schools : (state.schools.length > 0 ? (t.search_school_placeholder || t.select_school_placeholder) : t.no_schools)}" value="" autocomplete="off" oninput="filterSchoolDropdown(this.value)" onfocus="openSchoolDropdown()" onkeydown="handleSchoolComboboxKeydown(event)" ${state.loading || state.schools.length === 0 ? 'disabled' : ''} />
+                        <i data-lucide="chevron-down" size="18" class="school-combobox-chevron"></i>
                     </div>
-
-                    <!-- Custom Dropdown List -->
-                    <div id="school-dropdown-list" class="custom-dropdown-list" style="width: 100%; box-sizing: border-box;">
+                    <div id="school-dropdown-list" class="custom-dropdown-list school-dropdown-list" style="width: 100%; box-sizing: border-box;">
                         ${state.schools.length > 0 ? state.schools.map(s => `
-                            <div class="dropdown-item ${state.currentSchool?.id === s.id ? 'selected' : ''}" onclick="selectSchool('${s.id}')">
-                                <span>${s.name}</span>
+                            <div class="dropdown-item" data-school-id="${s.id}" data-school-name="${(s.name || '').replace(/"/g, '&quot;')}" onclick="event.preventDefault(); selectSchool('${s.id}');">
+                                <span>${(s.name || '').replace(/</g, '&lt;')}</span>
                                 ${state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : ''}
                             </div>
-                        `).join('') : `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${state.loading ? t.connecting : t.could_not_load_schools}</div>`}
+                        `).join('') : `<div class="school-dropdown-empty" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${state.loading ? t.connecting : t.could_not_load_schools}</div>`}
+                        ${state.schools.length > 0 ? `<div class="school-dropdown-no-match" style="display: none; padding: 1rem; text-align: center; color: var(--text-muted); font-size: 14px;">${t.no_schools}</div>` : ''}
                     </div>
                 </div>
             </div>
@@ -2596,7 +2600,7 @@ function _renderViewImpl() {
                 </div>`;
             }
             if (info.maxCapacity !== null && info.maxCapacity !== undefined && info.spotsLeft === 0) {
-                return `<div class="tile-reg-badge tile-reg-full" title="${t.class_full}"><i data-lucide="x" size="10"></i></div>`;
+                return `<div class="tile-reg-full-pill"><i data-lucide="x-circle" size="12"></i> ${t.full_label || t.class_full}</div>`;
             }
             let urgency = '';
             if (info.maxCapacity != null && info.spotsLeft <= 10) {
@@ -3161,8 +3165,8 @@ function _renderViewImpl() {
 
     } else if (view === 'admin-revenue') {
         const now = new Date();
-        const defaultStart = state.adminRevenueDateStart || (new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
-        const defaultEnd = state.adminRevenueDateEnd || (new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]);
+        const defaultStart = state.adminRevenueDateStart || window.formatClassDate(new Date(now.getFullYear(), now.getMonth(), 1));
+        const defaultEnd = state.adminRevenueDateEnd || window.formatClassDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
         const dateStart = state.adminRevenueDateStart ? new Date(state.adminRevenueDateStart + 'T00:00:00') : new Date(now.getFullYear(), now.getMonth(), 1);
         const dateEnd = state.adminRevenueDateEnd ? new Date(state.adminRevenueDateEnd + 'T23:59:59.999') : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         const pkgFilter = state.adminRevenuePackageFilter;
@@ -3197,7 +3201,7 @@ function _renderViewImpl() {
             <div class="filter-bar">
                 <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueDateStart=this.value||null; renderView();">
                 <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueDateEnd=this.value||null; renderView();">
-                <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueDateStart=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0]; state.adminRevenueDateEnd=new Date(n.getFullYear(),n.getMonth()+1,0).toISOString().split('T')[0]; renderView();">
+                <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
                     <i data-lucide="calendar" size="14"></i> ${t.filter_this_month || 'This Month'}
                 </button>
             </div>
@@ -3576,11 +3580,11 @@ function _renderViewImpl() {
                             <div class="jandj-form-row">
                                 <div>
                                     <label class="jandj-form-label">${t.competition_date}</label>
-                                    <input type="date" id="comp-date" class="jandj-form-input" value="${current && current.starts_at ? new Date(current.starts_at).toISOString().slice(0, 10) : ''}" onchange="debouncedAutosaveCompetition()">
+                                    <input type="date" id="comp-date" class="jandj-form-input" value="${current && current.starts_at ? window.formatClassDate(new Date(current.starts_at)) : ''}" onchange="debouncedAutosaveCompetition()">
                                 </div>
                                 <div>
                                     <label class="jandj-form-label">${t.competition_time}</label>
-                                    <input type="time" id="comp-time" class="jandj-form-input" value="${current && current.starts_at ? new Date(current.starts_at).toTimeString().slice(0, 5) : '19:00'}" onchange="debouncedAutosaveCompetition()">
+                                    <input type="time" id="comp-time" class="jandj-form-input" value="${current && current.starts_at ? (() => { const d = new Date(current.starts_at); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); })() : '19:00'}" onchange="debouncedAutosaveCompetition()">
                                 </div>
                             </div>
                         </div>
@@ -3793,10 +3797,14 @@ window.getNextClassDate = (dayCode) => {
     return result;
 };
 
+// Returns YYYY-MM-DD in the device's local timezone (for display, inputs, and "has class started?" logic).
 window.formatClassDate = (date) => {
     if (!date) return '';
     const d = new Date(date);
-    return d.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
 };
 
 // Returns the Monday of the current week (Mon-Sun week)
@@ -3930,14 +3938,34 @@ window.showMessageModal = (opts) => {
     if (window.lucide) window.lucide.createIcons();
 };
 
-window.showRegisterSuccessModal = () => {
+window.showRegisterSuccessModal = (registrationId) => {
     const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const studentId = state.currentUser?.id;
+    const canCancel = registrationId && studentId && supabaseClient;
     window.showMessageModal({
         icon: 'success',
         title: t('registered_title'),
         body: t('register_success_4h_note'),
         primaryLabel: t('got_it'),
-        onPrimary: (close) => { close(); }
+        secondaryLabel: canCancel ? t('cancel_registration') : null,
+        onPrimary: (close) => { close(); },
+        onSecondary: canCancel ? async (close) => {
+            try {
+                const { error } = await supabaseClient.rpc('cancel_class_registration', {
+                    p_registration_id: registrationId,
+                    p_student_id: String(studentId)
+                });
+                if (error) throw error;
+                close();
+                await window.loadClassAvailability();
+                renderView();
+                if (window.lucide) window.lucide.createIcons();
+            } catch (e) {
+                console.error('Cancel error:', e);
+                close();
+                alert(e.message || t('cancel_error'));
+            }
+        } : undefined
     });
 };
 
@@ -4003,11 +4031,13 @@ window.registerForClass = async (classId, className) => {
             p_class_date: dateStr
         });
         if (error) throw error;
-        // Refresh availability
-        await window.loadClassAvailability();
-        renderView();
-        if (window.lucide) window.lucide.createIcons();
-        window.showRegisterSuccessModal();
+        const registrationId = data?.id || (data && typeof data === 'object' ? data.id : null);
+        // Show success modal immediately; refresh availability in background so phone feels fast
+        window.showRegisterSuccessModal(registrationId);
+        window.loadClassAvailability().then(() => {
+            renderView();
+            if (window.lucide) window.lucide.createIcons();
+        }).catch(() => {});
     } catch (e) {
         console.error('Registration error:', e);
         alert(e.message || t('register_error'));
@@ -5684,33 +5714,60 @@ window.removeSubscription = async (id) => {
 
 // --- MOBILE UI HELPERS ---
 // --- MOBILE UI HELPERS ---
-window.toggleSchoolDropdown = () => {
+
+window.openSchoolDropdown = () => {
     const list = document.getElementById('school-dropdown-list');
-    const triggerIcon = document.querySelector('#school-dropdown-trigger i');
+    const chevron = document.querySelector('.school-combobox-chevron');
+    const input = document.getElementById('school-search-input');
+    if (!list || !input) return;
+    if (input.disabled) return;
+    list.classList.add('open');
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+    filterSchoolDropdown(input.value);
+    setTimeout(() => {
+        const closeHandler = (e) => {
+            if (!e.target.closest('.school-combobox-container')) {
+                closeSchoolDropdown();
+                document.removeEventListener('click', closeHandler);
+            }
+        };
+        document.addEventListener('click', closeHandler);
+    }, 10);
+};
+
+window.closeSchoolDropdown = () => {
+    const list = document.getElementById('school-dropdown-list');
+    const chevron = document.querySelector('.school-combobox-chevron');
+    const input = document.getElementById('school-search-input');
+    if (list) list.classList.remove('open');
+    if (chevron) chevron.style.transform = 'rotate(0deg)';
+    if (input) input.blur();
+};
+
+window.filterSchoolDropdown = (query) => {
+    const list = document.getElementById('school-dropdown-list');
     if (!list) return;
+    const q = (query || '').trim().toLowerCase();
+    const items = list.querySelectorAll('.dropdown-item[data-school-name]');
+    const noMatch = list.querySelector('.school-dropdown-no-match');
+    let visibleCount = 0;
+    items.forEach(item => {
+        const name = (item.dataset.schoolName || '').toLowerCase();
+        const show = !q || name.includes(q);
+        item.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+    });
+    if (noMatch) noMatch.style.display = items.length > 0 && visibleCount === 0 ? '' : 'none';
+};
 
-    const isOpen = list.classList.contains('open');
-
-    if (!isOpen) {
-        list.classList.add('open');
-        if (triggerIcon) triggerIcon.style.transform = 'rotate(180deg)';
-
-        // Auto-close when clicking outside
-        setTimeout(() => {
-            const closeHandler = (e) => {
-                if (!e.target.closest('#school-dropdown-trigger') && !e.target.closest('#school-dropdown-list')) {
-                    list.classList.remove('open');
-                    if (triggerIcon) triggerIcon.style.transform = 'rotate(0deg)';
-                    document.removeEventListener('click', closeHandler);
-                }
-            };
-            document.addEventListener('click', closeHandler);
-        }, 10);
-    } else {
-        list.classList.remove('open');
-        if (triggerIcon) triggerIcon.style.transform = 'rotate(0deg)';
+window.handleSchoolComboboxKeydown = (e) => {
+    if (e.key === 'Escape') {
+        closeSchoolDropdown();
     }
 };
+
+// Legacy; kept for compatibility
+window.toggleSchoolDropdown = () => { openSchoolDropdown(); };
 
 window.renderAdminStudentCard = (s) => {
     const t = (key) => window.t(key);
@@ -5892,7 +5949,7 @@ window.updateStudentPrompt = async (id) => {
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('next_expiry_label')} (Main Timer)</label>
-                    <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? new Date(s.package_expires_at).toISOString().split('T')[0] : ''}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                    <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? window.formatClassDate(new Date(s.package_expires_at)) : ''}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
             </div>
 

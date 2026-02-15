@@ -1415,6 +1415,56 @@ select option {
     margin: 0;
 }
 
+/* --- SCHOOL SEARCHABLE COMBOBOX (landing page) --- */
+.school-combobox-container {
+    position: relative;
+}
+.school-combobox-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.school-combobox-input {
+    width: 100%;
+    padding: 12px 44px 12px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    background: #FFFFFF;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 500;
+    box-sizing: border-box;
+    outline: none;
+    transition: all 0.2s ease;
+}
+.school-combobox-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+.school-combobox-input:focus {
+    border-color: var(--system-blue);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+.school-combobox-input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+.school-combobox-chevron {
+    position: absolute;
+    right: 16px;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+.dark-mode .school-combobox-input {
+    background: #000000;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+.dark-mode .school-combobox-input:focus {
+    border-color: var(--system-blue);
+}
+
 /* --- PREMIUM CUSTOM DROPDOWN --- */
 .custom-dropdown-container {
     position: relative;
@@ -3223,6 +3273,26 @@ select.filter-control {
   color: #FF3B30;
 }
 .dark-mode .tile-reg-full {
+  background: rgba(255, 59, 48, 0.2);
+  color: #FF6B6B;
+}
+
+/* Full pill badge (icon + "Full" text) */
+.tile-reg-full-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: rgba(255, 59, 48, 0.15);
+  color: #FF3B30;
+}
+.dark-mode .tile-reg-full-pill {
   background: rgba(255, 59, 48, 0.2);
   color: #FF6B6B;
 }
