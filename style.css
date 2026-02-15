@@ -1122,6 +1122,75 @@ select option {
     color: var(--text-primary);
 }
 
+/* Admin: Private Classes Contact section (Settings) */
+.admin-private-contact-card {
+    margin-top: 2rem;
+    padding: 1.25rem 1.25rem 1.5rem;
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(91, 141, 217, 0.06), rgba(91, 141, 217, 0.02));
+    border: 1px solid rgba(91, 141, 217, 0.12);
+}
+.dark-mode .admin-private-contact-card {
+    background: linear-gradient(145deg, rgba(91, 141, 217, 0.08), rgba(91, 141, 217, 0.03));
+    border-color: rgba(123, 171, 232, 0.15);
+}
+.admin-private-contact-card .admin-private-contact-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+.admin-private-contact-card .admin-private-contact-desc {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+    opacity: 0.95;
+}
+.admin-private-contact-card .admin-private-contact-select-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--system-gray6);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s, background 0.2s;
+}
+.admin-private-contact-card .admin-private-contact-select-wrap:focus-within {
+    border-color: rgba(91, 141, 217, 0.4);
+}
+.dark-mode .admin-private-contact-card .admin-private-contact-select-wrap {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.admin-private-contact-card .admin-private-contact-select-wrap select {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    padding: 0 4px 0 0;
+}
+.admin-private-contact-card .admin-private-contact-select-wrap select option {
+    background: var(--surface-solid);
+    color: var(--text-primary);
+}
+.admin-private-contact-card .admin-private-contact-select-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
 /* Private Classes Card (Schedule) - Apple-style */
 .private-classes-card {
     margin-top: 2rem;

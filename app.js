@@ -37,6 +37,8 @@ const DANCE_LOCALES = {
         full_name_placeholder: "Full name",
         email_placeholder: "Email address",
         signup_require_fields: "Please enter full name, email, phone and password.",
+        signup_email_login_hint: "You will use this email to log in.",
+        email_already_registered: "This email is already in use. Sign in or use another email.",
         signup_invalid_email: "Please enter a valid email address.",
         confirm_password_placeholder: "Confirm password",
         signup_passwords_dont_match: "Passwords do not match.",
@@ -200,6 +202,8 @@ const DANCE_LOCALES = {
         class_location: "Location",
         location_placeholder: "e.g. Studio A",
         active_packs_label: "Your Active Packs",
+        all_schools_packs_label: "Your Packs Across Schools",
+        no_packs_any_school: "You have no active packages at any school",
         expired_classes_label: "Expired Classes",
         no_expiration: "No expiration date",
         expires_in: "Expires in",
@@ -375,6 +379,8 @@ const DANCE_LOCALES = {
         save_profile_btn: "Save Profile",
         change_password_btn: "Change Password",
         password_changed_success: "Password updated successfully.",
+        auth_password_sync_failed: "Warning: the login service could not be updated. Use your OLD password to log in once, then change the password again in Settings.",
+        admin_password_sync_hint: "Your password is correct for this school, but the login service could not accept it. If you recently changed your password in Settings, try logging in with your previous (old) password, then change it again.",
         profile_saved_success: "Profile saved.",
         password_mismatch: "New passwords do not match.",
         password_too_short: "Password must be at least 4 characters.",
@@ -410,6 +416,8 @@ const DANCE_LOCALES = {
         full_name_placeholder: "Nombre completo",
         email_placeholder: "Correo electrónico",
         signup_require_fields: "Ingresa nombre completo, correo, teléfono y contraseña.",
+        signup_email_login_hint: "Usarás este correo para iniciar sesión.",
+        email_already_registered: "Este correo ya está en uso. Inicia sesión o usa otro correo.",
         signup_invalid_email: "Ingresa un correo electrónico válido.",
         confirm_password_placeholder: "Repetir contraseña",
         signup_passwords_dont_match: "Las contraseñas no coinciden.",
@@ -573,6 +581,8 @@ const DANCE_LOCALES = {
         class_location: "Ubicación",
         location_placeholder: "Ej: Aula A",
         active_packs_label: "Tus Paquetes Activos",
+        all_schools_packs_label: "Tus Paquetes en Todas las Escuelas",
+        no_packs_any_school: "No tienes paquetes activos en ninguna escuela",
         expired_classes_label: "Clases Expiradas",
         no_expiration: "Sin fecha de vencimiento",
         expires_in: "Vence en",
@@ -748,6 +758,8 @@ const DANCE_LOCALES = {
         save_profile_btn: "Guardar Perfil",
         change_password_btn: "Cambiar Contraseña",
         password_changed_success: "Contraseña actualizada.",
+        auth_password_sync_failed: "Aviso: el servicio de inicio de sesión no pudo actualizarse. Usa tu contraseña ANTERIOR para entrar una vez, luego cámbiala de nuevo en Ajustes.",
+        admin_password_sync_hint: "Tu contraseña es correcta para esta escuela, pero el servicio de inicio de sesión no la aceptó. Si cambiaste la contraseña en Ajustes, intenta entrar con tu contraseña anterior y cámbiala de nuevo.",
         profile_saved_success: "Perfil guardado.",
         password_mismatch: "Las contraseñas no coinciden.",
         password_too_short: "La contraseña debe tener al menos 4 caracteres.",
@@ -784,6 +796,8 @@ const DANCE_LOCALES = {
         full_name_placeholder: "Vollständiger Name",
         email_placeholder: "E-Mail-Adresse",
         signup_require_fields: "Bitte gib Name, E-Mail, Telefon und Passwort ein.",
+        signup_email_login_hint: "Du wirst diese E-Mail zum Anmelden verwenden.",
+        email_already_registered: "Diese E-Mail ist bereits registriert. Melde dich an oder verwende eine andere E-Mail.",
         signup_invalid_email: "Bitte gib eine gültige E-Mail-Adresse ein.",
         confirm_password_placeholder: "Passwort bestätigen",
         signup_passwords_dont_match: "Die Passwörter stimmen nicht überein.",
@@ -947,6 +961,8 @@ const DANCE_LOCALES = {
         class_location: "Standort",
         location_placeholder: "z.B. Studio A",
         active_packs_label: "Deine aktiven Pakete",
+        all_schools_packs_label: "Deine Pakete in allen Schulen",
+        no_packs_any_school: "Du hast keine aktiven Pakete an einer Schule",
         expired_classes_label: "Abgelaufene Stunden",
         no_expiration: "Kein Ablaufdatum",
         expires_in: "Läuft ab in",
@@ -1097,6 +1113,8 @@ const DANCE_LOCALES = {
         save_profile_btn: "Profil speichern",
         change_password_btn: "Passwort ändern",
         password_changed_success: "Passwort aktualisiert.",
+        auth_password_sync_failed: "Hinweis: Der Anmeldedienst konnte nicht aktualisiert werden. Melde dich einmal mit deinem ALTEN Passwort an und ändere es danach unter Einstellungen erneut.",
+        admin_password_sync_hint: "Dein Passwort ist für diese Schule korrekt, wurde aber vom Anmeldedienst nicht akzeptiert. Wenn du kürzlich das Passwort in den Einstellungen geändert hast, melde dich mit dem vorherigen Passwort an und ändere es danach erneut.",
         profile_saved_success: "Profil gespeichert.",
         password_mismatch: "Passwörter stimmen nicht überein.",
         password_too_short: "Passwort muss mindestens 4 Zeichen haben.",
@@ -1224,11 +1242,13 @@ async function fetchAllData() {
             return;
         }
 
-        // Critical: when logged in as student, always use THEIR school so we never show another school's data
+        // Multi-school students: use the enrollment's school_id for the current school context.
+        // The student may be enrolled in multiple schools; currentUser.school_id matches the school they logged into.
         if (state.currentUser && !state.isAdmin && state.currentUser.school_id) {
             if (state.currentSchool.id !== state.currentUser.school_id) {
-                state.currentSchool = state.schools.find(s => s.id === state.currentUser.school_id) || { id: state.currentUser.school_id, name: 'School', currency: 'MXN' };
-                saveState();
+                // Sync currentSchool to match the enrollment they logged into
+                const enrolledSchool = state.schools.find(s => s.id === state.currentUser.school_id);
+                if (enrolledSchool) state.currentSchool = enrolledSchool;
             }
         }
         const sid = (state.currentUser && !state.isAdmin && state.currentUser.school_id)
@@ -1299,13 +1319,24 @@ async function fetchAllData() {
             const { data: rpcStudents } = await supabaseClient.rpc('get_school_students', { p_school_id: sid });
             if (rpcStudents && Array.isArray(rpcStudents)) state.students = rpcStudents;
         } else if (isStudent && state.currentUser) {
-            // Legacy login: RLS may block student row; refresh profile from DB so balance/packs stay in sync
+            // Refresh student profile from DB (try user_id first, fallback to id)
             const schoolId = state.currentUser.school_id || sid;
-            const { data: myRow } = await supabaseClient.rpc('get_student_by_id', {
-                p_student_id: state.currentUser.id,
-                p_school_id: schoolId
-            });
-            if (myRow && Array.isArray(myRow) && myRow.length > 0) {
+            let myRow = null;
+            if (state.currentUser.user_id) {
+                const { data } = await supabaseClient.rpc('get_student_by_user_id', {
+                    p_user_id: state.currentUser.user_id,
+                    p_school_id: schoolId
+                });
+                if (data && Array.isArray(data) && data.length > 0) myRow = data;
+            }
+            if (!myRow) {
+                const { data } = await supabaseClient.rpc('get_student_by_id', {
+                    p_student_id: state.currentUser.id,
+                    p_school_id: schoolId
+                });
+                if (data && Array.isArray(data) && data.length > 0) myRow = data;
+            }
+            if (myRow && myRow.length > 0) {
                 const row = myRow[0];
                 state.students = [row];
                 state.currentUser = { ...row, role: 'student' };
@@ -1317,11 +1348,24 @@ async function fetchAllData() {
         // Always refresh current student profile from server so balance shows latest (e.g. after admin deducts via QR)
         if (isStudent && state.currentUser && supabaseClient) {
             const schoolId = state.currentUser.school_id || sid;
-            const { data: freshRow } = await supabaseClient.rpc('get_student_by_id', {
-                p_student_id: String(state.currentUser.id),
-                p_school_id: schoolId
-            });
-            if (freshRow && Array.isArray(freshRow) && freshRow.length > 0) {
+            let freshRow = null;
+            // Primary: lookup by user_id (global identity) + school
+            if (state.currentUser.user_id) {
+                const { data } = await supabaseClient.rpc('get_student_by_user_id', {
+                    p_user_id: state.currentUser.user_id,
+                    p_school_id: schoolId
+                });
+                if (data && Array.isArray(data) && data.length > 0) freshRow = data;
+            }
+            // Fallback: lookup by student id
+            if (!freshRow) {
+                const { data } = await supabaseClient.rpc('get_student_by_id', {
+                    p_student_id: String(state.currentUser.id),
+                    p_school_id: schoolId
+                });
+                if (data && Array.isArray(data) && data.length > 0) freshRow = data;
+            }
+            if (freshRow && freshRow.length > 0) {
                 const row = freshRow[0];
                 state.currentUser = { ...row, role: 'student' };
                 const idx = state.students.findIndex(s => s.id === row.id || String(s.id) === String(row.id));
@@ -1359,6 +1403,19 @@ async function fetchAllData() {
             const admins = state.admins || [];
             state.schoolAdminLinked = !!(uid && admins.some(a => a.user_id === uid));
             state.currentAdmin = admins.find(a => a.user_id === uid) || null;
+        }
+        // Fetch all enrollments across schools for multi-school package display
+        if (isStudent && state.currentUser?.user_id && supabaseClient) {
+            try {
+                const { data: allEnroll } = await supabaseClient.rpc('get_all_student_enrollments', {
+                    p_user_id: state.currentUser.user_id
+                });
+                if (allEnroll) {
+                    state.allEnrollments = Array.isArray(allEnroll) ? allEnroll : (typeof allEnroll === 'string' ? JSON.parse(allEnroll) : []);
+                } else {
+                    state.allEnrollments = [];
+                }
+            } catch (_) { state.allEnrollments = []; }
         }
         if (isStudent && state.currentUser?.id && supabaseClient && sid) {
             try {
@@ -2598,8 +2655,8 @@ function _renderViewImpl() {
                             <div class="auth-input-group">
                                 ${isSignup ? `
                                     <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('full_name_placeholder')}" autocomplete="name">
-                                    <input type="text" id="auth-username" class="minimal-input" placeholder="${window.t('username')}" autocomplete="username">
-                                    <input type="text" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email" maxlength="254">
+                                    <input type="email" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email" maxlength="254">
+                                    <p class="auth-hint" style="font-size: 0.8rem; color: var(--text-secondary); margin: -0.5rem 0 0.5rem 0;">${window.t('signup_email_login_hint')}</p>
                                     <input type="text" id="auth-phone" class="minimal-input" placeholder="${window.t('phone')}" autocomplete="tel">
                                     <div class="password-input-wrap">
                                         <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
@@ -2610,7 +2667,7 @@ function _renderViewImpl() {
                                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                                     </div>
                                 ` : `
-                                    <input type="text" id="auth-name" class="minimal-input" placeholder="${window.t('username')}" autocomplete="username">
+                                    <input type="email" id="auth-email" class="minimal-input" placeholder="${window.t('email_placeholder')}" autocomplete="email" inputmode="email">
                                     <div class="password-input-wrap">
                                         <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
@@ -2951,11 +3008,14 @@ function _renderViewImpl() {
 
                     <div style="margin-top: 2rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; text-align: left;">
                         ${(() => {
-                const allPacks = state.currentUser.active_packs || [];
                 const now = new Date();
-                const activePacks = allPacks.filter(p => new Date(p.expires_at) > now);
-                const expiredPacks = allPacks.filter(p => new Date(p.expires_at) <= now).sort((a, b) => new Date(b.expires_at) - new Date(a.expires_at));
-                const renderPackCard = (p, isExp) => {
+                const currentSchoolId = state.currentSchool?.id;
+                const enrollments = Array.isArray(state.allEnrollments) && state.allEnrollments.length > 0
+                    ? state.allEnrollments
+                    : [{ ...state.currentUser, school_name: state.currentSchool?.name || '' }];
+                const hasMultipleSchools = enrollments.length > 1 || (enrollments.length === 1 && enrollments[0].school_id !== currentSchoolId);
+
+                const renderPackCard = (p, isExp, schoolName) => {
                     const days = window.getDaysRemaining(p.expires_at);
                     const isSoon = !isExp && days > 0 && days <= 5;
                     const sc = isExp ? 'var(--system-red)' : (isSoon ? 'var(--system-orange)' : 'var(--system-blue)');
@@ -2972,17 +3032,60 @@ function _renderViewImpl() {
                         '<div style="text-align: right;"><div style="font-size: 20px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + (p.count == null || p.count === 'null' ? '∞' : p.count) + '</div>' +
                         '<div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">Clases</div></div></div></div>';
                 };
-                let out = '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">' + (t.active_packs_label || 'Tus Paquetes Activos') + '</div>';
-                out += '<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: ' + (expiredPacks.length > 0 ? '2rem' : '0') + ';">';
-                if (activePacks.length === 0 && expiredPacks.length === 0) {
-                    out += '<div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; text-align: center; border: 1px dashed var(--border);"><div style="font-size: 13px; color: var(--text-secondary); opacity: 0.5;">No tienes paquetes activos</div></div>';
+
+                // Sort: current school first, then alphabetically
+                const sorted = [...enrollments].sort((a, b) => {
+                    if (a.school_id === currentSchoolId && b.school_id !== currentSchoolId) return -1;
+                    if (b.school_id === currentSchoolId && a.school_id !== currentSchoolId) return 1;
+                    return (a.school_name || '').localeCompare(b.school_name || '');
+                });
+
+                let totalActive = 0;
+                let totalExpired = 0;
+                sorted.forEach(en => {
+                    const packs = Array.isArray(en.active_packs) ? en.active_packs : [];
+                    totalActive += packs.filter(p => new Date(p.expires_at) > now).length;
+                    totalExpired += packs.filter(p => new Date(p.expires_at) <= now).length;
+                });
+
+                let out = '';
+                if (hasMultipleSchools) {
+                    out += '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 16px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">' + (t.all_schools_packs_label || 'Your Packs Across Schools') + '</div>';
                 } else {
-                    out += activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => renderPackCard(p, false)).join('');
+                    out += '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">' + (t.active_packs_label || 'Tus Paquetes Activos') + '</div>';
                 }
-                out += '</div>';
-                if (expiredPacks.length > 0) {
-                    out += '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: 0.05em; opacity: 0.6; padding: 0 10px;">' + t.expired_classes_label + '</div>';
-                    out += '<div style="display: flex; flex-direction: column; gap: 12px;">' + expiredPacks.map(p => renderPackCard(p, true)).join('') + '</div>';
+
+                if (totalActive === 0 && totalExpired === 0) {
+                    out += '<div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; text-align: center; border: 1px dashed var(--border);"><div style="font-size: 13px; color: var(--text-secondary); opacity: 0.5;">' + (t.no_packs_any_school || 'No tienes paquetes activos') + '</div></div>';
+                    return out;
+                }
+
+                for (const enrollment of sorted) {
+                    const sName = (enrollment.school_name || '').replace(/</g, '&lt;');
+                    const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
+                    const active = packs.filter(p => new Date(p.expires_at) > now).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+                    const expired = packs.filter(p => new Date(p.expires_at) <= now).sort((a, b) => new Date(b.expires_at) - new Date(a.expires_at));
+                    if (active.length === 0 && expired.length === 0) continue;
+                    const isCurrent = enrollment.school_id === currentSchoolId;
+                    const enrollBalance = enrollment.balance === null ? '∞' : (enrollment.balance ?? 0);
+
+                    if (hasMultipleSchools) {
+                        out += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; margin-top: 12px; padding: 0 4px;">' +
+                            '<div style="width: 6px; height: 6px; border-radius: 50%; background: ' + (isCurrent ? 'var(--system-blue)' : 'var(--text-secondary)') + '; opacity: ' + (isCurrent ? 1 : 0.4) + ';"></div>' +
+                            '<div style="font-size: 13px; font-weight: 700; color: ' + (isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)') + ';">' + sName + '</div>' +
+                            '<div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); opacity: 0.6; margin-left: auto;">' + enrollBalance + ' clases</div>' +
+                            '</div>';
+                    }
+
+                    if (active.length > 0) {
+                        out += '<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: ' + (expired.length > 0 ? '1rem' : '0') + ';">';
+                        out += active.map(p => renderPackCard(p, false, sName)).join('');
+                        out += '</div>';
+                    }
+                    if (expired.length > 0) {
+                        out += '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; margin-top: 8px; letter-spacing: 0.05em; opacity: 0.4; padding: 0 10px;">' + t.expired_classes_label + '</div>';
+                        out += '<div style="display: flex; flex-direction: column; gap: 12px;">' + expired.map(p => renderPackCard(p, true, sName)).join('') + '</div>';
+                    }
                 }
                 return out;
             })()}
@@ -3034,7 +3137,7 @@ function _renderViewImpl() {
         `;
         setTimeout(() => {
             new QRCode(document.getElementById("qr-code"), {
-                text: state.currentUser.id,
+                text: state.currentUser.user_id || state.currentUser.id,
                 width: 250, height: 250, colorDark: "#000", colorLight: "#fff"
             });
         }, 50);
@@ -3664,19 +3767,18 @@ function _renderViewImpl() {
                 </div>
             </div>
 
-            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.private_contact_section}
-            </div>
-            <div class="ios-list" style="padding: 0 1.2rem;">
-                <p class="text-muted" style="font-size: 12px; margin-bottom: 10px;">${t.private_contact_desc}</p>
-                <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.select_contact_admin}</span>
-                    <select id="private-contact-admin" onchange="window.savePrivateContactAdmin(this.value)" style="border: none; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; font-size: 14px; color: var(--text-primary); outline: none;">
+            <div class="admin-private-contact-card" style="margin-left: 1.2rem; margin-right: 1.2rem;">
+                <div class="admin-private-contact-title">${t.private_contact_section}</div>
+                <p class="admin-private-contact-desc">${t.private_contact_desc}</p>
+                <div class="admin-private-contact-select-wrap">
+                    <span class="admin-private-contact-select-label">${t.select_contact_admin}</span>
+                    <select id="private-contact-admin" onchange="window.savePrivateContactAdmin(this.value)">
                         <option value="">—</option>
                         ${(Array.isArray(state.admins) ? state.admins : []).map(adm => `
                             <option value="${adm.id}" ${(state.adminSettings?.private_contact_admin_id || '') === adm.id ? 'selected' : ''}>${(adm.display_name || adm.username || '').replace(/</g, '&lt;')}</option>
                         `).join('')}
                     </select>
+                    <i data-lucide="chevron-down" size="18" style="opacity: 0.5; flex-shrink: 0;"></i>
                 </div>
             </div>
 
@@ -4444,16 +4546,14 @@ window.selectCustomOption = async (classId, field, value) => {
 window.signUpStudent = async () => {
     const t = new Proxy(window.t, { get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop] });
     const name = document.getElementById('auth-name').value.trim();
-    const usernameEl = document.getElementById('auth-username');
-    const username = usernameEl ? usernameEl.value.trim() : '';
     const emailEl = document.getElementById('auth-email');
-    const email = emailEl ? emailEl.value.trim() : '';
+    const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
     const phone = document.getElementById('auth-phone').value.trim();
     const pass = document.getElementById('auth-pass').value.trim();
     const passConfirmEl = document.getElementById('auth-pass-confirm');
     const passConfirm = passConfirmEl ? passConfirmEl.value.trim() : '';
 
-    if (!name || !username || !pass || !phone || !email) {
+    if (!name || !email || !pass || !phone) {
         alert(t('signup_require_fields'));
         return;
     }
@@ -4462,21 +4562,9 @@ window.signUpStudent = async () => {
         return;
     }
 
-    if (supabaseClient) {
-        const { data: usernameTaken } = await supabaseClient.rpc('student_username_exists', {
-            p_username: username,
-            p_school_id: state.currentSchool.id
-        });
-        if (usernameTaken) {
-            alert(t('username_exists_msg'));
-            return;
-        }
-    }
-
     const newStudent = {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
         name,
-        username: username || null,
         email: email || null,
         phone,
         paid: false,
@@ -4489,34 +4577,32 @@ window.signUpStudent = async () => {
     let studentCreated = false;
     if (supabaseClient) {
         try {
-            // Use username for Auth pseudo-email so it's unique per school (sign-in uses full name + password)
-            const pseudoEmail = `${username.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
             const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-                email: pseudoEmail,
+                email,
                 password: pass
             });
-            if (!signUpError && signUpData?.user) {
+            if (signUpError) {
+                if (signUpError.message && (signUpError.message.includes('already registered') || signUpError.message.includes('already exists'))) {
+                    alert(t('email_already_registered'));
+                    return;
+                }
+                alert("Error creating account: " + (signUpError.message || "Try again."));
+                return;
+            }
+            if (signUpData?.user) {
                 const authUser = signUpData.user;
-                // Ensure we have a session so auth.uid() is set for insert/RPC. signUp sometimes doesn't return session; signIn does.
                 if (signUpData.session) {
                     await supabaseClient.auth.setSession({
                         access_token: signUpData.session.access_token,
                         refresh_token: signUpData.session.refresh_token
                     });
                 } else {
-                    const { data: signInData, error: signInErr } = await supabaseClient.auth.signInWithPassword({
-                        email: pseudoEmail,
-                        password: pass
-                    });
-                    if (signInErr || !signInData?.session) {
-                        console.warn('No session after signUp; signIn failed:', signInErr?.message);
-                    }
+                    const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+                    if (signInErr) console.warn('No session after signUp; signIn failed:', signInErr?.message);
                 }
-                // Try RPC first (bypasses RLS, sets user_id) so we don't depend on table insert
                 const { data: authRpcRow, error: authRpcError } = await supabaseClient.rpc('create_student_with_auth', {
                     p_user_id: authUser.id,
                     p_name: name,
-                    p_username: username || null,
                     p_email: email || null,
                     p_phone: phone || null,
                     p_password: pass,
@@ -4527,7 +4613,6 @@ window.signUpStudent = async () => {
                     if (created) {
                         newStudent.id = created.id;
                         newStudent.email = created.email ?? email;
-                        newStudent.username = created.username ?? username;
                         newStudent.user_id = created.user_id;
                         studentCreated = true;
                     }
@@ -4539,10 +4624,8 @@ window.signUpStudent = async () => {
                 }
             }
             if (!studentCreated) {
-                // Auth failed (rate limit, etc.) or both inserts failed: create student via legacy RPC (user_id stays NULL)
                 const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
                     p_name: name,
-                    p_username: username || null,
                     p_email: email || null,
                     p_phone: phone || null,
                     p_password: pass,
@@ -4558,19 +4641,18 @@ window.signUpStudent = async () => {
                 }
             }
             if (!studentCreated) {
-                alert("Error creating account: " + (signUpError?.message || "Could not create profile. Try again."));
+                alert("Error creating profile. Try again.");
                 return;
             }
-            } catch (e) {
-                try {
-                    const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
-                        p_name: name,
-                        p_username: username || null,
-                        p_email: email || null,
-                        p_phone: phone || null,
-                        p_password: pass,
-                        p_school_id: state.currentSchool.id
-                    });
+        } catch (e) {
+            try {
+                const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
+                    p_name: name,
+                    p_email: email || null,
+                    p_phone: phone || null,
+                    p_password: pass,
+                    p_school_id: state.currentSchool.id
+                });
                 if (!rpcError && rpcRow) {
                     const created = typeof rpcRow === 'object' ? rpcRow : (typeof rpcRow === 'string' ? JSON.parse(rpcRow) : null);
                     if (created) {
@@ -4581,7 +4663,7 @@ window.signUpStudent = async () => {
                 }
             } catch (_) {}
             if (!studentCreated) {
-                alert("Unexpected signup error: " + e.message);
+                alert("Unexpected signup error: " + (e.message || "Try again."));
                 return;
             }
         }
@@ -4602,83 +4684,46 @@ window.signUpStudent = async () => {
 };
 
 window.loginStudent = async () => {
-    const userInput = document.getElementById('auth-name').value.trim();
+    const emailEl = document.getElementById('auth-email');
+    const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
     const passInput = document.getElementById('auth-pass').value.trim();
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
     let student;
-    if (supabaseClient) {
+    if (supabaseClient && email && passInput) {
         try {
-            // 1) Sign-in by usuario (username) + password
-            if (userInput && passInput) {
-                const { data: usernameRows, error: usernameErr } = await supabaseClient.rpc('get_student_by_username_credentials', {
-                    p_username: userInput,
-                    p_password: passInput,
+            const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                email,
+                password: passInput
+            });
+            if (!authError && authData?.user) {
+                const uid = authData.user.id;
+                const { data: enrollRows } = await supabaseClient.rpc('get_student_by_user_id', {
+                    p_user_id: uid,
                     p_school_id: state.currentSchool.id
                 });
-                if (!usernameErr && Array.isArray(usernameRows) && usernameRows.length > 0) {
-                    student = usernameRows[0];
-                    const usernameEmail = `${String(student.username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
-                    let err = (await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput })).error;
-                    if (err) {
-                        await supabaseClient.auth.signUp({ email: usernameEmail, password: passInput });
-                        err = (await supabaseClient.auth.signInWithPassword({ email: usernameEmail, password: passInput })).error;
-                    }
-                    if (!err && student.id && student.school_id && student.user_id == null) {
-                        await supabaseClient.rpc('link_student_auth', { p_student_id: student.id, p_school_id: student.school_id });
-                    }
-                }
-                if (!student) {
-                    const { data: nameRows, error: nameErr } = await supabaseClient.rpc('get_student_by_credentials', {
-                        p_name: userInput,
-                        p_password: passInput,
+                if (enrollRows && Array.isArray(enrollRows) && enrollRows.length > 0) {
+                    student = enrollRows[0];
+                } else {
+                    const { data: enrolled, error: enrollErr } = await supabaseClient.rpc('auto_enroll_student', {
+                        p_user_id: uid,
                         p_school_id: state.currentSchool.id
                     });
-                    if (!nameErr && Array.isArray(nameRows) && nameRows.length > 0) {
-                        student = nameRows[0];
-                        const pseudoEmail = `${String(student.name || userInput).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
-                        let { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: passInput });
-                        if (signInErr) {
-                            await supabaseClient.auth.signUp({ email: pseudoEmail, password: passInput });
-                            signInErr = (await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: passInput })).error;
-                        }
-                        if (!signInErr && student.id && student.school_id && student.user_id == null) {
-                            await supabaseClient.rpc('link_student_auth', { p_student_id: student.id, p_school_id: student.school_id });
-                        }
+                    if (!enrollErr && enrolled) {
+                        student = typeof enrolled === 'object' ? enrolled : JSON.parse(enrolled);
                     }
-                }
-            }
-            if (!student) {
-                const usernameEmail = `${userInput.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@students.bailadmin.local`;
-                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-                    email: usernameEmail,
-                    password: passInput
-                });
-                if (!authError && authData?.user) {
-                    const { data: profile } = await supabaseClient
-                        .from('students')
-                        .select('*')
-                        .eq('user_id', authData.user.id)
-                        .eq('school_id', state.currentSchool.id)
-                        .single();
-                    if (profile) student = profile;
                 }
             }
         } catch (e) {
             console.warn('Student login error:', e);
         }
-    } else {
-        student = state.students.find(s =>
-            ((s.username && s.username.toLowerCase() === userInput.toLowerCase()) || s.name.toLowerCase() === userInput.toLowerCase()) && s.password === passInput
-        );
     }
 
     if (student) {
         state.currentUser = { ...student, role: 'student' };
         state.isAdmin = false;
-        state.currentSchool = state.schools.find(s => s.id === student.school_id) || { id: student.school_id, name: 'School' };
         state.currentView = 'qr';
         clearSchoolData();
         _lastFetchEndTime = 0;
@@ -4756,8 +4801,13 @@ window.loginAdminWithCreds = async () => {
                     const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
                     if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
                         const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
-                        if (!signInAgain) await supabaseClient.rpc('link_admin_auth');
-                        else adminRow = null;
+                        if (!signInAgain) {
+                            await supabaseClient.rpc('link_admin_auth');
+                        } else {
+                            // Auth user exists but password does not match – e.g. password was changed in DB but Auth sync failed
+                            adminRow = null;
+                            state._adminLoginLegacyOkAuthFailed = true;
+                        }
                     } else if (!signUpErr) {
                         await supabaseClient.rpc('link_admin_auth');
                     } else {
@@ -4771,6 +4821,7 @@ window.loginAdminWithCreds = async () => {
     }
 
     if (adminRow) {
+        state._adminLoginLegacyOkAuthFailed = false;
         state.currentUser = {
             name: adminRow.username + " (Admin)",
             role: "admin"
@@ -4782,7 +4833,12 @@ window.loginAdminWithCreds = async () => {
         renderView();
         await fetchAllData();
     } else {
-        alert(t('invalid_login'));
+        if (state._adminLoginLegacyOkAuthFailed) {
+            alert(t('admin_password_sync_hint') || 'Your password is correct for this school, but the login service could not accept it. If you recently changed your password in Settings, try logging in with your previous (old) password. Once in, go to Settings and change the password again.');
+            state._adminLoginLegacyOkAuthFailed = false;
+        } else {
+            alert(t('invalid_login'));
+        }
     }
 };
 
@@ -5760,10 +5816,15 @@ window.changeAdminPassword = async () => {
             p_new_password: newPass
         });
         if (error) throw error;
-        // Also update Supabase Auth so future login works (login uses Auth, not admins table)
+        // Also update Supabase Auth so future login works (login uses Auth first)
         const { error: authErr } = await supabaseClient.auth.updateUser({ password: newPass });
         if (authErr) {
-            console.warn('Auth password sync failed (admins table updated):', authErr);
+            alert(t('password_changed_success') + '\n\n' + (t('auth_password_sync_failed') || 'Warning: login service could not be updated. You may need to use your OLD password to log in once, then change the password again.') + '\n\n' + (authErr.message || ''));
+            if (currentEl) currentEl.value = '';
+            if (newEl) newEl.value = '';
+            if (confirmEl) confirmEl.value = '';
+            renderView();
+            return;
         }
         if (currentEl) currentEl.value = '';
         if (newEl) newEl.value = '';
@@ -6254,11 +6315,6 @@ window.updateStudentPrompt = async (id) => {
                 </div>
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('username')}</label>
-                    <input type="text" id="edit-student-username" class="minimal-input" value="${(s.username || '').replace(/"/g, '&quot;')}" placeholder="${t('username')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
-                </div>
-
-                <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('email_placeholder') || 'Email'}</label>
                     <input type="text" id="edit-student-email" class="minimal-input" value="${(s.email || '').replace(/"/g, '&quot;')}" placeholder="email@example.com" inputmode="email" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
@@ -6376,7 +6432,6 @@ window.saveStudentDetails = async (id) => {
     if (!s) return;
 
     const newName = document.getElementById('edit-student-name').value.trim();
-    const newUsername = document.getElementById('edit-student-username')?.value.trim() ?? '';
     const newEmail = document.getElementById('edit-student-email')?.value.trim() ?? '';
     const newPhone = document.getElementById('edit-student-phone').value.trim();
     const newPassword = document.getElementById('edit-student-password')?.value ?? '';
@@ -6385,7 +6440,6 @@ window.saveStudentDetails = async (id) => {
 
     const updates = {
         name: newName,
-        username: newUsername || null,
         email: newEmail || null,
         phone: newPhone,
         balance: balanceVal === "" ? null : parseInt(balanceVal, 10),
@@ -6492,7 +6546,7 @@ window.stopScanner = async () => {
 
 window.handleScan = async (scannedId) => {
     const id = (scannedId || '').trim();
-    const student = state.students.find(s => s.id === id);
+    const student = state.students.find(s => s.id === id || s.user_id === id);
     const resultEl = document.getElementById('inline-scan-result'); // TARGET INLINE
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
