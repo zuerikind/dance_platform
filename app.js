@@ -5760,6 +5760,11 @@ window.changeAdminPassword = async () => {
             p_new_password: newPass
         });
         if (error) throw error;
+        // Also update Supabase Auth so future login works (login uses Auth, not admins table)
+        const { error: authErr } = await supabaseClient.auth.updateUser({ password: newPass });
+        if (authErr) {
+            console.warn('Auth password sync failed (admins table updated):', authErr);
+        }
         if (currentEl) currentEl.value = '';
         if (newEl) newEl.value = '';
         if (confirmEl) confirmEl.value = '';
