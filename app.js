@@ -2217,8 +2217,9 @@ function _renderViewImpl() {
                 </div>
                 
                 <div class="school-combobox-container custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
-                    <div class="school-combobox-trigger" onclick="document.getElementById('school-search-input')?.focus(); openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
-                        <input type="text" id="school-search-input" class="school-combobox-input" placeholder="${state.loading ? t.loading_schools : (state.schools.length > 0 ? (t.search_school_placeholder || t.select_school_placeholder) : t.no_schools)}" value="" autocomplete="off" oninput="filterSchoolDropdown(this.value)" onfocus="openSchoolDropdown()" onkeydown="handleSchoolComboboxKeydown(event)" ${state.loading || state.schools.length === 0 ? 'disabled' : ''} />
+                    <div class="school-combobox-trigger" onclick="openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
+                        <span id="school-trigger-label" class="school-combobox-label" style="flex: 1; min-width: 0; font: inherit; color: inherit; text-align: left;">${state.currentSchool?.name || (state.loading ? t.loading_schools : (state.schools.length > 0 ? (t.search_school_placeholder || t.select_school_placeholder) : t.no_schools))}</span>
+                        <input type="text" id="school-search-input" class="school-combobox-input school-search-when-open" placeholder="${t.search_school_placeholder || t.select_school_placeholder}" value="" autocomplete="off" oninput="filterSchoolDropdown(this.value)" onkeydown="handleSchoolComboboxKeydown(event)" style="display: none;" ${state.loading || state.schools.length === 0 ? 'disabled' : ''} />
                         <i data-lucide="chevron-down" size="18" class="school-combobox-chevron"></i>
                     </div>
                     <div id="school-dropdown-list" class="custom-dropdown-list school-dropdown-list" style="width: 100%; box-sizing: border-box;">
@@ -6134,13 +6135,19 @@ window.removeSubscription = async (id) => {
 
 window.openSchoolDropdown = () => {
     const list = document.getElementById('school-dropdown-list');
+    const trigger = document.querySelector('.school-combobox-trigger');
     const chevron = document.querySelector('.school-combobox-chevron');
     const input = document.getElementById('school-search-input');
+    const label = document.getElementById('school-trigger-label');
     if (!list || !input) return;
     if (input.disabled) return;
     list.classList.add('open');
+    if (trigger) trigger.classList.add('dropdown-open');
     if (chevron) chevron.style.transform = 'rotate(180deg)';
-    filterSchoolDropdown(input.value);
+    if (label) label.style.display = 'none';
+    input.style.display = '';
+    input.value = '';
+    filterSchoolDropdown('');
     setTimeout(() => {
         const closeHandler = (e) => {
             if (!e.target.closest('.school-combobox-container')) {
@@ -6154,11 +6161,23 @@ window.openSchoolDropdown = () => {
 
 window.closeSchoolDropdown = () => {
     const list = document.getElementById('school-dropdown-list');
+    const trigger = document.querySelector('.school-combobox-trigger');
     const chevron = document.querySelector('.school-combobox-chevron');
     const input = document.getElementById('school-search-input');
+    const label = document.getElementById('school-trigger-label');
     if (list) list.classList.remove('open');
+    if (trigger) trigger.classList.remove('dropdown-open');
     if (chevron) chevron.style.transform = 'rotate(0deg)';
-    if (input) input.blur();
+    if (input) {
+        input.blur();
+        input.value = '';
+        input.style.display = 'none';
+    }
+    if (label) {
+        label.style.display = '';
+        const t = window.t || (k => k);
+        label.textContent = state.currentSchool?.name || (t('search_school_placeholder') || t('select_school_placeholder') || 'Select school');
+    }
 };
 
 window.filterSchoolDropdown = (query) => {
