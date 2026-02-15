@@ -1037,6 +1037,157 @@ select option {
     }
 }
 
+/* Private Classes Contact Modal */
+#private-classes-modal .modal-content {
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+.private-classes-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+    color: var(--text-primary);
+}
+.private-classes-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--system-blue), #0051D5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    color: white;
+}
+.private-classes-avatar i {
+    width: 32px;
+    height: 32px;
+}
+.private-classes-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    color: var(--text-primary);
+}
+.private-classes-phone {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+.private-classes-whatsapp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    border: none;
+    background: #25D366;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    margin-top: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+}
+.private-classes-whatsapp-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+}
+.private-classes-whatsapp-btn:active {
+    transform: translateY(0);
+}
+.private-classes-close-btn {
+    width: 100%;
+    padding: 0.85rem;
+    margin-top: 0.75rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.private-classes-close-btn:hover {
+    background: var(--system-gray6);
+    color: var(--text-primary);
+}
+
+/* Private Classes Card (Schedule) - Apple-style */
+.private-classes-card {
+    margin-top: 2rem;
+    padding: 1.75rem 1.5rem;
+    cursor: pointer;
+    border-radius: 20px;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(91, 141, 217, 0.08), rgba(91, 141, 217, 0.02));
+    border: 1px solid rgba(91, 141, 217, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+.private-classes-card:hover {
+    border-color: rgba(91, 141, 217, 0.25);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+.dark-mode .private-classes-card {
+    background: linear-gradient(145deg, rgba(91, 141, 217, 0.12), rgba(91, 141, 217, 0.04));
+    border-color: rgba(123, 171, 232, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+.dark-mode .private-classes-card:hover {
+    border-color: rgba(123, 171, 232, 0.35);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+}
+.private-classes-card-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.45;
+    color: var(--text-primary);
+    margin-bottom: 1.25rem;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.private-classes-card-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0.85rem 1.5rem;
+    border-radius: 14px;
+    border: none;
+    background: var(--text);
+    color: var(--background);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.private-classes-card-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+.private-classes-card-btn:active {
+    transform: translateY(0);
+}
+.private-classes-card-btn i {
+    width: 18px;
+    height: 18px;
+    opacity: 0.9;
+}
+
 /* MODAL */
 .modal {
     position: fixed;
@@ -2667,6 +2818,21 @@ select option {
 }
 .students-filter-header:hover {
   opacity: 0.85;
+}
+
+.qr-registrations-header:hover {
+  opacity: 0.85;
+}
+
+/* Expandable chevron: rotate when parent has .expanded (no full render) */
+.expandable-chevron {
+  transition: transform 0.3s ease;
+}
+.admin-reg-section.expanded .admin-reg-header .expandable-chevron,
+.students-filter-expandable.expanded .students-filter-header .expandable-chevron,
+.qr-registrations-expandable.expanded .qr-registrations-header .expandable-chevron,
+.expandable-section.expanded .expandable-section-header .expandable-chevron {
+  transform: rotate(180deg);
 }
 .students-filter-expandable .students-filter-bar {
   margin-left: 0;

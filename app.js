@@ -345,6 +345,8 @@ const DANCE_LOCALES = {
         cancel_confirm: "Cancel your registration for this class?",
         cancel_confirm_full: "You are cancelling this class. If the class gets full, you will not be able to register again.",
         register_success_4h_note: "If you don't cancel at least 4 hours before the class starts, one class will be deducted from your pass automatically.",
+        my_registrations_label: "Class Registrations",
+        took_class_label: "Past classes",
         got_it: "Got it",
         cancel_confirm_yes: "Yes, cancel registration",
         go_back: "Go back",
@@ -355,6 +357,28 @@ const DANCE_LOCALES = {
         no_registrations_yet: "No registrations this week",
         registered_count: "{n} registered",
         past_day: "Past",
+        // Private classes
+        private_classes_prompt: "Do you want private classes? Message us and we will give you all the information.",
+        private_classes_btn: "I am interested",
+        private_classes_contact_title: "Contact for Private Classes",
+        message_whatsapp: "Message on WhatsApp",
+        contact_not_configured: "Contact not configured. Please try again later.",
+        private_contact_section: "Private Classes Contact",
+        private_contact_desc: "Select which admin students see when they ask about private classes",
+        my_profile_section: "My Profile",
+        display_name_label: "Display Name",
+        phone_label: "Phone (for WhatsApp)",
+        change_password_section: "Change Password",
+        current_password_label: "Current password",
+        new_password_label: "New password",
+        confirm_new_password_label: "Confirm new password",
+        save_profile_btn: "Save Profile",
+        change_password_btn: "Change Password",
+        password_changed_success: "Password updated successfully.",
+        profile_saved_success: "Profile saved.",
+        password_mismatch: "New passwords do not match.",
+        password_too_short: "Password must be at least 4 characters.",
+        select_contact_admin: "Select contact",
     },
     es: {
         nav_schedule: "Horario",
@@ -694,6 +718,8 @@ const DANCE_LOCALES = {
         cancel_confirm: "¿Cancelar tu registro para esta clase?",
         cancel_confirm_full: "Estás cancelando esta clase. Si la clase se llena, no podrás inscribirte de nuevo.",
         register_success_4h_note: "Si no cancelas al menos 4 horas antes del inicio de la clase, se descontará una clase de tu pase automáticamente.",
+        my_registrations_label: "Registros de clases",
+        took_class_label: "Clases pasadas",
         got_it: "Entendido",
         cancel_confirm_yes: "Sí, cancelar registro",
         go_back: "Volver",
@@ -704,6 +730,28 @@ const DANCE_LOCALES = {
         no_registrations_yet: "Sin registros esta semana",
         registered_count: "{n} registrados",
         past_day: "Pasado",
+        // Private classes
+        private_classes_prompt: "¿Quieres clases particulares? Escríbenos y te damos toda la información.",
+        private_classes_btn: "Me interesa",
+        private_classes_contact_title: "Contacto para Clases Particulares",
+        message_whatsapp: "Escribir por WhatsApp",
+        contact_not_configured: "Contacto no configurado. Intenta más tarde.",
+        private_contact_section: "Contacto Clases Particulares",
+        private_contact_desc: "Selecciona qué admin ven los alumnos al preguntar por clases particulares",
+        my_profile_section: "Mi Perfil",
+        display_name_label: "Nombre para mostrar",
+        phone_label: "Teléfono (para WhatsApp)",
+        change_password_section: "Cambiar Contraseña",
+        current_password_label: "Contraseña actual",
+        new_password_label: "Nueva contraseña",
+        confirm_new_password_label: "Confirmar nueva contraseña",
+        save_profile_btn: "Guardar Perfil",
+        change_password_btn: "Cambiar Contraseña",
+        password_changed_success: "Contraseña actualizada.",
+        profile_saved_success: "Perfil guardado.",
+        password_mismatch: "Las contraseñas no coinciden.",
+        password_too_short: "La contraseña debe tener al menos 4 caracteres.",
+        select_contact_admin: "Seleccionar contacto",
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -1019,6 +1067,8 @@ const DANCE_LOCALES = {
         cancel_confirm: "Anmeldung für diesen Kurs stornieren?",
         cancel_confirm_full: "Du stornierst diesen Kurs. Wenn der Kurs voll wird, kannst du dich nicht erneut anmelden.",
         register_success_4h_note: "Wenn du nicht mindestens 4 Stunden vor Kursbeginn stornierst, wird automatisch eine Klasse von deinem Pass abgezogen.",
+        my_registrations_label: "Kurs-Anmeldungen",
+        took_class_label: "Vergangene Kurse",
         got_it: "Verstanden",
         cancel_confirm_yes: "Ja, Anmeldung stornieren",
         go_back: "Zurück",
@@ -1028,7 +1078,29 @@ const DANCE_LOCALES = {
         class_registrations_title: "Kursanmeldungen",
         no_registrations_yet: "Noch keine Anmeldungen diese Woche",
         registered_count: "{n} angemeldet",
-        past_day: "Vergangen"
+        past_day: "Vergangen",
+        // Private classes
+        private_classes_prompt: "Möchtest du Privatunterricht? Schreib uns und wir geben dir alle Infos.",
+        private_classes_btn: "Ich bin interessiert",
+        private_classes_contact_title: "Kontakt für Privatunterricht",
+        message_whatsapp: "Per WhatsApp schreiben",
+        contact_not_configured: "Kontakt nicht eingerichtet. Bitte später versuchen.",
+        private_contact_section: "Privatunterricht-Kontakt",
+        private_contact_desc: "Wähle den Admin, den Schüler bei Fragen zu Privatunterricht sehen",
+        my_profile_section: "Mein Profil",
+        display_name_label: "Anzeigename",
+        phone_label: "Telefon (für WhatsApp)",
+        change_password_section: "Passwort ändern",
+        current_password_label: "Aktuelles Passwort",
+        new_password_label: "Neues Passwort",
+        confirm_new_password_label: "Neues Passwort bestätigen",
+        save_profile_btn: "Profil speichern",
+        change_password_btn: "Passwort ändern",
+        password_changed_success: "Passwort aktualisiert.",
+        profile_saved_success: "Profil gespeichert.",
+        password_mismatch: "Passwörter stimmen nicht überein.",
+        password_too_short: "Passwort muss mindestens 4 Zeichen haben.",
+        select_contact_admin: "Kontakt auswählen",
     }
 };
 
@@ -1087,6 +1159,8 @@ let state = {
     // Class Registration
     classAvailability: {},       // { classId: { max_capacity, registered_count, spots_left } }
     studentRegistrations: [],    // upcoming registrations for the student
+    studentPastRegistrations: [], // past registrations (attended/no_show) for My QR page
+    qrRegistrationsExpanded: true, // expandable Class Registrations section on QR page
     todayRegistrations: [],      // today's registrations (used by scanner)
     classRegLoaded: false,       // whether availability data has been loaded
     adminWeekRegistrations: [],  // all registrations for the current week (admin view)
@@ -1284,6 +1358,7 @@ async function fetchAllData() {
             const uid = sessionData?.session?.user?.id;
             const admins = state.admins || [];
             state.schoolAdminLinked = !!(uid && admins.some(a => a.user_id === uid));
+            state.currentAdmin = admins.find(a => a.user_id === uid) || null;
         }
         if (isStudent && state.currentUser?.id && supabaseClient && sid) {
             try {
@@ -1334,8 +1409,8 @@ async function fetchAllData() {
                 state.classRegLoaded = false;
                 // Don't await — let it run in background to not slow down initial render
                 window.loadClassAvailability().then(() => {
-                    renderView();
-                    if (window.lucide) window.lucide.createIcons();
+                    if (shouldDeferRender()) scheduleDeferredRender();
+                    else { renderView(); if (window.lucide) window.lucide.createIcons(); }
                 }).catch(() => {});
             }
 
@@ -1378,7 +1453,10 @@ async function fetchAllData() {
 
         state.loading = false;
         _lastFetchEndTime = Date.now();
-        if (state.currentView !== 'auth') renderView();
+        if (state.currentView !== 'auth') {
+            if (shouldDeferRender()) scheduleDeferredRender();
+            else renderView();
+        }
         if (window._fetchAllDataNeeded) {
             window._fetchAllDataNeeded = false;
             setTimeout(() => fetchAllData(), 100);
@@ -1387,7 +1465,10 @@ async function fetchAllData() {
         state.loading = false;
         _lastFetchEndTime = Date.now();
         console.error("Error fetching data:", err);
-        if (state.currentView !== 'auth') renderView();
+        if (state.currentView !== 'auth') {
+            if (shouldDeferRender()) scheduleDeferredRender();
+            else renderView();
+        }
         if (window._fetchAllDataNeeded) {
             window._fetchAllDataNeeded = false;
             setTimeout(() => fetchAllData(), 100);
@@ -1462,6 +1543,7 @@ function sessionIdentityMatches(saved) {
 const INACTIVITY_LIMIT = 12 * 60 * 60 * 1000; // 12 Hours
 
 window.resetInactivityTimer = () => {
+    _lastUserInteractionAt = Date.now();
     // Throttled persistence: Only update storage if 30s have passed to save resources
     const now = Date.now();
     if (now - state.lastActivity > 30000) {
@@ -2003,6 +2085,47 @@ window.submitStudentCompetitionRegistration = async () => {
 
 let _renderViewScheduled = false;
 let _lastRenderedView = null;
+let _lastUserInteractionAt = 0;
+let _deferredRenderTimer = null;
+
+function shouldDeferRender() {
+    const active = document.activeElement;
+    if (active && ['INPUT', 'TEXTAREA'].includes(active.tagName || '')) return true;
+    if (active && (active.getAttribute('contenteditable') === 'true')) return true;
+    if (document.querySelector('.modal:not(.hidden)')) return true;
+    if (Date.now() - _lastUserInteractionAt < 500) return true;
+    return false;
+}
+
+window.toggleExpandableNoRender = (key) => {
+    const map = {
+        'adminReg': ['adminRegExpanded', 'admin-reg-content', 'admin-reg-section'],
+        'studentsFilter': ['studentsFilterExpanded', 'students-filter-content', 'students-filter-expandable'],
+        'qrRegistrations': ['qrRegistrationsExpanded', 'qr-registrations-content', 'qr-registrations-expandable'],
+        'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section']
+    };
+    const entry = map[key];
+    if (!entry) return;
+    const [stateKey, contentId, containerClass] = entry;
+    state[stateKey] = !state[stateKey];
+    const content = document.getElementById(contentId);
+    const container = document.querySelector(`.${containerClass}`);
+    if (content) content.style.display = state[stateKey] ? '' : 'none';
+    if (container) container.classList.toggle('expanded', !!state[stateKey]);
+};
+
+function scheduleDeferredRender() {
+    if (_deferredRenderTimer) clearTimeout(_deferredRenderTimer);
+    _deferredRenderTimer = setTimeout(() => {
+        _deferredRenderTimer = null;
+        if (!shouldDeferRender()) {
+            renderView();
+            if (window.lucide) window.lucide.createIcons();
+        } else {
+            scheduleDeferredRender();
+        }
+    }, 500);
+}
 
 function renderView() {
     if (_renderViewScheduled) return;
@@ -2531,7 +2654,10 @@ function _renderViewImpl() {
         const regEnabled = !state.isAdmin && state.currentSchool?.class_registration_enabled;
         // Trigger async load of availability data if not yet loaded
         if (regEnabled && !state.classRegLoaded) {
-            window.loadClassAvailability().then(() => { renderView(); if (window.lucide) window.lucide.createIcons(); });
+            window.loadClassAvailability().then(() => {
+                if (shouldDeferRender()) scheduleDeferredRender();
+                else { renderView(); if (window.lucide) window.lucide.createIcons(); }
+            }).catch(() => {});
         }
 
         // Helper to get registration info for a class
@@ -2711,6 +2837,16 @@ function _renderViewImpl() {
             });
             html += `</div>`;
         }
+
+        // Private classes section
+        html += `
+            <div class="private-classes-card" onclick="window.openPrivateClassesModal()">
+                <p class="private-classes-card-title">${t.private_classes_prompt}</p>
+                <button type="button" class="private-classes-card-btn">
+                    <i data-lucide="message-circle" size="18"></i> ${t.private_classes_btn}
+                </button>
+            </div>
+        `;
     } else if (view === 'shop') {
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
@@ -2851,6 +2987,47 @@ function _renderViewImpl() {
                 return out;
             })()}
                     </div>
+
+                    ${state.currentSchool?.class_registration_enabled ? (() => {
+                        const regExpanded = state.qrRegistrationsExpanded !== false;
+                        const upcoming = (state.studentRegistrations || []).filter(r => r.status === 'registered');
+                        const pastTook = (state.studentPastRegistrations || []).filter(r => r.status === 'attended' || r.status === 'no_show');
+                        const todayTook = (state.studentRegistrations || []).filter(r => (r.status === 'attended' || r.status === 'no_show'));
+                        const took = [...todayTook, ...pastTook].sort((a, b) => {
+                            const dA = new Date(a.class_date + 'T' + (a.time || '23:59'));
+                            const dB = new Date(b.class_date + 'T' + (b.time || '23:59'));
+                            return dB - dA;
+                        });
+                        const locale = state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US';
+                        const fmtDate = (d) => d ? new Date(d).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' }) : '';
+                        return `
+                    <div class="qr-registrations-expandable ${regExpanded ? 'expanded' : ''}" style="margin-top: 1.5rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; border-top: 1px solid var(--border); padding-top: 1rem;">
+                        <div class="qr-registrations-header" onclick="toggleExpandableNoRender('qrRegistrations')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer;">
+                            <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.my_registrations_label || 'Class Registrations'}</span>
+                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        </div>
+                        <div id="qr-registrations-content" style="display: ${regExpanded ? '' : 'none'};">
+                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                            <div>
+                                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.7; margin-bottom: 8px;">${t.upcoming_classes || 'Upcoming'}</div>
+                                ${upcoming.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary); padding: 8px 0;">${t.no_upcoming || 'No upcoming registrations'}</div>` : upcoming.map(r => {
+                                    const dateLabel = fmtDate(r.class_date);
+                                    return `<div class="card" style="padding: 10px 14px; border-radius: 12px; font-size: 13px;"><div style="font-weight: 700;">${(r.class_name || '').replace(/</g, '&lt;')}</div><div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${dateLabel} • ${r.time || ''}</div></div>`;
+                                }).join('')}
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.7; margin-bottom: 8px;">${t.took_class_label || 'Took class'}</div>
+                                ${took.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary); padding: 8px 0;">${t.no_past_classes || 'No classes attended yet'}</div>` : took.slice(0, 20).map(r => {
+                                    const dateLabel = fmtDate(r.class_date);
+                                    const statusLabel = r.status === 'attended' ? (t.attended || 'Attended') : (t.no_show || 'No-show');
+                                    const statusColor = r.status === 'attended' ? 'var(--system-green)' : 'var(--text-secondary)';
+                                    return `<div class="card" style="padding: 10px 14px; border-radius: 12px; font-size: 13px; opacity: 0.9;"><div style="font-weight: 700;">${(r.class_name || '').replace(/</g, '&lt;')}</div><div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${dateLabel} • ${r.time || ''}</div><div style="font-size: 10px; font-weight: 600; color: ${statusColor}; margin-top: 4px;">${statusLabel}</div></div>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    `})() : ''}
 
                 </div>
             </div>
@@ -3008,8 +3185,8 @@ function _renderViewImpl() {
                     }
 
                     return `
-                    <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                        <div class="admin-reg-header" onclick="state.adminRegExpanded=!state.adminRegExpanded; renderView(); if(window.lucide) window.lucide.createIcons();" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
+                    <div class="admin-reg-section ${state.adminRegExpanded ? 'expanded' : ''}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
+                        <div class="admin-reg-header" onclick="toggleExpandableNoRender('adminReg')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <i data-lucide="calendar-check" size="16" style="opacity: 0.6;"></i>
                                 <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.class_registrations_title}</span>
@@ -3017,11 +3194,10 @@ function _renderViewImpl() {
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
                                 ${activeRegs.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${activeRegs.length}</span>` : ''}
-                                <i data-lucide="${state.adminRegExpanded ? 'chevron-up' : 'chevron-down'}" size="16" style="opacity: 0.4;"></i>
+                                <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
                         </div>
-                        ${state.adminRegExpanded ? `
-                        <div class="admin-reg-content" style="padding: 0.8rem 0;">
+                        <div id="admin-reg-content" class="admin-reg-content" style="padding: 0.8rem 0; display: ${state.adminRegExpanded ? '' : 'none'};">
                             ${groupedArr.length === 0 ? `
                                 <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">
                                     <i data-lucide="inbox" size="24" style="opacity: 0.2; margin-bottom: 0.3rem;"></i>
@@ -3054,16 +3230,15 @@ function _renderViewImpl() {
                                 </div>`;
                             }).join('')}
                         </div>
-                        ` : ''}
                     </div>`;
                 })() : ''}
-                <div class="students-filter-expandable" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
-                    <div class="students-filter-header" onclick="state.studentsFilterExpanded=!state.studentsFilterExpanded; renderView(); if(window.lucide) window.lucide.createIcons();" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
+                <div class="students-filter-expandable ${state.studentsFilterExpanded ? 'expanded' : ''}" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
+                    <div class="students-filter-header" onclick="toggleExpandableNoRender('studentsFilter')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
                         <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.filters_label || 'Filters'}</span>
-                        <i data-lucide="${state.studentsFilterExpanded ? 'chevron-up' : 'chevron-down'}" size="18" style="opacity: 0.5;"></i>
+                        <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
                     </div>
-                    ${state.studentsFilterExpanded ? `
-                    <div class="filter-bar students-filter-bar" style="margin-bottom: 12px;">
+                    <div id="students-filter-content" style="display: ${state.studentsFilterExpanded ? '' : 'none'}; margin-bottom: 12px;">
+                    <div class="filter-bar students-filter-bar">
                         <div class="filter-group">
                             <span class="filter-label">${t.filter_label_pack || 'Pack'}</span>
                             <span class="filter-select-wrap">
@@ -3098,7 +3273,7 @@ function _renderViewImpl() {
                         </div>
                         <span class="filter-count" id="students-filter-count"></span>
                     </div>
-                    ` : ''}
+                    </div>
                 </div>
                 <div class="students-search-wrap">
                     <input type="text" class="students-search" placeholder="${t.search_students}" value="${(state.adminStudentsSearch || '').replace(/"/g, '&quot;')}" oninput="state.adminStudentsSearch=this.value; filterStudents(this.value)">
@@ -3490,6 +3665,62 @@ function _renderViewImpl() {
             </div>
 
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.private_contact_section}
+            </div>
+            <div class="ios-list" style="padding: 0 1.2rem;">
+                <p class="text-muted" style="font-size: 12px; margin-bottom: 10px;">${t.private_contact_desc}</p>
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.select_contact_admin}</span>
+                    <select id="private-contact-admin" onchange="window.savePrivateContactAdmin(this.value)" style="border: none; background: var(--system-gray6); padding: 8px 12px; border-radius: 10px; font-size: 14px; color: var(--text-primary); outline: none;">
+                        <option value="">—</option>
+                        ${(Array.isArray(state.admins) ? state.admins : []).map(adm => `
+                            <option value="${adm.id}" ${(state.adminSettings?.private_contact_admin_id || '') === adm.id ? 'selected' : ''}>${(adm.display_name || adm.username || '').replace(/</g, '&lt;')}</option>
+                        `).join('')}
+                    </select>
+                </div>
+            </div>
+
+            ${state.currentAdmin ? `
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.my_profile_section}
+            </div>
+            <div class="ios-list">
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.display_name_label}</span>
+                    <input type="text" id="profile-display-name" value="${(state.currentAdmin.display_name || '').replace(/"/g, '&quot;')}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                </div>
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.phone_label}</span>
+                    <input type="text" id="profile-phone" value="${(state.currentAdmin.phone || '').replace(/"/g, '&quot;')}" placeholder="+52 55 1234 5678" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                </div>
+                <div class="ios-list-item" onclick="window.saveAdminProfile()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                    <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_profile_btn}
+                </div>
+            </div>
+
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.change_password_section}
+            </div>
+            <div class="ios-list">
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.current_password_label}</span>
+                    <input type="password" id="profile-current-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                </div>
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.new_password_label}</span>
+                    <input type="password" id="profile-new-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                </div>
+                <div class="ios-list-item" style="padding: 12px 16px;">
+                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.confirm_new_password_label}</span>
+                    <input type="password" id="profile-confirm-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                </div>
+                <div class="ios-list-item" onclick="window.changeAdminPassword()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                    <i data-lucide="key" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.change_password_btn}
+                </div>
+            </div>
+            ` : ''}
+
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.mgmt_admins_title}
             </div>
             <div class="ios-list">
@@ -3506,13 +3737,12 @@ function _renderViewImpl() {
                 </div>
             </div>
 
-            <div class="expandable-section" style="margin-top: 2rem; padding: 0 1.2rem;">
-                <div class="expandable-section-header" onclick="state.additionalFeaturesExpanded=!state.additionalFeaturesExpanded; renderView();" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
+            <div class="expandable-section ${state.additionalFeaturesExpanded ? 'expanded' : ''}" style="margin-top: 2rem; padding: 0 1.2rem;">
+                <div class="expandable-section-header" onclick="toggleExpandableNoRender('additionalFeatures')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
                     <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.additional_features}</span>
-                    <i data-lucide="${state.additionalFeaturesExpanded ? 'chevron-up' : 'chevron-down'}" size="18" style="opacity: 0.5;"></i>
+                    <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
                 </div>
-                ${state.additionalFeaturesExpanded ? `
-                <div class="expandable-section-content" style="padding: 1rem 0;">
+                <div id="additional-features-content" class="expandable-section-content" style="padding: 1rem 0; display: ${state.additionalFeaturesExpanded ? '' : 'none'};">
                     <!-- Class Registration Toggle -->
                     <div class="card" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -3537,7 +3767,6 @@ function _renderViewImpl() {
                     </button>
                     ` : ''}
                 </div>
-                ` : ''}
             </div>
 
             <div style="height: 100px;"></div> <!-- Spacer for bottom nav padding -->
@@ -3774,6 +4003,7 @@ window.setScheduleView = (v) => {
     state.scheduleView = v;
     saveState();
     renderView();
+    window.scrollTo(0, 0);
 };
 
 // --- CLASS REGISTRATION HELPERS ---
@@ -3882,23 +4112,68 @@ window.loadClassAvailability = async () => {
         } catch (e) { console.warn('Error loading availability for', dateStr, e); }
     }
 
-    // Also load student's own registrations
+    // Also load student's own registrations (upcoming + past for My QR page)
     let myRegs = [];
+    let pastRegs = [];
     if (state.currentUser?.id) {
         try {
-            const { data, error } = await supabaseClient.rpc('get_student_upcoming_registrations', {
-                p_student_id: String(state.currentUser.id),
-                p_school_id: schoolId
-            });
-            if (!error && data) {
-                myRegs = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+            const [upcomingRes, pastRes] = await Promise.all([
+                supabaseClient.rpc('get_student_upcoming_registrations', { p_student_id: String(state.currentUser.id), p_school_id: schoolId }),
+                supabaseClient.rpc('get_student_past_registrations', { p_student_id: String(state.currentUser.id), p_school_id: schoolId })
+            ]);
+            if (!upcomingRes.error && upcomingRes.data) {
+                myRegs = Array.isArray(upcomingRes.data) ? upcomingRes.data : (typeof upcomingRes.data === 'string' ? JSON.parse(upcomingRes.data) : []);
+            }
+            if (!pastRes.error && pastRes.data) {
+                pastRegs = Array.isArray(pastRes.data) ? pastRes.data : (typeof pastRes.data === 'string' ? JSON.parse(pastRes.data) : []);
             }
         } catch (e) { console.warn('Error loading registrations:', e); }
     }
 
     state.classAvailability = availability;
     state.studentRegistrations = myRegs;
+    state.studentPastRegistrations = pastRegs;
     state.classRegLoaded = true;
+};
+
+window.openPrivateClassesModal = async () => {
+    const modal = document.getElementById('private-classes-modal');
+    const content = document.getElementById('private-classes-modal-content');
+    if (!modal || !content) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const sid = state.currentSchool?.id;
+    if (!sid || !supabaseClient) {
+        content.innerHTML = `<p class="text-muted">${t('contact_not_configured')}</p><button class="btn-primary" onclick="document.getElementById('private-classes-modal').classList.add('hidden')" style="margin-top:1rem;">${t('close')}</button>`;
+        modal.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+        return;
+    }
+    content.innerHTML = `<div style="padding:1rem;"><i data-lucide="loader-2" class="spin" size="24"></i><p class="text-muted" style="margin-top:0.5rem;">${t('loading')}</p></div>`;
+    modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+    try {
+        const { data, error } = await supabaseClient.rpc('get_private_classes_contact', { p_school_id: sid });
+        if (error) throw error;
+        if (!data || !data.name || !data.phone) {
+            content.innerHTML = `<p class="text-muted">${t('contact_not_configured')}</p><button class="btn-primary" onclick="document.getElementById('private-classes-modal').classList.add('hidden')" style="margin-top:1rem;">${t('close')}</button>`;
+        } else {
+            const phoneDigits = (data.phone || '').replace(/\D/g, '');
+            const whatsappUrl = phoneDigits ? `https://wa.me/${phoneDigits}` : '#';
+            content.innerHTML = `
+                <h2 class="private-classes-title">${t('private_classes_contact_title')}</h2>
+                <div class="private-classes-avatar"><i data-lucide="user" size="32"></i></div>
+                <p class="private-classes-name">${(data.name || '').replace(/</g, '&lt;')}</p>
+                <p class="private-classes-phone">${(data.phone || '').replace(/</g, '&lt;')}</p>
+                <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="private-classes-whatsapp-btn">
+                    <i data-lucide="message-circle" size="22"></i> ${t('message_whatsapp')}
+                </a>
+                <button type="button" class="private-classes-close-btn" onclick="document.getElementById('private-classes-modal').classList.add('hidden')">${t('close')}</button>
+            `;
+        }
+    } catch (err) {
+        content.innerHTML = `<p class="text-muted">${t('contact_not_configured')}</p><button class="btn-primary" onclick="document.getElementById('private-classes-modal').classList.add('hidden')" style="margin-top:1rem;">${t('close')}</button>`;
+    }
+    if (window.lucide) window.lucide.createIcons();
 };
 
 window.showMessageModal = (opts) => {
@@ -3958,8 +4233,8 @@ window.showRegisterSuccessModal = (registrationId) => {
                 if (error) throw error;
                 close();
                 await window.loadClassAvailability();
-                renderView();
-                if (window.lucide) window.lucide.createIcons();
+                if (shouldDeferRender()) scheduleDeferredRender();
+                else { renderView(); if (window.lucide) window.lucide.createIcons(); }
             } catch (e) {
                 console.error('Cancel error:', e);
                 close();
@@ -3987,10 +4262,10 @@ window.showCancelConfirmModal = (registrationId) => {
                     p_student_id: String(studentId)
                 });
                 if (error) throw error;
-                await window.loadClassAvailability();
-                renderView();
-                if (window.lucide) window.lucide.createIcons();
                 close();
+                await window.loadClassAvailability();
+                if (shouldDeferRender()) scheduleDeferredRender();
+                else { renderView(); if (window.lucide) window.lucide.createIcons(); }
             } catch (e) {
                 console.error('Cancel error:', e);
                 close();
@@ -4035,8 +4310,8 @@ window.registerForClass = async (classId, className) => {
         // Show success modal immediately; refresh availability in background so phone feels fast
         window.showRegisterSuccessModal(registrationId);
         window.loadClassAvailability().then(() => {
-            renderView();
-            if (window.lucide) window.lucide.createIcons();
+            if (shouldDeferRender()) scheduleDeferredRender();
+            else { renderView(); if (window.lucide) window.lucide.createIcons(); }
         }).catch(() => {});
     } catch (e) {
         console.error('Registration error:', e);
@@ -5423,6 +5698,78 @@ window.updateAdminSetting = async (key, value) => {
     saveState();
 };
 
+window.savePrivateContactAdmin = async (adminId) => {
+    if (!state.currentSchool?.id) return;
+    await window.updateAdminSetting('private_contact_admin_id', adminId || '');
+};
+
+window.saveAdminProfile = async () => {
+    const adm = state.currentAdmin;
+    if (!adm || !supabaseClient) return;
+    const t = window.t;
+    const displayName = (document.getElementById('profile-display-name')?.value || '').trim();
+    const phone = (document.getElementById('profile-phone')?.value || '').trim();
+    try {
+        const { error } = await supabaseClient.rpc('admin_update_profile', {
+            p_admin_id: adm.id,
+            p_phone: phone,
+            p_display_name: displayName
+        });
+        if (error) throw error;
+        adm.display_name = displayName || null;
+        adm.phone = phone || null;
+        state.currentAdmin = adm;
+        const idx = (state.admins || []).findIndex(a => a.id === adm.id);
+        if (idx >= 0) {
+            state.admins[idx] = { ...state.admins[idx], display_name: adm.display_name, phone: adm.phone };
+        }
+        saveState();
+        alert(t('profile_saved_success'));
+        renderView();
+    } catch (err) {
+        alert('Error: ' + (err.message || 'Could not save profile'));
+    }
+};
+
+window.changeAdminPassword = async () => {
+    const adm = state.currentAdmin;
+    if (!adm || !supabaseClient) return;
+    const t = window.t;
+    const currentEl = document.getElementById('profile-current-password');
+    const newEl = document.getElementById('profile-new-password');
+    const confirmEl = document.getElementById('profile-confirm-password');
+    const current = currentEl?.value || '';
+    const newPass = newEl?.value || '';
+    const confirmPass = confirmEl?.value || '';
+    if (!current) {
+        alert(t('current_password_label') + ' ' + (t('required') || 'required'));
+        return;
+    }
+    if (newPass.length < 4) {
+        alert(t('password_too_short'));
+        return;
+    }
+    if (newPass !== confirmPass) {
+        alert(t('password_mismatch'));
+        return;
+    }
+    try {
+        const { error } = await supabaseClient.rpc('admin_change_password', {
+            p_admin_id: adm.id,
+            p_current_password: current,
+            p_new_password: newPass
+        });
+        if (error) throw error;
+        if (currentEl) currentEl.value = '';
+        if (newEl) newEl.value = '';
+        if (confirmEl) confirmEl.value = '';
+        alert(t('password_changed_success'));
+        renderView();
+    } catch (err) {
+        alert(err.message || 'Could not change password');
+    }
+};
+
 window.openAddAdminModal = () => {
     const modal = document.getElementById('add-admin-modal');
     const formView = document.getElementById('add-admin-form-view');
@@ -5571,7 +5918,11 @@ window.debouncedUpdateClass = (id, field, value) => {
             if (!c) continue;
             await window._doClassUpdateOnly(classId, fieldName, c[fieldName]);
         }
-        if (toFlush.length > 0) { saveState(); renderView(); }
+        if (toFlush.length > 0) {
+            saveState();
+            if (shouldDeferRender()) scheduleDeferredRender();
+            else renderView();
+        }
     }, CLASS_UPDATE_DEBOUNCE_MS);
 };
 
@@ -6465,6 +6816,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         }
         saveState();
         renderView();
+        window.scrollTo(0, 0);
         if (view === 'qr' && state.currentUser && !state.isAdmin && state.currentUser.id && (state.currentUser.school_id || state.currentSchool?.id) && supabaseClient) {
             fetchAllData();
         }
@@ -6494,11 +6846,13 @@ logoEl.addEventListener('mousedown', () => {
         state.isAdmin = !state.isAdmin;
         state.currentView = state.isAdmin ? 'admin-students' : 'schedule';
         renderView();
+        window.scrollTo(0, 0);
     }, 2000);
     superAdminTimer = setTimeout(() => {
         isLongPress = true;
         state.currentView = 'super-admin-dashboard';
         renderView();
+        window.scrollTo(0, 0);
     }, 5000);
 });
 
