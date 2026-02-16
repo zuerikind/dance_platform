@@ -3,6 +3,19 @@ const SUPABASE_URL = 'https://fziyybqhecfxhkagknvg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs';
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
+// XSS: escape user/DB content before inserting into HTML
+function escapeHtml(str) {
+    if (str == null) return '';
+    const s = String(str);
+    return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+window.escapeHtml = escapeHtml;
+
 // --- TRANSLATIONS ---
 // --- TRANSLATIONS (DANCE_LOCALES) ---
 const DANCE_LOCALES = {
@@ -153,6 +166,7 @@ const DANCE_LOCALES = {
         select_school_placeholder: "Choose your school...",
         search_school_placeholder: "Type or select school...",
         loading_schools: "Loading schools...",
+        loading_dashboard: "Opening dashboard...",
         no_schools: "No schools found",
         could_not_load_schools: "Could not load schools",
         connecting: "Connecting...",
@@ -165,6 +179,10 @@ const DANCE_LOCALES = {
         dev_dashboard_title: "Platform Developer",
         dev_school_inspector: "School Inspector",
         dev_active_schools: "Active Schools",
+        school_active: "Active",
+        school_inactive: "Inactive",
+        activate_school: "Activate",
+        deactivate_school: "Deactivate",
         dev_stats_schools: "Schools",
         dev_stats_students: "Total Students",
         dev_stats_plans: "Plans",
@@ -195,6 +213,10 @@ const DANCE_LOCALES = {
         password_label: "Password",
         delete_school_btn: "Delete School",
         rename_school_btn: "Rename",
+        school_active: "Active",
+        school_inactive: "Inactive",
+        activate_school: "Activate",
+        deactivate_school: "Deactivate",
         rename_school_prompt: "Enter new name for this school:",
         rename_school_success: "School name updated.",
         delete_school_confirm: "Are you sure you want to delete this school? ALL data (students, admins, payments, classes) will be permanently lost.",
@@ -537,6 +559,7 @@ const DANCE_LOCALES = {
         select_school_placeholder: "Elige tu escuela...",
         search_school_placeholder: "Escribe o elige escuela...",
         loading_schools: "Cargando academias...",
+        loading_dashboard: "Abriendo panel...",
         no_schools: "No hay academias",
         could_not_load_schools: "No se pudieron cargar las academias",
         connecting: "Iniciando conexión...",
@@ -549,6 +572,10 @@ const DANCE_LOCALES = {
         dev_dashboard_title: "Plataforma Dev",
         dev_school_inspector: "Inspector de Escuela",
         dev_active_schools: "Escuelas Activas",
+        school_active: "Activa",
+        school_inactive: "Inactiva",
+        activate_school: "Activar",
+        deactivate_school: "Desactivar",
         dev_stats_schools: "Escuelas",
         dev_stats_students: "Total Alumnos",
         dev_stats_plans: "Planes",
@@ -579,6 +606,10 @@ const DANCE_LOCALES = {
         password_label: "Contraseña",
         delete_school_btn: "Eliminar Escuela",
         rename_school_btn: "Renombrar",
+        school_active: "Activa",
+        school_inactive: "Inactiva",
+        activate_school: "Activar",
+        deactivate_school: "Desactivar",
         rename_school_prompt: "Ingresa el nuevo nombre de la escuela:",
         rename_school_success: "Nombre de escuela actualizado.",
         delete_school_confirm: "¿Estás seguro de que quieres eliminar esta escuela? TODOS los datos (alumnos, admins, pagos, clases) se perderán permanentemente.",
@@ -922,6 +953,7 @@ const DANCE_LOCALES = {
         select_school_placeholder: "Wähle deine Schule...",
         search_school_placeholder: "Tippen oder Schule wählen...",
         loading_schools: "Schulen werden geladen...",
+        loading_dashboard: "Dashboard wird geöffnet...",
         no_schools: "Keine Schulen gefunden",
         could_not_load_schools: "Schulen konnten nicht geladen werden",
         connecting: "Verbindung wird hergestellt...",
@@ -934,6 +966,10 @@ const DANCE_LOCALES = {
         dev_dashboard_title: "Plattform-Entwickler",
         dev_school_inspector: "Schul-Inspektor",
         dev_active_schools: "Aktive Schulen",
+        school_active: "Aktiv",
+        school_inactive: "Inaktiv",
+        activate_school: "Aktivieren",
+        deactivate_school: "Deaktivieren",
         dev_stats_schools: "Schulen",
         dev_stats_students: "Gesamt Schüler",
         dev_stats_plans: "Pläne",
@@ -964,6 +1000,10 @@ const DANCE_LOCALES = {
         password_label: "Passwort",
         delete_school_btn: "Schule löschen",
         rename_school_btn: "Umbenennen",
+        school_active: "Aktiv",
+        school_inactive: "Inaktiv",
+        activate_school: "Aktivieren",
+        deactivate_school: "Deaktivieren",
         rename_school_prompt: "Neuer Name für diese Schule:",
         rename_school_success: "Schulname aktualisiert.",
         delete_school_confirm: "Bist du sicher? ALLE Daten (Schüler, Admins, Zahlungen, Kurse) werden unwiderruflich gelöscht.",
@@ -1237,6 +1277,14 @@ async function fetchAllData() {
             console.error('Schools fetch error:', schoolsError);
         }
         state.schools = schoolsData ?? [];
+        // If current school was deactivated, clear it so user must pick an active school
+        if (!state.isPlatformDev && state.currentSchool && !state.schools.some(s => s.id === state.currentSchool.id)) {
+            state.currentSchool = null;
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.currentView = 'school-selection';
+            saveState();
+        }
         if (state.currentView === 'school-selection') {
             renderView();
         }
@@ -2257,12 +2305,20 @@ function _renderViewImpl() {
         const schools = isDev ? state.platformData.schools : state.schools;
         const devTab = state.devDashboardTab || 'schools';
         const getSchoolName = (id) => (state.platformData.schools || []).find(s => s.id === id)?.name || id;
+        const showDashboardLoader = isDev && state.loading;
 
         html += `
             <div class="ios-header">
                 <div class="ios-large-title" style="letter-spacing: -1.2px;">${title}</div>
                 ${isDev ? '<div style="font-size: 13px; color: var(--system-blue); font-weight: 700; padding: 0 1.2rem; margin-top: -5px; letter-spacing: 0.1em; text-transform: uppercase;">' + t.admin_label + ' (God Mode)</div>' : ''}
             </div>
+            ${showDashboardLoader ? `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh; padding: 2rem; text-align: center;">
+                <div class="spin" style="color: var(--system-blue); margin-bottom: 1rem;"><i data-lucide="loader-2" size="48"></i></div>
+                <p style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0;">${t.loading_dashboard || 'Opening dashboard...'}</p>
+            </div>
+            ` : ''}
+            ${!showDashboardLoader ? `
             ${isDev ? `
             <div style="display: flex; gap: 8px; padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);">
                 <button type="button" onclick="state.devDashboardTab='schools'; renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: ${devTab === 'schools' ? 'var(--system-blue)' : 'var(--system-gray6)'}; color: ${devTab === 'schools' ? 'white' : 'var(--text-secondary)'}; transition: all 0.2s;">${t.dev_tab_schools || 'Schools'}</button>
@@ -2344,6 +2400,12 @@ function _renderViewImpl() {
                                         <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: monospace; letter-spacing: 0.05em;">${s.id}</div>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
+                                        ${isDev ? `
+                                        <button type="button" onclick="window.toggleSchoolActive('${escapeHtml(s.id)}', ${s.active !== false})" title="${(s.active !== false ? (t.deactivate_school || 'Deactivate') : (t.activate_school || 'Activate')).replace(/"/g, '&quot;')}" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 14px; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; border: 1px solid transparent; cursor: pointer; transition: opacity 0.2s, background 0.2s, border-color 0.2s; ${s.active !== false ? 'color: var(--system-green); background: rgba(52, 199, 89, 0.12); border-color: rgba(52, 199, 89, 0.25);' : 'color: var(--text-secondary); background: rgba(142, 142, 147, 0.12); border-color: var(--border);'} " onmouseover="this.style.opacity='0.9'; this.style.background=${s.active !== false ? "'rgba(52, 199, 89, 0.2)'" : "'rgba(142, 142, 147, 0.2)'"};" onmouseout="this.style.opacity='1'; this.style.background=${s.active !== false ? "'rgba(52, 199, 89, 0.12)'" : "'rgba(142, 142, 147, 0.12)'"};">
+                                            <i data-lucide="${s.active !== false ? 'check-circle' : 'power'}" size="12" style="flex-shrink: 0;"></i>
+                                            <span>${s.active !== false ? (t.school_active || 'Active') : (t.school_inactive || 'Inactive')}</span>
+                                        </button>
+                                        ` : ''}
                                         <div style="font-size: 11px; font-weight: 800; color: var(--system-blue); background: rgba(0, 122, 255, 0.08); padding: 5px 12px; border-radius: 14px; letter-spacing: 0.02em; border: 1px solid rgba(0, 122, 255, 0.1);">
                                             ${schoolStudents} ${t.dev_students_label.toUpperCase()}
                                         </div>
@@ -2387,6 +2449,7 @@ function _renderViewImpl() {
                 ` : ''}
                 ` : ''}
             </div>
+            ` : ''}
         `;
     } else if (view === 'platform-add-school') {
         html += `
@@ -4090,10 +4153,12 @@ function _renderViewImpl() {
     // Global UI Updates
     const isDevView = ['platform-dev-dashboard', 'platform-school-details'].includes(view);
     const isAdminView = (view && view.startsWith('admin-'));
-    const hasSession = state.currentUser !== null || (state.isAdmin && isAdminView) || state.isPlatformDev;
-    const showNav = hasSession && !['school-selection', 'auth'].includes(view) && !isDevView;
-    // Show logout when logged in OR when clearly in admin context (e.g. after refresh on Jack and Jill)
-    document.getElementById('logout-btn').classList.toggle('hidden', !hasSession);
+    const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
+    const isLanding = view === 'school-selection' || view === 'auth';
+    // On landing page: show logout only for platform dev; otherwise hide so unauthenticated users never see it
+    const showLogout = hasSession && (!isLanding || state.isPlatformDev);
+    const showNav = hasSession && !isLanding && !isDevView;
+    document.getElementById('logout-btn').classList.toggle('hidden', !showLogout);
     document.getElementById('dev-login-trigger').classList.toggle('hidden', state.currentUser !== null);
     document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
     document.getElementById('admin-nav').classList.toggle('hidden', !showNav || !state.isAdmin);
@@ -4943,6 +5008,7 @@ window.loginDeveloper = async (user, pass) => {
         return;
     }
 
+    state.currentView = 'platform-dev-dashboard';
     state.loading = true;
     renderView();
 
@@ -4957,14 +5023,17 @@ window.loginDeveloper = async (user, pass) => {
             state.isPlatformDev = true;
             state.currentUser = { name: authData.user.email + " (Dev)", role: "platform-dev" };
             state.currentView = 'platform-dev-dashboard';
-            state.loading = false;
             setSessionIdentity();
             saveState();
-            await fetchPlatformData();
+            renderView();
             document.getElementById('dev-login-modal').classList.add('hidden');
+            await fetchPlatformData();
+            state.loading = false;
+            renderView();
             return;
         }
         if (authError) {
+            state.currentView = 'school-selection';
             state.loading = false;
             renderView();
             alert("That email isn't linked to a Dev account. Use your username (e.g. Omid7991) and password instead.");
@@ -4996,6 +5065,7 @@ window.loginDeveloper = async (user, pass) => {
         } catch (e) { console.warn('Platform dev Auth link:', e); }
         const { data: sessionData } = await supabaseClient.auth.getSession();
         if (!sessionData?.session?.user) {
+            state.currentView = 'school-selection';
             state.loading = false;
             renderView();
             alert("Your username and password are correct, but we couldn't sign you in to the backend (create/delete schools need that).\n\nUse one of these:\n• Log in with the **email + password** you used in \"Link account\" (e.g. omid@bailadmin.lat).\n• Or use the \"Link account\" card on the dashboard to link this user to a new email and password.");
@@ -5004,18 +5074,32 @@ window.loginDeveloper = async (user, pass) => {
         state.isPlatformDev = true;
         state.currentUser = { name: platformUsername + " (Dev)", role: "platform-dev" };
         state.currentView = 'platform-dev-dashboard';
-        state.loading = false;
         setSessionIdentity();
         saveState();
+        renderView();
         document.getElementById('dev-login-modal').classList.add('hidden');
         await fetchPlatformData();
+        state.loading = false;
         renderView();
         return;
     }
 
+    state.currentView = 'school-selection';
     state.loading = false;
     renderView();
     alert("Invalid Developer credentials.");
+};
+
+window.toggleSchoolActive = async (schoolId, currentlyActive) => {
+    if (!supabaseClient) return;
+    const t = typeof window.t === 'function' ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
+    const { error } = await supabaseClient.rpc('school_set_active', { p_school_id: schoolId, p_active: !currentlyActive });
+    if (error) {
+        alert(t('error_generic') || 'Error: ' + (error.message || 'Could not update school.'));
+        return;
+    }
+    await fetchPlatformData();
+    renderView();
 };
 
 window.renameSchool = async (schoolId) => {
@@ -5212,7 +5296,6 @@ window.createNewStudent = async () => {
     if (supabaseClient) {
         const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
             p_name: name,
-            p_username: null,
             p_email: (email && email.trim()) || null,
             p_phone: (phone && phone.trim()) || null,
             p_password: pass,
@@ -6242,10 +6325,10 @@ window.renderAdminStudentCard = (s) => {
         ? `<span class="packs">${s.active_packs.length} ${s.active_packs.length === 1 ? 'Pack' : 'Packs'}</span>`
         : '';
     return `
-        <div class="student-card" onclick="updateStudentPrompt('${s.id}')">
-            <div class="student-card-avatar">${s.name.charAt(0).toUpperCase()}</div>
+        <div class="student-card" onclick="updateStudentPrompt('${escapeHtml(s.id)}')">
+            <div class="student-card-avatar">${escapeHtml((s.name || '').charAt(0).toUpperCase())}</div>
             <div class="student-card-body">
-                <div class="student-card-name">${s.name.replace(/</g, '&lt;')}</div>
+                <div class="student-card-name">${escapeHtml(s.name)}</div>
                 <div class="student-card-meta">
                     ${t('remaining_classes')}: <span class="balance">${balanceStr}</span>${packsHtml}
                 </div>
@@ -6343,28 +6426,28 @@ window.updateStudentPrompt = async (id) => {
         <div style="text-align: left; width: 100%; min-width: 280px; color: ${textColor}; box-sizing: border-box;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
                 <div style="width: 50px; height: 50px; background: ${bgColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #007aff; font-size: 20px;">
-                    ${s.name.charAt(0).toUpperCase()}
+                    ${escapeHtml((s.name || '').charAt(0).toUpperCase())}
                 </div>
                 <div>
-                    <h2 style="margin: 0; font-size: 20px; letter-spacing: -0.5px; color: ${textColor};">${s.name}</h2>
-                    <p style="margin: 0; font-size: 12px; color: #8e8e93;">${s.id}</p>
+                    <h2 style="margin: 0; font-size: 20px; letter-spacing: -0.5px; color: ${textColor};">${escapeHtml(s.name)}</h2>
+                    <p style="margin: 0; font-size: 12px; color: #8e8e93;">${escapeHtml(s.id)}</p>
                 </div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 1.2rem; width: 100%; min-width: 260px;">
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('full_name_label')}</label>
-                    <input type="text" id="edit-student-name" class="minimal-input" value="${(s.name || '').replace(/"/g, '&quot;')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                    <input type="text" id="edit-student-name" class="minimal-input" value="${escapeHtml(s.name || '')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('email_placeholder') || 'Email'}</label>
-                    <input type="text" id="edit-student-email" class="minimal-input" value="${(s.email || '').replace(/"/g, '&quot;')}" placeholder="email@example.com" inputmode="email" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                    <input type="text" id="edit-student-email" class="minimal-input" value="${escapeHtml(s.email || '')}" placeholder="email@example.com" inputmode="email" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('phone')}</label>
-                    <input type="text" id="edit-student-phone" class="minimal-input" value="${(s.phone || '').replace(/"/g, '&quot;')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                    <input type="text" id="edit-student-phone" class="minimal-input" value="${escapeHtml(s.phone || '')}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div class="ios-input-group password-input-wrap" style="width: 100%; min-width: 0;">
@@ -6384,10 +6467,10 @@ window.updateStudentPrompt = async (id) => {
                         ${(s.active_packs || []).length > 0 ? s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map(p => `
                             <div style="padding: 12px; border-bottom: 1px solid rgba(142,142,147,0.3); display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: ${textColor};">${p.name}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: ${textColor};">${escapeHtml(p.name)}</div>
                                     <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${(p.count == null || p.count === 'null') ? '∞' : p.count} Clases • ${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
                                 </div>
-                                <button onclick="window.removeStudentPack('${s.id}', '${p.id}')" style="background: transparent; border: none; color: #ff3b30; padding: 8px; cursor: pointer; opacity: 0.5;">
+                                <button onclick="window.removeStudentPack('${escapeHtml(s.id)}', '${escapeHtml(p.id)}')" style="background: transparent; border: none; color: #ff3b30; padding: 8px; cursor: pointer; opacity: 0.5;">
                                     <i data-lucide="minus-circle" size="16"></i>
                                 </button>
                             </div>
@@ -6410,7 +6493,7 @@ window.updateStudentPrompt = async (id) => {
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2.5rem;">
                 <button class="btn-secondary" onclick="document.getElementById('student-modal').classList.add('hidden')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('cancel')}</button>
-                <button class="btn-primary" onclick="window.saveStudentDetails('${s.id}')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('save_btn')}</button>
+                <button class="btn-primary" onclick="window.saveStudentDetails('${escapeHtml(s.id)}')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('save_btn')}</button>
             </div>
 
             <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(142,142,147,0.3);">
@@ -6599,7 +6682,7 @@ window.handleScan = async (scannedId) => {
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
-                <p style="margin-top:0.3rem">${t('not_found_msg')}: [${id.substring(0, 8)}...]</p>
+                <p style="margin-top:0.3rem">${t('not_found_msg')}: [${escapeHtml(id.substring(0, 8))}...]</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
             </div>
         `;
@@ -6642,20 +6725,20 @@ window.handleScan = async (scannedId) => {
                     <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--secondary);">${t('student_registered_for')}</span>
                 </div>
-                <div style="font-size: 0.95rem; font-weight: 600;">${r.class_name} <span class="text-muted">@ ${r.class_time}</span></div>
+                <div style="font-size: 0.95rem; font-weight: 600;">${escapeHtml(r.class_name)} <span class="text-muted">@ ${escapeHtml(r.class_time)}</span></div>
             </div>
         `).join('');
 
         // Build confirm buttons for each registration
         const regBtns = todayRegs.map(r => `
-            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${r.id}')" style="padding: 0.8rem; font-size: 0.85rem; margin-bottom: 0.4rem;">
-                <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('confirm_attendance_registered')} – ${r.class_name}
+            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}')" style="padding: 0.8rem; font-size: 0.85rem; margin-bottom: 0.4rem;">
+                <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('confirm_attendance_registered')} – ${escapeHtml(r.class_name)}
             </button>
         `).join('');
 
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
-                <h3 style="font-size: 1rem; margin:0 0 0.5rem;">${student.name}</h3>
+                <h3 style="font-size: 1rem; margin:0 0 0.5rem;">${escapeHtml(student.name)}</h3>
                 <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.8rem;">
                     ${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}
                 </div>
@@ -6675,7 +6758,7 @@ window.handleScan = async (scannedId) => {
     } else if (hasNoClasses) {
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--system-orange); background: rgba(255, 149, 0, 0.1); padding: 1rem; text-align: center;">
-                <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
+                <h3 style="font-size: 1rem; margin:0;">${escapeHtml(student.name)}</h3>
                 <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0.75rem 0;">${t('no_classes_buy_package')}</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
             </div>
@@ -6686,7 +6769,7 @@ window.handleScan = async (scannedId) => {
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
-                        <h3 style="font-size: 1rem; margin:0;">${student.name}</h3>
+                        <h3 style="font-size: 1rem; margin:0;">${escapeHtml(student.name)}</h3>
                         <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">
                             ${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}
                         </div>
@@ -6694,10 +6777,10 @@ window.handleScan = async (scannedId) => {
                 </div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
-                    <button class="btn-primary" onclick="confirmAttendance('${student.id}', 1)" style="padding: 0.8rem; font-size: 0.85rem;">
+                    <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1)" style="padding: 0.8rem; font-size: 0.85rem;">
                         ${t('one_class')}
                     </button>
-                    <button class="btn-secondary" onclick="confirmAttendance('${student.id}', 2)" style="padding: 0.8rem; font-size: 0.85rem;">
+                    <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2)" style="padding: 0.8rem; font-size: 0.85rem;">
                         ${t('two_classes')}
                     </button>
                 </div>
@@ -6705,7 +6788,7 @@ window.handleScan = async (scannedId) => {
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem;">
                     <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
                     <input type="number" id="scan-custom-count" min="1" max="${maxDeduct}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                    <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${student.id}', n); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">
+                    <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">
                         ${t('deduct_btn')}
                     </button>
                 </div>
@@ -6719,7 +6802,7 @@ window.handleScan = async (scannedId) => {
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <h2 style="color: var(--danger); font-size: 1rem;">${t('scan_fail')}</h2>
-                <p style="margin-top:0.3rem">${student.name}</p>
+                <p style="margin-top:0.3rem">${escapeHtml(student.name)}</p>
                 <p style="font-size:0.75rem; color:var(--danger)">${t('inactive')}</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
             </div>
@@ -6775,7 +6858,7 @@ window.confirmRegisteredAttendance = async (registrationId) => {
         console.error('Error confirming registered attendance:', e);
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <p style="color: var(--danger);">${e.message || t('error_confirming_attendance')}</p>
+                <p style="color: var(--danger);">${escapeHtml(e.message || t('error_confirming_attendance'))}</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
             </div>
         `;
