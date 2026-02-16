@@ -3,6 +3,32 @@ const SUPABASE_URL = 'https://fziyybqhecfxhkagknvg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs';
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
+// Discovery: country -> cities for dropdowns (consistent values for filtering)
+const DISCOVERY_COUNTRIES_CITIES = {
+    'Switzerland': ['Zurich', 'Geneva', 'Basel', 'Bern', 'Lausanne', 'Winterthur', 'Lucerne', 'St. Gallen'],
+    'Germany': ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Stuttgart', 'Düsseldorf', 'Dortmund', 'Essen', 'Leipzig'],
+    'Austria': ['Vienna', 'Graz', 'Linz', 'Salzburg', 'Innsbruck'],
+    'Spain': ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'Málaga', 'Murcia', 'Palma'],
+    'Mexico': ['Mexico City', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'León', 'Cancún', 'Mérida'],
+    'United States': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Francisco'],
+    'France': ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg'],
+    'Netherlands': ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven'],
+    'United Kingdom': ['London', 'Birmingham', 'Manchester', 'Leeds', 'Liverpool', 'Bristol', 'Edinburgh', 'Glasgow'],
+    'Colombia': ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena'],
+    'Argentina': ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata'],
+    'Italy': ['Rome', 'Milan', 'Naples', 'Turin', 'Florence', 'Venice', 'Bologna'],
+    'Portugal': ['Lisbon', 'Porto', 'Braga', 'Coimbra', 'Faro'],
+    'Belgium': ['Brussels', 'Antwerp', 'Ghent', 'Charleroi', 'Liège'],
+    'Canada': ['Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Ottawa'],
+    'Brazil': ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza'],
+    'Chile': ['Santiago', 'Valparaíso', 'Concepción'],
+    'Peru': ['Lima', 'Arequipa', 'Trujillo'],
+    'Ecuador': ['Quito', 'Guayaquil', 'Cuenca'],
+    'Costa Rica': ['San José', 'Limón', 'Alajuela'],
+    'Other': []
+};
+const DISCOVERY_COUNTRIES = Object.keys(DISCOVERY_COUNTRIES_CITIES).sort();
+
 // XSS: escape user/DB content before inserting into HTML
 function escapeHtml(str) {
     if (str == null) return '';
@@ -157,6 +183,21 @@ const DANCE_LOCALES = {
         unknown_student: "Unknown Student",
         delete_payment_confirm: "Delete this payment record forever?",
         select_school_subtitle: "Please select your school or teacher to continue",
+        discover_dance_btn: "Discover dance – all the dance studios",
+        discovery_title: "Discover Dance",
+        discovery_subtitle: "Find studios and teachers near you",
+        discovery_back: "Back to all studios",
+        discovery_no_schools: "No studios listed yet.",
+        discovery_filter_dance: "Dance style",
+        discovery_filter_country: "Country",
+        discovery_filter_city: "City",
+        discovery_filter_all: "All",
+        discovery_not_found: "This studio doesn't have a detail page yet.",
+        discovery_placeholder_upload_soon: "Will be uploaded soon.",
+        discovery_location: "Location",
+        discovery_classes: "Classes",
+        discovery_packages: "Packages",
+        discovery_gallery: "Gallery",
         add_school_btn: "New School",
         enter_school_name: "Enter new school or teacher name:",
         school_created: "School created successfully!",
@@ -196,6 +237,12 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Classes",
         dev_view_details: "View Details",
         dev_enter_as_admin: "Enter as Admin",
+        dev_edit_discovery_profile: "Edit discovery profile",
+        dev_discovery_profile_desc: "Slug, location, description, genres, logo, locations",
+        dev_edit_school_info: "Edit school info",
+        dev_save_school_info: "Save",
+        dev_school_info_desc: "Name and address",
+        dev_school_info_saved: "School information saved.",
         dev_events_feature: "Jack and Jill / Events",
         dev_events_feature_desc: "Allow this school to create Jack and Jill events (premium feature)",
         dev_events_enabled: "Enabled",
@@ -204,6 +251,12 @@ const DANCE_LOCALES = {
         dev_volver_dashboard: "Back to Dashboard",
         dev_admins_label: "Administrators",
         dev_students_label: "Students",
+        dev_discovery_site: "Discovery site",
+        dev_discovery_toggle_on: "On",
+        dev_discovery_toggle_off: "Off",
+        dev_discovery_profiles: "Discovery profiles",
+        dev_open_ajustes: "Open Ajustes",
+        dev_edit_in_dashboard: "View / Edit",
         dev_plans_label: "Subscription Catalogue",
         dev_classes_label: "Schedule and Classes",
         dev_no_admins: "No admins assigned",
@@ -262,6 +315,8 @@ const DANCE_LOCALES = {
         mgmt_admins_title: "Administrators",
         day_label: "Day",
         hour_label: "Time",
+        start_time_label: "Start",
+        end_time_label: "End",
         level_tag_label: "Level",
         new_class_label: "New Class",
         show_weekly_btn: "Show Weekly Plan",
@@ -412,6 +467,35 @@ const DANCE_LOCALES = {
         password_mismatch: "New passwords do not match.",
         password_too_short: "Password must be at least 4 characters.",
         select_contact_admin: "Select contact",
+        discovery_profile_section: "Discovery profile",
+        discovery_slug_label: "URL slug",
+        discovery_slug_placeholder: "e.g. royal_latin",
+        discovery_upload_btn: "Upload",
+        discovery_replace_title: "Replace image?",
+        discovery_replace_message: "A photo is already set. Do you want to replace it with the new one?",
+        discovery_replace_confirm: "Replace",
+        discovery_remove_image: "Remove",
+        country_label: "Country",
+        city_label: "City",
+        address_label: "Address",
+        discovery_description_label: "Description",
+        discovery_genres_label: "Genres (comma-separated)",
+        discovery_levels_label: "Levels (comma-separated)",
+        logo_url_label: "Logo URL",
+        teacher_photo_url_label: "Teacher photo URL",
+        gallery_urls_label: "Gallery URLs (one per line)",
+        discovery_locations_label: "Where we teach",
+        discovery_location_name: "Salon / location name",
+        discovery_location_address: "Address (required)",
+        discovery_location_description: "Condition / description of the place",
+        discovery_add_location: "Add location",
+        discovery_remove_location: "Remove",
+        discovery_where_we_teach: "Locations",
+        save_discovery_btn: "Save discovery profile",
+        discovery_preview_title: "Preview on Discover",
+        show_discovery_preview_btn: "Show preview",
+        hide_discovery_preview_btn: "Hide preview",
+        discovery_saved: "Discovery profile saved",
     },
     es: {
         nav_schedule: "Horario",
@@ -550,6 +634,21 @@ const DANCE_LOCALES = {
         unknown_student: "Alumno Desconocido",
         delete_payment_confirm: "¿Eliminar este registro de pago permanentemente?",
         select_school_subtitle: "Por favor selecciona tu escuela o profesor para continuar",
+        discover_dance_btn: "Descubre la danza – todos los estudios",
+        discovery_title: "Descubre la danza",
+        discovery_subtitle: "Encuentra estudios y profesores cerca de ti",
+        discovery_back: "Volver a todos los estudios",
+        discovery_no_schools: "Aún no hay estudios publicados.",
+        discovery_filter_dance: "Estilo de baile",
+        discovery_filter_country: "País",
+        discovery_filter_city: "Ciudad",
+        discovery_filter_all: "Todos",
+        discovery_not_found: "Este estudio aún no tiene página de detalle.",
+        discovery_placeholder_upload_soon: "Se subirá pronto.",
+        discovery_location: "Ubicación",
+        discovery_classes: "Clases",
+        discovery_packages: "Paquetes",
+        discovery_gallery: "Galería",
         add_school_btn: "Nueva Escuela",
         enter_school_name: "Ingresa el nombre de la nueva escuela o profesor:",
         school_created: "¡Escuela creada con éxito!",
@@ -589,6 +688,12 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Clases",
         dev_view_details: "Ver Detalles",
         dev_enter_as_admin: "Entrar como Admin",
+        dev_edit_discovery_profile: "Editar perfil Discovery",
+        dev_discovery_profile_desc: "Slug, ubicación, descripción, géneros, logo, ubicaciones",
+        dev_edit_school_info: "Editar datos de la escuela",
+        dev_save_school_info: "Guardar",
+        dev_school_info_desc: "Nombre y dirección",
+        dev_school_info_saved: "Información de la escuela guardada.",
         dev_events_feature: "Jack and Jill / Eventos",
         dev_events_feature_desc: "Permitir a esta escuela crear eventos Jack and Jill (función premium)",
         dev_events_enabled: "Activado",
@@ -597,6 +702,12 @@ const DANCE_LOCALES = {
         dev_volver_dashboard: "Volver al Dashboard",
         dev_admins_label: "Administradores",
         dev_students_label: "Alumnos",
+        dev_discovery_site: "Sitio Discovery",
+        dev_discovery_toggle_on: "Activado",
+        dev_discovery_toggle_off: "Desactivado",
+        dev_discovery_profiles: "Perfiles Discovery",
+        dev_open_ajustes: "Abrir Ajustes",
+        dev_edit_in_dashboard: "Ver / Editar",
         dev_plans_label: "Catálogo de Planes",
         dev_classes_label: "Horarios y Clases",
         dev_no_admins: "Sin administradores",
@@ -655,6 +766,8 @@ const DANCE_LOCALES = {
         mgmt_admins_title: "Administradores",
         day_label: "Día",
         hour_label: "Hora",
+        start_time_label: "Inicio",
+        end_time_label: "Fin",
         level_tag_label: "Nivel",
         new_class_label: "Nueva Clase",
         show_weekly_btn: "Ver Plan Semanal",
@@ -805,6 +918,36 @@ const DANCE_LOCALES = {
         password_mismatch: "Las contraseñas no coinciden.",
         password_too_short: "La contraseña debe tener al menos 4 caracteres.",
         select_contact_admin: "Seleccionar contacto",
+        discovery_profile_section: "Perfil Discovery",
+        discovery_slug_label: "Slug URL",
+        discovery_slug_placeholder: "ej. royal_latin",
+        discovery_upload_btn: "Subir",
+        discovery_replace_title: "¿Reemplazar imagen?",
+        discovery_replace_message: "Ya hay una foto. ¿Quieres reemplazarla por la nueva?",
+        discovery_replace_confirm: "Reemplazar",
+        discovery_remove_image: "Quitar",
+        country_label: "País",
+        city_label: "Ciudad",
+        address_label: "Dirección",
+        discovery_description_label: "Descripción",
+        discovery_genres_label: "Géneros (separados por coma)",
+        discovery_levels_label: "Niveles (separados por coma)",
+        logo_url_label: "URL del logo",
+        teacher_photo_url_label: "URL foto del profesor",
+        gallery_urls_label: "URLs de galería (una por línea)",
+        discovery_locations_label: "Dónde damos clase",
+        discovery_location_name: "Nombre del salón / lugar",
+        discovery_location_address: "Dirección (obligatoria)",
+        discovery_location_description: "Estado / descripción del lugar",
+        discovery_add_location: "Añadir ubicación",
+        discovery_remove_location: "Quitar",
+        discovery_where_we_teach: "Ubicaciones",
+        save_discovery_btn: "Guardar perfil Discovery",
+        discovery_preview_title: "Vista previa en Discover",
+        show_discovery_preview_btn: "Ver vista previa",
+        hide_discovery_preview_btn: "Ocultar vista previa",
+        discovery_saved: "Perfil Discovery guardado.",
+        discovery_saved: "Perfil Discovery guardado",
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -944,6 +1087,21 @@ const DANCE_LOCALES = {
         unknown_student: "Unbekannter Schüler",
         delete_payment_confirm: "Diesen Zahlungsbeleg permanent löschen?",
         select_school_subtitle: "Bitte wähle deine Schule oder deinen Lehrer aus",
+        discover_dance_btn: "Tanz entdecken – alle Tanzstudios",
+        discovery_title: "Tanz entdecken",
+        discovery_subtitle: "Finde Studios und Lehrer in deiner Nähe",
+        discovery_back: "Zurück zu allen Studios",
+        discovery_no_schools: "Noch keine Studios gelistet.",
+        discovery_filter_dance: "Tanzstil",
+        discovery_filter_country: "Land",
+        discovery_filter_city: "Stadt",
+        discovery_filter_all: "Alle",
+        discovery_not_found: "Dieses Studio hat noch keine Detailseite.",
+        discovery_placeholder_upload_soon: "Wird demnächst hochgeladen.",
+        discovery_location: "Standort",
+        discovery_classes: "Kurse",
+        discovery_packages: "Pakete",
+        discovery_gallery: "Galerie",
         add_school_btn: "Neue Schule",
         enter_school_name: "Namen der neuen Schule oder des Lehrers eingeben:",
         school_created: "Schule erfolgreich erstellt!",
@@ -983,6 +1141,12 @@ const DANCE_LOCALES = {
         dev_stats_classes: "Kurse",
         dev_view_details: "Details anzeigen",
         dev_enter_as_admin: "Als Admin betreten",
+        dev_edit_discovery_profile: "Discovery-Profil bearbeiten",
+        dev_discovery_profile_desc: "Slug, Standort, Beschreibung, Stile, Logo, Orte",
+        dev_edit_school_info: "Schuldaten bearbeiten",
+        dev_save_school_info: "Speichern",
+        dev_school_info_desc: "Name und Adresse",
+        dev_school_info_saved: "Schulinformationen gespeichert.",
         dev_events_feature: "Jack and Jill / Events",
         dev_events_feature_desc: "Erlaube dieser Schule Jack and Jill Events zu erstellen (Premium-Funktion)",
         dev_events_enabled: "Aktiviert",
@@ -991,6 +1155,12 @@ const DANCE_LOCALES = {
         dev_volver_dashboard: "Zurück zum Dashboard",
         dev_admins_label: "Administratoren",
         dev_students_label: "Schüler",
+        dev_discovery_site: "Discovery-Seite",
+        dev_discovery_toggle_on: "An",
+        dev_discovery_toggle_off: "Aus",
+        dev_discovery_profiles: "Discovery-Profile",
+        dev_open_ajustes: "Einstellungen öffnen",
+        dev_edit_in_dashboard: "Ansehen / Bearbeiten",
         dev_plans_label: "Abos",
         dev_classes_label: "Stundenplan und Kurse",
         dev_no_admins: "Keine Admins zugewiesen",
@@ -1049,6 +1219,8 @@ const DANCE_LOCALES = {
         mgmt_admins_title: "Administratoren",
         day_label: "Tag",
         hour_label: "Uhrzeit",
+        start_time_label: "Start",
+        end_time_label: "Ende",
         level_tag_label: "Niveau",
         new_class_label: "Neuer Kurs",
         show_weekly_btn: "Wochenplan anzeigen",
@@ -1174,6 +1346,36 @@ const DANCE_LOCALES = {
         password_mismatch: "Passwörter stimmen nicht überein.",
         password_too_short: "Passwort muss mindestens 4 Zeichen haben.",
         select_contact_admin: "Kontakt auswählen",
+        discovery_profile_section: "Discovery-Profil",
+        discovery_slug_label: "URL-Slug",
+        discovery_slug_placeholder: "z.B. royal_latin",
+        discovery_upload_btn: "Hochladen",
+        discovery_replace_title: "Bild ersetzen?",
+        discovery_replace_message: "Es ist bereits ein Foto vorhanden. Möchtest du es durch das neue ersetzen?",
+        discovery_replace_confirm: "Ersetzen",
+        discovery_remove_image: "Entfernen",
+        country_label: "Land",
+        city_label: "Stadt",
+        address_label: "Adresse",
+        discovery_description_label: "Beschreibung",
+        discovery_genres_label: "Stile (kommagetrennt)",
+        discovery_levels_label: "Level (kommagetrennt)",
+        logo_url_label: "Logo-URL",
+        teacher_photo_url_label: "Lehrerfoto-URL",
+        gallery_urls_label: "Galerie-URLs (eine pro Zeile)",
+        discovery_locations_label: "Wo wir unterrichten",
+        discovery_location_name: "Name des Salons / Orts",
+        discovery_location_address: "Adresse (Pflichtfeld)",
+        discovery_location_description: "Zustand / Beschreibung des Orts",
+        discovery_add_location: "Ort hinzufügen",
+        discovery_remove_location: "Entfernen",
+        discovery_where_we_teach: "Standorte",
+        save_discovery_btn: "Discovery-Profil speichern",
+        discovery_preview_title: "Vorschau auf Discover",
+        show_discovery_preview_btn: "Vorschau anzeigen",
+        hide_discovery_preview_btn: "Vorschau ausblenden",
+        discovery_saved: "Discovery-Profil gespeichert.",
+        discovery_saved: "Discovery-Profil gespeichert",
     }
 };
 
@@ -1199,6 +1401,7 @@ let state = {
     currentSchool: null,
     admins: [],
     showWeeklyPreview: false,
+    showDiscoveryPreview: false,
     isPlatformDev: false,
     platformAdminLinked: false,
     schoolAdminLinked: false,
@@ -1277,6 +1480,10 @@ async function fetchAllData() {
             console.error('Schools fetch error:', schoolsError);
         }
         state.schools = schoolsData ?? [];
+        if (!state.currentSchool && supabaseClient) {
+            const { data: discEnabled } = await supabaseClient.rpc('discovery_is_enabled');
+            state.discoveryEnabled = !!discEnabled;
+        }
         // If current school was deactivated, clear it so user must pick an active school
         if (!state.isPlatformDev && state.currentSchool && !state.schools.some(s => s.id === state.currentSchool.id)) {
             state.currentSchool = null;
@@ -1595,6 +1802,191 @@ async function fetchAllData() {
         }
     }
 }
+
+window._discoveryFetchInProgress = false;
+window.fetchDiscoveryData = async () => {
+    if (!state.discoveryPath) return;
+    if (window._discoveryFetchInProgress) return;
+    window._discoveryFetchInProgress = true;
+    const path = state.discoveryPath;
+    try {
+        if (path === '/discovery') {
+            state.discoverySchools = [];
+            state.discoverySchoolDetail = null;
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.rpc('discovery_list_schools');
+                    if (error) throw error;
+                    state.discoverySchools = Array.isArray(data) ? data : (data && typeof data === 'object' && data !== null ? [data] : []);
+                } catch (err) {
+                    console.error('Discovery list error:', err);
+                    state.discoverySchools = [];
+                }
+            }
+        } else if (path.startsWith('/discovery/')) {
+            state.discoverySchoolDetail = null;
+            let slug = path.replace(/^\/discovery\//, '').trim();
+            try { slug = decodeURIComponent(slug); } catch (_) { /* keep raw */ }
+            if (slug && supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.rpc('discovery_school_detail', { p_slug: slug });
+                    if (error) throw error;
+                    state.discoverySchoolDetail = data || null;
+                } catch (err) {
+                    console.error('Discovery detail error:', err);
+                    state.discoverySchoolDetail = null;
+                }
+            }
+        }
+    } finally {
+        window._discoveryFetchInProgress = false;
+    }
+};
+
+window.navigateDiscovery = (path) => {
+    state.discoveryPath = path;
+    history.pushState({ discoveryPath: path }, '', path || '/discovery');
+    window.fetchDiscoveryData().then(() => renderView());
+};
+
+window.renderDiscoveryView = (path) => {
+    const t = (key) => (window.t ? window.t(key) : key);
+    if (path !== '/discovery' && path.startsWith('/discovery/')) {
+        const detail = state.discoverySchoolDetail;
+        if (!detail) {
+            return `<div class="container discovery-page" style="padding: 2rem 1rem; text-align: center;">
+                <a href="#" class="discovery-back-link" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" style="margin-bottom: 1rem; display: inline-block;">← ${t('discovery_back')}</a>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 1rem;">${t('discovery_not_found')}</p>
+            </div>`;
+        }
+        const placeholder = t('discovery_placeholder_upload_soon');
+        const name = detail.name || detail.school?.name || '';
+        const desc = detail.discovery_description || detail.school?.discovery_description || '';
+        const country = detail.country || detail.school?.country || '';
+        const city = detail.city || detail.school?.city || '';
+        const address = detail.address || detail.school?.address || '';
+        const location = [city, country].filter(Boolean).join(', ') || address || '';
+        const classes = detail.classes || [];
+        const subscriptions = detail.subscriptions || [];
+        const genres = (detail.discovery_genres || detail.school?.discovery_genres || []);
+        const levels = (detail.discovery_levels || detail.school?.discovery_levels || []);
+        const logoUrl = detail.logo_url || detail.school?.logo_url || '';
+        const teacherPhotoUrl = detail.teacher_photo_url || detail.school?.teacher_photo_url || '';
+        const locations = detail.discovery_locations || detail.school?.discovery_locations || [];
+        const locationsList = Array.isArray(locations) ? locations : [];
+        const displayName = name ? String(name).replace(/</g, '&lt;') : placeholder;
+        const displayLoc = location ? String(location).replace(/</g, '&lt;') : placeholder;
+        const displayDesc = desc ? String(desc).replace(/</g, '&lt;').replace(/\n/g, '<br>') : placeholder;
+        let html = `<div class="container discovery-detail-page">
+            <div style="margin-bottom: 1.25rem;"><a href="#" class="discovery-back-link" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" style="font-size: 14px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back')}</a></div>
+            <div class="discovery-detail-hero">
+                <div class="discovery-detail-logo-wrap">${logoUrl ? `<img src="${String(logoUrl).replace(/"/g, '&quot;')}" alt="">` : `<div class="discovery-detail-logo-placeholder"><i data-lucide="image" size="40"></i></div>`}</div>
+                <div class="discovery-detail-info">
+                    <h1 class="discovery-detail-title">${displayName}</h1>
+                    <p class="discovery-detail-loc"><i data-lucide="map-pin" size="14"></i> ${displayLoc}</p>
+                    ${(genres.length || levels.length) ? `<p class="discovery-detail-tags">${[...genres, ...levels].filter(Boolean).join(' · ')}</p>` : `<p class="discovery-detail-tags" style="font-style: italic;">${placeholder}</p>`}
+                </div>
+            </div>
+            <div class="discovery-detail-desc">${displayDesc}</div>
+            <div class="discovery-detail-teacher-wrap">${teacherPhotoUrl ? `<img src="${String(teacherPhotoUrl).replace(/"/g, '&quot;')}" alt="Teacher">` : `<div class="discovery-detail-teacher-placeholder"><i data-lucide="user" size="48"></i><span>${placeholder}</span></div>`}</div>
+            <h2 class="discovery-detail-section-title">${t('discovery_classes')}</h2>
+            ${classes.length ? (() => { const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']; const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] }; const noClassesMsg = t('no_classes_msg') || 'No classes'; return `<div class="weekly-grid">${daysOrder.map(dayKey => { const aliases = dayAliases[dayKey]; const dayClasses = classes.filter(c => aliases.includes(c.day)).sort((a, b) => (a.time || '').localeCompare(b.time || '')); const dayLabel = t(dayKey.toLowerCase()) || dayKey; return `<div class="day-tile" style="background: var(--surface); border-radius: 16px; border: 1px solid var(--border); padding: 0.8rem;"><div class="day-tile-header" style="padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">${dayLabel}</div><div style="display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.6rem;">${dayClasses.length > 0 ? dayClasses.map(c => { const cName = String(c.name || c.class_name || '').replace(/</g, '&lt;'); const timeStr = (typeof window.formatClassTime === 'function' ? window.formatClassTime(c) : (c.time || '')); const loc = (c.location || '').replace(/</g, '&lt;'); return `<div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;"><span class="tile-class-level" style="font-size: 8px; background: var(--system-gray6); padding: 2px 6px; border-radius: 4px;">${(c.tag || 'Open').replace(/</g, '&lt;')}</span>${loc ? `<span style="font-size: 6px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; opacity: 0.7;">${loc}</span>` : ''}</div><div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${cName}</div><div class="tile-class-time" style="font-size: 9px; opacity: 0.6;">${timeStr.replace(/</g, '&lt;')}</div></div>`; }).join('') : `<div class="text-muted" style="font-size:9px; font-style:italic; padding: 0.5rem 0;">${noClassesMsg}</div>`}</div></div>`; }).join('')}</div>`; })() : `<div class="discovery-detail-placeholder-block"><i data-lucide="calendar" size="24"></i><span>${placeholder}</span></div>`}
+            <h2 class="discovery-detail-section-title">${t('discovery_packages')}</h2>
+            ${subscriptions.length ? `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${subscriptions.map(s => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, detail.currency || 'MXN') : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="credit-card" size="24"></i><span>${placeholder}</span></div>`}
+            <h2 class="discovery-detail-section-title">${t('discovery_where_we_teach')}</h2>
+            ${locationsList.length ? locationsList.map(loc => { const locName = String(loc.name || '').replace(/</g, '&lt;'); const locAddr = String(loc.address || '').replace(/</g, '&lt;'); const locDesc = String(loc.description || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'); const imgs = Array.isArray(loc.image_urls) ? loc.image_urls : []; return `<div class="discovery-detail-location-card" style="margin-bottom: 1.25rem; padding: 1rem; border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; margin-bottom: 4px;">${locName || '—'}</div><div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 6px;"><i data-lucide="map-pin" size="14"></i> ${locAddr || placeholder}</div>${locDesc ? `<div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${locDesc}</div>` : ''}${imgs.length ? `<div class="discovery-detail-gallery-grid" style="margin-top: 8px;">${imgs.slice(0, 6).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : ''}</div>`; }).join('') : `<div class="discovery-detail-placeholder-block"><i data-lucide="map-pin" size="32"></i><span>${placeholder}</span></div>`}
+            </div>`;
+        return html;
+    }
+    const allSchools = state.discoverySchools || [];
+    state.discoveryFilterGenre = state.discoveryFilterGenre ?? '';
+    state.discoveryFilterCountry = state.discoveryFilterCountry ?? '';
+    state.discoveryFilterCity = state.discoveryFilterCity ?? '';
+    const genreSet = new Set();
+    allSchools.forEach(s => {
+        const g = s.discovery_genres;
+        if (Array.isArray(g)) g.forEach(x => { if (x && String(x).trim()) genreSet.add(String(x).trim()); });
+    });
+    const allGenres = [...genreSet].sort((a, b) => a.localeCompare(b));
+    const countrySet = new Set();
+    allSchools.forEach(s => { const c = (s.country || 'Other').trim() || 'Other'; countrySet.add(c); });
+    const allCountries = [...countrySet].sort((a, b) => a.localeCompare(b));
+    let schools = allSchools;
+    if (state.discoveryFilterGenre) {
+        const g = state.discoveryFilterGenre;
+        schools = schools.filter(s => Array.isArray(s.discovery_genres) && s.discovery_genres.some(x => String(x).trim() === g));
+    }
+    if (state.discoveryFilterCountry) {
+        const c = state.discoveryFilterCountry;
+        schools = schools.filter(s => ((s.country || 'Other').trim() || 'Other') === c);
+    }
+    if (state.discoveryFilterCity) {
+        const city = state.discoveryFilterCity;
+        schools = schools.filter(s => (s.city || '').trim() === city);
+    }
+    const citySet = new Set();
+    const schoolListForCities = state.discoveryFilterCountry ? allSchools.filter(s => ((s.country || 'Other').trim() || 'Other') === state.discoveryFilterCountry) : allSchools;
+    schoolListForCities.forEach(s => { const c = (s.city || '').trim(); if (c) citySet.add(c); });
+    const citiesInScope = [...citySet].sort((a, b) => a.localeCompare(b));
+    const byCountry = {};
+    schools.forEach(s => {
+        const c = (s.country || 'Other').trim() || 'Other';
+        if (!byCountry[c]) byCountry[c] = [];
+        byCountry[c].push(s);
+    });
+    const countries = Object.keys(byCountry).sort();
+    const filtersHtml = `
+        <div class="discovery-filters">
+            <div class="discovery-filter-group">
+                <label class="discovery-filter-label">${t('discovery_filter_dance')}</label>
+                <select class="discovery-filter-select" onchange="state.discoveryFilterGenre=this.value; state.discoveryFilterCity=''; renderView();">
+                    <option value="">${t('discovery_filter_all')}</option>
+                    ${allGenres.map(g => `<option value="${String(g).replace(/"/g, '&quot;')}" ${state.discoveryFilterGenre === g ? 'selected' : ''}>${String(g).replace(/</g, '&lt;')}</option>`).join('')}
+                </select>
+            </div>
+            <div class="discovery-filter-group">
+                <label class="discovery-filter-label">${t('discovery_filter_country')}</label>
+                <select class="discovery-filter-select" onchange="state.discoveryFilterCountry=this.value; state.discoveryFilterCity=''; renderView();">
+                    <option value="">${t('discovery_filter_all')}</option>
+                    ${allCountries.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}" ${state.discoveryFilterCountry === c ? 'selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`).join('')}
+                </select>
+            </div>
+            <div class="discovery-filter-group">
+                <label class="discovery-filter-label">${t('discovery_filter_city')}</label>
+                <select class="discovery-filter-select" onchange="state.discoveryFilterCity=this.value; renderView();">
+                    <option value="">${t('discovery_filter_all')}</option>
+                    ${citiesInScope.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}" ${state.discoveryFilterCity === c ? 'selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`).join('')}
+                </select>
+            </div>
+        </div>`;
+    let cardsHtml = countries.length ? countries.map(country => `
+        <div class="discovery-country-section">
+            <h2 class="discovery-country-title">${String(country).replace(/</g, '&lt;')}</h2>
+            <div class="discovery-grid">
+                ${byCountry[country].map(s => {
+                    const slug = s.discovery_slug || s.slug || '';
+                    const name = (s.name || '').trim();
+                    const city = (s.city || '').trim();
+                    const loc = [city, country].filter(Boolean).join(', ');
+                    const logo = s.logo_url || '';
+                    const placeholder = t('discovery_placeholder_upload_soon');
+                    return `<a href="#" class="discovery-card" onclick="event.preventDefault(); window.navigateDiscovery('/discovery/${encodeURIComponent(slug)}');">
+                        ${logo ? `<img src="${String(logo).replace(/"/g, '&quot;')}" alt="" class="discovery-card-logo" />` : `<div class="discovery-card-no-logo"><i data-lucide="image" size="24"></i></div>`}
+                        <div class="discovery-card-name">${name ? String(name).replace(/</g, '&lt;') : placeholder}</div>
+                        <div class="discovery-card-loc">${loc ? String(loc).replace(/</g, '&lt;') : placeholder}</div>
+                    </a>`;
+                }).join('')}
+            </div>
+        </div>
+    `).join('') : `<p style="color: var(--text-muted); font-size: 0.95rem;">${t('discovery_no_schools')}</p>`;
+    return `<div class="container discovery-page">
+        <a href="/" class="discovery-back-link" onclick="event.preventDefault(); state.discoveryPath=null; history.pushState({},'','/'); renderView();">← ${t('discovery_back')}</a>
+        <h1 class="discovery-hero-title">${t('discovery_title')}</h1>
+        <p class="discovery-hero-subtitle">${t('discovery_subtitle')}</p>
+        ${filtersHtml}
+        ${cardsHtml}
+    </div>`;
+};
 
 // --- LOGIC ---
 function saveState() {
@@ -2111,6 +2503,8 @@ window.openRegistrationAnswers = async (regId) => {
 
 const CURRENCY_LABELS = { MXN: 'Mexican Peso (MXN)', CHF: 'Swiss Franc (CHF)', USD: 'US Dollar (USD)', COP: 'Colombian Peso (COP)' };
 const CURRENCY_SYMBOLS = { MXN: 'MX$', CHF: 'CHF ', USD: 'US$', COP: 'COP ' };
+window.formatClassTime = (c) => (c && c.end_time ? `${c.time || ''} – ${c.end_time}` : (c && c.time) ? c.time : '');
+
 window.formatPrice = (price, currency) => {
     const c = (currency || 'MXN').toUpperCase();
     const sym = CURRENCY_SYMBOLS[c] || 'MX$';
@@ -2264,6 +2658,20 @@ function _renderViewImpl() {
     const viewChanged = view !== _lastRenderedView;
     _lastRenderedView = view;
 
+    // Discovery: path-based /discovery and /discovery/<slug> (no student/admin nav)
+    if (state.discoveryPath) {
+        if (!root) return;
+        try {
+            const html = typeof window.renderDiscoveryView === 'function' ? window.renderDiscoveryView(state.discoveryPath) : '';
+            root.innerHTML = html || '<div class="container" style="padding:2rem;text-align:center;"><p>Loading...</p></div>';
+            if (window.lucide) window.lucide.createIcons();
+        } catch (e) {
+            console.error('Discovery render error:', e);
+            root.innerHTML = '<div class="container" style="padding:2rem;text-align:center;"><p style="color:var(--text-muted);">Something went wrong. <a href="/" style="color:var(--system-blue);">Go back</a>.</p></div>';
+        }
+        return;
+    }
+
     // Magic Proxy: supports both t.key and t('key')
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
@@ -2296,6 +2704,9 @@ function _renderViewImpl() {
                         ${state.schools.length > 0 ? `<div class="school-dropdown-no-match" style="display: none; padding: 1rem; text-align: center; color: var(--text-muted); font-size: 14px;">${t.no_schools}</div>` : ''}
                     </div>
                 </div>
+                ${state.discoveryEnabled ? `
+                <a href="/discovery" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" class="discovery-landing-link" style="display: inline-block; margin-top: 1.25rem; padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none; opacity: 0.85; transition: opacity 0.2s, color 0.2s;">${t.discover_dance_btn || 'Discover dance – all the dance studios'}</a>
+                ` : ''}
             </div>
         `;
     }
@@ -2380,6 +2791,32 @@ function _renderViewImpl() {
                             <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.08em; opacity: 0.7;">${t.dev_stats_students}</div>
                             <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary);">${state.platformData.students.length}</div>
                         </div>
+                    </div>
+                    <!-- Discovery site toggle -->
+                    <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">${t.dev_discovery_site || 'Discovery site'}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${t.discovery_title || 'Discover Dance'} ${t.dev_discovery_toggle_on ? '— ' + (state.platformData.discoveryEnabled ? t.dev_discovery_toggle_on : t.dev_discovery_toggle_off) : ''}</div>
+                        </div>
+                        <button type="button" onclick="window.setDiscoveryEnabled(!(state.platformData.discoveryEnabled === true))" style="width: 56px; height: 32px; border-radius: 16px; border: none; cursor: pointer; background: ${state.platformData.discoveryEnabled === true ? 'var(--system-blue)' : 'var(--system-gray5)'}; transition: background 0.2s; position: relative;"><span style="position: absolute; width: 26px; height: 26px; border-radius: 50%; background: white; top: 3px; left: ${state.platformData.discoveryEnabled === true ? '27px' : '3px'}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
+                    </div>
+                    <!-- Discovery profiles (schools) -->
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.2rem; opacity: 0.8;">${t.dev_discovery_profiles || 'Discovery profiles'}</div>
+                    <div class="ios-list" style="margin-bottom: 1.5rem; padding: 0; background: transparent; border: none;">
+                        ${(state.platformData.schools || []).map(s => {
+                            const slug = s.discovery_slug || '—';
+                            const country = (s.country || '').trim() || '—';
+                            const city = (s.city || '').trim() || '—';
+                            const genres = Array.isArray(s.discovery_genres) ? s.discovery_genres.join(', ') : (s.discovery_genres || '—');
+                            const desc = (s.discovery_description || '').toString().slice(0, 60);
+                            return `<div class="ios-list-item" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 700;">${(s.name || '').replace(/</g, '&lt;')}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${String(slug).replace(/</g, '&lt;')} · ${String(city).replace(/</g, '&lt;')}, ${String(country).replace(/</g, '&lt;')} ${genres !== '—' ? ' · ' + String(genres).replace(/</g, '&lt;') : ''}</div>
+                                </div>
+                                <button type="button" class="btn-secondary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="padding: 8px 14px; font-size: 12px; font-weight: 700; border-radius: 12px;">${t.dev_edit_in_dashboard || 'View / Edit'}</button>
+                            </div>`;
+                        }).join('')}
                     </div>
                 ` : ''}
 
@@ -2582,6 +3019,34 @@ function _renderViewImpl() {
                             <option value="COP" ${(school.currency || 'MXN') === 'COP' ? 'selected' : ''}>Colombian Peso (COP)</option>
                         </select>
                     </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(128, 90, 213, 0.12); display: flex; align-items: center; justify-content: center;">
+                                <i data-lucide="building-2" size="22" style="color: #805ad5;"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">${t.dev_edit_school_info || 'Edit school info'}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">${t.school_name_label || 'Name'}, ${t.address_label || 'Address'}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-primary" onclick="state.currentSchool=state.platformData.schools.find(x=>x.id==='${school.id}')||{}; state._devEditSchoolReturnView='platform-school-details'; state._devEditSchoolReturnSchoolId='${school.id}'; state.currentView='platform-dev-edit-school'; fetchAllData(); renderView();" style="padding: 12px 20px; border-radius: 14px; font-size: 14px; font-weight: 700;">
+                            <i data-lucide="edit-3" size="18" style="margin-right: 8px;"></i> ${t.dev_edit_school_info || 'Edit school info'}
+                        </button>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 122, 255, 0.12); display: flex; align-items: center; justify-content: center;">
+                                <i data-lucide="globe" size="22" style="color: var(--system-blue);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">${t.discovery_profile_section || 'Discovery profile'}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">${t.dev_discovery_profile_desc || 'Slug, location, description, genres, logo, locations'}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-primary" onclick="state.currentSchool=state.platformData.schools.find(x=>x.id==='${school.id}')||{}; state._devDiscoveryReturnView='platform-school-details'; state._devDiscoveryReturnSchoolId='${school.id}'; state.currentView='platform-dev-edit-discovery'; fetchAllData(); renderView();" style="padding: 12px 20px; border-radius: 14px; font-size: 14px; font-weight: 700;">
+                            <i data-lucide="edit-3" size="18" style="margin-right: 8px;"></i> ${t.dev_edit_discovery_profile || 'Edit discovery profile'}
+                        </button>
+                    </div>
                 </div>
 
                 <div style="padding: 0 1.2rem 2rem;">
@@ -2668,7 +3133,7 @@ function _renderViewImpl() {
                                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                     <div style="flex: 1;">
                                         <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${c.name}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.8; margin-top: 2px;">${c.day} • ${c.time} • ${c.location || 'N/A'}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.8; margin-top: 2px;">${c.day} • ${window.formatClassTime(c)} • ${c.location || 'N/A'}</div>
                                     </div>
                                     <div style="font-size: 10px; font-weight: 800; background: var(--system-gray6); padding: 5px 12px; border-radius: 12px; text-transform: uppercase; color: var(--text-primary); opacity: 0.6; border: 1px solid rgba(0,0,0,0.05);">${c.tag || 'OPEN'}</div>
                                 </div>
@@ -2701,6 +3166,110 @@ function _renderViewImpl() {
                     ` : ''; })() : ''}
                 </div>
             `;
+        }
+    }
+    else if (view === 'platform-dev-edit-school') {
+        const school = state.currentSchool;
+        if (!school || !school.id) {
+            html += `<div style="padding: 2rem 1.2rem;"><p style="color: var(--text-secondary); margin-bottom: 1rem;">${t.not_found_msg}</p><button type="button" class="btn-primary" onclick="state.currentView=state._devEditSchoolReturnView||'platform-dev-dashboard'; state.selectedDevSchoolId=state._devEditSchoolReturnSchoolId; renderView();">${t.dev_volver_dashboard}</button></div>`;
+        } else {
+            html += `
+            <div class="ios-header" style="display: flex; align-items: center; gap: 1rem; padding: 0 1.2rem 1rem;">
+                <button type="button" class="btn-back" onclick="state.currentView=state._devEditSchoolReturnView||'platform-dev-dashboard'; state.selectedDevSchoolId=state._devEditSchoolReturnSchoolId; renderView();">
+                    <i data-lucide="arrow-left" size="20"></i>
+                </button>
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t.dev_edit_school_info || 'Edit school info'}</div>
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${(school.name || '').replace(/</g, '&lt;')}</div>
+                </div>
+            </div>
+            <div style="padding: 1.2rem;">
+            <div class="ios-list" style="margin-bottom: 1rem;">
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;">
+                    <span style="font-size: 14px; opacity: 0.8;">${t.school_name_label || 'School name'}</span>
+                    <input type="text" id="dev-edit-school-name" value="${(school.name || '').replace(/"/g, '&quot;')}" placeholder="School or teacher name" style="border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; width: 100%; box-sizing: border-box;">
+                </div>
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;">
+                    <span style="font-size: 14px; opacity: 0.8;">${t.address_label || 'Address'}</span>
+                    <input type="text" id="dev-edit-school-address" value="${(school.address || '').replace(/"/g, '&quot;')}" placeholder="${t.address_label || 'Address'}" style="border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; width: 100%; box-sizing: border-box;">
+                </div>
+                <div class="ios-list-item" onclick="window.saveSchoolInfoByPlatform('${school.id}')" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                    <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.dev_save_school_info || 'Save'}
+                </div>
+            </div>
+            </div>
+            `;
+        }
+    }
+    else if (view === 'platform-dev-edit-discovery') {
+        const school = state.currentSchool;
+        if (!school || !school.id) {
+            html += `<div style="padding: 2rem 1.2rem;"><p style="color: var(--text-secondary); margin-bottom: 1rem;">${t.not_found_msg}</p><button type="button" class="btn-primary" onclick="state.currentView=state._devDiscoveryReturnView||'platform-dev-dashboard'; state.selectedDevSchoolId=state._devDiscoveryReturnSchoolId; renderView();">${t.dev_volver_dashboard}</button></div>`;
+        } else {
+            html += `
+            <div class="ios-header" style="display: flex; align-items: center; gap: 1rem; padding: 0 1.2rem 1rem;">
+                <button type="button" class="btn-back" onclick="state.currentView=state._devDiscoveryReturnView||'platform-dev-dashboard'; state.selectedDevSchoolId=state._devDiscoveryReturnSchoolId; renderView();">
+                    <i data-lucide="arrow-left" size="20"></i>
+                </button>
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t.dev_edit_discovery_profile || 'Edit discovery profile'}</div>
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${(school.name || '').replace(/</g, '&lt;')}</div>
+                </div>
+            </div>
+            <div style="padding: 0 1.2rem 2rem;">
+            <div style="padding: 0 1.2rem; margin-top: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.discovery_profile_section || 'Discovery profile'}</div>
+            <div class="ios-list" style="margin-bottom: 1rem;">
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_slug_label}</span><input type="text" id="discovery-slug" value="${(school.discovery_slug || '').replace(/"/g, '&quot;')}" placeholder="${t.discovery_slug_placeholder || 'royal_latin'}" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.country_label}</span><select id="discovery-country" onchange="window.updateDiscoveryCityDropdown(); window.updateDiscoveryPreview();" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;"><option value="">—</option>${DISCOVERY_COUNTRIES.map(c => { const v = (school.country || '').trim(); return `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === v ? 'selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`; }).join('')}</select></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.city_label}</span><select id="discovery-city" onchange="window.updateDiscoveryPreview()" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;">${(() => { const country = (school.country || '').trim(); const city = (school.city || '').trim(); const cities = DISCOVERY_COUNTRIES_CITIES[country] || []; const list = (city && !cities.includes(city) ? [city, ...cities] : cities); return '<option value="">—</option>' + list.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === city ? ' selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`).join(''); })()}</select></div>
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_description_label}</span><textarea id="discovery-description" rows="3" placeholder="Short description for the discovery page" oninput="window.updateDiscoveryPreview()" style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;">${(school.discovery_description || '').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</textarea></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_genres_label}</span><input type="text" id="discovery-genres" value="${(Array.isArray(school.discovery_genres) ? school.discovery_genres.join(', ') : (school.discovery_genres || '')).toString().replace(/"/g, '&quot;')}" placeholder="Salsa, Bachata" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_levels_label}</span><input type="text" id="discovery-levels" value="${(Array.isArray(school.discovery_levels) ? school.discovery_levels.join(', ') : (school.discovery_levels || '')).toString().replace(/"/g, '&quot;')}" placeholder="Beginner, Intermediate" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;"><span style="font-size: 14px; opacity: 0.8;">${t.logo_url_label}</span><div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"><input type="file" id="discovery-logo-file" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryImage('logo')"><button type="button" onclick="document.getElementById('discovery-logo-file').click();" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--system-gray6); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer;">${t.discovery_upload_btn || 'Upload'}</button>${(school.logo_url || '').trim() ? `<button type="button" onclick="window.clearDiscoveryImage('logo')" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; border: 1px solid var(--border); color: var(--system-red, #ff3b30); cursor: pointer;">${(t.discovery_remove_image || 'Remove').replace(/</g, '&lt;')}</button>` : ''}<input type="text" id="discovery-logo-url" value="${(school.logo_url || '').replace(/"/g, '&quot;')}" placeholder="https://... or upload" oninput="window.updateDiscoveryPreview()" style="flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none;"></div></div>
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;"><span style="font-size: 14px; opacity: 0.8;">${t.teacher_photo_url_label}</span><div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"><input type="file" id="discovery-teacher-file" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryImage('teacher')"><button type="button" onclick="document.getElementById('discovery-teacher-file').click();" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--system-gray6); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer;">${t.discovery_upload_btn || 'Upload'}</button>${(school.teacher_photo_url || '').trim() ? `<button type="button" onclick="window.clearDiscoveryImage('teacher')" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; border: 1px solid var(--border); color: var(--system-red, #ff3b30); cursor: pointer;">${(t.discovery_remove_image || 'Remove').replace(/</g, '&lt;')}</button>` : ''}<input type="text" id="discovery-teacher-url" value="${(school.teacher_photo_url || '').replace(/"/g, '&quot;')}" placeholder="https://... or upload" oninput="window.updateDiscoveryPreview()" style="flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none;"></div></div>
+                <div class="discovery-locations-wrap">
+                    <h3 class="discovery-locations-title">${t.discovery_locations_label || 'Where we teach'}</h3>
+                    ${(() => { if (state._discoveryLocationsSchoolId !== school?.id) { state._discoveryLocationsSchoolId = school?.id; state.discoveryLocations = Array.isArray(school?.discovery_locations) ? school.discovery_locations.map(l => ({ name: l.name || '', address: l.address || '', description: l.description || '', image_urls: Array.isArray(l.image_urls) ? [...l.image_urls] : [] })) : []; } const locs = state.discoveryLocations || []; return locs.map((loc, i) => `<div class="discovery-location-card">
+                        <div class="discovery-location-card-header">
+                            <span class="discovery-location-card-badge">${t.discovery_where_we_teach || 'Location'} ${i + 1}</span>
+                            <button type="button" class="discovery-location-remove" onclick="window.removeDiscoveryLocation(${i})" aria-label="${t.discovery_remove_location || 'Remove'}"><i data-lucide="trash-2" size="16"></i></button>
+                        </div>
+                        <div class="discovery-location-fields">
+                            <label class="discovery-location-label">${t.discovery_location_name || 'Name'}</label>
+                            <input type="text" class="discovery-location-input" value="${(loc.name || '').replace(/"/g, '&quot;')}" oninput="window.setDiscoveryLocationField(${i}, 'name', this.value)" placeholder="e.g. Studio Central">
+                            <label class="discovery-location-label">${t.discovery_location_address || 'Address'} <span class="discovery-location-required">*</span></label>
+                            <input type="text" class="discovery-location-input" value="${(loc.address || '').replace(/"/g, '&quot;')}" oninput="window.setDiscoveryLocationField(${i}, 'address', this.value)" placeholder="Street, number, city">
+                            <label class="discovery-location-label">${t.discovery_location_description || 'Description'}</label>
+                            <textarea rows="2" class="discovery-location-textarea" oninput="window.setDiscoveryLocationField(${i}, 'description', this.value)" placeholder="Condition, facilities…">${(loc.description || '').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</textarea>
+                            <label class="discovery-location-label">${t.discovery_upload_btn || 'Photos'}</label>
+                            <div class="discovery-location-photos-row">
+                                <input type="file" id="discovery-loc-file-${i}" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryLocationImage(${i}, this)">
+                                <button type="button" class="discovery-location-upload-btn" onclick="document.getElementById('discovery-loc-file-${i}').click();"><i data-lucide="plus" size="18"></i> ${t.discovery_upload_btn || 'Upload'}</button>
+                                ${(loc.image_urls || []).length ? `<div class="discovery-location-thumbs">${(loc.image_urls || []).map((url, j) => `<span class="discovery-location-thumb-wrap"><img src="${String(url).replace(/"/g, '&quot;')}" alt="" class="discovery-location-thumb"><button type="button" class="discovery-location-thumb-remove" onclick="window.removeDiscoveryLocationImage(${i}, ${j})" aria-label="Remove">×</button></span>`).join('')}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>`).join('') + `<button type="button" class="discovery-location-add-btn" onclick="window.addDiscoveryLocation()"><i data-lucide="plus" size="20"></i> ${t.discovery_add_location || 'Add location'}</button>`; })()}
+                </div>
+                <div class="ios-list-item" onclick="window.saveDiscoveryProfile()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                    <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_discovery_btn || 'Save discovery profile'}
+                </div>
+            </div>
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem;">
+                <button onclick="window.toggleDiscoveryPreview()" style="width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; font-size: 14px;">
+                    <i data-lucide="${state.showDiscoveryPreview ? 'eye-off' : 'eye'}" size="16" style="opacity: 0.6;"></i>
+                    ${state.showDiscoveryPreview ? t.hide_discovery_preview_btn : t.show_discovery_preview_btn}
+                </button>
+            </div>
+            ${state.showDiscoveryPreview ? `
+            <div style="padding: 0 1.2rem; margin-top: 1rem; margin-bottom: 0.8rem;" class="slide-in">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">${t.discovery_preview_title || 'Preview on Discover'}</div>
+            </div>
+            <div class="card slide-in" style="margin: 0 1.2rem 1.5rem; padding: 0; border-radius: 16px; border: 1px solid var(--border); overflow: hidden;">
+                <div id="discovery-preview-inner" style="font-size: 13px; color: var(--text-primary); max-height: 70vh; overflow-y: auto; padding: 1rem; background: var(--bg-body);">${(() => { const sc = state.currentSchool; const loc = [sc?.city, sc?.country].filter(Boolean).join(', ') || '—'; return window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || '', loc, desc: (sc?.discovery_description || '').toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(' · ') : '', logoUrl: (sc?.logo_url || '').trim(), teacherUrl: (sc?.teacher_photo_url || '').trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : (Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : []), currency: sc?.currency || 'MXN', classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t.discovery_placeholder_upload_soon || 'Will be uploaded soon.' }) : ''; })()}</div>
+            </div>
+            ` : ''}
+            <div style="height: 80px;"></div>
+            </div>`;
         }
     }
     else if (view === 'auth') {
@@ -2925,7 +3494,7 @@ function _renderViewImpl() {
                         </div>
                         <h3 style="font-size: 1.25rem; margin-bottom: 0.3rem; letter-spacing: -0.02em;">${c.name}</h3>
                         <div class="text-muted" style="display:flex; align-items:center; flex-wrap: wrap; gap:0.4rem; font-size: 0.9rem;">
-                            <i data-lucide="calendar" size="14"></i> ${classDayStr} • <i data-lucide="clock" size="14"></i> ${c.time}
+                            <i data-lucide="calendar" size="14"></i> ${classDayStr} • <i data-lucide="clock" size="14"></i> ${window.formatClassTime(c)}
                             ${c.location ? `• <i data-lucide="map-pin" size="14" style="opacity: 0.4;"></i> <span style="opacity: 0.7; font-weight: 500;">${c.location}</span>` : ''}
                         </div>
                         ${isPast ? '' : buildRegButton(c, info)}
@@ -2964,7 +3533,7 @@ function _renderViewImpl() {
                                         ${c.location ? `<div onclick="window.showLocationDetails(\`${c.location.replace(/'/g, "\\'")}\`)" style="font-size: 7px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.8; cursor: pointer;"><i data-lucide="map-pin" style="width: 7px; height: 7px; opacity: 0.5;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
                                     </div>
                                     <div class="tile-class-desc">${c.name}</div>
-                                    <div class="tile-class-time">${c.time}</div>
+                                    <div class="tile-class-time">${window.formatClassTime(c)}</div>
                                     ${isPastDay ? '' : buildTileReg(c, info)}
                                 </div>`;
                             }).join('') : `<div class="text-muted" style="font-size:0.6rem; font-style:italic;">${t.no_classes_msg}</div>`}
@@ -3701,7 +4270,7 @@ function _renderViewImpl() {
                             </button>
                         </div>
                         
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; position: relative; overflow: visible;">
                                 <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.day_label}</label>
                                 <div class="custom-dropdown-container" style="overflow: visible;">
@@ -3720,8 +4289,12 @@ function _renderViewImpl() {
                                 </div>
                             </div>
                             <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
-                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.hour_label}</label>
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.start_time_label}</label>
                                 <input type="time" value="${c.time || '09:00'}" onblur="scheduleTimeBlurSave(${c.id}, this)" onfocus="cancelTimeBlurSave(this)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
+                            </div>
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.end_time_label}</label>
+                                <input type="time" value="${c.end_time || c.time || '10:00'}" onblur="scheduleEndTimeBlurSave(${c.id}, this)" onfocus="cancelTimeBlurSave(this)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
                             </div>
                         </div>
 
@@ -3783,7 +4356,7 @@ function _renderViewImpl() {
                                             ${c.location ? `<div style="font-size: 6px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 2px; opacity: 0.7;"><i data-lucide="map-pin" size="6" style="opacity: 0.5;"></i> ${window.formatLocationLabel(c.location)}</div>` : ''}
                                         </div>
                                         <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${c.name}</div>
-                                        <div class="tile-class-time" style="font-size: 9px; opacity: 0.6;">${c.time}</div>
+                                        <div class="tile-class-time" style="font-size: 9px; opacity: 0.6;">${window.formatClassTime(c)}</div>
                                     </div>
                                 `).join('') : `<div class="text-muted" style="font-size:9px; font-style:italic; padding: 1rem 0;">${t.no_classes_msg}</div>`}
                             </div>
@@ -3958,6 +4531,61 @@ function _renderViewImpl() {
                     ` : ''}
                 </div>
             </div>
+
+            <!-- Discovery profile (Ajustes) -->
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.discovery_profile_section || 'Discovery profile'}
+            </div>
+            <div class="ios-list" style="margin-bottom: 1rem;">
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_slug_label}</span><input type="text" id="discovery-slug" value="${(state.currentSchool?.discovery_slug || '').replace(/"/g, '&quot;')}" placeholder="${t.discovery_slug_placeholder || 'royal_latin'}" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.country_label}</span><select id="discovery-country" onchange="window.updateDiscoveryCityDropdown(); window.updateDiscoveryPreview();" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;"><option value="">—</option>${DISCOVERY_COUNTRIES.map(c => { const v = (state.currentSchool?.country || '').trim(); return `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === v ? 'selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`; }).join('')}</select></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.city_label}</span><select id="discovery-city" onchange="window.updateDiscoveryPreview()" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;">${(() => { const country = (state.currentSchool?.country || '').trim(); const city = (state.currentSchool?.city || '').trim(); const cities = DISCOVERY_COUNTRIES_CITIES[country] || []; const list = (city && !cities.includes(city) ? [city, ...cities] : cities); return '<option value="">—</option>' + list.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === city ? ' selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`).join(''); })()}</select></div>
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_description_label}</span><textarea id="discovery-description" rows="3" placeholder="Short description for the discovery page" oninput="window.updateDiscoveryPreview()" style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;">${(state.currentSchool?.discovery_description || '').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</textarea></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_genres_label}</span><input type="text" id="discovery-genres" value="${(Array.isArray(state.currentSchool?.discovery_genres) ? state.currentSchool.discovery_genres.join(', ') : (state.currentSchool?.discovery_genres || '')).toString().replace(/"/g, '&quot;')}" placeholder="Salsa, Bachata" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_levels_label}</span><input type="text" id="discovery-levels" value="${(Array.isArray(state.currentSchool?.discovery_levels) ? state.currentSchool.discovery_levels.join(', ') : (state.currentSchool?.discovery_levels || '')).toString().replace(/"/g, '&quot;')}" placeholder="Beginner, Intermediate" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;"><span style="font-size: 14px; opacity: 0.8;">${t.logo_url_label}</span><div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"><input type="file" id="discovery-logo-file" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryImage('logo')"><button type="button" onclick="document.getElementById('discovery-logo-file').click();" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--system-gray6); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer;">${t.discovery_upload_btn || 'Upload'}</button>${(state.currentSchool?.logo_url || '').trim() ? `<button type="button" onclick="window.clearDiscoveryImage('logo')" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; border: 1px solid var(--border); color: var(--system-red, #ff3b30); cursor: pointer;">${(t.discovery_remove_image || 'Remove').replace(/</g, '&lt;')}</button>` : ''}<input type="text" id="discovery-logo-url" value="${(state.currentSchool?.logo_url || '').replace(/"/g, '&quot;')}" placeholder="https://... or upload" oninput="window.updateDiscoveryPreview()" style="flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none;"></div></div>
+                <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;"><span style="font-size: 14px; opacity: 0.8;">${t.teacher_photo_url_label}</span><div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"><input type="file" id="discovery-teacher-file" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryImage('teacher')"><button type="button" onclick="document.getElementById('discovery-teacher-file').click();" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--system-gray6); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer;">${t.discovery_upload_btn || 'Upload'}</button>${(state.currentSchool?.teacher_photo_url || '').trim() ? `<button type="button" onclick="window.clearDiscoveryImage('teacher')" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; border: 1px solid var(--border); color: var(--system-red, #ff3b30); cursor: pointer;">${(t.discovery_remove_image || 'Remove').replace(/</g, '&lt;')}</button>` : ''}<input type="text" id="discovery-teacher-url" value="${(state.currentSchool?.teacher_photo_url || '').replace(/"/g, '&quot;')}" placeholder="https://... or upload" oninput="window.updateDiscoveryPreview()" style="flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none;"></div></div>
+                <div class="discovery-locations-wrap">
+                    <h3 class="discovery-locations-title">${t.discovery_locations_label || 'Where we teach'}</h3>
+                    ${(() => { if (state._discoveryLocationsSchoolId !== state.currentSchool?.id) { state._discoveryLocationsSchoolId = state.currentSchool?.id; state.discoveryLocations = Array.isArray(state.currentSchool?.discovery_locations) ? state.currentSchool.discovery_locations.map(l => ({ name: l.name || '', address: l.address || '', description: l.description || '', image_urls: Array.isArray(l.image_urls) ? [...l.image_urls] : [] })) : []; } const locs = state.discoveryLocations || []; return locs.map((loc, i) => `<div class="discovery-location-card">
+                        <div class="discovery-location-card-header">
+                            <span class="discovery-location-card-badge">${t.discovery_where_we_teach || 'Location'} ${i + 1}</span>
+                            <button type="button" class="discovery-location-remove" onclick="window.removeDiscoveryLocation(${i})" aria-label="${t.discovery_remove_location || 'Remove'}"><i data-lucide="trash-2" size="16"></i></button>
+                        </div>
+                        <div class="discovery-location-fields">
+                            <label class="discovery-location-label">${t.discovery_location_name || 'Name'}</label>
+                            <input type="text" class="discovery-location-input" value="${(loc.name || '').replace(/"/g, '&quot;')}" oninput="window.setDiscoveryLocationField(${i}, 'name', this.value)" placeholder="e.g. Studio Central">
+                            <label class="discovery-location-label">${t.discovery_location_address || 'Address'} <span class="discovery-location-required">*</span></label>
+                            <input type="text" class="discovery-location-input" value="${(loc.address || '').replace(/"/g, '&quot;')}" oninput="window.setDiscoveryLocationField(${i}, 'address', this.value)" placeholder="Street, number, city">
+                            <label class="discovery-location-label">${t.discovery_location_description || 'Description'}</label>
+                            <textarea rows="2" class="discovery-location-textarea" oninput="window.setDiscoveryLocationField(${i}, 'description', this.value)" placeholder="Condition, facilities…">${(loc.description || '').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</textarea>
+                            <label class="discovery-location-label">${t.discovery_upload_btn || 'Photos'}</label>
+                            <div class="discovery-location-photos-row">
+                                <input type="file" id="discovery-loc-file-${i}" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryLocationImage(${i}, this)">
+                                <button type="button" class="discovery-location-upload-btn" onclick="document.getElementById('discovery-loc-file-${i}').click();"><i data-lucide="plus" size="18"></i> ${t.discovery_upload_btn || 'Upload'}</button>
+                                ${(loc.image_urls || []).length ? `<div class="discovery-location-thumbs">${(loc.image_urls || []).map((url, j) => `<span class="discovery-location-thumb-wrap"><img src="${String(url).replace(/"/g, '&quot;')}" alt="" class="discovery-location-thumb"><button type="button" class="discovery-location-thumb-remove" onclick="window.removeDiscoveryLocationImage(${i}, ${j})" aria-label="Remove">×</button></span>`).join('')}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>`).join('') + `<button type="button" class="discovery-location-add-btn" onclick="window.addDiscoveryLocation()"><i data-lucide="plus" size="20"></i> ${t.discovery_add_location || 'Add location'}</button>`; })()}
+                </div>
+                <div class="ios-list-item" onclick="window.saveDiscoveryProfile()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                    <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_discovery_btn || 'Save discovery profile'}
+                </div>
+            </div>
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem;">
+                <button onclick="window.toggleDiscoveryPreview()" style="width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; font-size: 14px;">
+                    <i data-lucide="${state.showDiscoveryPreview ? 'eye-off' : 'eye'}" size="16" style="opacity: 0.6;"></i>
+                    ${state.showDiscoveryPreview ? t.hide_discovery_preview_btn : t.show_discovery_preview_btn}
+                </button>
+            </div>
+            ${state.showDiscoveryPreview ? `
+            <div style="padding: 0 1.2rem; margin-top: 1rem; margin-bottom: 0.8rem;" class="slide-in">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">${t.discovery_preview_title || 'Preview on Discover'}</div>
+            </div>
+            <div class="card slide-in" style="margin: 0 1.2rem 1.5rem; padding: 0; border-radius: 16px; border: 1px solid var(--border); overflow: hidden;">
+                <div id="discovery-preview-inner" style="font-size: 13px; color: var(--text-primary); max-height: 70vh; overflow-y: auto; padding: 1rem; background: var(--bg-body);">${(() => { const sc = state.currentSchool; const loc = [sc?.city, sc?.country].filter(Boolean).join(', ') || (sc?.address || '—'); const gallery = Array.isArray(sc?.gallery_urls) ? sc.gallery_urls : (typeof sc?.gallery_urls === 'string' ? sc.gallery_urls.split(/\\r?\\n/).map(s => s.trim()).filter(Boolean) : []); return window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || '', loc, desc: (sc?.discovery_description || '').toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(' · ') : '', logoUrl: (sc?.logo_url || '').trim(), teacherUrl: (sc?.teacher_photo_url || '').trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : (Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : []), currency: sc?.currency || 'MXN', classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t.discovery_placeholder_upload_soon || 'Will be uploaded soon.' }) : ''; })()}</div>
+            </div>
+            ` : ''}
 
             <div style="height: 100px;"></div> <!-- Spacer for bottom nav padding -->
     `;
@@ -4151,7 +4779,7 @@ function _renderViewImpl() {
     if (window.lucide) lucide.createIcons();
 
     // Global UI Updates
-    const isDevView = ['platform-dev-dashboard', 'platform-school-details'].includes(view);
+    const isDevView = ['platform-dev-dashboard', 'platform-school-details', 'platform-dev-edit-discovery', 'platform-dev-edit-school'].includes(view);
     const isAdminView = (view && view.startsWith('admin-'));
     const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
     const isLanding = view === 'school-selection' || view === 'auth';
@@ -4619,6 +5247,13 @@ window.scheduleTimeBlurSave = (classId, inputEl) => {
     inputEl._timeBlurT = setTimeout(() => {
         inputEl._timeBlurT = null;
         if (inputEl.value && document.activeElement !== inputEl) updateClass(classId, 'time', inputEl.value);
+    }, 400);
+};
+window.scheduleEndTimeBlurSave = (classId, inputEl) => {
+    if (inputEl._timeBlurT) clearTimeout(inputEl._timeBlurT);
+    inputEl._timeBlurT = setTimeout(() => {
+        inputEl._timeBlurT = null;
+        if (document.activeElement !== inputEl) updateClass(classId, 'end_time', inputEl.value || '');
     }, 400);
 };
 window.cancelTimeBlurSave = (inputEl) => {
@@ -5102,6 +5737,35 @@ window.toggleSchoolActive = async (schoolId, currentlyActive) => {
     renderView();
 };
 
+window.saveSchoolInfoByPlatform = async (schoolId) => {
+    const t = typeof window.t === 'function' ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
+    if (!supabaseClient) { alert(t('error_generic') || 'No database connection'); return; }
+    const nameEl = document.getElementById('dev-edit-school-name');
+    const addressEl = document.getElementById('dev-edit-school-address');
+    const name = (nameEl?.value ?? '').trim() || null;
+    const address = (addressEl?.value ?? '').trim();
+    const { data, error } = await supabaseClient.rpc('school_update_info_by_platform', {
+        p_school_id: schoolId,
+        p_name: name,
+        p_address: address || null
+    });
+    if (error) {
+        alert(t('error_generic') || 'Error: ' + (error.message || 'Could not update school.'));
+        return;
+    }
+    const updated = (data && typeof data === 'object') ? data : (data ? JSON.parse(data) : null);
+    if (updated && state.platformData?.schools) {
+        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, ...updated } : s);
+    }
+    if (state.currentSchool?.id === schoolId && updated) {
+        state.currentSchool = { ...state.currentSchool, ...updated };
+    }
+    state.currentView = state._devEditSchoolReturnView || 'platform-dev-dashboard';
+    state.selectedDevSchoolId = state._devEditSchoolReturnSchoolId || schoolId;
+    renderView();
+    alert(t('dev_school_info_saved') || t('rename_school_success') || 'School info saved.');
+};
+
 window.renameSchool = async (schoolId) => {
     const t = typeof window.t === 'function' ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
     const schools = state.platformData?.schools || state.schools || [];
@@ -5226,6 +5890,14 @@ window.deleteSchool = async (schoolId, schoolNameParam) => {
     }
 };
 
+window.setDiscoveryEnabled = async (enabled) => {
+    if (!supabaseClient || !state.isPlatformDev) return;
+    const { error } = await supabaseClient.rpc('platform_setting_set', { p_key: 'discovery_enabled', p_value: enabled });
+    if (error) { alert(error.message || 'Failed to update'); return; }
+    state.platformData.discoveryEnabled = !!enabled;
+    renderView();
+};
+
 async function fetchPlatformData() {
     if (!supabaseClient) return;
     state.loading = true;
@@ -5270,6 +5942,8 @@ async function fetchPlatformData() {
             const admins = state.platformData?.platform_admins || [];
             const sessionLinked = !!(uid && admins.some(pa => pa.user_id === uid));
             state.platformAdminLinked = sessionLinked;
+            const { data: discEnabled } = await supabaseClient.rpc('discovery_is_enabled');
+            state.platformData.discoveryEnabled = !!discEnabled;
         }
 
         state.loading = false;
@@ -5801,6 +6475,284 @@ window.removePaymentRequest = async (id) => {
     }
 };
 
+window.updateDiscoveryCityDropdown = () => {
+    const country = (document.getElementById('discovery-country')?.value || '').trim();
+    const cities = DISCOVERY_COUNTRIES_CITIES[country] || [];
+    const sel = document.getElementById('discovery-city');
+    if (!sel) return;
+    const current = (sel.value || '').trim();
+    const list = (current && !cities.includes(current) ? [current, ...cities] : cities);
+    sel.innerHTML = '<option value="">—</option>' + list.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === current ? ' selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`).join('');
+};
+
+window.uploadDiscoveryImage = async (kind) => {
+    const id = kind === 'logo' ? 'discovery-logo-file' : 'discovery-teacher-file';
+    const urlId = kind === 'logo' ? 'discovery-logo-url' : 'discovery-teacher-url';
+    const fileInput = document.getElementById(id);
+    const file = fileInput?.files?.[0];
+    if (!file || !supabaseClient || !state.currentSchool?.id) return;
+    const urlEl = document.getElementById(urlId);
+    const hasExisting = (urlEl?.value || '').trim().length > 0;
+    if (hasExisting) {
+        state._discoveryReplacePending = { file, kind };
+        window.showDiscoveryReplaceModal();
+        return;
+    }
+    await window.doUploadDiscoveryImage(file, kind);
+    if (fileInput) fileInput.value = '';
+};
+
+window.showDiscoveryReplaceModal = () => {
+    const t = (k) => (window.t ? window.t(k) : k);
+    const title = t('discovery_replace_title');
+    const message = t('discovery_replace_message');
+    const replaceLabel = t('discovery_replace_confirm');
+    const cancelLabel = window.t ? window.t('cancel') : 'Cancel';
+    const existing = document.getElementById('discovery-replace-modal');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'discovery-replace-modal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'discovery-replace-title');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+    overlay.innerHTML = `
+        <div class="discovery-replace-dialog" style="background:var(--bg-body, #fff);border-radius:16px;max-width:320px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:24px;">
+            <h2 id="discovery-replace-title" style="margin:0 0 12px;font-size:18px;font-weight:600;color:var(--text-primary,#111);">${title.replace(/</g, '&lt;')}</h2>
+            <p style="margin:0 0 20px;font-size:15px;color:var(--text-secondary,#666);line-height:1.4;">${message.replace(/</g, '&lt;')}</p>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button type="button" class="discovery-replace-cancel" style="padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;background:var(--system-gray5,#e5e5ea);color:var(--text-primary);border:none;cursor:pointer;">${cancelLabel.replace(/</g, '&lt;')}</button>
+                <button type="button" class="discovery-replace-confirm" style="padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;background:var(--system-blue,#007aff);color:#fff;border:none;cursor:pointer;">${replaceLabel.replace(/</g, '&lt;')}</button>
+            </div>
+        </div>`;
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) window.confirmDiscoveryReplace(false); });
+    const cancelBtn = overlay.querySelector('.discovery-replace-cancel');
+    const confirmBtn = overlay.querySelector('.discovery-replace-confirm');
+    cancelBtn.addEventListener('click', () => window.confirmDiscoveryReplace(false));
+    confirmBtn.addEventListener('click', () => window.confirmDiscoveryReplace(true));
+    document.body.appendChild(overlay);
+};
+
+window.confirmDiscoveryReplace = async (confirmed) => {
+    const pending = state._discoveryReplacePending;
+    state._discoveryReplacePending = null;
+    const id = pending?.kind === 'logo' ? 'discovery-logo-file' : 'discovery-teacher-file';
+    const fileInput = document.getElementById(id);
+    if (fileInput) fileInput.value = '';
+    const modal = document.getElementById('discovery-replace-modal');
+    if (modal) modal.remove();
+    if (confirmed && pending?.file && pending?.kind) await window.doUploadDiscoveryImage(pending.file, pending.kind);
+};
+
+window.doUploadDiscoveryImage = async (file, kind) => {
+    if (!file || !supabaseClient || !state.currentSchool?.id) return;
+    const urlId = kind === 'logo' ? 'discovery-logo-url' : 'discovery-teacher-url';
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const path = `${state.currentSchool.id}/${kind}.${ext}`;
+    const { error } = await supabaseClient.storage.from('school-discovery').upload(path, file, { upsert: true });
+    if (error) { alert(error.message || 'Upload failed'); return; }
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/school-discovery/${path}`;
+    const urlEl = document.getElementById(urlId);
+    if (urlEl) { urlEl.value = publicUrl; window.updateDiscoveryPreview(); }
+};
+
+window.clearDiscoveryImage = (kind) => {
+    const urlId = kind === 'logo' ? 'discovery-logo-url' : 'discovery-teacher-url';
+    const urlEl = document.getElementById(urlId);
+    if (urlEl) { urlEl.value = ''; window.updateDiscoveryPreview(); }
+};
+
+window.addDiscoveryLocation = () => {
+    state.discoveryLocations = state.discoveryLocations || [];
+    state.discoveryLocations.push({ name: '', address: '', description: '', image_urls: [] });
+    renderView();
+};
+window.removeDiscoveryLocation = (index) => {
+    state.discoveryLocations = state.discoveryLocations || [];
+    state.discoveryLocations.splice(index, 1);
+    renderView();
+};
+window.setDiscoveryLocationField = (index, field, value) => {
+    state.discoveryLocations = state.discoveryLocations || [];
+    if (state.discoveryLocations[index]) state.discoveryLocations[index][field] = value;
+    if (document.getElementById('discovery-preview-inner')) window.updateDiscoveryPreview();
+};
+window.removeDiscoveryLocationImage = (locIndex, imgIndex) => {
+    state.discoveryLocations = state.discoveryLocations || [];
+    if (state.discoveryLocations[locIndex] && Array.isArray(state.discoveryLocations[locIndex].image_urls)) {
+        state.discoveryLocations[locIndex].image_urls.splice(imgIndex, 1);
+        renderView();
+    }
+};
+window.uploadDiscoveryLocationImage = async (locIndex, fileInput) => {
+    const file = fileInput?.files?.[0];
+    if (!file || !supabaseClient || !state.currentSchool?.id) return;
+    state.discoveryLocations = state.discoveryLocations || [];
+    const loc = state.discoveryLocations[locIndex];
+    if (!loc) return;
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const imgCount = Array.isArray(loc.image_urls) ? loc.image_urls.length : 0;
+    const path = `${state.currentSchool.id}/locations/${locIndex}_${imgCount}.${ext}`;
+    const { error } = await supabaseClient.storage.from('school-discovery').upload(path, file, { upsert: true });
+    if (error) { alert(error.message || 'Upload failed'); return; }
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/school-discovery/${path}`;
+    if (!Array.isArray(loc.image_urls)) loc.image_urls = [];
+    loc.image_urls.push(publicUrl);
+    fileInput.value = '';
+    renderView();
+};
+
+window.toggleDiscoveryPreview = () => {
+    state.showDiscoveryPreview = !state.showDiscoveryPreview;
+    renderView();
+    if (state.showDiscoveryPreview && document.getElementById('discovery-preview-inner')) setTimeout(() => window.updateDiscoveryPreview(), 50);
+};
+
+window.getDiscoveryPreviewFullHtml = (opts) => {
+    const t = (k) => (window.t ? window.t(k) : k);
+    const name = (opts.name || '').replace(/</g, '&lt;');
+    const loc = (opts.loc || '—').replace(/</g, '&lt;');
+    const desc = (opts.desc || '').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+    const tags = (opts.genres || '').replace(/</g, '&lt;');
+    const placeholder = opts.placeholder || (t('discovery_placeholder_upload_soon'));
+    const logoUrl = (opts.logoUrl || '').trim();
+    const teacherUrl = (opts.teacherUrl || '').trim();
+    const classes = opts.classes || [];
+    const subscriptions = opts.subscriptions || [];
+    const gallery = opts.gallery || [];
+    const locations = opts.locations || [];
+    const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayAliases = { 'Mon': ['Mon', 'Mo', 'Monday'], 'Tue': ['Tue', 'Tu', 'Tuesday'], 'Wed': ['Wed', 'We', 'Wednesday'], 'Thu': ['Thu', 'Th', 'Thursday'], 'Fri': ['Fri', 'Fr', 'Friday'], 'Sat': ['Sat', 'Sa', 'Saturday'], 'Sun': ['Sun', 'Su', 'Sunday'] };
+    const noClassesMsg = (opts.noClassesMsg != null ? opts.noClassesMsg : (t('no_classes_msg') || 'No classes'));
+    const classesHtml = classes.length ? `<div class="weekly-grid">${daysOrder.map(dayKey => {
+        const aliases = dayAliases[dayKey];
+        const dayClasses = classes.filter(c => aliases.includes(c.day)).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+        const dayLabel = t(dayKey.toLowerCase()) || dayKey;
+        return `<div class="day-tile" style="background: var(--surface); border-radius: 16px; border: 1px solid var(--border); padding: 0.8rem;">
+            <div class="day-tile-header" style="padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">${dayLabel}</div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.6rem;">
+                ${dayClasses.length > 0 ? dayClasses.map(c => {
+                    const cName = String(c.name || c.class_name || '').replace(/</g, '&lt;');
+                    const timeStr = (typeof window.formatClassTime === 'function' ? window.formatClassTime(c) : (c.time || ''));
+                    const loc = (c.location || '').replace(/</g, '&lt;');
+                    return `<div class="tile-class-item" style="padding: 8px; border-radius: 10px; border: 1px solid var(--border);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                            <span class="tile-class-level" style="font-size: 8px; background: var(--system-gray6); padding: 2px 6px; border-radius: 4px;">${(c.tag || 'Open').replace(/</g, '&lt;')}</span>
+                            ${loc ? `<span style="font-size: 6px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; opacity: 0.7;">${loc}</span>` : ''}
+                        </div>
+                        <div class="tile-class-desc" style="font-size: 11px; font-weight: 700;">${cName}</div>
+                        <div class="tile-class-time" style="font-size: 9px; opacity: 0.6;">${timeStr.replace(/</g, '&lt;')}</div>
+                    </div>`;
+                }).join('') : `<div class="text-muted" style="font-size:9px; font-style:italic; padding: 0.5rem 0;">${noClassesMsg}</div>`}
+            </div>
+        </div>`;
+    }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="calendar" size="24"></i><span>${placeholder}</span></div>`;
+    const currency = opts.currency || 'MXN';
+    const planSortKey = (s) => { const name = (s.name || '').toLowerCase(); if (name.includes('ilimitad') || name.includes('unlimited') || s.limit_count === 0 || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9; const n = parseInt(s.limit_count, 10); if (!isNaN(n)) return n; const m = (s.name || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
+    const sortedSubs = [...subscriptions].sort((a, b) => planSortKey(a) - planSortKey(b));
+    const packagesHtml = sortedSubs.length ? `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${sortedSubs.map(s => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, currency) : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="credit-card" size="24"></i><span>${placeholder}</span></div>`;
+    const locationsHtml = locations.length ? locations.map(loc => { const locName = String(loc.name || '').replace(/</g, '&lt;'); const locAddr = String(loc.address || '').replace(/</g, '&lt;'); const locDesc = String(loc.description || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'); const imgs = Array.isArray(loc.image_urls) ? loc.image_urls : []; return `<div class="discovery-detail-location-card" style="margin-bottom: 1rem; padding: 1rem; border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; margin-bottom: 4px;">${locName || '—'}</div><div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 6px;"><i data-lucide="map-pin" size="14"></i> ${locAddr || placeholder}</div>${locDesc ? `<div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${locDesc}</div>` : ''}${imgs.length ? `<div class="discovery-detail-gallery-grid" style="margin-top: 8px;">${imgs.slice(0, 6).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : ''}</div>`; }).join('') : (gallery.length ? `<div class="discovery-detail-gallery-grid">${gallery.slice(0, 12).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="map-pin" size="32"></i><span>${placeholder}</span></div>`);
+    return `<div class="discovery-detail-page" style="padding-top: 0;">
+            <div class="discovery-detail-hero">
+                <div class="discovery-detail-logo-wrap">${logoUrl ? `<img src="${String(logoUrl).replace(/"/g, '&quot;')}" alt="">` : `<div class="discovery-detail-logo-placeholder"><i data-lucide="image" size="40"></i></div>`}</div>
+                <div class="discovery-detail-info">
+                    <h1 class="discovery-detail-title">${name || '—'}</h1>
+                    <p class="discovery-detail-loc"><i data-lucide="map-pin" size="14"></i> ${loc}</p>
+                    <p class="discovery-detail-tags">${tags || placeholder}</p>
+                </div>
+            </div>
+            <div class="discovery-detail-desc">${desc || placeholder}</div>
+            <div class="discovery-detail-teacher-wrap">${teacherUrl ? `<img src="${String(teacherUrl).replace(/"/g, '&quot;')}" alt="Teacher">` : `<div class="discovery-detail-teacher-placeholder"><i data-lucide="user" size="48"></i><span>${placeholder}</span></div>`}</div>
+            <h2 class="discovery-detail-section-title">${t('discovery_classes')}</h2>${classesHtml}
+            <h2 class="discovery-detail-section-title">${t('discovery_packages')}</h2>${packagesHtml}
+            <h2 class="discovery-detail-section-title">${t('discovery_where_we_teach')}</h2>${locationsHtml}
+            </div>`;
+};
+
+window.updateDiscoveryPreview = () => {
+    const inner = document.getElementById('discovery-preview-inner');
+    if (!inner) return;
+    const slug = (document.getElementById('discovery-slug')?.value || '').trim();
+    const name = (state.currentSchool?.name || '').replace(/</g, '&lt;');
+    const country = (document.getElementById('discovery-country')?.value || '').trim();
+    const city = (document.getElementById('discovery-city')?.value || '').trim();
+    const loc = [city, country].filter(Boolean).join(', ') || '—';
+    const descEl = document.getElementById('discovery-description');
+    const descRaw = (descEl?.value || '').toString();
+    const desc = descRaw.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+    const genresEl = document.getElementById('discovery-genres');
+    const genres = (genresEl?.value || '').split(',').map(s => s.trim()).filter(Boolean).join(' · ');
+    const logoUrl = (document.getElementById('discovery-logo-url')?.value || '').trim();
+    const teacherUrl = (document.getElementById('discovery-teacher-url')?.value || '').trim();
+    const placeholder = window.t ? window.t('discovery_placeholder_upload_soon') : 'Will be uploaded soon.';
+    const locations = state.discoveryLocations ?? state.currentSchool?.discovery_locations ?? [];
+    if (!state.showDiscoveryPreview) return;
+    inner.innerHTML = window.getDiscoveryPreviewFullHtml({
+        name: state.currentSchool?.name || '',
+        loc,
+        desc: descRaw,
+        genres,
+        logoUrl,
+        teacherUrl,
+        gallery: [],
+        locations: Array.isArray(locations) ? locations : [],
+        currency: state.currentSchool?.currency || 'MXN',
+        classes: state.classes || [],
+        subscriptions: state.subscriptions || [],
+        placeholder
+    });
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.saveDiscoveryProfile = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const slug = (document.getElementById('discovery-slug')?.value || '').trim();
+    const country = (document.getElementById('discovery-country')?.value || '').trim();
+    const city = (document.getElementById('discovery-city')?.value || '').trim();
+    const description = (document.getElementById('discovery-description')?.value || '').trim();
+    const genresStr = (document.getElementById('discovery-genres')?.value || '').trim();
+    const levelsStr = (document.getElementById('discovery-levels')?.value || '').trim();
+    const logoUrl = (document.getElementById('discovery-logo-url')?.value || '').trim();
+    const teacherPhotoUrl = (document.getElementById('discovery-teacher-url')?.value || '').trim();
+    const genres = genresStr ? genresStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const levels = levelsStr ? levelsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const locationsRaw = (state.discoveryLocations || []).map(l => ({
+        name: (l.name || '').trim(),
+        address: (l.address || '').trim(),
+        description: (l.description || '').trim(),
+        image_urls: Array.isArray(l.image_urls) ? l.image_urls : []
+    }));
+    const locations = locationsRaw.filter(l => l.name || l.address || l.description || (l.image_urls && l.image_urls.length));
+    const missingAddress = locations.some(l => !(l.address && l.address.length));
+    if (locations.length && missingAddress) {
+        alert(window.t ? window.t('discovery_location_address') : 'Address is required for each location.');
+        return;
+    }
+    const locationsToSave = locations.filter(l => l.address && l.address.length);
+    const { error } = await supabaseClient.rpc('school_update_discovery', {
+        p_school_id: state.currentSchool.id,
+        p_discovery_slug: slug || null,
+        p_country: country || null,
+        p_city: city || null,
+        p_address: null,
+        p_discovery_description: description || null,
+        p_discovery_genres: genres,
+        p_discovery_levels: levels,
+        p_logo_url: logoUrl || null,
+        p_teacher_photo_url: teacherPhotoUrl || null,
+        p_gallery_urls: [],
+        p_discovery_locations: locationsToSave
+    });
+    if (error) { alert(error.message || 'Failed to save discovery profile'); return; }
+    state.currentSchool = { ...state.currentSchool, discovery_slug: slug || null, country: country || null, city: city || null, address: null, discovery_description: description || null, discovery_genres: genres, discovery_levels: levels, logo_url: logoUrl || null, teacher_photo_url: teacherPhotoUrl || null, discovery_locations: locationsToSave };
+    if (state.platformData && state.platformData.schools) {
+        const idx = state.platformData.schools.findIndex(s => s.id === state.currentSchool.id);
+        if (idx >= 0) state.platformData.schools[idx] = { ...state.platformData.schools[idx], ...state.currentSchool };
+    }
+    alert(window.t ? window.t('discovery_saved') : 'Discovery profile saved.');
+    renderView();
+};
+
 window.saveBankSettings = async (btn) => {
     const name = document.getElementById('set-bank-name').value;
     const cbu = document.getElementById('set-bank-cbu').value;
@@ -6131,6 +7083,7 @@ window.addClass = async () => {
             p_name: 'New Class',
             p_day: 'Mon',
             p_time: '09:00',
+            p_end_time: '10:00',
             p_price: 150,
             p_tag: 'Beginner',
             p_location: 'Studio A'
@@ -6146,11 +7099,11 @@ window.addClass = async () => {
         if (row) {
             const created = typeof row === 'object' && !Array.isArray(row) ? row : (Array.isArray(row) ? row[0] : null);
             if (created) state.classes.push(created);
-            else state.classes.push({ id: state.classes.length + 1, name: 'New Class', day: 'Mon', time: '09:00', price: 150, tag: 'Beginner', location: 'Studio A', school_id: schoolId });
+            else state.classes.push({ id: state.classes.length + 1, name: 'New Class', day: 'Mon', time: '09:00', end_time: '10:00', price: 150, tag: 'Beginner', location: 'Studio A', school_id: schoolId });
         }
     } else {
         const newId = state.classes.length ? Math.max(...state.classes.map(c => c.id)) + 1 : 1;
-        state.classes.push({ id: newId, name: 'New Class', day: 'Mon', time: '09:00', price: 150, tag: 'Beginner', location: 'Studio A', school_id: schoolId });
+        state.classes.push({ id: newId, name: 'New Class', day: 'Mon', time: '09:00', end_time: '10:00', price: 150, tag: 'Beginner', location: 'Studio A', school_id: schoolId });
     }
     saveState();
     renderView();
@@ -7076,9 +8029,16 @@ logoEl.addEventListener('click', () => {
 
 
 (async function init() {
+    const path = (window.location.pathname || '').replace(/\/$/, '') || '/';
+    if (path === '/discovery' || path.startsWith('/discovery/')) {
+        state.discoveryPath = path;
+    }
     const local = localStorage.getItem('dance_app_state');
-    const saved = local ? JSON.parse(local) : {};
-    if (local) {
+    let saved = {};
+    try {
+        saved = local ? JSON.parse(local) : {};
+    } catch (_) { saved = {}; }
+    if (local && !state.discoveryPath) {
         state.language = saved.language || 'en';
         state.theme = saved.theme || 'dark';
         if (saved.currentUser) state.currentUser = saved.currentUser;
@@ -7108,6 +8068,10 @@ logoEl.addEventListener('click', () => {
             clearSchoolData();
             saveState();
         }
+    }
+    if (state.discoveryPath && local) {
+        state.language = saved.language || state.language || 'en';
+        state.theme = saved.theme || state.theme || 'dark';
     }
 
     // Reconcile state with Supabase session: prevent stale localStorage from restoring admin after logout
@@ -7165,8 +8129,23 @@ logoEl.addEventListener('click', () => {
     updateI18n();
     document.body.setAttribute('data-theme', state.theme);
     document.body.classList.toggle('dark-mode', state.theme === 'dark');
+
+    if (state.discoveryPath && supabaseClient) {
+        await window.fetchDiscoveryData();
+    }
     renderView();
     if (window.lucide) lucide.createIcons();
+
+    window.addEventListener('popstate', () => {
+        const path = (window.location.pathname || '').replace(/\/$/, '') || '/';
+        if (path === '/discovery' || path.startsWith('/discovery/')) {
+            state.discoveryPath = path;
+            window.fetchDiscoveryData().then(() => renderView());
+        } else {
+            state.discoveryPath = null;
+            renderView();
+        }
+    });
 
     window.addEventListener('hashchange', () => {
         if (parseHashRoute()) {
@@ -7250,8 +8229,8 @@ logoEl.addEventListener('click', () => {
         }
     });
 
-    // Fetch live data from Supabase
-    fetchAllData();
+    // Fetch live data from Supabase (skip when on discovery path)
+    if (!state.discoveryPath) fetchAllData();
 
     // Background Sync: Refresh every 2 minutes (less aggressive to avoid overwriting state / race conditions)
     setInterval(() => {
@@ -7260,7 +8239,7 @@ logoEl.addEventListener('click', () => {
         const isEditingClasses = state.currentView === 'admin-settings';
         const recentlyEditedClass = state._lastClassEditAt && (Date.now() - state._lastClassEditAt < 15000);
 
-        if (state.currentUser && !isFocussed && !isModalOpen && !isEditingClasses && !recentlyEditedClass) {
+        if (state.currentUser && !state.discoveryPath && !isFocussed && !isModalOpen && !isEditingClasses && !recentlyEditedClass) {
             fetchAllData();
         }
     }, 120000);
