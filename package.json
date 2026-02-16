@@ -4,6 +4,6 @@
     "description": "Premium Dance School Management Platform",
     "scripts": {
         "start": "serve . -s",
-        "build": "echo 'Static site – no build step needed'"
+        "build": "node build-vercel.js"
     }
 }
