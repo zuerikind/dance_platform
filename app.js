@@ -2818,24 +2818,6 @@ function _renderViewImpl() {
                         </div>
                         <button type="button" onclick="window.setDiscoveryEnabled(!(state.platformData.discoveryEnabled === true))" style="width: 56px; height: 32px; border-radius: 16px; border: none; cursor: pointer; background: ${state.platformData.discoveryEnabled === true ? 'var(--system-blue)' : 'var(--system-gray5)'}; transition: background 0.2s; position: relative;"><span style="position: absolute; width: 26px; height: 26px; border-radius: 50%; background: white; top: 3px; left: ${state.platformData.discoveryEnabled === true ? '27px' : '3px'}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
                     </div>
-                    <!-- Discovery profiles (schools) -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.2rem; opacity: 0.8;">${t.dev_discovery_profiles || 'Discovery profiles'}</div>
-                    <div class="ios-list" style="margin-bottom: 1.5rem; padding: 0; background: transparent; border: none;">
-                        ${(state.platformData.schools || []).map(s => {
-                            const slug = s.discovery_slug || '—';
-                            const country = (s.country || '').trim() || '—';
-                            const city = (s.city || '').trim() || '—';
-                            const genres = Array.isArray(s.discovery_genres) ? s.discovery_genres.join(', ') : (s.discovery_genres || '—');
-                            const desc = (s.discovery_description || '').toString().slice(0, 60);
-                            return `<div class="ios-list-item" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="font-weight: 700;">${(s.name || '').replace(/</g, '&lt;')}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">${String(slug).replace(/</g, '&lt;')} · ${String(city).replace(/</g, '&lt;')}, ${String(country).replace(/</g, '&lt;')} ${genres !== '—' ? ' · ' + String(genres).replace(/</g, '&lt;') : ''}</div>
-                                </div>
-                                <button type="button" class="btn-secondary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="padding: 8px 14px; font-size: 12px; font-weight: 700; border-radius: 12px;">${t.dev_edit_in_dashboard || 'View / Edit'}</button>
-                            </div>`;
-                        }).join('')}
-                    </div>
                 ` : ''}
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0 0.2rem;">
@@ -2986,202 +2968,154 @@ function _renderViewImpl() {
             const jjEnabled = !!school.jack_and_jill_enabled;
 
             html += `
-                <div class="platform-school-detail-header">
-                    <div style="display: flex; align-items: center; gap: 1rem; padding: 0 1.2rem 1rem;">
-                        <button type="button" class="btn-back" onclick="state.currentView='platform-dev-dashboard'; renderView();">
-                            <i data-lucide="arrow-left" size="20"></i>
-                        </button>
-                        <span style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t.dev_school_inspector}</span>
-                    </div>
-                    <div class="platform-school-hero">
-                        <div style="width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, rgba(0,122,255,0.2) 0%, rgba(0,122,255,0.05) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; border: 1px solid rgba(0,122,255,0.15);">
-                            <i data-lucide="building-2" size="36" style="color: var(--system-blue);"></i>
+                <div class="platform-school-details-page">
+                    <div class="platform-school-detail-header">
+                        <div class="platform-school-detail-nav">
+                            <button type="button" class="btn-back" onclick="state.currentView='platform-dev-dashboard'; renderView();">
+                                <i data-lucide="arrow-left" size="20"></i>
+                            </button>
+                            <span class="platform-school-detail-badge">${t.dev_school_inspector}</span>
                         </div>
-                        <h1 class="platform-school-title">${(school.name || '').replace(/</g, '&lt;')}</h1>
-                        <div style="font-size: 11px; color: var(--text-secondary); font-family: monospace; letter-spacing: 0.05em; opacity: 0.6;">${String(schoolId).slice(0, 8)}…</div>
-                        <button class="btn-primary platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();" style="margin-top: 1.25rem; padding: 14px 28px; border-radius: 14px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-left: auto; margin-right: auto;">
-                            <i data-lucide="shield-check" size="20"></i> ${t.dev_enter_as_admin}
-                        </button>
-                    </div>
-                    <div class="platform-school-feature-toggle">
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                            <div style="display: flex; align-items: center; gap: 14px;">
-                                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 149, 0, 0.12); display: flex; align-items: center; justify-content: center;">
-                                    <i data-lucide="trophy" size="22" style="color: var(--system-orange);"></i>
-                                </div>
-                                <div>
-                                    <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">${t.dev_events_feature}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">${t.dev_events_feature_desc}</div>
-                                </div>
-                            </div>
-                            <label class="toggle-switch" style="flex-shrink: 0;">
-                                <input type="checkbox" class="toggle-switch-input" ${jjEnabled ? 'checked' : ''} onchange="toggleSchoolJackAndJill('${school.id}', this.checked)">
-                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                            </label>
+                        <div class="platform-school-hero">
+                            <div class="platform-school-hero-icon"><i data-lucide="building-2" size="36"></i></div>
+                            <h1 class="platform-school-title">${(school.name || '').replace(/</g, '&lt;')}</h1>
+                            <div class="platform-school-id">${String(schoolId).slice(0, 8)}…</div>
+                            <button class="platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();">
+                                <i data-lucide="shield-check" size="20"></i> ${t.dev_enter_as_admin}
+                            </button>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(52, 199, 89, 0.12); display: flex; align-items: center; justify-content: center;">
-                                <i data-lucide="banknote" size="22" style="color: var(--system-green);"></i>
-                            </div>
-                            <div>
-                                <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">Currency</div>
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">Plan prices shown in this currency</div>
-                            </div>
-                        </div>
-                        <select onchange="toggleSchoolCurrency('${school.id}', this.value)" style="padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer;">
-                            <option value="MXN" ${(school.currency || 'MXN') === 'MXN' ? 'selected' : ''}>Mexican Peso (MXN)</option>
-                            <option value="CHF" ${(school.currency || 'MXN') === 'CHF' ? 'selected' : ''}>Swiss Franc (CHF)</option>
-                            <option value="USD" ${(school.currency || 'MXN') === 'USD' ? 'selected' : ''}>US Dollar (USD)</option>
-                            <option value="COP" ${(school.currency || 'MXN') === 'COP' ? 'selected' : ''}>Colombian Peso (COP)</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(128, 90, 213, 0.12); display: flex; align-items: center; justify-content: center;">
-                                <i data-lucide="building-2" size="22" style="color: #805ad5;"></i>
-                            </div>
-                            <div>
-                                <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">${t.dev_edit_school_info || 'Edit school info'}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">${t.school_name_label || 'Name'}, ${t.address_label || 'Address'}</div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn-primary" onclick="state.currentSchool=state.platformData.schools.find(x=>x.id==='${school.id}')||{}; state._devEditSchoolReturnView='platform-school-details'; state._devEditSchoolReturnSchoolId='${school.id}'; state.currentView='platform-dev-edit-school'; fetchAllData(); renderView();" style="padding: 12px 20px; border-radius: 14px; font-size: 14px; font-weight: 700;">
-                            <i data-lucide="edit-3" size="18" style="margin-right: 8px;"></i> ${t.dev_edit_school_info || 'Edit school info'}
-                        </button>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); margin: 0 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 122, 255, 0.12); display: flex; align-items: center; justify-content: center;">
-                                <i data-lucide="globe" size="22" style="color: var(--system-blue);"></i>
-                            </div>
-                            <div>
-                                <div style="font-weight: 800; font-size: 15px; color: var(--text-primary);">${t.discovery_profile_section || 'Discovery profile'}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.85;">${t.dev_discovery_profile_desc || 'Slug, location, description, genres, logo, locations'}</div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn-primary" onclick="state.currentSchool=state.platformData.schools.find(x=>x.id==='${school.id}')||{}; state._devDiscoveryReturnView='platform-school-details'; state._devDiscoveryReturnSchoolId='${school.id}'; state.currentView='platform-dev-edit-discovery'; fetchAllData(); renderView();" style="padding: 12px 20px; border-radius: 14px; font-size: 14px; font-weight: 700;">
-                            <i data-lucide="edit-3" size="18" style="margin-right: 8px;"></i> ${t.dev_edit_discovery_profile || 'Edit discovery profile'}
-                        </button>
-                    </div>
-                </div>
-
-                <div style="padding: 0 1.2rem 2rem;">
-                    <!-- PREMIUM STATS GRID -->
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
-                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
-                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(0, 122, 255, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="users" size="18" style="color: var(--system-blue);"></i></div>
-                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${students.length}</div>
-                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_students_label}</div>
-                        </div>
-                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
-                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(52, 199, 89, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="credit-card" size="18" style="color: var(--system-green);"></i></div>
-                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${subs.length}</div>
-                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_plans_label}</div>
-                        </div>
-                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
-                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(255, 149, 0, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="calendar" size="18" style="color: var(--system-orange);"></i></div>
-                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${classes.length}</div>
-                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_classes_label}</div>
-                        </div>
-                        <div class="platform-stat-card" style="padding: 1.25rem 0.5rem; border-radius: 16px; text-align: center; background: var(--bg-card); border: 1px solid var(--border);">
-                            <div style="width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 10px; background: rgba(255, 59, 48, 0.12); display: flex; align-items: center; justify-content: center;"><i data-lucide="shield" size="18" style="color: var(--system-red);"></i></div>
-                            <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">${admins.length}</div>
-                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 2px;">${t.dev_admins_label}</div>
-                        </div>
-                    </div>
-
-                    <!-- ADMINS SECTION -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.dev_admins_label}</div>
-                    <div class="ios-list" style="margin-bottom: 2.5rem; overflow: hidden;">
-                        ${admins.length > 0 ? admins.map(a => `
-                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
-                                <div style="display: flex; align-items: center; gap: 14px; width: 100%;">
-                                    <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: var(--system-blue); border: 1px solid rgba(0,0,0,0.05);">${a.username.charAt(0).toUpperCase()}</div>
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${a.username}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.6; margin-top: 2px;"><i data-lucide="key" size="10" style="vertical-align: middle; margin-right: 4px;"></i>${t.password_label}: <span style="font-family: monospace; font-weight: 600;">${a.password || '—'}</span></div>
+                    <div class="platform-school-detail-body">
+                        <div class="platform-settings-group">
+                            <div class="platform-setting-row">
+                                <div class="platform-setting-info">
+                                    <div class="platform-setting-icon platform-setting-icon-orange"><i data-lucide="trophy" size="22"></i></div>
+                                    <div>
+                                        <div class="platform-setting-title">${t.dev_events_feature}</div>
+                                        <div class="platform-setting-desc">${t.dev_events_feature_desc}</div>
                                     </div>
-                                    <i data-lucide="chevron-right" size="16" style="opacity: 0.2;"></i>
                                 </div>
+                                <label class="toggle-switch"><input type="checkbox" class="toggle-switch-input" ${jjEnabled ? 'checked' : ''} onchange="toggleSchoolJackAndJill('${school.id}', this.checked)"><span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span></label>
                             </div>
-                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_admins}</div>`}
-                    </div>
-
-                    <!-- STUDENTS LIST -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding: 0 0.5rem;">
-                        <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); opacity: 0.7;">${t.dev_students_label}</div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--system-blue); background: rgba(0,122,255,0.08); padding: 3px 8px; border-radius: 8px;">${students.length} Total</div>
-                    </div>
-                    <div class="ios-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 2.5rem;">
-                        ${students.length > 0 ? students.map(s => `
-                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;">
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${s.name}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7;">${s.phone || '—'} ${s.email ? ' • ' + s.email : ''}</div>
-                                    <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.6; margin-top: 4px;"><i data-lucide="key" size="10" style="vertical-align: middle;"></i> ${t.password_label}: <span style="font-family: monospace;">${s.password || '—'}</span></div>
-                                </div>
-                                <div style="text-align: right; background: var(--system-gray6); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.02);">
-                                    <div style="font-weight: 900; color: var(--system-blue); font-size: 18px; letter-spacing: -0.5px;">${s.balance === null ? '∞' : s.balance}</div>
-                                    <div style="font-size: 9px; opacity: 0.5; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-top: -2px;">${t.balance_label}</div>
-                                </div>
-                            </div>
-                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2.5rem; font-size: 13px; font-weight: 600;">${t.dev_no_students}</div>`}
-                    </div>
-
-                    <!-- PLANS & SUBSCRIPTIONS -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.dev_plans_label}</div>
-                    <div class="ios-list" style="margin-bottom: 2.5rem;">
-                        ${subs.length > 0 ? subs.map(sb => `
-                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
-                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                    <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${sb.name}</div>
-                                    <div style="font-weight: 900; font-size: 17px; color: var(--system-green); background: rgba(52, 199, 89, 0.08); padding: 6px 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.1); font-family: 'Outfit';">${formatPrice(sb.price, school.currency || 'MXN')}</div>
-                                </div>
-                            </div>
-                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_plans}</div>`}
-                    </div>
-
-                    <!-- CLASSES / SCHEDULE -->
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.dev_classes_label}</div>
-                    <div class="ios-list" style="margin-bottom: 4rem;">
-                        ${classes.length > 0 ? classes.map(c => `
-                            <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
-                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.2px; color: var(--text-primary);">${c.name}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary); opacity: 0.8; margin-top: 2px;">${c.day} • ${window.formatClassTime(c)} • ${c.location || 'N/A'}</div>
+                            <div class="platform-setting-row">
+                                <div class="platform-setting-info">
+                                    <div class="platform-setting-icon platform-setting-icon-green"><i data-lucide="banknote" size="22"></i></div>
+                                    <div>
+                                        <div class="platform-setting-title">Currency</div>
+                                        <div class="platform-setting-desc">Plan prices in this currency</div>
                                     </div>
-                                    <div style="font-size: 10px; font-weight: 800; background: var(--system-gray6); padding: 5px 12px; border-radius: 12px; text-transform: uppercase; color: var(--text-primary); opacity: 0.6; border: 1px solid rgba(0,0,0,0.05);">${c.tag || 'OPEN'}</div>
                                 </div>
+                                <select class="platform-setting-select" onchange="toggleSchoolCurrency('${school.id}', this.value)">
+                                    <option value="MXN" ${(school.currency || 'MXN') === 'MXN' ? 'selected' : ''}>MXN</option>
+                                    <option value="CHF" ${(school.currency || 'MXN') === 'CHF' ? 'selected' : ''}>CHF</option>
+                                    <option value="USD" ${(school.currency || 'MXN') === 'USD' ? 'selected' : ''}>USD</option>
+                                    <option value="COP" ${(school.currency || 'MXN') === 'COP' ? 'selected' : ''}>COP</option>
+                                </select>
                             </div>
-                        `).join('').replace(/border-bottom: 1px solid var\(--border\);:last-child/, 'border-bottom: none;') : `<div class="ios-list-item" style="color: var(--text-secondary); justify-content: center; padding: 2rem; font-size: 13px; font-weight: 600;">${t.dev_no_classes}</div>`}
-                    </div>
-
-                    ${state.platformData.payment_requests && state.platformData.payment_requests.length > 0 ? (() => { const prs = state.platformData.payment_requests.filter(pr => pr.school_id === schoolId); return prs.length > 0 ? `
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">Payment requests</div>
-                    <div class="ios-list" style="margin-bottom: 2.5rem;">
-                        ${prs.map(pr => `
-                            <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border);">
-                                <div style="font-size: 14px; font-weight: 700;">${pr.sub_name || '—'} • ${formatPrice(pr.price, school.currency || 'MXN')} • ${pr.status || '—'}</div>
-                                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${pr.payment_method || '—'} • ${pr.created_at ? new Date(pr.created_at).toLocaleDateString() : '—'}</div>
+                        </div>
+                        <div class="platform-edit-group">
+                            <button type="button" class="platform-edit-row" onclick="state.currentSchool=state.platformData.schools.find(x=>x.id==='${school.id}')||{}; state._devEditSchoolReturnView='platform-school-details'; state._devEditSchoolReturnSchoolId='${school.id}'; state.currentView='platform-dev-edit-school'; fetchAllData(); renderView();">
+                                <div class="platform-setting-info">
+                                    <div class="platform-setting-icon platform-setting-icon-purple"><i data-lucide="building-2" size="20"></i></div>
+                                    <div>
+                                        <div class="platform-setting-title">${t.dev_edit_school_info || 'Edit school info'}</div>
+                                        <div class="platform-setting-desc">${t.school_name_label || 'Name'}, ${t.address_label || 'Address'}</div>
+                                    </div>
+                                </div>
+                                <i data-lucide="chevron-right" size="18" class="platform-edit-chevron"></i>
+                            </button>
+                            <button type="button" class="platform-edit-row" onclick="state.currentSchool=state.platformData.schools.find(x=>x.id==='${school.id}')||{}; state._devDiscoveryReturnView='platform-school-details'; state._devDiscoveryReturnSchoolId='${school.id}'; state.currentView='platform-dev-edit-discovery'; fetchAllData(); renderView();">
+                                <div class="platform-setting-info">
+                                    <div class="platform-setting-icon platform-setting-icon-blue"><i data-lucide="globe" size="20"></i></div>
+                                    <div>
+                                        <div class="platform-setting-title">${t.dev_edit_discovery_profile || 'Edit discovery profile'}</div>
+                                        <div class="platform-setting-desc">${t.dev_discovery_profile_desc || 'Slug, logo, genres'}</div>
+                                    </div>
+                                </div>
+                                <i data-lucide="chevron-right" size="18" class="platform-edit-chevron"></i>
+                            </button>
+                        </div>
+                        <div class="platform-stats-grid">
+                            <div class="platform-stat-card"><div class="platform-stat-icon platform-stat-icon-blue"><i data-lucide="users" size="18"></i></div><div class="platform-stat-value">${students.length}</div><div class="platform-stat-label">${t.dev_students_label}</div></div>
+                            <div class="platform-stat-card"><div class="platform-stat-icon platform-stat-icon-green"><i data-lucide="credit-card" size="18"></i></div><div class="platform-stat-value">${subs.length}</div><div class="platform-stat-label">${t.dev_plans_label}</div></div>
+                            <div class="platform-stat-card"><div class="platform-stat-icon platform-stat-icon-orange"><i data-lucide="calendar" size="18"></i></div><div class="platform-stat-value">${classes.length}</div><div class="platform-stat-label">${t.dev_classes_label}</div></div>
+                            <div class="platform-stat-card"><div class="platform-stat-icon platform-stat-icon-red"><i data-lucide="shield" size="18"></i></div><div class="platform-stat-value">${admins.length}</div><div class="platform-stat-label">${t.dev_admins_label}</div></div>
+                        </div>
+                        <div class="platform-section">
+                            <h3 class="platform-section-title">${t.dev_admins_label}</h3>
+                            <div class="platform-list platform-list-admins">
+                                ${admins.length > 0 ? admins.map(a => `
+                                    <div class="platform-list-item">
+                                        <div class="platform-list-avatar">${a.username.charAt(0).toUpperCase()}</div>
+                                        <div class="platform-list-content">
+                                            <div class="platform-list-title">${a.username}</div>
+                                            <div class="platform-list-meta"><i data-lucide="key" size="12"></i> ${t.password_label}: <span class="platform-list-mono">${a.password || '—'}</span></div>
+                                        </div>
+                                    </div>
+                                `).join('') : `<div class="platform-list-empty">${t.dev_no_admins}</div>`}
                             </div>
-                        `).join('')}
-                    </div>
-                    ` : ''; })() : ''}
-
-                    ${state.platformData.admin_settings && state.platformData.admin_settings.length > 0 ? (() => { const sets = state.platformData.admin_settings.filter(as => as.school_id === schoolId); return sets.length > 0 ? `
-                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">Admin settings (bank, etc.)</div>
-                    <div class="ios-list" style="margin-bottom: 4rem;">
-                        ${sets.map(as => `
-                            <div class="ios-list-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border);">
-                                <div style="font-size: 12px; font-weight: 800; color: var(--system-blue);">${as.key || '—'}</div>
-                                <div style="font-size: 13px; font-family: monospace;">${(as.value != null && as.value !== '') ? String(as.value) : '—'}</div>
+                        </div>
+                        <div class="platform-section">
+                            <div class="platform-section-header">
+                                <h3 class="platform-section-title">${t.dev_students_label}</h3>
+                                <span class="platform-section-badge">${students.length}</span>
                             </div>
-                        `).join('')}
+                            <div class="platform-list platform-list-students">
+                                ${students.length > 0 ? students.map(s => `
+                                    <div class="platform-list-item platform-list-item-student">
+                                        <div class="platform-list-content">
+                                            <div class="platform-list-title">${s.name}</div>
+                                            <div class="platform-list-meta">${s.phone || '—'} ${s.email ? ' • ' + s.email : ''}</div>
+                                            <div class="platform-list-meta platform-list-meta-small"><i data-lucide="key" size="10"></i> ${t.password_label}: <span class="platform-list-mono">${s.password || '—'}</span></div>
+                                        </div>
+                                        <div class="platform-list-balance">
+                                            <div class="platform-list-balance-value">${s.balance === null ? '∞' : s.balance}</div>
+                                            <div class="platform-list-balance-label">${t.balance_label}</div>
+                                        </div>
+                                    </div>
+                                `).join('') : `<div class="platform-list-empty">${t.dev_no_students}</div>`}
+                            </div>
+                        </div>
+                        <div class="platform-section">
+                            <h3 class="platform-section-title">${t.dev_plans_label}</h3>
+                            <div class="platform-list">
+                                ${subs.length > 0 ? subs.map(sb => `
+                                    <div class="platform-list-item">
+                                        <div class="platform-list-title">${sb.name}</div>
+                                        <div class="platform-list-price">${formatPrice(sb.price, school.currency || 'MXN')}</div>
+                                    </div>
+                                `).join('') : `<div class="platform-list-empty">${t.dev_no_plans}</div>`}
+                            </div>
+                        </div>
+                        <div class="platform-section">
+                            <h3 class="platform-section-title">${t.dev_classes_label}</h3>
+                            <div class="platform-list">
+                                ${classes.length > 0 ? classes.map(c => `
+                                    <div class="platform-list-item">
+                                        <div>
+                                            <div class="platform-list-title">${c.name}</div>
+                                            <div class="platform-list-meta">${c.day} • ${window.formatClassTime(c)} • ${c.location || 'N/A'}</div>
+                                        </div>
+                                        <span class="platform-list-tag">${c.tag || 'OPEN'}</span>
+                                    </div>
+                                `).join('') : `<div class="platform-list-empty">${t.dev_no_classes}</div>`}
+                            </div>
+                        </div>
+                        ${state.platformData.payment_requests && state.platformData.payment_requests.length > 0 ? (() => { const prs = state.platformData.payment_requests.filter(pr => pr.school_id === schoolId); return prs.length > 0 ? `
+                        <div class="platform-section">
+                            <h3 class="platform-section-title">Payment requests</h3>
+                            <div class="platform-list">${prs.map(pr => `
+                                <div class="platform-list-item">
+                                    <div><div class="platform-list-title">${pr.sub_name || '—'} • ${formatPrice(pr.price, school.currency || 'MXN')}</div><div class="platform-list-meta">${pr.status || '—'} • ${pr.payment_method || '—'}</div></div>
+                                </div>`).join('')}</div>
+                        </div>` : ''; })() : ''}
+                        ${state.platformData.admin_settings && state.platformData.admin_settings.length > 0 ? (() => { const sets = state.platformData.admin_settings.filter(as => as.school_id === schoolId); return sets.length > 0 ? `
+                        <div class="platform-section">
+                            <h3 class="platform-section-title">Admin settings</h3>
+                            <div class="platform-list">${sets.map(as => `
+                                <div class="platform-list-item"><div class="platform-list-title">${as.key || '—'}</div><div class="platform-list-mono">${(as.value != null && as.value !== '') ? String(as.value) : '—'}</div></div>`).join('')}</div>
+                        </div>` : ''; })() : ''}
                     </div>
-                    ` : ''; })() : ''}
                 </div>
             `;
         }
@@ -4795,6 +4729,7 @@ function _renderViewImpl() {
     html += `</div>`;
     root.innerHTML = html;
     if (window.lucide) lucide.createIcons();
+    if (view === 'platform-school-details') window.scrollTo(0, 0);
 
     // Global UI Updates
     const isDevView = ['platform-dev-dashboard', 'platform-school-details', 'platform-dev-edit-discovery', 'platform-dev-edit-school'].includes(view);
