@@ -26,6 +26,8 @@ const DANCE_LOCALES = {
         no_subs: "No active memberships found",
         scan_success: "Verification Successful",
         scan_fail: "Membership Inactive",
+        scan_align_hint: "Align QR code within the frame",
+        error_confirming_attendance: "Error confirming attendance",
         camera_not_found: "No camera found. Please connect a camera or use a device with a built-in camera.",
         camera_permission_denied: "Camera access denied. Please allow camera in your browser settings.",
         switch_to_admin: "Go to Admin",
@@ -408,6 +410,8 @@ const DANCE_LOCALES = {
         no_subs: "Sin membresías activas",
         scan_success: "Verificación Exitosa",
         scan_fail: "Membresía Inactiva",
+        scan_align_hint: "Centra el código QR en el marco",
+        error_confirming_attendance: "Error al confirmar la asistencia",
         camera_not_found: "No se encontró ninguna cámara. Conecta una cámara o usa un dispositivo con cámara integrada.",
         camera_permission_denied: "Acceso a la cámara denegado. Permite la cámara en la configuración del navegador.",
         switch_to_admin: "Ir a Admin",
@@ -791,6 +795,8 @@ const DANCE_LOCALES = {
         no_subs: "Keine aktiven Mitgliedschaften gefunden",
         scan_success: "Verifizierung erfolgreich",
         scan_fail: "Mitgliedschaft inaktiv",
+        scan_align_hint: "QR-Code im Rahmen ausrichten",
+        error_confirming_attendance: "Fehler beim Bestätigen der Anwesenheit",
         camera_not_found: "Keine Kamera gefunden. Verbinde eine Kamera oder verwende ein Gerät mit integrierter Kamera.",
         camera_permission_denied: "Kamerazugriff verweigert. Bitte erlaube die Kamera in den Browser-Einstellungen.",
         switch_to_admin: "Zum Admin",
@@ -6769,7 +6775,7 @@ window.confirmRegisteredAttendance = async (registrationId) => {
         console.error('Error confirming registered attendance:', e);
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <p style="color: var(--danger);">${e.message || 'Error confirming attendance'}</p>
+                <p style="color: var(--danger);">${e.message || t('error_confirming_attendance')}</p>
                 <button class="btn-primary mt-2 w-full" onclick="cancelAttendance()">${t('close')}</button>
             </div>
         `;
