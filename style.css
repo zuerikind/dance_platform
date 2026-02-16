@@ -1718,6 +1718,43 @@ select option {
     border-color: var(--system-blue);
 }
 
+/* Discovery landing button - Apple-style, compact, sizes to fit text */
+.discovery-landing-btn {
+    display: inline-block;
+    width: max-content;
+    min-width: 100px;
+    margin: 1rem auto 0;
+    padding: 10px 16px;
+    font-family: var(--system-font);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    text-decoration: none;
+    text-align: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    -webkit-font-smoothing: antialiased;
+    transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+    cursor: pointer;
+}
+.discovery-landing-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+.dark-mode .discovery-landing-btn {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.6);
+}
+.dark-mode .discovery-landing-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
 /* --- PREMIUM CUSTOM DROPDOWN --- */
 .custom-dropdown-container {
     position: relative;
@@ -3715,99 +3752,131 @@ select.filter-control {
   outline: none;
 }
 
-/* --- Discovery page: responsive grid, professional cards --- */
+/* --- Discovery page: Apple-style, refined --- */
 .discovery-page {
-  max-width: 1100px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: 1.5rem 1.2rem 4rem;
   box-sizing: border-box;
+  font-family: var(--system-font);
+  -webkit-font-smoothing: antialiased;
 }
 .discovery-back-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 1.75rem;
-  font-size: 14px;
+  gap: 8px;
+  margin-bottom: 2rem;
+  font-size: 15px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-decoration: none;
-  opacity: 0.9;
-  transition: opacity 0.2s, color 0.2s;
+  transition: opacity 0.2s ease;
 }
 .discovery-back-link:hover {
-  opacity: 1;
+  opacity: 0.8;
   color: var(--text-primary);
+}
+.discovery-hero {
+  margin-bottom: 2.5rem;
 }
 .discovery-hero-title {
-  font-size: 1.75rem;
+  font-size: 2.25rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.35rem;
+  letter-spacing: -0.045em;
+  margin: 0 0 0.5rem;
   color: var(--text-primary);
+  line-height: 1.15;
 }
 .discovery-hero-subtitle {
-  font-size: 1rem;
-  color: var(--text-muted);
-  margin: 0 0 2.5rem;
-  line-height: 1.4;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 400;
 }
-.discovery-country-section {
-  margin-bottom: 2.25rem;
+.discovery-filters-wrap {
+  margin-bottom: 2.5rem;
 }
 .discovery-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid var(--border);
+  gap: 1rem 1.5rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark-mode .discovery-filters {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 .discovery-filter-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 140px;
+  gap: 8px;
+  flex: 1;
+  min-width: 120px;
+  max-width: 180px;
 }
 .discovery-filter-label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-secondary);
 }
 .discovery-filter-select {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 12px 36px 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-body) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238E8E93' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 12px center;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
   outline: none;
   cursor: pointer;
-  min-width: 0;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.discovery-filter-select:hover,
+.discovery-filter-select:hover {
+  border-color: var(--text-secondary);
+}
 .discovery-filter-select:focus {
-  border-color: var(--text-muted);
+  border-color: var(--system-blue);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+.dark-mode .discovery-filter-select {
+  background-color: var(--bg-card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFFFFF' fill-opacity='0.6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.discovery-content {
+  /* Main content area */
+}
+.discovery-country-section {
+  margin-bottom: 2.5rem;
+}
+.discovery-country-section:last-child {
+  margin-bottom: 0;
 }
 .discovery-country-title {
-  font-size: 0.7rem;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 1rem;
-  opacity: 0.9;
 }
 .discovery-grid {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
   grid-template-columns: repeat(2, 1fr);
 }
 @media (min-width: 600px) {
   .discovery-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
   }
 }
 @media (min-width: 900px) {
@@ -3815,63 +3884,81 @@ select.filter-control {
     grid-template-columns: repeat(4, 1fr);
   }
 }
-@media (min-width: 1200px) {
-  .discovery-grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
 .discovery-card {
-  display: block;
-  padding: 1.25rem;
-  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
   border-radius: 16px;
-  border: 1px solid var(--border);
+  overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.25s ease;
   box-sizing: border-box;
 }
 .discovery-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+.discovery-card:active {
   transform: translateY(-2px);
+}
+.dark-mode .discovery-card {
   border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 .dark-mode .discovery-card:hover {
-  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+.discovery-card-media {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--system-gray6);
+}
+.dark-mode .discovery-card-media {
+  background: rgba(255, 255, 255, 0.05);
 }
 .discovery-card-logo {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  border-radius: 12px;
-  margin-bottom: 0.85rem;
-  background: var(--bg-body);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .discovery-card-no-logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  margin-bottom: 0.85rem;
-  background: var(--system-gray6);
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  opacity: 0.8;
+  opacity: 0.5;
+}
+.discovery-card-body {
+  padding: 1rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .discovery-card-name {
   font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.35;
-  margin-bottom: 0.2rem;
+  font-size: 1rem;
+  line-height: 1.3;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 .discovery-card-loc {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.3;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+.discovery-empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 3rem 1.5rem;
+  margin: 0;
 }
 
 /* --- Discovery school detail page: responsive, minimal --- */

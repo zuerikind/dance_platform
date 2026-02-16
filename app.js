@@ -183,7 +183,7 @@ const DANCE_LOCALES = {
         unknown_student: "Unknown Student",
         delete_payment_confirm: "Delete this payment record forever?",
         select_school_subtitle: "Please select your school or teacher to continue",
-        discover_dance_btn: "Discover dance – all the dance studios",
+        discover_dance_btn: "Discover all schools",
         discovery_title: "Discover Dance",
         discovery_subtitle: "Find studios and teachers near you",
         discovery_back: "Back to all studios",
@@ -209,7 +209,9 @@ const DANCE_LOCALES = {
         loading_schools: "Loading schools...",
         loading_dashboard: "Opening dashboard...",
         no_schools: "No schools found",
+        no_schools_yet: "No schools registered yet.",
         could_not_load_schools: "Could not load schools",
+        retry: "Retry",
         connecting: "Connecting...",
         dev_access_title: "Dev Access",
         dev_access_subtitle: "Enter platform developer credentials",
@@ -634,7 +636,7 @@ const DANCE_LOCALES = {
         unknown_student: "Alumno Desconocido",
         delete_payment_confirm: "¿Eliminar este registro de pago permanentemente?",
         select_school_subtitle: "Por favor selecciona tu escuela o profesor para continuar",
-        discover_dance_btn: "Descubre la danza – todos los estudios",
+        discover_dance_btn: "Descubre todas las escuelas",
         discovery_title: "Descubre la danza",
         discovery_subtitle: "Encuentra estudios y profesores cerca de ti",
         discovery_back: "Volver a todos los estudios",
@@ -661,6 +663,7 @@ const DANCE_LOCALES = {
         loading_dashboard: "Abriendo panel...",
         no_schools: "No hay academias",
         could_not_load_schools: "No se pudieron cargar las academias",
+        retry: "Reintentar",
         connecting: "Iniciando conexión...",
         dev_access_title: "Acceso Dev",
         dev_access_subtitle: "Ingresa credenciales de desarrollador",
@@ -1087,7 +1090,7 @@ const DANCE_LOCALES = {
         unknown_student: "Unbekannter Schüler",
         delete_payment_confirm: "Diesen Zahlungsbeleg permanent löschen?",
         select_school_subtitle: "Bitte wähle deine Schule oder deinen Lehrer aus",
-        discover_dance_btn: "Tanz entdecken – alle Tanzstudios",
+        discover_dance_btn: "Alle Schulen entdecken",
         discovery_title: "Tanz entdecken",
         discovery_subtitle: "Finde Studios und Lehrer in deiner Nähe",
         discovery_back: "Zurück zu allen Studios",
@@ -1114,6 +1117,7 @@ const DANCE_LOCALES = {
         loading_dashboard: "Dashboard wird geöffnet...",
         no_schools: "Keine Schulen gefunden",
         could_not_load_schools: "Schulen konnten nicht geladen werden",
+        retry: "Erneut versuchen",
         connecting: "Verbindung wird hergestellt...",
         dev_access_title: "Entwickler-Zugang",
         dev_access_subtitle: "Entwickler-Anmeldedaten eingeben",
@@ -1479,6 +1483,7 @@ async function fetchAllData() {
         if (schoolsError) {
             console.error('Schools fetch error:', schoolsError);
         }
+        state.schoolsLoadError = schoolsError || null;
         state.schools = schoolsData ?? [];
         if (!state.currentSchool && supabaseClient) {
             const { data: discEnabled } = await supabaseClient.rpc('discovery_is_enabled');
@@ -1846,7 +1851,10 @@ window.fetchDiscoveryData = async () => {
 window.navigateDiscovery = (path) => {
     state.discoveryPath = path;
     history.pushState({ discoveryPath: path }, '', path || '/discovery');
-    window.fetchDiscoveryData().then(() => renderView());
+    window.fetchDiscoveryData().then(() => {
+        renderView();
+        window.scrollTo(0, 0);
+    });
 };
 
 window.renderDiscoveryView = (path) => {
@@ -1855,7 +1863,7 @@ window.renderDiscoveryView = (path) => {
         const detail = state.discoverySchoolDetail;
         if (!detail) {
             return `<div class="container discovery-page" style="padding: 2rem 1rem; text-align: center;">
-                <a href="#" class="discovery-back-link" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" style="margin-bottom: 1rem; display: inline-block;">← ${t('discovery_back')}</a>
+                <a href="#" class="discovery-back-link" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back')}</a>
                 <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 1rem;">${t('discovery_not_found')}</p>
             </div>`;
         }
@@ -1971,20 +1979,24 @@ window.renderDiscoveryView = (path) => {
                     const logo = s.logo_url || '';
                     const placeholder = t('discovery_placeholder_upload_soon');
                     return `<a href="#" class="discovery-card" onclick="event.preventDefault(); window.navigateDiscovery('/discovery/${encodeURIComponent(slug)}');">
-                        ${logo ? `<img src="${String(logo).replace(/"/g, '&quot;')}" alt="" class="discovery-card-logo" />` : `<div class="discovery-card-no-logo"><i data-lucide="image" size="24"></i></div>`}
-                        <div class="discovery-card-name">${name ? String(name).replace(/</g, '&lt;') : placeholder}</div>
-                        <div class="discovery-card-loc">${loc ? String(loc).replace(/</g, '&lt;') : placeholder}</div>
+                        <div class="discovery-card-media">${logo ? `<img src="${String(logo).replace(/"/g, '&quot;')}" alt="" class="discovery-card-logo" />` : `<div class="discovery-card-no-logo"><i data-lucide="image" size="32"></i></div>`}</div>
+                        <div class="discovery-card-body">
+                            <span class="discovery-card-name">${name ? String(name).replace(/</g, '&lt;') : placeholder}</span>
+                            <span class="discovery-card-loc">${loc ? String(loc).replace(/</g, '&lt;') : placeholder}</span>
+                        </div>
                     </a>`;
                 }).join('')}
             </div>
         </div>
-    `).join('') : `<p style="color: var(--text-muted); font-size: 0.95rem;">${t('discovery_no_schools')}</p>`;
+    `).join('') : `<p class="discovery-empty-state">${t('discovery_no_schools')}</p>`;
     return `<div class="container discovery-page">
-        <a href="/" class="discovery-back-link" onclick="event.preventDefault(); state.discoveryPath=null; history.pushState({},'','/'); renderView();">← ${t('discovery_back')}</a>
-        <h1 class="discovery-hero-title">${t('discovery_title')}</h1>
-        <p class="discovery-hero-subtitle">${t('discovery_subtitle')}</p>
-        ${filtersHtml}
-        ${cardsHtml}
+        <a href="/" class="discovery-back-link" onclick="event.preventDefault(); state.discoveryPath=null; history.pushState({},'','/'); renderView();"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back')}</a>
+        <header class="discovery-hero">
+            <h1 class="discovery-hero-title">${t('discovery_title')}</h1>
+            <p class="discovery-hero-subtitle">${t('discovery_subtitle')}</p>
+        </header>
+        <div class="discovery-filters-wrap">${filtersHtml}</div>
+        <main class="discovery-content">${cardsHtml}</main>
     </div>`;
 };
 
@@ -2680,6 +2692,8 @@ function _renderViewImpl() {
     let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${viewChanged ? 'slide-in' : ''}">`;
 
     if (view === 'school-selection') {
+        const hasSchools = state.schools.length > 0;
+        const triggerLabel = state.currentSchool?.name || (state.loading ? t.loading_schools : (t.search_school_placeholder || t.select_school_placeholder));
         html += `
             <div class="auth-page-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70vh; text-align: center; width: 100%;">
                 <div class="landing-branding slide-in" style="margin-bottom: 2.5rem;">
@@ -2690,22 +2704,26 @@ function _renderViewImpl() {
                 
                 <div class="school-combobox-container custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
                     <div class="school-combobox-trigger" onclick="var list = document.getElementById('school-dropdown-list'); if (list && list.classList.contains('open')) closeSchoolDropdown(); else openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
-                        <span id="school-trigger-label" class="school-combobox-label" style="flex: 1; min-width: 0; font: inherit; color: inherit; text-align: left;">${state.currentSchool?.name || (state.loading ? t.loading_schools : (state.schools.length > 0 ? (t.search_school_placeholder || t.select_school_placeholder) : t.no_schools))}</span>
-                        <input type="text" id="school-search-input" class="school-combobox-input school-search-when-open" placeholder="${t.search_school_placeholder || t.select_school_placeholder}" value="" autocomplete="off" oninput="filterSchoolDropdown(this.value)" onkeydown="handleSchoolComboboxKeydown(event)" style="display: none;" ${state.loading || state.schools.length === 0 ? 'disabled' : ''} />
+                        <span id="school-trigger-label" class="school-combobox-label" style="flex: 1; min-width: 0; font: inherit; color: inherit; text-align: left;">${triggerLabel.replace(/</g, '&lt;')}</span>
+                        <input type="text" id="school-search-input" class="school-combobox-input school-search-when-open" placeholder="${t.search_school_placeholder || t.select_school_placeholder}" value="" autocomplete="off" oninput="filterSchoolDropdown(this.value)" onkeydown="handleSchoolComboboxKeydown(event)" style="display: none;" ${state.loading || !hasSchools ? 'disabled' : ''} />
                         <i data-lucide="chevron-down" size="18" class="school-combobox-chevron"></i>
                     </div>
                     <div id="school-dropdown-list" class="custom-dropdown-list school-dropdown-list" style="width: 100%; box-sizing: border-box;">
-                        ${state.schools.length > 0 ? state.schools.map(s => `
+                        ${hasSchools ? state.schools.map(s => `
                             <div class="dropdown-item" data-school-id="${s.id}" data-school-name="${(s.name || '').replace(/"/g, '&quot;')}" onclick="event.preventDefault(); selectSchool('${s.id}');">
                                 <span>${(s.name || '').replace(/</g, '&lt;')}</span>
                                 ${state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : ''}
                             </div>
                         `).join('') : `<div class="school-dropdown-empty" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${state.loading ? t.connecting : t.could_not_load_schools}</div>`}
-                        ${state.schools.length > 0 ? `<div class="school-dropdown-no-match" style="display: none; padding: 1rem; text-align: center; color: var(--text-muted); font-size: 14px;">${t.no_schools}</div>` : ''}
+                        ${hasSchools ? `<div class="school-dropdown-no-match" style="display: none; padding: 1rem; text-align: center; color: var(--text-muted); font-size: 14px;">${t.no_schools}</div>` : ''}
                     </div>
                 </div>
+                ${!hasSchools && !state.loading ? `
+                <p class="text-muted" style="font-size: 13px; margin-top: 1rem; max-width: 280px;">${state.schoolsLoadError ? t.could_not_load_schools : (t.no_schools_yet || t.no_schools)}</p>
+                <button type="button" onclick="fetchAllData()" class="btn-secondary" style="margin-top: 0.75rem; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600;">${(t.retry || 'Retry').replace(/</g, '&lt;')}</button>
+                ` : ''}
                 ${state.discoveryEnabled ? `
-                <a href="/discovery" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" class="discovery-landing-link" style="display: inline-block; margin-top: 1.25rem; padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none; opacity: 0.85; transition: opacity 0.2s, color 0.2s;">${t.discover_dance_btn || 'Discover dance – all the dance studios'}</a>
+                <a href="/discovery" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" class="discovery-landing-btn">${t.discover_dance_btn || 'Discover all schools'}</a>
                 ` : ''}
             </div>
         `;
