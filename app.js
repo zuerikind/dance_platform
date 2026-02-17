@@ -4115,9 +4115,12 @@ function _renderViewImpl() {
                             })()}
                         </div>
                         ${(() => {
+                            const balance = state.currentUser.balance ?? 0;
                             const packs = state.currentUser.active_packs || [];
                             const now = new Date();
                             const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+                            const hasUnlimited = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
+                            if (balance <= 0 && !hasUnlimited) return ''; // hide next expiry when no classes left
                             const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
                             if (nextExpiry) {
                                 const d = new Date(nextExpiry);
@@ -5000,18 +5003,20 @@ function _renderViewImpl() {
                                 <i data-lucide="trash-2" size="16"></i>
                             </button>
                         </div>
-                         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                            <div style="flex: 1; min-width: 60px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                         <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || 'MXN'] || '$').trim()}</span>
                                 <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
-                            <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
-                                <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
-                                <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
-                            </div>
-                            <div style="flex: 1; min-width: 56px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
-                                <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
-                                <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>
+                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>
                             </div>
                         </div>
                     </div>
