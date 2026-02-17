@@ -133,6 +133,7 @@ const DANCE_LOCALES = {
         attendance_success: "Attendance confirmed!",
         no_classes_buy_package: "This student has no classes left. They should buy a new package.",
         admin_user_placeholder: "Admin Username",
+        admin_email_placeholder: "Admin Email",
         admin_pass_placeholder: "Admin Password",
         admin_login_btn: "Admin Login",
         admin_access_trigger: "• ADMIN ACCESS •",
@@ -173,7 +174,7 @@ const DANCE_LOCALES = {
         add_admin_modal_title: "Add administrator",
         add_admin_modal_subtitle: "Create a new admin for your school",
         add_admin_success_title: "Administrator added",
-        add_admin_success_text: "The new administrator can now sign in with the username and password you set.",
+        add_admin_success_text: "The new administrator can now sign in with the email and password you set.",
         add_admin_btn: "Add",
         enter_student_name: "Enter student name:",
         enter_student_phone: "Enter student phone:",
@@ -285,6 +286,10 @@ const DANCE_LOCALES = {
         add_school_title: "Create New School",
         school_info_section: "Academy Details",
         admin_info_section: "Initial Administrator",
+        admin_name_label: "Admin name",
+        admin_email_label: "Email",
+        admin_email_not_set: "Not set",
+        enter_admin_email: "Please enter an email address.",
         dev_discovery_optional: "Discovery profile (optional)",
         create_school_btn: "Execute Initialization",
         username_exists_msg: "This username is already taken. Please choose another one.",
@@ -347,6 +352,7 @@ const DANCE_LOCALES = {
         admin_add_need_linked_session: "To add administrators you must be signed in with your linked account. Please log out and sign in again with your username and password.",
         error_removing_admin: "Error removing administrator:",
         additional_features: "Additional features",
+        settings_account_admin_label: "Profile, password, admins & more",
         create_new_competition: "Create new competition",
         jack_and_jill: "Jack and Jill",
         competition_date: "Date",
@@ -604,6 +610,7 @@ const DANCE_LOCALES = {
         attendance_success: "¡Asistencia confirmada!",
         no_classes_buy_package: "Este alumno no tiene clases. Debe comprar un nuevo paquete.",
         admin_user_placeholder: "Usuario Admin",
+        admin_email_placeholder: "Email Admin",
         admin_pass_placeholder: "Contraseña Admin",
         admin_login_btn: "Inicia Sesión Admin",
         admin_access_trigger: "• ACCESO ADMIN •",
@@ -644,7 +651,7 @@ const DANCE_LOCALES = {
         add_admin_modal_title: "Agregar administrador",
         add_admin_modal_subtitle: "Crea un nuevo administrador para tu escuela",
         add_admin_success_title: "Administrador agregado",
-        add_admin_success_text: "El nuevo administrador ya puede iniciar sesión con el usuario y la contraseña que configuraste.",
+        add_admin_success_text: "El nuevo administrador ya puede iniciar sesión con el email y la contraseña que configuraste.",
         add_admin_btn: "Agregar",
         enter_student_name: "Ingresa el nombre del alumno:",
         enter_student_phone: "Ingresa el teléfono del alumno:",
@@ -755,6 +762,10 @@ const DANCE_LOCALES = {
         add_school_title: "Crear Nueva Escuela",
         school_info_section: "Detalles de la Academia",
         admin_info_section: "Administrador Inicial",
+        admin_name_label: "Nombre del admin",
+        admin_email_label: "Email",
+        admin_email_not_set: "No configurado",
+        enter_admin_email: "Por favor ingresa un email.",
         dev_discovery_optional: "Perfil Discovery (opcional)",
         create_school_btn: "Ejecutar Inicialización",
         username_exists_msg: "Este usuario ya está en uso. Por favor elige otro.",
@@ -817,6 +828,7 @@ const DANCE_LOCALES = {
         admin_add_need_linked_session: "Para agregar administradores debes iniciar sesión con tu cuenta vinculada. Cierra sesión e inicia de nuevo con tu usuario y contraseña.",
         error_removing_admin: "Error al eliminar administrador:",
         additional_features: "Funciones adicionales",
+        settings_account_admin_label: "Perfil, contraseña, administradores y más",
         create_new_competition: "Crear nueva competencia",
         jack_and_jill: "Jack and Jill",
         competition_date: "Fecha",
@@ -1076,6 +1088,7 @@ const DANCE_LOCALES = {
         attendance_success: "Anwesenheit bestätigt!",
         no_classes_buy_package: "Dieser Schüler hat keine Stunden mehr. Bitte neues Paket kaufen.",
         admin_user_placeholder: "Admin Benutzername",
+        admin_email_placeholder: "Admin E-Mail",
         admin_pass_placeholder: "Admin Passwort",
         admin_login_btn: "Admin Login",
         admin_access_trigger: "• ADMIN ZUGANG •",
@@ -1116,7 +1129,7 @@ const DANCE_LOCALES = {
         add_admin_modal_title: "Administrator hinzufügen",
         add_admin_modal_subtitle: "Einen neuen Administrator für deine Schule anlegen",
         add_admin_success_title: "Administrator hinzugefügt",
-        add_admin_success_text: "Der neue Administrator kann sich jetzt mit dem von dir festgelegten Benutzernamen und Passwort anmelden.",
+        add_admin_success_text: "Der neue Administrator kann sich jetzt mit der von dir festgelegten E-Mail und dem Passwort anmelden.",
         add_admin_btn: "Hinzufügen",
         enter_student_name: "Name des Schülers eingeben:",
         enter_student_phone: "Telefonnummer eingeben:",
@@ -1227,6 +1240,10 @@ const DANCE_LOCALES = {
         add_school_title: "Neue Schule erstellen",
         school_info_section: "Akademie-Details",
         admin_info_section: "Erster Administrator",
+        admin_name_label: "Admin-Name",
+        admin_email_label: "E-Mail",
+        admin_email_not_set: "Nicht festgelegt",
+        enter_admin_email: "Bitte gib eine E-Mail-Adresse ein.",
         dev_discovery_optional: "Discovery-Profil (optional)",
         create_school_btn: "Initialisierung ausführen",
         username_exists_msg: "Dieser Benutzername ist bereits vergeben. Bitte wähle einen anderen.",
@@ -1264,6 +1281,8 @@ const DANCE_LOCALES = {
         no_data_msg: "Noch keine Daten",
         mgmt_classes_title: "Kursverwaltung",
         mgmt_admins_title: "Administratoren",
+        additional_features: "Zusätzliche Funktionen",
+        settings_account_admin_label: "Profil, Passwort, Administratoren und mehr",
         day_label: "Tag",
         hour_label: "Uhrzeit",
         start_time_label: "Start",
@@ -1473,6 +1492,7 @@ let state = {
     currentCompetition: null,
     competitionRegistrations: [],
     additionalFeaturesExpanded: false,
+    settingsAdvancedExpanded: false,
     currentCompetitionForStudent: null,
     studentCompetitionRegistration: null,
     studentCompetitionDetail: null,
@@ -1738,6 +1758,14 @@ async function fetchAllData() {
             const admins = state.admins || [];
             state.schoolAdminLinked = !!(uid && admins.some(a => a.user_id === uid));
             state.currentAdmin = admins.find(a => a.user_id === uid) || null;
+            // Fallback: when admins list is empty (RLS) but user is admin, fetch current admin for My Profile / Change Password
+            if (!state.currentAdmin && uid && sid) {
+                try {
+                    const { data: curAdmin } = await supabaseClient.rpc('get_current_admin', { p_school_id: sid });
+                    const row = Array.isArray(curAdmin) && curAdmin.length > 0 ? curAdmin[0] : curAdmin;
+                    if (row && typeof row === 'object') state.currentAdmin = row;
+                } catch (_) { /* ignore */ }
+            }
         }
         // All enrollments across schools (fetched in parallel above) for multi-school package display
         if (isStudent && allEnrollmentsRes?.data != null) {
@@ -2695,7 +2723,8 @@ window.toggleExpandableNoRender = (key) => {
         'studentsFilter': ['studentsFilterExpanded', 'students-filter-content', 'students-filter-expandable'],
         'qrRegistrations': ['qrRegistrationsExpanded', 'qr-registrations-content', 'qr-registrations-expandable'],
         'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section'],
-        'revenueFilters': ['adminRevenueFiltersExpanded', 'revenue-filters-content', 'revenue-filters-expandable']
+        'revenueFilters': ['adminRevenueFiltersExpanded', 'revenue-filters-content', 'revenue-filters-expandable'],
+        'settingsAdvanced': ['settingsAdvancedExpanded', 'settings-advanced-content', 'settings-advanced-expandable']
     };
     const entry = map[key];
     if (!entry) return;
@@ -3003,10 +3032,19 @@ function _renderViewImpl() {
                 <div class="ios-list" style="margin-bottom: 3.5rem; overflow: hidden;">
                     <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
                         <div style="width: 100%;">
-                            <div style="font-size: 12px; font-weight: 800; color: var(--system-blue); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em;">${t.username}</div>
+                            <div style="font-size: 12px; font-weight: 800; color: var(--system-blue); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em;">${t.admin_name_label || 'Admin name'}</div>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <i data-lucide="user" size="14" style="opacity: 0.3;"></i>
-                                <input type="text" id="new-school-admin-user" placeholder="admin_user" style="width: 100%; border: none; background: transparent; color: var(--text-primary); outline: none; font-size: 17px; font-weight: 700; padding: 0; letter-spacing: -0.3px;">
+                                <input type="text" id="new-school-admin-name" placeholder="e.g. María García" style="width: 100%; border: none; background: transparent; color: var(--text-primary); outline: none; font-size: 17px; font-weight: 700; padding: 0; letter-spacing: -0.3px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ios-list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                        <div style="width: 100%;">
+                            <div style="font-size: 12px; font-weight: 800; color: var(--system-blue); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em;">${t.admin_email_label || 'Admin email'}</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i data-lucide="mail" size="14" style="opacity: 0.3;"></i>
+                                <input type="email" id="new-school-admin-email" placeholder="admin@example.com" style="width: 100%; border: none; background: transparent; color: var(--text-primary); outline: none; font-size: 17px; font-weight: 700; padding: 0; letter-spacing: -0.3px;">
                             </div>
                         </div>
                     </div>
@@ -3403,7 +3441,7 @@ function _renderViewImpl() {
                             <div class="admin-trigger-container" style="margin-top: 2.5rem; text-align: center;">
                                 <button id="admin-show-btn" style="opacity: 0.3; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="showAdminFields()">${window.t('admin_access_trigger')}</button>
                                 <div id="admin-fields" class="hidden slide-in" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                                    <input type="text" id="admin-user-input" class="minimal-input" placeholder="${window.t('admin_user_placeholder')}" style="margin-bottom: 0.8rem;">
+                                    <input type="email" id="admin-user-input" class="minimal-input" placeholder="${window.t('admin_email_placeholder') || window.t('admin_user_placeholder')}" style="margin-bottom: 0.8rem;">
                                     <div class="password-input-wrap" style="margin-bottom: 1rem;">
                                         <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${window.t('admin_pass_placeholder')}">
                                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
@@ -4491,110 +4529,6 @@ function _renderViewImpl() {
                 </div>
             </div>
 
-            <div class="admin-private-contact-card" style="margin-left: 1.2rem; margin-right: 1.2rem;">
-                <div class="admin-private-contact-title">${t.private_contact_section}</div>
-                <p class="admin-private-contact-desc">${t.private_contact_desc}</p>
-                <div class="admin-private-contact-select-wrap">
-                    <span class="admin-private-contact-select-label">${t.select_contact_admin}</span>
-                    <select id="private-contact-admin" onchange="window.savePrivateContactAdmin(this.value)">
-                        <option value="">—</option>
-                        ${(Array.isArray(state.admins) ? state.admins : []).map(adm => `
-                            <option value="${adm.id}" ${(state.adminSettings?.private_contact_admin_id || '') === adm.id ? 'selected' : ''}>${(adm.display_name || adm.username || '').replace(/</g, '&lt;')}</option>
-                        `).join('')}
-                    </select>
-                    <i data-lucide="chevron-down" size="18" style="opacity: 0.5; flex-shrink: 0;"></i>
-                </div>
-            </div>
-
-            ${state.currentAdmin ? `
-            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.my_profile_section}
-            </div>
-            <div class="ios-list">
-                <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.display_name_label}</span>
-                    <input type="text" id="profile-display-name" value="${(state.currentAdmin.display_name || '').replace(/"/g, '&quot;')}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
-                </div>
-                <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.phone_label}</span>
-                    <input type="text" id="profile-phone" value="${(state.currentAdmin.phone || '').replace(/"/g, '&quot;')}" placeholder="+52 55 1234 5678" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
-                </div>
-                <div class="ios-list-item" onclick="window.saveAdminProfile()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
-                    <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_profile_btn}
-                </div>
-            </div>
-
-            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.change_password_section}
-            </div>
-            <div class="ios-list">
-                <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.current_password_label}</span>
-                    <input type="password" id="profile-current-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
-                </div>
-                <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.new_password_label}</span>
-                    <input type="password" id="profile-new-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
-                </div>
-                <div class="ios-list-item" style="padding: 12px 16px;">
-                    <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.confirm_new_password_label}</span>
-                    <input type="password" id="profile-confirm-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
-                </div>
-                <div class="ios-list-item" onclick="window.changeAdminPassword()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
-                    <i data-lucide="key" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.change_password_btn}
-                </div>
-            </div>
-            ` : ''}
-
-            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.mgmt_admins_title}
-            </div>
-            <div class="ios-list">
-                ${(Array.isArray(state.admins) ? state.admins : []).map(adm => `
-                    <div class="ios-list-item" style="padding: 12px 16px; align-items: center;">
-                        <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${adm.username}</span>
-                        <button onclick="window.removeAdmin('${adm.id}')" style="background: none; border: none; color: var(--text-secondary); padding: 8px; opacity: 0.4; margin-left: auto; cursor: pointer;">
-                            <i data-lucide="trash-2" size="18"></i>
-                        </button>
-                    </div>
-                `).join('')}
-                <div class="ios-list-item" onclick="window.openAddAdminModal()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
-                    <i data-lucide="user-plus" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_admin || 'Agregar Admin'}
-                </div>
-            </div>
-
-            <div class="expandable-section ${state.additionalFeaturesExpanded ? 'expanded' : ''}" style="margin-top: 2rem; padding: 0 1.2rem;">
-                <div class="expandable-section-header" onclick="toggleExpandableNoRender('additionalFeatures')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
-                    <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.additional_features}</span>
-                    <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
-                </div>
-                <div id="additional-features-content" class="expandable-section-content" style="padding: 1rem 0; display: ${state.additionalFeaturesExpanded ? '' : 'none'};">
-                    <!-- Class Registration Toggle -->
-                    <div class="card" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="flex: 1;">
-                                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                                    <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
-                                    ${t.registration_enabled}
-                                </div>
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; padding-left: 26px;">${t.registration_enabled_desc}</div>
-                            </div>
-                            <label class="toggle-switch" style="flex-shrink: 0; margin-left: 12px;">
-                                <input type="checkbox" class="toggle-switch-input" ${state.currentSchool?.class_registration_enabled ? 'checked' : ''} onchange="window.toggleClassRegistration(this.checked)">
-                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    ${state.currentSchool?.jack_and_jill_enabled === true ? `
-                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${t.create_new_competition}</div>
-                    <button class="btn-primary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
-                        <i data-lucide="trophy" size="16" style="margin-right: 8px;"></i> ${t.jack_and_jill}
-                    </button>
-                    ` : ''}
-                </div>
-            </div>
-
             <!-- Discovery profile (Ajustes) -->
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.discovery_profile_section || 'Discovery profile'}
@@ -4649,6 +4583,111 @@ function _renderViewImpl() {
                 <div id="discovery-preview-inner" style="font-size: 13px; color: var(--text-primary); max-height: 70vh; overflow-y: auto; padding: 1rem; background: var(--bg-body);">${(() => { const sc = state.currentSchool; const loc = [sc?.city, sc?.country].filter(Boolean).join(', ') || (sc?.address || '—'); const gallery = Array.isArray(sc?.gallery_urls) ? sc.gallery_urls : (typeof sc?.gallery_urls === 'string' ? sc.gallery_urls.split(/\\r?\\n/).map(s => s.trim()).filter(Boolean) : []); return window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || '', loc, desc: (sc?.discovery_description || '').toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(' · ') : '', logoUrl: (sc?.logo_url || '').trim(), teacherUrl: (sc?.teacher_photo_url || '').trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : (Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : []), currency: sc?.currency || 'MXN', classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t.discovery_placeholder_upload_soon || 'Will be uploaded soon.' }) : ''; })()}</div>
             </div>
             ` : ''}
+
+            <!-- Profile, password, admins, additional features, private contact (expandable at bottom) -->
+            <div class="settings-advanced-expandable ${state.settingsAdvancedExpanded ? 'expanded' : ''}" style="margin-top: 2.5rem; margin-bottom: 1rem; padding: 0 1.2rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div class="expandable-section-header" onclick="toggleExpandableNoRender('settingsAdvanced')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
+                    <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.settings_account_admin_label || 'Profile, password, admins & more'}</span>
+                    <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                </div>
+                <div id="settings-advanced-content" style="padding: 1rem 0; display: ${state.settingsAdvancedExpanded ? '' : 'none'};">
+                    <!-- Contacto clases particulares -->
+                    <div class="admin-private-contact-card" style="margin-bottom: 1.5rem;">
+                        <div class="admin-private-contact-title">${t.private_contact_section}</div>
+                        <p class="admin-private-contact-desc">${t.private_contact_desc}</p>
+                        <div class="admin-private-contact-select-wrap">
+                            <span class="admin-private-contact-select-label">${t.select_contact_admin}</span>
+                            <select id="private-contact-admin" onchange="window.savePrivateContactAdmin(this.value)">
+                                <option value="">—</option>
+                                ${(Array.isArray(state.admins) ? state.admins : []).map(adm => `
+                                    <option value="${adm.id}" ${(state.adminSettings?.private_contact_admin_id || '') === adm.id ? 'selected' : ''}>${(adm.display_name || adm.username || '').replace(/</g, '&lt;')}</option>
+                                `).join('')}
+                            </select>
+                            <i data-lucide="chevron-down" size="18" style="opacity: 0.5; flex-shrink: 0;"></i>
+                        </div>
+                    </div>
+
+                    ${state.currentAdmin ? `
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t.my_profile_section}</div>
+                    <div class="ios-list" style="margin-bottom: 1.5rem;">
+                        <div class="ios-list-item" style="padding: 12px 16px;">
+                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.display_name_label}</span>
+                            <input type="text" id="profile-display-name" value="${(state.currentAdmin.display_name || '').replace(/"/g, '&quot;')}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                        </div>
+                        <div class="ios-list-item" style="padding: 12px 16px;">
+                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.admin_email_label || 'Email'}</span>
+                            <input type="email" id="profile-email" value="${(state.currentAdmin.email || '').replace(/"/g, '&quot;')}" placeholder="${t.admin_email_not_set || 'Not set'}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                        </div>
+                        <div class="ios-list-item" style="padding: 12px 16px;">
+                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.phone_label}</span>
+                            <input type="text" id="profile-phone" value="${(state.currentAdmin.phone || '').replace(/"/g, '&quot;')}" placeholder="+52 55 1234 5678" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                        </div>
+                        <div class="ios-list-item" onclick="window.saveAdminProfile()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                            <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_profile_btn}
+                        </div>
+                    </div>
+
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t.change_password_section}</div>
+                    <div class="ios-list" style="margin-bottom: 1.5rem;">
+                        <div class="ios-list-item" style="padding: 12px 16px;">
+                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.current_password_label}</span>
+                            <input type="password" id="profile-current-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                        </div>
+                        <div class="ios-list-item" style="padding: 12px 16px;">
+                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.new_password_label}</span>
+                            <input type="password" id="profile-new-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                        </div>
+                        <div class="ios-list-item" style="padding: 12px 16px;">
+                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.confirm_new_password_label}</span>
+                            <input type="password" id="profile-confirm-password" placeholder="••••••••" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
+                        </div>
+                        <div class="ios-list-item" onclick="window.changeAdminPassword()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                            <i data-lucide="key" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.change_password_btn}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t.mgmt_admins_title}</div>
+                    <div class="ios-list" style="margin-bottom: 1.5rem;">
+                        ${(Array.isArray(state.admins) ? state.admins : []).map(adm => `
+                            <div class="ios-list-item" style="padding: 12px 16px; align-items: center;">
+                                <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${adm.username}</span>
+                                <button onclick="window.removeAdmin('${adm.id}')" style="background: none; border: none; color: var(--text-secondary); padding: 8px; opacity: 0.4; margin-left: auto; cursor: pointer;">
+                                    <i data-lucide="trash-2" size="18"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                        <div class="ios-list-item" onclick="window.openAddAdminModal()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                            <i data-lucide="user-plus" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_admin || 'Agregar Admin'}
+                        </div>
+                    </div>
+
+                    <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t.additional_features}</div>
+                    <div style="margin-bottom: 1rem;">
+                        <div class="card" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
+                                        ${t.registration_enabled}
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; padding-left: 26px;">${t.registration_enabled_desc}</div>
+                                </div>
+                                <label class="toggle-switch" style="flex-shrink: 0; margin-left: 12px;">
+                                    <input type="checkbox" class="toggle-switch-input" ${state.currentSchool?.class_registration_enabled ? 'checked' : ''} onchange="window.toggleClassRegistration(this.checked)">
+                                    <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                                </label>
+                            </div>
+                        </div>
+                        ${state.currentSchool?.jack_and_jill_enabled === true ? `
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${t.create_new_competition}</div>
+                        <button class="btn-primary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
+                            <i data-lucide="trophy" size="16" style="margin-right: 8px;"></i> ${t.jack_and_jill}
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
 
             <div style="height: 100px;"></div> <!-- Spacer for bottom nav padding -->
     `;
@@ -5549,73 +5588,75 @@ window.deleteStudent = async (id) => {
 };
 
 window.loginAdminWithCreds = async () => {
-    const user = document.getElementById('admin-user-input').value.trim();
+    const emailRaw = document.getElementById('admin-user-input').value.trim();
+    const email = emailRaw ? emailRaw.toLowerCase() : '';
     const pass = document.getElementById('admin-pass-input').value.trim();
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
+    const schoolId = state.currentSchool?.id;
 
     let adminRow = null;
-    if (supabaseClient) {
+    if (supabaseClient && schoolId) {
         try {
-            const pseudoEmail = `${user.replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
-
-            // 1) Try Supabase Auth (for admins who already have user_id set)
+            // 1) Try Supabase Auth with real email (for admins who have Auth user with that email)
             const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-                email: pseudoEmail,
+                email: email,
                 password: pass
             });
 
             if (!authError && authData?.user) {
-                const { data: row, error: adminError } = await supabaseClient
+                // Get admin by user_id or by email+school_id
+                const { data: rowByUser, error: errUser } = await supabaseClient
                     .from('admins')
                     .select('*')
                     .eq('user_id', authData.user.id)
-                    .eq('school_id', state.currentSchool.id)
+                    .eq('school_id', schoolId)
                     .single();
-                if (!adminError && row) adminRow = row;
-                // Signed in but no admin row by user_id: legacy admin, link this Auth user to their row
-                if (!adminRow && user && pass) {
-                    const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_admin_by_credentials', {
-                        p_username: user,
-                        p_password: pass,
-                        p_school_id: state.currentSchool.id
-                    });
-                    if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
-                        adminRow = legacyRows[0];
-                        await supabaseClient.rpc('link_admin_auth');
-                    }
+                if (!errUser && rowByUser) adminRow = rowByUser;
+                if (!adminRow) {
+                    const { data: rowByEmail, error: errEmail } = await supabaseClient
+                        .from('admins')
+                        .select('*')
+                        .eq('school_id', schoolId)
+                        .ilike('email', email)
+                        .single();
+                    if (!errEmail && rowByEmail) adminRow = rowByEmail;
+                }
+                if (adminRow && !adminRow.user_id) {
+                    await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
+                    adminRow = { ...adminRow, user_id: authData.user.id };
                 }
             } else {
-                // 2) Legacy: credentials OK but no Auth user yet – create one and link so is_school_admin() works
-                const { data: legacyRows, error: rpcError } = await supabaseClient.rpc('get_admin_by_credentials', {
-                    p_username: user,
+                // 2) Auth failed: check if admin exists in DB with email+password (Auth user may not exist yet)
+                const { data: emailRows, error: rpcError } = await supabaseClient.rpc('get_admin_by_email_credentials', {
+                    p_email: email,
                     p_password: pass,
-                    p_school_id: state.currentSchool.id
+                    p_school_id: schoolId
                 });
-                if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
-                    adminRow = legacyRows[0];
-                    const { error: signUpErr, data: signUpData } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
+                if (!rpcError && Array.isArray(emailRows) && emailRows.length > 0) {
+                    adminRow = emailRows[0];
+                    const { error: signUpErr, data: signUpData } = await supabaseClient.auth.signUp({ email: email, password: pass });
                     if (!signUpErr && signUpData?.user) {
                         const hasIdentity = Array.isArray(signUpData.user.identities) && signUpData.user.identities.length > 0;
                         if (hasIdentity) {
-                            await supabaseClient.rpc('link_admin_auth');
+                            await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
                         } else {
-                            const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
+                            const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: email, password: pass });
                             if (!signInAgain) {
-                                await supabaseClient.rpc('link_admin_auth');
+                                await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
                             } else {
                                 console.warn('Admin Auth: credentials valid but Auth sign-in failed:', signInAgain?.message);
                             }
                         }
-                    } else if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
-                        const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
+                    } else if (signUpErr && signUpErr.message && (signUpErr.message.includes('already registered') || signUpErr.message.includes('already been registered'))) {
+                        const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: email, password: pass });
                         if (!signInAgain) {
-                            await supabaseClient.rpc('link_admin_auth');
+                            await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
                         } else {
                             console.warn('Admin Auth: credentials valid but Auth sign-in failed:', signInAgain?.message);
                         }
-                    } else {
+                    } else if (signUpErr) {
                         console.warn('Admin Auth signUp failed:', signUpErr?.message);
                     }
                 }
@@ -5700,6 +5741,8 @@ window.saveAdminEmail = async () => {
             if (errEl) { errEl.textContent = error.message || 'Error saving email.'; errEl.style.display = 'block'; }
             return;
         }
+        const { error: authErr } = await supabaseClient.auth.updateUser({ email });
+        if (authErr) console.warn('Auth email update failed (DB updated):', authErr.message);
         const modal = document.getElementById('admin-email-modal');
         if (modal) modal.classList.add('hidden');
         alert(t('admin_email_saved') || 'Email saved!');
@@ -6278,12 +6321,13 @@ window.updateNewSchoolCityOptions = () => {
 };
 
 window.submitNewSchoolWithAdmin = async () => {
-    const schoolName = document.getElementById('new-school-name').value;
-    const adminUser = document.getElementById('new-school-admin-user').value;
-    const adminPass = document.getElementById('new-school-admin-pass').value;
+    const schoolName = (document.getElementById('new-school-name')?.value || '').trim();
+    const adminName = (document.getElementById('new-school-admin-name')?.value || '').trim();
+    const adminEmail = (document.getElementById('new-school-admin-email')?.value || '').trim().toLowerCase();
+    const adminPass = (document.getElementById('new-school-admin-pass')?.value || '').trim();
 
-    if (!schoolName || !adminUser || !adminPass) {
-        alert("Please fill in all fields.");
+    if (!schoolName || !adminName || !adminEmail || !adminPass) {
+        alert("Please fill in all fields (school name, admin name, admin email, password).");
         return;
     }
 
@@ -6326,32 +6370,32 @@ window.submitNewSchoolWithAdmin = async () => {
             const schoolId = schoolRow?.id;
             if (!schoolId) throw new Error('School was not created');
 
-            // 2. Create Auth user for admin (pseudo-email) then insert admin with user_id (platform-only RPC for first admin)
+            // 3. Create Auth user for admin (real email) then insert admin with user_id (platform-only RPC for first admin)
             let adminUserId = null;
-            const pseudoEmail = `${String(adminUser).replace(/\s+/g, '_').toLowerCase()}+${schoolId}@admins.bailadmin.local`;
             let sessBefore = null;
             try {
                 const res = await supabaseClient.auth.getSession();
                 sessBefore = res?.data?.session;
                 const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
                 if (tempClient) {
-                    const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password: adminPass });
+                    const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: adminEmail, password: adminPass });
                     if (!signUpErr && signUpData?.user) adminUserId = signUpData.user.id;
                 }
             } catch (e) { console.warn('Admin Auth signUp:', e); } finally {
                 if (sessBefore) await supabaseClient.auth.setSession({ access_token: sessBefore.access_token, refresh_token: sessBefore.refresh_token });
             }
-            const adminPayload = { p_school_id: schoolId, p_username: adminUser.trim(), p_password: adminPass };
+            const adminPayload = { p_school_id: schoolId, p_username: adminName, p_email: adminEmail, p_password: adminPass };
             if (adminUserId) adminPayload.p_user_id = adminUserId;
             let { error: adminError } = await supabaseClient.rpc('admin_insert_for_school_by_platform', adminPayload);
             if (adminError) {
-                const res2 = await supabaseClient.rpc('admin_insert_for_school', adminPayload);
+                const res2 = await supabaseClient.rpc('admin_insert_for_school', { p_school_id: schoolId, p_username: adminName, p_email: adminEmail, p_password: adminPass, p_user_id: adminUserId });
                 adminError = res2.error;
             }
             if (adminError) {
                 const fallbackPayload = {
                     id: "ADM-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
-                    username: adminUser.trim(),
+                    username: adminName,
+                    email: adminEmail,
                     password: adminPass,
                     school_id: schoolId
                 };
@@ -6360,7 +6404,7 @@ window.submitNewSchoolWithAdmin = async () => {
                 if (fallback.error) throw adminError;
             }
 
-            // 3. Create Default "Clase Suelta" Pass
+            // 4. Create Default "Clase Suelta" Pass
             const { error: subError } = await supabaseClient
                 .from('subscriptions')
                 .insert([{
@@ -6373,7 +6417,7 @@ window.submitNewSchoolWithAdmin = async () => {
 
             if (subError) throw subError;
 
-            alert(`School "${schoolName}" and Admin "${adminUser}" created successfully!`);
+            alert(`School "${schoolName}" and Admin "${adminName}" created successfully!`);
             state.currentView = 'platform-dev-dashboard';
             await fetchPlatformData();
         } catch (err) {
@@ -7113,22 +7157,43 @@ window.saveAdminProfile = async () => {
     const t = window.t;
     const displayName = (document.getElementById('profile-display-name')?.value || '').trim();
     const phone = (document.getElementById('profile-phone')?.value || '').trim();
+    const newEmail = (document.getElementById('profile-email')?.value || '').trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (newEmail && !emailRegex.test(newEmail)) {
+        alert(t('admin_email_invalid') || 'Please enter a valid email address.');
+        return;
+    }
     try {
-        const { error } = await supabaseClient.rpc('admin_update_profile', {
+        const { error: profError } = await supabaseClient.rpc('admin_update_profile', {
             p_admin_id: adm.id,
             p_phone: phone,
             p_display_name: displayName
         });
-        if (error) throw error;
+        if (profError) throw profError;
         adm.display_name = displayName || null;
         adm.phone = phone || null;
+        if (newEmail && newEmail !== (adm.email || '').toLowerCase()) {
+            const payload = { p_email: newEmail };
+            if (state.currentSchool?.id) payload.p_school_id = state.currentSchool.id;
+            const { error: emailError } = await supabaseClient.rpc('admin_set_email', payload);
+            if (emailError) throw emailError;
+            adm.email = newEmail;
+            // Update Auth email immediately (bypasses confirmation) so login with new email works
+            try {
+                const res = await supabaseClient.functions.invoke('admin-update-email', { body: { email: newEmail } });
+                if (res.error) throw res.error;
+                await supabaseClient.auth.refreshSession();
+            } catch (authUpdateErr) {
+                console.warn('Auth email update failed (DB updated):', authUpdateErr?.message || authUpdateErr);
+            }
+        }
         state.currentAdmin = adm;
         const idx = (state.admins || []).findIndex(a => a.id === adm.id);
         if (idx >= 0) {
-            state.admins[idx] = { ...state.admins[idx], display_name: adm.display_name, phone: adm.phone };
+            state.admins[idx] = { ...state.admins[idx], display_name: adm.display_name, phone: adm.phone, email: adm.email };
         }
         saveState();
-        alert(t('profile_saved_success'));
+        alert(t('profile_saved_success') || t('profile_saved') || 'Profile saved!');
         renderView();
     } catch (err) {
         alert('Error: ' + (err.message || 'Could not save profile'));
@@ -7199,13 +7264,15 @@ window.openAddAdminModal = () => {
     const sub = document.querySelector('#add-admin-form-view p');
     if (sub) sub.textContent = t('add_admin_modal_subtitle') || 'Create a new admin for your school';
     document.getElementById('add-admin-username').value = '';
+    const emailEl = document.getElementById('add-admin-email');
+    if (emailEl) emailEl.value = '';
     document.getElementById('add-admin-password').value = '';
     document.getElementById('add-admin-password-confirm').value = '';
     if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
     const submitLabel = document.getElementById('add-admin-submit-label');
     if (submitLabel) submitLabel.textContent = t('add_admin_btn') || 'Add';
     document.getElementById('add-admin-success-title').textContent = t('add_admin_success_title') || 'Administrator added';
-    document.getElementById('add-admin-success-text').textContent = t('add_admin_success_text') || 'The new administrator can now sign in with the username and password you set.';
+    document.getElementById('add-admin-success-text').textContent = t('add_admin_success_text') || 'The new administrator can now sign in with the email and password you set.';
     document.getElementById('add-admin-done-btn').textContent = t('close') || 'Done';
     modal.classList.remove('hidden');
     if (window.lucide) window.lucide.createIcons();
@@ -7219,18 +7286,31 @@ window.closeAddAdminModal = () => {
 window.submitAddAdminModal = async () => {
     const t = window.t;
     const usernameEl = document.getElementById('add-admin-username');
+    const emailEl = document.getElementById('add-admin-email');
     const passwordEl = document.getElementById('add-admin-password');
     const confirmEl = document.getElementById('add-admin-password-confirm');
     const errEl = document.getElementById('add-admin-error');
     const submitBtn = document.getElementById('add-admin-submit-btn');
     const username = (usernameEl && usernameEl.value || '').trim();
+    const email = (emailEl && emailEl.value || '').trim().toLowerCase();
     const password = passwordEl ? passwordEl.value : '';
     const confirmPassword = confirmEl ? confirmEl.value : '';
     if (!errEl) return;
     errEl.style.display = 'none';
     errEl.textContent = '';
     if (!username) {
-        errEl.textContent = t('enter_admin_user') || 'Please enter a username.';
+        errEl.textContent = t('enter_admin_user') || 'Please enter a name.';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (!email) {
+        errEl.textContent = t('enter_admin_email') || 'Please enter an email address.';
+        errEl.style.display = 'block';
+        return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        errEl.textContent = t('admin_email_invalid') || 'Please enter a valid email address.';
         errEl.style.display = 'block';
         return;
     }
@@ -7251,11 +7331,10 @@ window.submitAddAdminModal = async () => {
     }
     if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.7'; }
     let userId = null;
-    const pseudoEmail = `${String(username).replace(/\s+/g, '_').toLowerCase()}+${state.currentSchool.id}@admins.bailadmin.local`;
     try {
         const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
         if (tempClient) {
-            const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password });
+            const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email, password });
             if (!signUpErr && signUpData?.user) {
                 const hasIdentity = Array.isArray(signUpData.user.identities) && signUpData.user.identities.length > 0;
                 if (hasIdentity) {
@@ -7264,7 +7343,7 @@ window.submitAddAdminModal = async () => {
             }
         }
     } catch (e) { console.warn('Admin Auth signUp:', e); }
-    const payload = { p_school_id: state.currentSchool.id, p_username: username, p_password: password };
+    const payload = { p_school_id: state.currentSchool.id, p_username: username, p_email: email, p_password: password };
     if (userId) payload.p_user_id = userId;
     const { error: rpcError } = await supabaseClient.rpc('admin_insert_for_school', payload);
     if (rpcError) {
@@ -7277,7 +7356,7 @@ window.submitAddAdminModal = async () => {
             return;
         }
         const newId = "ADM-" + Math.random().toString(36).substr(2, 4).toUpperCase();
-        const { error } = await supabaseClient.from('admins').insert([{ id: newId, username, password, school_id: state.currentSchool.id }]);
+        const { error } = await supabaseClient.from('admins').insert([{ id: newId, username, email, password, school_id: state.currentSchool.id }]);
         if (error) {
             const errMsg = (error.message || '').toLowerCase();
             if (errMsg.includes('row-level security') || errMsg.includes('violates row-level security')) {

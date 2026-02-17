@@ -172,8 +172,12 @@
                 <p style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; line-height: 1.4;">Create a new admin for your school</p>
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem;">
                     <div>
-                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Username</label>
-                        <input type="text" id="add-admin-username" placeholder="Admin username" autocomplete="off" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Name</label>
+                        <input type="text" id="add-admin-username" placeholder="Admin name" autocomplete="off" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Email</label>
+                        <input type="email" id="add-admin-email" placeholder="admin@example.com" autocomplete="off" class="add-admin-input" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
                     </div>
                     <div class="password-input-wrap">
                         <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Password</label>
@@ -199,7 +203,7 @@
                     <i data-lucide="check" size="36"></i>
                 </div>
                 <h3 id="add-admin-success-title" style="margin: 0 0 0.5rem; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary);">Administrator added</h3>
-                <p id="add-admin-success-text" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.5rem;">The new administrator can now sign in with the username and password you set.</p>
+                <p id="add-admin-success-text" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.5rem;">The new administrator can now sign in with the email and password you set.</p>
                 <button type="button" id="add-admin-done-btn" class="btn-primary" style="width: 100%; border-radius: 14px; height: 50px; font-weight: 600;" onclick="window.closeAddAdminModal(); if(window.fetchAllData) fetchAllData(); if(window.renderView) renderView();">Done</button>
             </div>
         </div>

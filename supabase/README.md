@@ -31,6 +31,16 @@ Logo upload uses an Edge Function to bypass the Storage RLS `auth.uid()` bug.
    supabase functions deploy upload-competition-logo
    ```
 
+### Admin email change (Edge Function)
+
+When an admin changes their email in Settings, the app updates the DB and calls the `admin-update-email` Edge Function so the Auth user's email is updated immediately (no confirmation email). That way they can log in with the new email and see students, classes, and packages.
+
+Deploy it (after linking the project as above):
+
+```bash
+supabase functions deploy admin-update-email
+```
+
 ## What the migration does
 
 - Adds `user_id` (references `auth.users`) to `students` and `admins`.
