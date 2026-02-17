@@ -522,6 +522,52 @@ const DANCE_LOCALES = {
         show_discovery_preview_btn: "Show preview",
         hide_discovery_preview_btn: "Hide preview",
         discovery_saved: "Discovery profile saved",
+        // Private Teacher / Booking
+        profile_type_label: "Profile type",
+        profile_type_school: "School",
+        profile_type_private_teacher: "Private Teacher",
+        teacher_availability_title: "Availability",
+        add_availability: "Add availability",
+        private_class_requests_title: "Private class requests",
+        no_private_requests: "No requests yet",
+        accept_btn: "Accept",
+        decline_btn: "Decline",
+        nav_book_class: "Book Class",
+        book_class_title: "Book a Class",
+        private_teacher_label: "Private Dance Teacher",
+        session_label: "session",
+        no_availability_this_week: "No availability this week",
+        confirm_booking_btn: "Request this slot",
+        confirm_request_title: "Confirm class request",
+        teacher_label: "Teacher",
+        date_label: "Date",
+        time_label: "Time",
+        location_label: "Location",
+        price_label: "Price",
+        message_label: "Message (optional)",
+        booking_message_placeholder: "e.g. I'd like to focus on…",
+        send_request_btn: "Send request",
+        request_sent_success: "Request sent! The teacher will review it.",
+        confirm_btn: "Confirm",
+        confirm_booking_title: "Confirm request",
+        no_availability: "No availability",
+        private_teacher_title: "Private Teacher",
+        request_sent: "Request sent! The teacher will confirm.",
+        request_sent_booking_title: "Request sent!",
+        request_sent_booking_msg: "The teacher will confirm it.",
+        need_package_to_book: "You need a package to request private classes",
+        visit_shop_to_buy: "Visit the Shop to buy one.",
+        my_private_classes: "My private classes",
+        no_private_classes_yet: "No accepted private classes yet",
+        accepted_private_classes: "Accepted private classes",
+        calendar_view: "Calendar",
+        no_accepted_private_classes: "No accepted private classes yet",
+        today: "Today",
+        no_classes_this_day: "No classes this day",
+        loading_dashboard: "Loading...",
+        month_jan: "Jan", month_feb: "Feb", month_mar: "Mar", month_apr: "Apr",
+        month_may: "May", month_jun: "Jun", month_jul: "Jul", month_aug: "Aug",
+        month_sep: "Sep", month_oct: "Oct", month_nov: "Nov", month_dec: "Dec",
     },
     es: {
         nav_schedule: "Horario",
@@ -998,7 +1044,34 @@ const DANCE_LOCALES = {
         show_discovery_preview_btn: "Ver vista previa",
         hide_discovery_preview_btn: "Ocultar vista previa",
         discovery_saved: "Perfil Discovery guardado.",
-        discovery_saved: "Perfil Discovery guardado",
+        profile_type_label: "Tipo de perfil",
+        profile_type_school: "Escuela",
+        profile_type_private_teacher: "Profesor privado",
+        teacher_availability_title: "Disponibilidad",
+        add_availability: "Añadir disponibilidad",
+        private_class_requests_title: "Solicitudes de clases privadas",
+        no_private_requests: "Aún no hay solicitudes",
+        accept_btn: "Aceptar",
+        decline_btn: "Rechazar",
+        nav_book_class: "Reservar clase",
+        session_label: "sesión",
+        no_availability: "Sin disponibilidad",
+        confirm_btn: "Confirmar",
+        confirm_booking_title: "Confirmar solicitud",
+        private_teacher_title: "Profesor privado",
+        request_sent: "¡Solicitud enviada! El profesor la confirmará.",
+        request_sent_booking_title: "¡Solicitud enviada!",
+        request_sent_booking_msg: "El profesor la confirmará.",
+        need_package_to_book: "Necesitas un paquete para solicitar clases privadas",
+        visit_shop_to_buy: "Visita la tienda para comprar uno.",
+        my_private_classes: "Mis clases privadas",
+        no_private_classes_yet: "Aún no hay clases privadas aceptadas",
+        accepted_private_classes: "Clases privadas aceptadas",
+        calendar_view: "Calendario",
+        no_accepted_private_classes: "Aún no hay clases privadas aceptadas",
+        today: "Hoy",
+        no_classes_this_day: "No hay clases este día",
+        loading_dashboard: "Cargando...",
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -1452,7 +1525,34 @@ const DANCE_LOCALES = {
         show_discovery_preview_btn: "Vorschau anzeigen",
         hide_discovery_preview_btn: "Vorschau ausblenden",
         discovery_saved: "Discovery-Profil gespeichert.",
-        discovery_saved: "Discovery-Profil gespeichert",
+        profile_type_label: "Profiltyp",
+        profile_type_school: "Schule",
+        profile_type_private_teacher: "Privatlehrer",
+        teacher_availability_title: "Verfügbarkeit",
+        add_availability: "Verfügbarkeit hinzufügen",
+        private_class_requests_title: "Anfragen für Privatstunden",
+        no_private_requests: "Noch keine Anfragen",
+        accept_btn: "Annehmen",
+        decline_btn: "Ablehnen",
+        nav_book_class: "Klasse buchen",
+        session_label: "Stunde",
+        no_availability: "Keine Verfügbarkeit",
+        confirm_btn: "Bestätigen",
+        confirm_booking_title: "Anfrage bestätigen",
+        private_teacher_title: "Privatlehrer",
+        request_sent: "Anfrage gesendet! Der Lehrer bestätigt.",
+        request_sent_booking_title: "Anfrage gesendet!",
+        request_sent_booking_msg: "Der Lehrer wird bestätigen.",
+        need_package_to_book: "Du benötigst ein Paket für Privatstunden.",
+        visit_shop_to_buy: "Besuche den Shop, um eines zu kaufen.",
+        my_private_classes: "Meine Privatstunden",
+        no_private_classes_yet: "Noch keine akzeptierten Privatstunden",
+        accepted_private_classes: "Akzeptierte Privatstunden",
+        calendar_view: "Kalender",
+        no_accepted_private_classes: "Noch keine akzeptierten Privatstunden",
+        today: "Heute",
+        no_classes_this_day: "Keine Stunden an diesem Tag",
+        loading_dashboard: "Laden...",
     }
 };
 
@@ -1510,6 +1610,10 @@ let state = {
     adminStudentsFilterPaid: 'all',    // 'all' | 'paid' | 'unpaid'
     adminStudentsSearch: '',           // persisted search text
     devDashboardTab: 'schools',  // 'schools' | 'audit'
+    teacherAvailability: [],       // teacher_availability rows for private teachers
+    privateClassRequests: [],      // private_class_requests for admin view
+    studentPrivateClassRequests: [], // accepted private class requests for current student
+    studentPrivateClassesExpanded: false, // expandable "My private classes" section in teacher-booking
     // Class Registration
     classAvailability: {},       // { classId: { max_capacity, registered_count, spots_left } }
     studentRegistrations: [],    // upcoming registrations for the student
@@ -1519,6 +1623,10 @@ let state = {
     classRegLoaded: false,       // whether availability data has been loaded
     adminWeekRegistrations: [],  // all registrations for the current week (admin view)
     adminRegExpanded: false,     // whether admin registrations section is expanded (collapsed by default)
+    teacherAcceptedClassesExpanded: true,  // expandable "Accepted private classes" in admin-students (private teachers); default true so calendar is visible
+    teacherAcceptedClassesView: 'list',    // 'calendar' | 'list'
+    teacherAcceptedCalendarDate: null,     // YYYY-MM-DD first of displayed month; null = current month
+    teacherAcceptedCalendarSelectedDate: null, // selected day for detail panel
     studentsFilterExpanded: false, // student filters section collapsed by default to save space
     adminRevenueFiltersExpanded: false // revenue page filters collapsed by default
 };
@@ -1767,6 +1875,37 @@ async function fetchAllData() {
                 } catch (_) { /* ignore */ }
             }
         }
+        // Fetch teacher availability & private class requests for private teachers
+        const currentSchoolObj = state.schools.find(s => s.id === sid) || state.currentSchool;
+        if (currentSchoolObj?.profile_type === 'private_teacher' && supabaseClient) {
+            try {
+                const { data: availData } = await supabaseClient.rpc('get_teacher_availability', { p_school_id: sid });
+                state.teacherAvailability = Array.isArray(availData) ? availData : [];
+            } catch (_) { state.teacherAvailability = []; }
+            if (state.isAdmin) {
+                try {
+                    const { data: pcrData } = await supabaseClient.rpc('get_private_class_requests_for_school', { p_school_id: sid });
+                    state.privateClassRequests = Array.isArray(pcrData) ? pcrData : [];
+                } catch (_) { state.privateClassRequests = []; }
+            }
+        } else {
+            state.teacherAvailability = [];
+            state.privateClassRequests = [];
+        }
+        // Student: fetch accepted private class requests (RLS allows student to SELECT own rows)
+        if (isStudent && state.currentSchool?.profile_type === 'private_teacher' && state.currentUser?.id && supabaseClient && sid) {
+            try {
+                const { data: pcrStudent } = await supabaseClient.from('private_class_requests').select('*').eq('school_id', sid).eq('student_id', String(state.currentUser.id)).eq('status', 'accepted').order('requested_date', { ascending: true });
+                state.studentPrivateClassRequests = Array.isArray(pcrStudent) ? pcrStudent : [];
+            } catch (_) { state.studentPrivateClassRequests = []; }
+        } else {
+            state.studentPrivateClassRequests = [];
+        }
+        // Also update currentSchool to include profile_type from fresh DB data
+        if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
+            state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };
+        }
+
         // All enrollments across schools (fetched in parallel above) for multi-school package display
         if (isStudent && allEnrollmentsRes?.data != null) {
             const allEnroll = allEnrollmentsRes.data;
@@ -2724,7 +2863,9 @@ window.toggleExpandableNoRender = (key) => {
         'qrRegistrations': ['qrRegistrationsExpanded', 'qr-registrations-content', 'qr-registrations-expandable'],
         'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section'],
         'revenueFilters': ['adminRevenueFiltersExpanded', 'revenue-filters-content', 'revenue-filters-expandable'],
-        'settingsAdvanced': ['settingsAdvancedExpanded', 'settings-advanced-content', 'settings-advanced-expandable']
+        'settingsAdvanced': ['settingsAdvancedExpanded', 'settings-advanced-content', 'settings-advanced-expandable'],
+        'studentPrivateClasses': ['studentPrivateClassesExpanded', 'student-private-classes-content', 'student-private-classes-expandable'],
+        'teacherAcceptedClasses': ['teacherAcceptedClassesExpanded', 'teacher-accepted-classes-content', 'teacher-accepted-classes-expandable']
     };
     const entry = map[key];
     if (!entry) return;
@@ -2943,7 +3084,7 @@ function _renderViewImpl() {
                             <div class="card card-premium dev-school-card" style="padding: 1.8rem; border-radius: 28px; display: flex; flex-direction: column; gap: 1.4rem; background: var(--bg-card); border: 1.5px solid var(--border); transition: all 0.4s var(--transition); position: relative;">
                                 <div class="dev-school-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                                     <div style="flex: 1;">
-                                        <div style="font-size: 20px; font-weight: 900; margin-bottom: 4px; letter-spacing: -0.5px; color: var(--text-primary);">${s.name}</div>
+                                        <div style="font-size: 20px; font-weight: 900; margin-bottom: 4px; letter-spacing: -0.5px; color: var(--text-primary);">${s.name}${s.profile_type === 'private_teacher' ? ' <span style="font-size: 10px; font-weight: 700; color: var(--system-orange, #ff9500); background: rgba(255,149,0,0.12); padding: 2px 8px; border-radius: 6px; vertical-align: middle; margin-left: 6px; letter-spacing: 0.03em;">' + (t.profile_type_private_teacher || 'Private Teacher') + '</span>' : ''}</div>
                                         <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: monospace; letter-spacing: 0.05em;">${s.id}</div>
                                     </div>
                                     <div class="dev-school-card-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -3016,6 +3157,21 @@ function _renderViewImpl() {
             </div>
 
             <div style="padding: 1.2rem;">
+                <!-- PROFILE TYPE SELECTOR -->
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.profile_type_label || 'Profile type'}</div>
+                <div class="ios-list" style="margin-bottom: 2.5rem; overflow: hidden;">
+                    <div class="ios-list-item" style="padding: 6px; border-bottom: none;">
+                        <div id="profile-type-selector" style="display: flex; width: 100%; border-radius: 12px; background: var(--bg-body); overflow: hidden; gap: 4px;">
+                            <button type="button" id="profile-type-school" class="profile-type-btn active" onclick="window.selectProfileType('school')" style="flex: 1; padding: 12px 8px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.25s;">
+                                <i data-lucide="school" size="16"></i> ${t.profile_type_school || 'School'}
+                            </button>
+                            <button type="button" id="profile-type-teacher" class="profile-type-btn" onclick="window.selectProfileType('private_teacher')" style="flex: 1; padding: 12px 8px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.25s;">
+                                <i data-lucide="user-check" size="16"></i> ${t.profile_type_private_teacher || 'Private Teacher'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SCHOOL INFO -->
                 <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.school_info_section}</div>
                 <div class="ios-list" style="margin-bottom: 2.5rem; overflow: hidden;">
@@ -3457,7 +3613,142 @@ function _renderViewImpl() {
             </div>
         `;
     }
+    else if (view === 'teacher-booking') {
+        // Private teacher scheduling card - students request private classes
+        if (!state.currentSchool?.id || state.currentSchool?.profile_type !== 'private_teacher') {
+            html += '<div style="padding: 2rem;">' + (t.not_found_msg || 'Not available') + '</div>';
+        } else {
+            const school = state.currentSchool;
+            const teacherName = school.name || '';
+            const teacherImg = school.logo_url || school.teacher_photo_url || '';
+            const locations = (school.discovery_locations || []);
+            const locOptions = locations.length ? locations.map(l => `<option value="${(l.name || l.address || '').replace(/"/g, '&quot;')}">${(l.name || l.address || '—').replace(/</g, '&lt;')}</option>`).join('') : '<option value="">—</option>';
+            const cheapestSub = (state.subscriptions || []).filter(s => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+            const priceStr = cheapestSub ? (typeof window.formatPrice === 'function' ? window.formatPrice(cheapestSub.price, school.currency || 'MXN') : cheapestSub.price) : '—';
+            const weekStart = state._teacherBookingWeekStart || (() => {
+                const d = new Date();
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                const monday = new Date(d);
+                monday.setDate(diff);
+                return monday.toISOString().slice(0, 10);
+            })();
+            const daySchedules = state._teacherBookingSlots || [];
+            const t2 = DANCE_LOCALES[state.language || 'en'];
+            const hasPackage = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(school.id) : true;
+            const myClasses = (state.studentPrivateClassRequests || []).filter(r => r.status === 'accepted');
+            const myClassesExpanded = state.studentPrivateClassesExpanded !== false;
+            html += `
+            <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
+                <div class="student-private-classes-expandable ${myClassesExpanded ? 'expanded' : ''}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
+                    <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
+                            <span style="font-weight: 700; font-size: 15px;">${t2.my_private_classes || 'My private classes'}</span>
+                            ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ''}
+                        </div>
+                        <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                    </div>
+                    <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? '' : 'none'}; background: var(--bg);">
+                        ${myClasses.length === 0 ? `
+                        <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 14px;">
+                            <i data-lucide="inbox" size="24" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
+                            <div>${t2.no_private_classes_yet || 'No accepted private classes yet'}</div>
+                        </div>
+                        ` : myClasses.map(r => {
+                            const dateLabel = window.formatShortDate ? window.formatShortDate(new Date(r.requested_date + 'T00:00:00'), state.language) : r.requested_date;
+                            return `
+                            <div class="student-private-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
+                                <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 14px;">${dateLabel} &middot; ${(r.requested_time || '').replace(/</g, '&lt;')}</div>
+                                    ${r.location ? `<div style="font-size: 12px; color: var(--text-secondary);"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i>${(r.location || '').replace(/</g, '&lt;')}</div>` : ''}
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="teacher-booking-card">
+                    <div class="teacher-booking-header">
+                        ${teacherImg ? `<img class="teacher-booking-avatar" src="${String(teacherImg).replace(/"/g, '&quot;')}" alt="">` : `<div class="teacher-booking-avatar" style="background: var(--system-gray5); display: flex; align-items: center; justify-content: center;"><i data-lucide="user" size="28" style="opacity: 0.4;"></i></div>`}
+                        <div class="teacher-booking-info">
+                            <div class="teacher-booking-name">${(teacherName || '').replace(/</g, '&lt;')}</div>
+                            <div class="teacher-booking-title">${(t2.private_teacher_title || 'Private Teacher').replace(/</g, '&lt;')}</div>
+                            <div class="teacher-booking-meta">
+                                <span class="teacher-booking-price">${priceStr} / ${t2.session_label || 'session'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${!hasPackage ? `
+                    <div class="teacher-booking-no-package" style="padding: 1.5rem; text-align: center; background: rgba(255,149,0,0.08); border-radius: 16px; margin: 0 18px 18px; border: 1px solid rgba(255,149,0,0.2);">
+                        <i data-lucide="package" size="32" style="color: var(--system-orange, #ff9500); opacity: 0.8; margin-bottom: 8px;"></i>
+                        <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">${t2.need_package_to_book || 'You need a package to request private classes'}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${t2.visit_shop_to_buy || 'Visit the Shop to buy one.'}</div>
+                        <button type="button" class="btn-primary" onclick="state.currentView='shop'; renderView();" style="padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 700;">${t2.nav_shop || 'Shop'}</button>
+                    </div>
+                    ` : `
+                    ${locations.length ? `
+                    <div class="teacher-booking-location-bar">
+                        <i data-lucide="map-pin" size="16" style="opacity: 0.5;"></i>
+                        <select id="teacher-booking-location" onchange="window.fetchTeacherBookingSlots()">
+                            ${locOptions}
+                        </select>
+                    </div>
+                    ` : ''}
+                    <div class="teacher-booking-week-nav">
+                        <button type="button" class="teacher-booking-week-btn" onclick="window.changeTeacherBookingWeek(-1)"><i data-lucide="chevron-left" size="20"></i></button>
+                        <span class="teacher-booking-week-label" id="teacher-booking-week-label">${weekStart} – ${(() => { const d = new Date(weekStart); d.setDate(d.getDate() + 6); return d.toISOString().slice(0, 10); })()}</span>
+                        <button type="button" class="teacher-booking-week-btn" onclick="window.changeTeacherBookingWeek(1)"><i data-lucide="chevron-right" size="20"></i></button>
+                    </div>
+                    <div class="teacher-booking-days" id="teacher-booking-days">
+                        ${daySchedules.length === 0 ? `
+                        <div style="padding: 2rem; text-align: center; color: var(--text-muted);">${t2.loading_dashboard || 'Loading...'}</div>
+                        ` : daySchedules.map(day => `
+                        <div class="teacher-booking-day">
+                            <div class="teacher-booking-day-label">${t2[day.dayName?.toLowerCase()] || day.dayName} ${day.date}</div>
+                            ${day.hasAvailability ? `
+                            <div class="teacher-booking-slots">
+                                ${(day.slots || []).map(slot => `
+                                <button type="button" class="teacher-booking-slot ${slot.available ? 'available' : 'unavailable'}" ${slot.available ? `onclick="window.showTeacherBookingConfirm('${day.date}', '${slot.time}', '${(slot.location || '').replace(/'/g, "\\'")}')"` : 'disabled'}>
+                                    ${slot.time}
+                                </button>
+                                `).join('')}
+                            </div>
+                            ` : `
+                            <div class="teacher-booking-empty-day">${t2.no_availability || 'No availability'}</div>
+                            `}
+                        </div>
+                        `).join('')}
+                    </div>
+                    `}
+                </div>
+            </div>
+            <div id="teacher-booking-confirm-overlay" class="teacher-booking-confirm-overlay hidden" style="display: none;">
+                <div class="teacher-booking-confirm-sheet">
+                    <div class="teacher-booking-confirm-title">${t2.confirm_booking_title || 'Confirm request'}</div>
+                    <div id="teacher-booking-confirm-details"></div>
+                    <div class="teacher-booking-confirm-actions">
+                        <button type="button" class="teacher-booking-confirm-btn secondary" onclick="window.hideTeacherBookingConfirm()">${t2.cancel}</button>
+                        <button type="button" class="teacher-booking-confirm-btn primary" id="teacher-booking-confirm-btn">${t2.confirm_btn || 'Confirm'}</button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+        // Trigger async load of slots only when needed (prevents infinite render/fetch loop)
+        const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || '');
+        const hasPkg = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
+        if (state.currentSchool?.id && state.currentSchool?.profile_type === 'private_teacher' && supabaseClient && needsLoad && hasPkg) {
+            window.fetchTeacherBookingSlots();
+        }
+    }
     else if (view === 'schedule') {
+        // Redirect private teacher students to teacher-booking
+        if (!state.isAdmin && state.currentSchool?.profile_type === 'private_teacher') {
+            state.currentView = 'teacher-booking';
+            renderView();
+            return;
+        }
         const regEnabled = !state.isAdmin && state.currentSchool?.class_registration_enabled;
         // Trigger async load of availability data if not yet loaded
         if (regEnabled && !state.classRegLoaded) {
@@ -3654,6 +3945,89 @@ function _renderViewImpl() {
                 </button>
             </div>
         `;
+    } else if (view === 'teacher-booking') {
+        // Scheduling card for private teachers
+        const school = state.currentSchool || {};
+        const teacherName = school.name || 'Teacher';
+        const logoUrl = school.logo_url || school.teacher_photo_url || '';
+        const weekStartState = state._bookingWeekStart || (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d.toISOString().split('T')[0]; })();
+        if (!state._bookingWeekStart) state._bookingWeekStart = weekStartState;
+        const weekSlots = state._bookingWeekSlots || [];
+        const selectedSlot = state._bookingSelectedSlot || null;
+        const dayNames = { Mon: t.mon, Tue: t.tue, Wed: t.wed, Thu: t.thu, Fri: t.fri, Sat: t.sat, Sun: t.sun };
+        const monthNames = [t.month_jan || 'Jan', t.month_feb || 'Feb', t.month_mar || 'Mar', t.month_apr || 'Apr', t.month_may || 'May', t.month_jun || 'Jun', t.month_jul || 'Jul', t.month_aug || 'Aug', t.month_sep || 'Sep', t.month_oct || 'Oct', t.month_nov || 'Nov', t.month_dec || 'Dec'];
+
+        const wsDate = new Date(weekStartState + 'T00:00:00');
+        const weDate = new Date(wsDate); weDate.setDate(weDate.getDate() + 6);
+        const weekLabel = monthNames[wsDate.getMonth()] + ' ' + wsDate.getDate() + ' – ' + monthNames[weDate.getMonth()] + ' ' + weDate.getDate() + ', ' + weDate.getFullYear();
+
+        // Collect locations from availability data
+        const locations = [...new Set((state.teacherAvailability || []).map(a => a.location).filter(Boolean))];
+        const selectedLocation = state._bookingLocation || locations[0] || '';
+
+        // Price from cheapest subscription
+        const cheapestSub = (state.subscriptions || []).reduce((min, s) => (!min || (s.price && s.price < min.price)) ? s : min, null);
+        const priceLabel = cheapestSub ? ((CURRENCY_SYMBOLS[school.currency || 'MXN'] || '$') + cheapestSub.price) : '';
+
+        html += `
+            <div class="ios-header">
+                <div class="ios-large-title" style="letter-spacing: -1px;">${t.book_class_title || 'Book a Class'}</div>
+            </div>
+            <div style="padding: 0 1.2rem;">
+                <div class="teacher-booking-card">
+                    <!-- Header -->
+                    <div class="teacher-booking-header">
+                        ${logoUrl ? '<img src="' + logoUrl + '" class="teacher-booking-avatar" alt="">' : '<div class="teacher-booking-avatar" style="display:flex;align-items:center;justify-content:center;background:var(--system-gray6);"><i data-lucide="user" size="28" style="opacity:0.4;"></i></div>'}
+                        <div class="teacher-booking-info">
+                            <div class="teacher-booking-name">${teacherName}</div>
+                            <div class="teacher-booking-title">${t.private_teacher_label || 'Private Dance Teacher'}</div>
+                            <div class="teacher-booking-meta">
+                                ${priceLabel ? '<span class="teacher-booking-price">' + priceLabel + ' / ' + (t.session_label || 'session') + '</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    ${locations.length > 0 ? `
+                    <!-- Location -->
+                    <div class="teacher-booking-location-bar">
+                        <i data-lucide="map-pin" size="14" style="opacity: 0.5;"></i>
+                        <select onchange="state._bookingLocation=this.value; window.loadBookingWeek();">
+                            ${locations.map(loc => '<option value="' + loc + '"' + (loc === selectedLocation ? ' selected' : '') + '>' + loc + '</option>').join('')}
+                        </select>
+                    </div>
+                    ` : ''}
+                    <!-- Week Nav -->
+                    <div class="teacher-booking-week-nav">
+                        <button class="teacher-booking-week-btn" onclick="window.shiftBookingWeek(-1)"><i data-lucide="chevron-left" size="18"></i></button>
+                        <span class="teacher-booking-week-label">${weekLabel}</span>
+                        <button class="teacher-booking-week-btn" onclick="window.shiftBookingWeek(1)"><i data-lucide="chevron-right" size="18"></i></button>
+                    </div>
+                    <!-- Day Slots -->
+                    <div class="teacher-booking-days">
+                        ${state._bookingSlotsLoading ? '<div style="text-align:center;padding:2rem;"><div class="spin"><i data-lucide="loader-2" size="24"></i></div></div>' : (weekSlots.length === 0 ? '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-style:italic;">' + (t.no_availability_this_week || 'No availability this week') + '</div>' : weekSlots.map(day => {
+                            if (!day.hasAvailability) return '';
+                            const filteredSlots = selectedLocation ? day.slots.filter(s => !s.location || s.location === selectedLocation) : day.slots;
+                            if (filteredSlots.length === 0) return '';
+                            return '<div class="teacher-booking-day"><div class="teacher-booking-day-label">' + (dayNames[day.dayName] || day.dayName) + ', ' + day.dayNumber + '</div><div class="teacher-booking-slots">' + filteredSlots.map(s => {
+                                const isSelected = selectedSlot && selectedSlot.date === day.date && selectedSlot.time === s.time;
+                                return '<button class="teacher-booking-slot ' + (s.available ? 'available' : 'unavailable') + (isSelected ? ' selected' : '') + '" ' + (s.available ? 'onclick="window.selectBookingSlot(\'' + day.date + '\', \'' + s.time + '\', \'' + (s.location || '').replace(/'/g, "\\\\'") + '\')"' : 'disabled') + '>' + s.time + '</button>';
+                            }).join('') + '</div></div>';
+                        }).join(''))}
+                    </div>
+                </div>
+
+                ${selectedSlot ? `
+                <!-- Confirm Button -->
+                <button class="btn-primary" onclick="window.showBookingConfirmation()" style="width: 100%; border-radius: 16px; height: 56px; font-size: 16px; font-weight: 800; margin-top: 0.5rem; margin-bottom: 1rem;">
+                    <i data-lucide="calendar-check" size="18" style="margin-right: 8px;"></i> ${t.confirm_booking_btn || 'Request this slot'}
+                </button>
+                ` : ''}
+            </div>
+        `;
+
+        // Load slots on first render
+        if (!state._bookingSlotsLoaded || state._bookingSlotsLoadedWeek !== weekStartState) {
+            setTimeout(() => window.loadBookingWeek(), 50);
+        }
     } else if (view === 'shop') {
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
@@ -4085,6 +4459,98 @@ function _renderViewImpl() {
                         </div>
                     </div>`;
                 })() : ''}
+                ${state.currentSchool?.profile_type === 'private_teacher' ? (() => {
+                    const acceptedReqs = (state.privateClassRequests || []).filter(r => r.status === 'accepted');
+                    const sortedAccepted = [...acceptedReqs].sort((a, b) => (a.requested_date + a.requested_time).localeCompare(b.requested_date + b.requested_time));
+                    const viewMode = state.teacherAcceptedClassesView || 'list';
+                    const expanded = state.teacherAcceptedClassesExpanded !== false;
+                    return `
+                    <div class="teacher-accepted-classes-expandable ${expanded ? 'expanded' : ''}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
+                        <div class="admin-reg-header" onclick="toggleExpandableNoRender('teacherAcceptedClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="calendar-check" size="16" style="opacity: 0.6;"></i>
+                                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.accepted_private_classes || 'Accepted private classes'}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                ${acceptedReqs.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${acceptedReqs.length}</span>` : ''}
+                                <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
+                            </div>
+                        </div>
+                        <div id="teacher-accepted-classes-content" style="padding: 0.8rem 0; display: ${expanded ? '' : 'none'};">
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <button type="button" class="btn-tab ${viewMode === 'list' ? 'active' : ''}" onclick="state.teacherAcceptedClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === 'list' ? 'var(--secondary)' : 'transparent'}; color: ${viewMode === 'list' ? 'white' : 'var(--text-primary)'};">${t.list_view || 'List'}</button>
+                                <button type="button" class="btn-tab ${viewMode === 'calendar' ? 'active' : ''}" onclick="state.teacherAcceptedClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === 'calendar' ? 'var(--secondary)' : 'transparent'}; color: ${viewMode === 'calendar' ? 'white' : 'var(--text-primary)'};">${t.calendar_view || 'Calendar'}</button>
+                            </div>
+                            ${viewMode === 'list' ? `
+                            ${sortedAccepted.length === 0 ? `
+                            <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">
+                                <i data-lucide="inbox" size="24" style="opacity: 0.2; margin-bottom: 0.3rem;"></i>
+                                <div>${t.no_accepted_private_classes || 'No accepted private classes yet'}</div>
+                            </div>
+                            ` : sortedAccepted.map(r => {
+                                const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                                const dateLabel = window.formatShortDate ? window.formatShortDate(new Date(r.requested_date + 'T00:00:00'), state.language) : r.requested_date;
+                                return `
+                                <div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
+                                    <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; font-size: 14px;">${(studentName || '').replace(/</g, '&lt;')}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(r.requested_time || '').replace(/</g, '&lt;')}${r.location ? ' &middot; ' + (r.location || '').replace(/</g, '&lt;') : ''}</div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                            ` : (() => {
+                                const calDateStr = state.teacherAcceptedCalendarDate || (new Date().toISOString().slice(0, 7) + '-01');
+                                const calDate = new Date(calDateStr + 'T12:00:00');
+                                const prevMonth = (() => { const x = new Date(calDate); x.setMonth(x.getMonth() - 1); return x.toISOString().slice(0, 7) + '-01'; })();
+                                const nextMonth = (() => { const x = new Date(calDate); x.setMonth(x.getMonth() + 1); return x.toISOString().slice(0, 7) + '-01'; })();
+                                const monthLabel = calDate.toLocaleDateString(state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US', { month: 'long', year: 'numeric' });
+                                const grid = window.getMonthCalendarGrid ? window.getMonthCalendarGrid(calDateStr, acceptedReqs) : [];
+                                const selectedDate = state.teacherAcceptedCalendarSelectedDate;
+                                const selectedEvents = selectedDate ? (acceptedReqs.filter(r => r.requested_date === selectedDate) || []) : [];
+                                const weekdays = state.language === 'es' ? ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] : state.language === 'de' ? ['Mo','Di','Mi','Do','Fr','Sa','So'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                                return `
+                                <div class="private-classes-calendar">
+                                    <div class="private-classes-calendar-nav">
+                                        <button type="button" class="private-classes-calendar-btn" onclick="state.teacherAcceptedCalendarDate='${prevMonth}'; renderView();"><i data-lucide="chevron-left" size="20"></i></button>
+                                        <span class="private-classes-calendar-month">${monthLabel}</span>
+                                        <button type="button" class="private-classes-calendar-btn" onclick="state.teacherAcceptedCalendarDate='${nextMonth}'; renderView();"><i data-lucide="chevron-right" size="20"></i></button>
+                                    </div>
+                                    <button type="button" class="private-classes-calendar-today" onclick="state.teacherAcceptedCalendarDate=null; state.teacherAcceptedCalendarSelectedDate=null; renderView();">${t.today || 'Today'}</button>
+                                    <div class="private-classes-calendar-weekdays">
+                                        ${weekdays.map(w => `<span class="private-classes-calendar-wd">${w}</span>`).join('')}
+                                    </div>
+                                    <div class="private-classes-calendar-grid">
+                                        ${grid.map(cell => {
+                                            const isSelected = cell.dateStr === selectedDate;
+                                            const hasEvents = cell.events.length > 0;
+                                            return `
+                                            <button type="button" class="private-classes-calendar-day ${!cell.isCurrentMonth ? 'other-month' : ''} ${isSelected ? 'selected' : ''}" onclick="state.teacherAcceptedCalendarSelectedDate='${cell.dateStr}'; renderView();">
+                                                <span class="private-classes-calendar-day-num">${cell.dayNum}</span>
+                                                ${hasEvents ? `<span class="private-classes-calendar-dots">${cell.events.slice(0, 3).map(() => '<span class="dot"></span>').join('')}</span>` : ''}
+                                            </button>`;
+                                        }).join('')}
+                                    </div>
+                                    ${selectedDate ? `
+                                    <div class="private-classes-calendar-detail">
+                                        <div class="private-classes-calendar-detail-title">${window.formatShortDate ? window.formatShortDate(new Date(selectedDate + 'T00:00:00'), state.language) : selectedDate}</div>
+                                        ${selectedEvents.length === 0 ? `<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 13px;">${t.no_classes_this_day || 'No classes this day'}</div>` : selectedEvents.map(r => {
+                                            const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                                            return `<div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
+                                                <i data-lucide="clock" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
+                                                <div style="flex: 1;">
+                                                    <div style="font-weight: 600; font-size: 14px;">${(studentName || '').replace(/</g, '&lt;')}</div>
+                                                    <div style="font-size: 12px; color: var(--text-secondary);">${(r.requested_time || '').replace(/</g, '&lt;')}${r.location ? ' &middot; ' + (r.location || '').replace(/</g, '&lt;') : ''}</div>
+                                                </div>
+                                            </div>`;
+                                        }).join('')}
+                                    </div>
+                                    ` : ''}
+                                </div>`;
+                            })()}
+                        </div>
+                    </div>`;
+                })() : ''}
                 <div class="students-filter-expandable ${state.studentsFilterExpanded ? 'expanded' : ''}" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
                     <div class="students-filter-header" onclick="toggleExpandableNoRender('studentsFilter')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
                         <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.filters_label || 'Filters'}</span>
@@ -4355,6 +4821,56 @@ function _renderViewImpl() {
                 <div class="ios-large-title">${t.nav_settings}</div>
             </div>
 
+            ${state.currentSchool?.profile_type === 'private_teacher' ? `
+            <!-- TEACHER AVAILABILITY -->
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.teacher_availability_title || 'Availability'}
+            </div>
+            <div class="ios-list" style="overflow: visible;">
+                ${(state.teacherAvailability || []).map(a => `
+                    <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; overflow: visible;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                <div class="custom-dropdown-container" style="overflow: visible; min-width: 70px;">
+                                    <div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('avail-${a.id}')" style="background: var(--system-gray6); border-radius: 10px; padding: 8px 10px; min-height: auto; width: auto; justify-content: space-between; gap: 6px;">
+                                        <span style="font-size: 13px; font-weight: 700;">${t[a.day_of_week.toLowerCase()] || a.day_of_week}</span>
+                                        <i data-lucide="chevron-down" size="12" style="opacity: 0.4;"></i>
+                                    </div>
+                                    <div class="custom-dropdown-list" id="dropdown-list-avail-${a.id}">
+                                        ${daysOrder.map(d => `
+                                            <div class="dropdown-item ${a.day_of_week === d ? 'selected' : ''}" onclick="window.updateTeacherAvail('${a.id}', 'day_of_week', '${d}')">
+                                                <span>${t[d.toLowerCase()]}</span>
+                                                ${a.day_of_week === d ? '<i data-lucide="check" size="14"></i>' : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="window.deleteTeacherAvail('${a.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 5px; cursor: pointer;">
+                                <i data-lucide="trash-2" size="18"></i>
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.start_time_label}</label>
+                                <input type="time" value="${a.start_time || '09:00'}" onchange="window.updateTeacherAvail('${a.id}', 'start_time', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
+                            </div>
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px;">
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.end_time_label}</label>
+                                <input type="time" value="${a.end_time || '10:00'}" onchange="window.updateTeacherAvail('${a.id}', 'end_time', this.value)" style="background: transparent; border: none; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; cursor: pointer; padding: 0;">
+                            </div>
+                            <div style="background: var(--system-gray6); border-radius: 12px; padding: 8px 12px; opacity: 0.8;">
+                                <label style="font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; opacity: 0.6;">${t.class_location || 'Location'}</label>
+                                <input type="text" value="${a.location || ''}" onchange="window.updateTeacherAvail('${a.id}', 'location', this.value)" placeholder="${t.location_placeholder || 'Optional'}" style="background: transparent; border: none; font-size: 13px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none; padding: 0;">
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+                <div class="ios-list-item" onclick="window.addTeacherAvail()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                    <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_availability || 'Add availability'}
+                </div>
+            </div>
+            ` : `
             <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.mgmt_classes_title}
             </div>
@@ -4467,6 +4983,7 @@ function _renderViewImpl() {
                 </div>
             </div>
             ` : ''}
+            `}
 
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.plans_label}
@@ -4503,6 +5020,31 @@ function _renderViewImpl() {
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} Plan
                 </div>
             </div>
+
+            ${state.currentSchool?.profile_type === 'private_teacher' ? `
+            <!-- PRIVATE CLASS REQUESTS -->
+            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.private_class_requests_title || 'Private class requests'}
+            </div>
+            <div style="padding: 0 1.2rem; margin-top: 0.5rem;">
+                ${(state.privateClassRequests || []).length === 0 ? `
+                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t.no_private_requests || 'No requests yet'}</div>
+                ` : (state.privateClassRequests || []).map(r => {
+                    const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                    return `
+                    <div class="pcr-card">
+                        <div class="pcr-card-header">
+                            <span class="pcr-card-name">${(studentName || '').replace(/</g, '&lt;')}</span>
+                            <span class="pcr-card-status ${r.status}">${r.status}</span>
+                        </div>
+                        <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
+                        ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + r.location + '</div>' : ''}
+                        ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || '').replace(/</g, '&lt;') + '"</div>' : ''}
+                        ${r.status === 'pending' ? '<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.accept_btn || 'Accept') + '</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.decline_btn || 'Decline') + '</button></div>' : ''}
+                    </div>`;
+                }).join('')}
+            </div>
+            ` : ''}
 
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.transfer_details_label}
@@ -4893,6 +5435,26 @@ function _renderViewImpl() {
     document.getElementById('dev-login-trigger').classList.toggle('hidden', state.currentUser !== null);
     document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
     document.getElementById('admin-nav').classList.toggle('hidden', !showNav || !state.isAdmin);
+
+    // Swap student nav first tab for private teachers
+    const studentNavFirst = document.querySelector('#student-nav .nav-item[data-view="schedule"], #student-nav .nav-item[data-view="teacher-booking"]');
+    if (studentNavFirst) {
+        const isPrivateTeacher = state.currentSchool?.profile_type === 'private_teacher';
+        const t = DANCE_LOCALES[state.language || 'en'];
+        if (isPrivateTeacher) {
+            studentNavFirst.setAttribute('data-view', 'teacher-booking');
+            const icon = studentNavFirst.querySelector('[data-lucide]');
+            if (icon) icon.setAttribute('data-lucide', 'calendar-clock');
+            const label = studentNavFirst.querySelector('span');
+            if (label) label.textContent = t.nav_book_class || 'Book Class';
+        } else {
+            studentNavFirst.setAttribute('data-view', 'schedule');
+            const icon = studentNavFirst.querySelector('[data-lucide]');
+            if (icon) icon.setAttribute('data-lucide', 'calendar');
+            const label = studentNavFirst.querySelector('span');
+            if (label) label.textContent = t.nav_schedule || 'Schedule';
+        }
+    }
     const siteFooter = document.querySelector('.site-footer');
     if (siteFooter) siteFooter.classList.toggle('hidden', view === 'school-selection');
     document.body.classList.toggle('landing-page', view === 'school-selection');
@@ -5014,6 +5576,39 @@ window.formatShortDate = (date, lang) => {
     if (!date) return '';
     const locale = lang === 'es' ? 'es-ES' : lang === 'de' ? 'de-DE' : 'en-US';
     return new Date(date).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+// Get calendar grid for a month (Mon–Sun weeks). Returns [{dateStr, dayNum, isCurrentMonth, events}, ...]
+window.getMonthCalendarGrid = (monthDateStr, acceptedReqs) => {
+    const d = new Date((monthDateStr || new Date().toISOString().slice(0, 7) + '-01') + 'T12:00:00');
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const firstDayOfWeek = firstDay.getDay();
+    const mondayOffset = firstDayOfWeek === 0 ? -6 : 1 - firstDayOfWeek;
+    const startCell = new Date(firstDay);
+    startCell.setDate(firstDay.getDate() + mondayOffset);
+    const lastDayOfWeek = lastDay.getDay();
+    const sundayOffset = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+    const endCell = new Date(lastDay);
+    endCell.setDate(lastDay.getDate() + sundayOffset);
+    const eventsByDate = {};
+    (acceptedReqs || []).forEach(r => {
+        if (!eventsByDate[r.requested_date]) eventsByDate[r.requested_date] = [];
+        eventsByDate[r.requested_date].push(r);
+    });
+    const cells = [];
+    const cur = new Date(startCell);
+    while (cur <= endCell) {
+        const dateStr = cur.toISOString().slice(0, 10);
+        const dayNum = cur.getDate();
+        const isCurrentMonth = cur.getMonth() === month;
+        const events = eventsByDate[dateStr] || [];
+        cells.push({ dateStr, dayNum, isCurrentMonth, events });
+        cur.setDate(cur.getDate() + 1);
+    }
+    return cells;
 };
 
 window.loadClassAvailability = async () => {
@@ -6308,7 +6903,328 @@ window.createNewSchool = async () => {
 
 window.createNewSchoolWithAdmin = async () => {
     state.currentView = 'platform-add-school';
+    state._newProfileType = 'school';
     renderView();
+};
+
+window.selectProfileType = (type) => {
+    state._newProfileType = type;
+    const schoolBtn = document.getElementById('profile-type-school');
+    const teacherBtn = document.getElementById('profile-type-teacher');
+    if (schoolBtn && teacherBtn) {
+        schoolBtn.classList.toggle('active', type === 'school');
+        teacherBtn.classList.toggle('active', type === 'private_teacher');
+    }
+};
+
+// Teacher Availability CRUD
+window.addTeacherAvail = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+        const { data, error } = await supabaseClient.rpc('upsert_teacher_availability', {
+            p_school_id: state.currentSchool.id,
+            p_day_of_week: 'Mon',
+            p_start_time: '09:00',
+            p_end_time: '10:00'
+        });
+        if (error) throw error;
+        await fetchAllData();
+    } catch (e) { alert('Error adding availability: ' + (e.message || e)); }
+};
+
+window.updateTeacherAvail = async (id, field, value) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const row = (state.teacherAvailability || []).find(a => a.id === id);
+    if (!row) return;
+    const updated = { ...row, [field]: value };
+    try {
+        const { error } = await supabaseClient.rpc('upsert_teacher_availability', {
+            p_school_id: state.currentSchool.id,
+            p_day_of_week: updated.day_of_week,
+            p_start_time: updated.start_time,
+            p_end_time: updated.end_time,
+            p_location: updated.location || null,
+            p_id: id
+        });
+        if (error) throw error;
+        // Close dropdown after day selection
+        const ddList = document.getElementById('dropdown-list-avail-' + id);
+        if (ddList) ddList.classList.remove('open');
+        await fetchAllData();
+    } catch (e) { alert('Error updating availability: ' + (e.message || e)); }
+};
+
+window.deleteTeacherAvail = async (id) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+        const { error } = await supabaseClient.rpc('delete_teacher_availability', {
+            p_id: id,
+            p_school_id: state.currentSchool.id
+        });
+        if (error) throw error;
+        await fetchAllData();
+    } catch (e) { alert('Error deleting availability: ' + (e.message || e)); }
+};
+
+// Teacher Booking: load week slots, navigate, select, confirm
+window.loadBookingWeek = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const weekStart = state._bookingWeekStart;
+    if (!weekStart) return;
+    state._bookingSlotsLoading = true;
+    renderView();
+    try {
+        const { data, error } = await supabaseClient.rpc('get_available_slots_for_week', {
+            p_school_id: state.currentSchool.id,
+            p_week_start: weekStart
+        });
+        if (error) throw error;
+        state._bookingWeekSlots = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+    } catch (e) {
+        console.error('loadBookingWeek error:', e);
+        state._bookingWeekSlots = [];
+    }
+    state._bookingSlotsLoading = false;
+    state._bookingSlotsLoaded = true;
+    state._bookingSlotsLoadedWeek = weekStart;
+    renderView();
+};
+
+window.shiftBookingWeek = (direction) => {
+    const current = new Date((state._bookingWeekStart || new Date().toISOString().split('T')[0]) + 'T00:00:00');
+    current.setDate(current.getDate() + (direction * 7));
+    state._bookingWeekStart = current.toISOString().split('T')[0];
+    state._bookingSelectedSlot = null;
+    window.loadBookingWeek();
+};
+
+window.selectBookingSlot = (date, time, location) => {
+    if (state._bookingSelectedSlot && state._bookingSelectedSlot.date === date && state._bookingSelectedSlot.time === time) {
+        state._bookingSelectedSlot = null;
+    } else {
+        state._bookingSelectedSlot = { date, time, location };
+    }
+    renderView();
+};
+
+window.showBookingConfirmation = () => {
+    const slot = state._bookingSelectedSlot;
+    if (!slot) return;
+    const t = DANCE_LOCALES[state.language || 'en'];
+    const school = state.currentSchool || {};
+    const teacherName = school.name || 'Teacher';
+    const cheapestSub = (state.subscriptions || []).reduce((min, s) => (!min || (s.price && s.price < min.price)) ? s : min, null);
+    const priceLabel = cheapestSub ? ((CURRENCY_SYMBOLS[school.currency || 'MXN'] || '$') + cheapestSub.price) : '';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'teacher-booking-confirm-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+        <div class="teacher-booking-confirm-sheet">
+            <div class="teacher-booking-confirm-title">${t.confirm_request_title || 'Confirm class request'}</div>
+            <div class="teacher-booking-confirm-row"><span>${t.teacher_label || 'Teacher'}</span><strong>${teacherName}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong>${slot.date}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.time_label || 'Time'}</span><strong>${slot.time}</strong></div>
+            ${slot.location ? '<div class="teacher-booking-confirm-row"><span>' + (t.location_label || 'Location') + '</span><strong>' + slot.location + '</strong></div>' : ''}
+            ${priceLabel ? '<div class="teacher-booking-confirm-row"><span>' + (t.price_label || 'Price') + '</span><strong>' + priceLabel + '</strong></div>' : ''}
+            <div style="margin-top: 12px;">
+                <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.message_label || 'Message (optional)'}</label>
+                <textarea id="booking-message" rows="2" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box; resize: none;" placeholder="${t.booking_message_placeholder || 'e.g. I\'d like to focus on…'}"></textarea>
+            </div>
+            <div class="teacher-booking-confirm-actions">
+                <button class="teacher-booking-confirm-btn secondary" onclick="this.closest('.teacher-booking-confirm-overlay').remove()">${t.cancel || 'Cancel'}</button>
+                <button class="teacher-booking-confirm-btn primary" onclick="window.submitBookingRequest(this)">${t.send_request_btn || 'Send request'}</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+};
+
+window.submitBookingRequest = async (btn) => {
+    const slot = state._bookingSelectedSlot;
+    if (!slot || !supabaseClient || !state.currentUser?.id) return;
+    btn.disabled = true;
+    btn.textContent = '...';
+    const message = (document.getElementById('booking-message')?.value || '').trim();
+    try {
+        const { error } = await supabaseClient.rpc('create_private_class_request', {
+            p_school_id: state.currentSchool.id,
+            p_student_id: String(state.currentUser.id),
+            p_requested_date: slot.date,
+            p_requested_time: slot.time,
+            p_location: slot.location || null,
+            p_message: message || null
+        });
+        if (error) throw error;
+        state._bookingSelectedSlot = null;
+        const overlay = btn.closest('.teacher-booking-confirm-overlay');
+        if (overlay) overlay.remove();
+        const t = DANCE_LOCALES[state.language || 'en'];
+        window.showBookingSuccessModal(t.request_sent_booking_title || 'Request sent!', t.request_sent_booking_msg || t.request_sent_success || 'The teacher will review it.');
+        window.loadBookingWeek();
+    } catch (e) {
+        btn.disabled = false;
+        btn.textContent = DANCE_LOCALES[state.language || 'en'].send_request_btn || 'Send request';
+        alert('Error: ' + (e.message || e));
+    }
+};
+
+// Package check: student has package with school (balance > 0 or unlimited or active pack)
+window.studentHasPackageWithSchool = (schoolId) => {
+    if (!schoolId || !state.allEnrollments?.length) return false;
+    const enrollment = state.allEnrollments.find(e => e.school_id === schoolId);
+    if (!enrollment) return false;
+    const balance = enrollment.balance;
+    if (balance === null) return true; // unlimited
+    if (typeof balance === 'number' && balance > 0) return true;
+    const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
+    const now = new Date();
+    return packs.some(p => {
+        const exp = p?.expires_at ? new Date(p.expires_at) : null;
+        return exp && exp > now;
+    });
+};
+
+// Teacher Booking (Student) - fetch slots, week nav, confirm
+window.fetchTeacherBookingSlots = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const weekStart = state._teacherBookingWeekStart || (() => {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const m = new Date(d);
+        m.setDate(diff);
+        return m.toISOString().slice(0, 10);
+    })();
+    try {
+        const { data, error } = await supabaseClient.rpc('get_available_slots_for_week', {
+            p_school_id: state.currentSchool.id,
+            p_week_start: weekStart
+        });
+        if (error) throw error;
+        state._teacherBookingSlots = Array.isArray(data) ? data : [];
+        state._teacherBookingWeekStart = weekStart;
+        state._teacherBookingLoadedWeek = weekStart;
+    } catch (e) {
+        console.warn('fetchTeacherBookingSlots:', e);
+        state._teacherBookingSlots = [];
+    }
+    if (state.currentView === 'teacher-booking') renderView();
+};
+
+window.changeTeacherBookingWeek = (delta) => {
+    const cur = state._teacherBookingWeekStart || (() => {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const m = new Date(d);
+        m.setDate(diff);
+        return m.toISOString().slice(0, 10);
+    })();
+    const d = new Date(cur + 'T12:00:00');
+    d.setDate(d.getDate() + 7 * delta);
+    state._teacherBookingWeekStart = d.toISOString().slice(0, 10);
+    state._teacherBookingSlots = [];
+    state._teacherBookingLoadedWeek = null;
+    renderView();
+};
+
+window.showTeacherBookingConfirm = (date, time, location) => {
+    if (!window.studentHasPackageWithSchool(state.currentSchool?.id)) {
+        const t = DANCE_LOCALES[state.language || 'en'];
+        alert(t.need_package_to_book || 'You need a package to request private classes. Visit the Shop to buy one.');
+        return;
+    }
+    state._teacherBookingConfirm = { date, time, location };
+    const overlay = document.getElementById('teacher-booking-confirm-overlay');
+    const details = document.getElementById('teacher-booking-confirm-details');
+    const t = DANCE_LOCALES[state.language || 'en'];
+    const school = state.currentSchool;
+    const cheapestSub = (state.subscriptions || []).filter(s => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+    const priceStr = cheapestSub ? (typeof window.formatPrice === 'function' ? window.formatPrice(cheapestSub.price, school?.currency || 'MXN') : cheapestSub.price) : '—';
+    if (overlay && details) {
+        details.innerHTML = `
+            <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong>${date}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.start_time_label || 'Time'}</span><strong>${time}</strong></div>
+            ${location ? `<div class="teacher-booking-confirm-row"><span>${t.class_location || 'Location'}</span><strong>${location}</strong></div>` : ''}
+            <div class="teacher-booking-confirm-row"><span>${t.price_label || 'Price'}</span><strong>${priceStr}</strong></div>
+        `;
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'flex';
+        const btn = document.getElementById('teacher-booking-confirm-btn');
+        if (btn) {
+            btn.onclick = () => window.submitTeacherBookingRequest();
+        }
+    }
+};
+
+window.hideTeacherBookingConfirm = () => {
+    state._teacherBookingConfirm = null;
+    const overlay = document.getElementById('teacher-booking-confirm-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+    }
+};
+
+window.showBookingSuccessModal = (title, message) => {
+    const t = DANCE_LOCALES[state.language || 'en'];
+    const overlay = document.createElement('div');
+    overlay.className = 'booking-success-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); if (window.lucide) window.lucide.createIcons(); } };
+    overlay.innerHTML = `
+        <div class="booking-success-card" onclick="event.stopPropagation()">
+            <div class="booking-success-icon">
+                <i data-lucide="check-circle" size="36"></i>
+            </div>
+            <h2 class="booking-success-title">${(title || '').replace(/</g, '&lt;')}</h2>
+            <p class="booking-success-message">${(message || '').replace(/</g, '&lt;')}</p>
+            <button type="button" class="booking-success-btn" onclick="this.closest('.booking-success-overlay').remove(); if (window.lucide) window.lucide.createIcons();">${t.close || 'OK'}</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.submitTeacherBookingRequest = async () => {
+    const c = state._teacherBookingConfirm;
+    if (!c || !supabaseClient || !state.currentSchool?.id || !state.currentUser?.id) return;
+    if (!window.studentHasPackageWithSchool(state.currentSchool.id)) {
+        const t = DANCE_LOCALES[state.language || 'en'];
+        alert(t.need_package_to_book || 'You need a package to request private classes. Visit the Shop to buy one.');
+        return;
+    }
+    try {
+        const { error } = await supabaseClient.rpc('create_private_class_request', {
+            p_school_id: state.currentSchool.id,
+            p_student_id: String(state.currentUser.id),
+            p_requested_date: c.date,
+            p_requested_time: c.time,
+            p_location: c.location || null,
+            p_message: null
+        });
+        if (error) throw error;
+        window.hideTeacherBookingConfirm();
+        state._teacherBookingConfirm = null;
+        const t = DANCE_LOCALES[state.language || 'en'];
+        window.showBookingSuccessModal(t.request_sent_booking_title || 'Request sent!', t.request_sent_booking_msg || t.request_sent || 'The teacher will confirm it.');
+        await window.fetchTeacherBookingSlots();
+    } catch (e) {
+        alert('Error: ' + (e.message || e));
+    }
+};
+
+// Private Class Requests: accept/decline
+window.respondToPrivateClassRequest = async (requestId, accept) => {
+    if (!supabaseClient) return;
+    try {
+        const { error } = await supabaseClient.rpc('teacher_respond_to_request', {
+            p_request_id: requestId,
+            p_accept: accept
+        });
+        if (error) throw error;
+        await fetchAllData();
+    } catch (e) { alert('Error: ' + (e.message || e)); }
 };
 
 window.updateNewSchoolCityOptions = () => {
@@ -6356,7 +7272,8 @@ window.submitNewSchoolWithAdmin = async () => {
             const hasDiscoveryData = slug || country || city || description || genres.length > 0;
 
             // 2. Create School with discovery data in one RPC (avoids session/auth issues between calls)
-            const insertPayload = { p_name: schoolName };
+            const profileType = state._newProfileType || 'school';
+            const insertPayload = { p_name: schoolName, p_profile_type: profileType };
             if (hasDiscoveryData) {
                 insertPayload.p_discovery_slug = slug || null;
                 insertPayload.p_country = country || null;
@@ -8379,7 +9296,7 @@ logoEl.addEventListener('mousedown', () => {
     logoPressTimer = setTimeout(() => {
         isLongPress = true;
         state.isAdmin = !state.isAdmin;
-        state.currentView = state.isAdmin ? 'admin-students' : 'schedule';
+        state.currentView = state.isAdmin ? 'admin-students' : (state.currentSchool?.profile_type === 'private_teacher' ? 'teacher-booking' : 'schedule');
         renderView();
         window.scrollTo(0, 0);
     }, 2000);
@@ -8501,7 +9418,7 @@ logoEl.addEventListener('click', () => {
     const isAdminView = adminViews.includes(state.currentView) || (state.currentView && state.currentView.startsWith('admin-'));
     if (isStudent && isAdminView) {
         state.isAdmin = false;
-        state.currentView = (saved.currentView === 'qr' || saved.currentView === 'shop' || saved.currentView === 'schedule') ? saved.currentView : 'qr';
+        state.currentView = (saved.currentView === 'qr' || saved.currentView === 'shop' || saved.currentView === 'schedule' || saved.currentView === 'teacher-booking') ? saved.currentView : 'qr';
         state.competitionId = null;
         state.competitionSchoolId = null;
         state.competitionTab = 'edit';

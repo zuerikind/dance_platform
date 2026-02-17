@@ -4818,3 +4818,535 @@ select.filter-control {
   padding-bottom: env(safe-area-inset-bottom, 0px);
   line-height: 1.5;
 }
+
+/* Profile Type Selector (Dev Dashboard: Add School/Teacher) */
+.profile-type-btn {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.profile-type-btn.active {
+  background: var(--system-blue);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.25);
+}
+
+/* Teacher Availability Form */
+.teacher-avail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.teacher-avail-row:last-child { border-bottom: none; }
+.teacher-avail-day {
+  font-weight: 700;
+  font-size: 13px;
+  min-width: 40px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.teacher-avail-time {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.teacher-avail-location {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.teacher-avail-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Private Class Requests */
+.pcr-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+}
+.pcr-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.pcr-card-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.pcr-card-status {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.pcr-card-status.pending { background: rgba(255,204,0,0.15); color: #e6a800; }
+.pcr-card-status.accepted { background: rgba(52,199,89,0.15); color: #34c759; }
+.pcr-card-status.declined { background: rgba(255,59,48,0.15); color: #ff3b30; }
+.pcr-card-detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+.pcr-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.pcr-btn-accept {
+  flex: 1;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  background: rgba(52,199,89,0.15);
+  color: #34c759;
+  transition: background 0.2s;
+}
+.pcr-btn-accept:hover { background: rgba(52,199,89,0.3); }
+.pcr-btn-decline {
+  flex: 1;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  background: rgba(255,59,48,0.1);
+  color: #ff3b30;
+  transition: background 0.2s;
+}
+.pcr-btn-decline:hover { background: rgba(255,59,48,0.25); }
+
+/* Teacher Booking (Student View) - Scheduling Card */
+.teacher-booking-card {
+  background: var(--bg-card);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.teacher-booking-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 18px 14px;
+}
+.teacher-booking-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-body);
+  flex-shrink: 0;
+}
+.teacher-booking-info {
+  flex: 1;
+}
+.teacher-booking-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+.teacher-booking-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.teacher-booking-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.teacher-booking-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--system-blue);
+}
+.teacher-booking-location-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.teacher-booking-location-bar select {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+}
+.teacher-booking-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+}
+.teacher-booking-week-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.teacher-booking-week-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.teacher-booking-week-btn:hover {
+  background: var(--bg-body);
+}
+.teacher-booking-days {
+  padding: 0 18px 18px;
+}
+.teacher-booking-day {
+  margin-bottom: 14px;
+}
+.teacher-booking-day-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.teacher-booking-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.teacher-booking-slot {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.teacher-booking-slot.available {
+  background: var(--bg-body);
+  color: var(--text-primary);
+}
+.teacher-booking-slot.available:hover {
+  background: var(--system-blue);
+  color: #fff;
+  border-color: var(--system-blue);
+}
+.teacher-booking-slot.available.selected {
+  background: var(--system-blue);
+  color: #fff;
+  border-color: var(--system-blue);
+}
+.teacher-booking-slot.unavailable {
+  background: transparent;
+  color: var(--text-muted);
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.teacher-booking-empty-day {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Booking Confirmation Overlay */
+.teacher-booking-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 5000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeInOverlay 0.25s ease;
+}
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.teacher-booking-confirm-sheet {
+  background: var(--bg-card);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  animation: slideUpSheet 0.3s ease;
+}
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.teacher-booking-confirm-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  color: var(--text-primary);
+}
+.teacher-booking-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 6px 0;
+  color: var(--text-secondary);
+}
+.teacher-booking-confirm-row strong {
+  color: var(--text-primary);
+}
+.teacher-booking-confirm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.teacher-booking-confirm-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.teacher-booking-confirm-btn.primary {
+  background: var(--system-blue);
+  color: #fff;
+}
+.teacher-booking-confirm-btn.primary:hover {
+  filter: brightness(1.1);
+}
+.teacher-booking-confirm-btn.secondary {
+  background: var(--bg-body);
+  color: var(--text-primary);
+}
+.teacher-booking-confirm-btn.secondary:hover {
+  background: var(--border);
+}
+
+/* Private classes calendar (admin accepted classes) */
+.private-classes-calendar {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid var(--border);
+}
+.private-classes-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.private-classes-calendar-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.private-classes-calendar-btn:hover {
+  background: var(--border);
+}
+.private-classes-calendar-month {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.private-classes-calendar-today {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--system-blue);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.private-classes-calendar-today:hover {
+  background: rgba(91, 141, 217, 0.1);
+}
+.private-classes-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.private-classes-calendar-wd {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.private-classes-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  min-height: 200px; /* Ensure calendar grid is always visible */
+}
+.private-classes-calendar-day {
+  aspect-ratio: 1;
+  min-height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: background 0.2s;
+}
+.private-classes-calendar-day:hover {
+  background: var(--bg-body);
+}
+.private-classes-calendar-day.other-month {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+.private-classes-calendar-day.selected {
+  background: var(--system-blue);
+  color: #fff;
+}
+.private-classes-calendar-day.selected.other-month {
+  opacity: 1;
+}
+.private-classes-calendar-dots {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.private-classes-calendar-dots .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--secondary);
+}
+.private-classes-calendar-day.selected .private-classes-calendar-dots .dot {
+  background: rgba(255,255,255,0.9);
+}
+.private-classes-calendar-detail {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.private-classes-calendar-detail-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+/* Booking success modal - styled confirmation window */
+.booking-success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 6000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeInOverlay 0.25s ease;
+}
+.booking-success-card {
+  background: var(--bg-card);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 340px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  animation: successCardPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes successCardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.booking-success-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--system-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.booking-success-icon i {
+  display: block;
+}
+.booking-success-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.3px;
+}
+.booking-success-message {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 1.5rem;
+}
+.booking-success-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--system-blue);
+  color: #fff;
+  transition: filter 0.2s;
+}
+.booking-success-btn:hover {
+  filter: brightness(1.1);
+}
+.booking-success-btn:active {
+  transform: scale(0.98);
+}
