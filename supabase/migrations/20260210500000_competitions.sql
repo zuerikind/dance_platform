@@ -65,11 +65,13 @@ CREATE INDEX IF NOT EXISTS idx_competition_registrations_school ON public.compet
 ALTER TABLE public.competitions ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: school admin for school_id, OR platform admin, OR (student: competition where school = student's school AND (is_active AND is_sign_in_active) OR student has a registration for this competition)
+DROP POLICY IF EXISTS "competitions_select_admin" ON public.competitions;
 CREATE POLICY "competitions_select_admin" ON public.competitions
   FOR SELECT USING (
     public.is_school_admin(school_id) OR public.is_platform_admin()
   );
 
+DROP POLICY IF EXISTS "competitions_select_student" ON public.competitions;
 CREATE POLICY "competitions_select_student" ON public.competitions
   FOR SELECT USING (
     (SELECT ctx.school_id FROM public.get_current_student_context() ctx LIMIT 1) = competitions.school_id
@@ -84,12 +86,15 @@ CREATE POLICY "competitions_select_student" ON public.competitions
   );
 
 -- INSERT/UPDATE/DELETE: school admin or platform admin only
+DROP POLICY IF EXISTS "competitions_insert" ON public.competitions;
 CREATE POLICY "competitions_insert" ON public.competitions
   FOR INSERT WITH CHECK (public.is_school_admin(school_id) OR public.is_platform_admin());
 
+DROP POLICY IF EXISTS "competitions_update" ON public.competitions;
 CREATE POLICY "competitions_update" ON public.competitions
   FOR UPDATE USING (public.is_school_admin(school_id) OR public.is_platform_admin());
 
+DROP POLICY IF EXISTS "competitions_delete" ON public.competitions;
 CREATE POLICY "competitions_delete" ON public.competitions
   FOR DELETE USING (public.is_school_admin(school_id) OR public.is_platform_admin());
 
@@ -99,9 +104,11 @@ CREATE POLICY "competitions_delete" ON public.competitions
 ALTER TABLE public.competition_registrations ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: school admin for school_id, OR student's own row
+DROP POLICY IF EXISTS "competition_registrations_select_admin" ON public.competition_registrations;
 CREATE POLICY "competition_registrations_select_admin" ON public.competition_registrations
   FOR SELECT USING (public.is_school_admin(school_id) OR public.is_platform_admin());
 
+DROP POLICY IF EXISTS "competition_registrations_select_student" ON public.competition_registrations;
 CREATE POLICY "competition_registrations_select_student" ON public.competition_registrations
   FOR SELECT USING (
     EXISTS (
@@ -111,6 +118,7 @@ CREATE POLICY "competition_registrations_select_student" ON public.competition_r
   );
 
 -- INSERT: student only for own row (enforced by RPC in practice; RLS allows if student_id matches current student and school matches)
+DROP POLICY IF EXISTS "competition_registrations_insert_student" ON public.competition_registrations;
 CREATE POLICY "competition_registrations_insert_student" ON public.competition_registrations
   FOR INSERT WITH CHECK (
     EXISTS (
@@ -120,6 +128,7 @@ CREATE POLICY "competition_registrations_insert_student" ON public.competition_r
   );
 
 -- UPDATE: student can update own row only when status = DRAFT; admin can update any in their school
+DROP POLICY IF EXISTS "competition_registrations_update_student" ON public.competition_registrations;
 CREATE POLICY "competition_registrations_update_student" ON public.competition_registrations
   FOR UPDATE USING (
     (EXISTS (SELECT 1 FROM public.get_current_student_context() ctx WHERE ctx.student_id = competition_registrations.student_id) AND status = 'DRAFT')
@@ -127,6 +136,7 @@ CREATE POLICY "competition_registrations_update_student" ON public.competition_r
     OR public.is_platform_admin()
   );
 
+DROP POLICY IF EXISTS "competition_registrations_delete" ON public.competition_registrations;
 CREATE POLICY "competition_registrations_delete" ON public.competition_registrations
   FOR DELETE USING (public.is_school_admin(school_id) OR public.is_platform_admin());
 

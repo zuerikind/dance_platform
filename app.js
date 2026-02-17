@@ -193,6 +193,8 @@ const DANCE_LOCALES = {
         discovery_filter_city: "City",
         discovery_filter_all: "All",
         discovery_not_found: "This studio doesn't have a detail page yet.",
+        discovery_sign_in_btn: "Sign in",
+        discovery_not_on_app: "This school is not on the app. Contact the teachers to see their classes and how to buy packages.",
         discovery_placeholder_upload_soon: "Will be uploaded soon.",
         discovery_location: "Location",
         discovery_classes: "Classes",
@@ -217,7 +219,7 @@ const DANCE_LOCALES = {
         dev_access_subtitle: "Enter platform developer credentials",
         footer_support: "Support",
         footer_contact: "Contact",
-        footer_copy: "Made with <3 by a salsero; © 2026 Bailadmin Systems. All rights reserved.",
+        footer_copy: "Made with <3 by a salsero; © 2026 Bailadmin Systems.",
         dev_login_btn: "Login",
         dev_dashboard_title: "Platform Developer",
         dev_school_inspector: "School Inspector",
@@ -226,6 +228,8 @@ const DANCE_LOCALES = {
         school_inactive: "Inactive",
         activate_school: "Activate",
         deactivate_school: "Deactivate",
+        school_on_platform: "On the platform",
+        school_on_discovery: "On discovery",
         dev_stats_schools: "Schools",
         dev_stats_students: "Total Students",
         dev_stats_plans: "Plans",
@@ -272,6 +276,8 @@ const DANCE_LOCALES = {
         school_inactive: "Inactive",
         activate_school: "Activate",
         deactivate_school: "Deactivate",
+        school_on_platform: "On the platform",
+        school_on_discovery: "On discovery",
         rename_school_prompt: "Enter new name for this school:",
         rename_school_success: "School name updated.",
         delete_school_confirm: "Are you sure you want to delete this school? ALL data (students, admins, payments, classes) will be permanently lost.",
@@ -279,6 +285,7 @@ const DANCE_LOCALES = {
         add_school_title: "Create New School",
         school_info_section: "Academy Details",
         admin_info_section: "Initial Administrator",
+        dev_discovery_optional: "Discovery profile (optional)",
         create_school_btn: "Execute Initialization",
         username_exists_msg: "This username is already taken. Please choose another one.",
         class_location: "Location",
@@ -465,6 +472,13 @@ const DANCE_LOCALES = {
         password_changed_success: "Password updated successfully.",
         auth_password_sync_failed: "Warning: the login service could not be updated. Use your OLD password to log in once, then change the password again in Settings.",
         admin_password_sync_hint: "Your password is correct for this school, but the login service could not accept it. If you recently changed your password in Settings, try logging in with your previous (old) password, then change it again.",
+        admin_account_needs_activation: "Your admin account was just created but the login service requires email confirmation. Ask your platform administrator to turn off \"Confirm email\" in Supabase: Authentication > Providers > Email. Then try logging in again.",
+        admin_email_modal_title: "Add your email",
+        admin_email_modal_msg: "For password reset and account security, please add your real email address. You will use this email to log in from now on.",
+        admin_email_save: "Save",
+        admin_email_later: "Later",
+        admin_email_saved: "Email saved!",
+        admin_email_invalid: "Please enter a valid email address.",
         profile_saved_success: "Profile saved.",
         password_mismatch: "New passwords do not match.",
         password_too_short: "Password must be at least 4 characters.",
@@ -476,6 +490,10 @@ const DANCE_LOCALES = {
         discovery_replace_title: "Replace image?",
         discovery_replace_message: "A photo is already set. Do you want to replace it with the new one?",
         discovery_replace_confirm: "Replace",
+        discovery_logo_crop_title: "Crop logo for discovery",
+        discovery_logo_crop_hint: "Position and zoom so your logo looks good in the square preview. This is how it will appear on the discovery page.",
+        discovery_logo_crop_preview_label: "Preview on discovery page:",
+        discovery_logo_crop_apply: "Apply",
         discovery_remove_image: "Remove",
         country_label: "Country",
         city_label: "City",
@@ -646,6 +664,8 @@ const DANCE_LOCALES = {
         discovery_filter_city: "Ciudad",
         discovery_filter_all: "Todos",
         discovery_not_found: "Este estudio aún no tiene página de detalle.",
+        discovery_sign_in_btn: "Iniciar sesión",
+        discovery_not_on_app: "Esta escuela no está en la app. Contacta a los profesores para ver sus clases y cómo comprar los paquetes.",
         discovery_placeholder_upload_soon: "Se subirá pronto.",
         discovery_location: "Ubicación",
         discovery_classes: "Clases",
@@ -669,7 +689,7 @@ const DANCE_LOCALES = {
         dev_access_subtitle: "Ingresa credenciales de desarrollador",
         footer_support: "Soporte",
         footer_contact: "Contacto",
-        footer_copy: "Hecho con <3 por un salsero; © 2026 Bailadmin Systems. Todos los derechos reservados.",
+        footer_copy: "Hecho con <3 por un salsero; © 2026 Bailadmin Systems.",
         dev_login_btn: "Entrar",
         dev_dashboard_title: "Plataforma Dev",
         dev_school_inspector: "Inspector de Escuela",
@@ -678,6 +698,8 @@ const DANCE_LOCALES = {
         school_inactive: "Inactiva",
         activate_school: "Activar",
         deactivate_school: "Desactivar",
+        school_on_platform: "En la plataforma",
+        school_on_discovery: "En discover",
         dev_stats_schools: "Escuelas",
         dev_stats_students: "Total Alumnos",
         dev_stats_plans: "Planes",
@@ -724,6 +746,8 @@ const DANCE_LOCALES = {
         school_inactive: "Inactiva",
         activate_school: "Activar",
         deactivate_school: "Desactivar",
+        school_on_platform: "En la plataforma",
+        school_on_discovery: "En discover",
         rename_school_prompt: "Ingresa el nuevo nombre de la escuela:",
         rename_school_success: "Nombre de escuela actualizado.",
         delete_school_confirm: "¿Estás seguro de que quieres eliminar esta escuela? TODOS los datos (alumnos, admins, pagos, clases) se perderán permanentemente.",
@@ -731,6 +755,7 @@ const DANCE_LOCALES = {
         add_school_title: "Crear Nueva Escuela",
         school_info_section: "Detalles de la Academia",
         admin_info_section: "Administrador Inicial",
+        dev_discovery_optional: "Perfil Discovery (opcional)",
         create_school_btn: "Ejecutar Inicialización",
         username_exists_msg: "Este usuario ya está en uso. Por favor elige otro.",
         class_location: "Ubicación",
@@ -917,6 +942,13 @@ const DANCE_LOCALES = {
         password_changed_success: "Contraseña actualizada.",
         auth_password_sync_failed: "Aviso: el servicio de inicio de sesión no pudo actualizarse. Usa tu contraseña ANTERIOR para entrar una vez, luego cámbiala de nuevo en Ajustes.",
         admin_password_sync_hint: "Tu contraseña es correcta para esta escuela, pero el servicio de inicio de sesión no la aceptó. Si cambiaste la contraseña en Ajustes, intenta entrar con tu contraseña anterior y cámbiala de nuevo.",
+        admin_account_needs_activation: "Tu cuenta de administrador acaba de crearse, pero el servicio de inicio de sesión exige confirmar el correo. Pide al administrador de la plataforma que desactive \"Confirmar email\" en Supabase: Autenticación > Proveedores > Email. Luego intenta entrar de nuevo.",
+        admin_email_modal_title: "Agrega tu correo",
+        admin_email_modal_msg: "Para recuperar tu contraseña y mayor seguridad, agrega tu correo electrónico real. Usarás este correo para iniciar sesión de ahora en adelante.",
+        admin_email_save: "Guardar",
+        admin_email_later: "Después",
+        admin_email_saved: "¡Correo guardado!",
+        admin_email_invalid: "Ingresa un correo electrónico válido.",
         profile_saved_success: "Perfil guardado.",
         password_mismatch: "Las contraseñas no coinciden.",
         password_too_short: "La contraseña debe tener al menos 4 caracteres.",
@@ -928,6 +960,10 @@ const DANCE_LOCALES = {
         discovery_replace_title: "¿Reemplazar imagen?",
         discovery_replace_message: "Ya hay una foto. ¿Quieres reemplazarla por la nueva?",
         discovery_replace_confirm: "Reemplazar",
+        discovery_logo_crop_title: "Recortar logo para discovery",
+        discovery_logo_crop_hint: "Posiciona y haz zoom para que tu logo se vea bien en el recuadro. Así se mostrará en la página de discovery.",
+        discovery_logo_crop_preview_label: "Vista previa en discovery:",
+        discovery_logo_crop_apply: "Aplicar",
         discovery_remove_image: "Quitar",
         country_label: "País",
         city_label: "Ciudad",
@@ -1100,6 +1136,8 @@ const DANCE_LOCALES = {
         discovery_filter_city: "Stadt",
         discovery_filter_all: "Alle",
         discovery_not_found: "Dieses Studio hat noch keine Detailseite.",
+        discovery_sign_in_btn: "Anmelden",
+        discovery_not_on_app: "Diese Schule ist nicht in der App. Kontaktiere die Lehrer, um ihre Kurse und den Paketkauf zu erfahren.",
         discovery_placeholder_upload_soon: "Wird demnächst hochgeladen.",
         discovery_location: "Standort",
         discovery_classes: "Kurse",
@@ -1123,7 +1161,7 @@ const DANCE_LOCALES = {
         dev_access_subtitle: "Entwickler-Anmeldedaten eingeben",
         footer_support: "Support",
         footer_contact: "Kontakt",
-        footer_copy: "Made with <3 by a salsero; © 2026 Bailadmin Systems. Alle Rechte vorbehalten.",
+        footer_copy: "Made with <3 by a salsero; © 2026 Bailadmin Systems.",
         dev_login_btn: "Login",
         dev_dashboard_title: "Plattform-Entwickler",
         dev_school_inspector: "Schul-Inspektor",
@@ -1132,6 +1170,8 @@ const DANCE_LOCALES = {
         school_inactive: "Inaktiv",
         activate_school: "Aktivieren",
         deactivate_school: "Deaktivieren",
+        school_on_platform: "Auf der Plattform",
+        school_on_discovery: "In Discovery",
         dev_stats_schools: "Schulen",
         dev_stats_students: "Gesamt Schüler",
         dev_stats_plans: "Pläne",
@@ -1178,6 +1218,8 @@ const DANCE_LOCALES = {
         school_inactive: "Inaktiv",
         activate_school: "Aktivieren",
         deactivate_school: "Deaktivieren",
+        school_on_platform: "Auf der Plattform",
+        school_on_discovery: "In Discovery",
         rename_school_prompt: "Neuer Name für diese Schule:",
         rename_school_success: "Schulname aktualisiert.",
         delete_school_confirm: "Bist du sicher? ALLE Daten (Schüler, Admins, Zahlungen, Kurse) werden unwiderruflich gelöscht.",
@@ -1185,6 +1227,7 @@ const DANCE_LOCALES = {
         add_school_title: "Neue Schule erstellen",
         school_info_section: "Akademie-Details",
         admin_info_section: "Erster Administrator",
+        dev_discovery_optional: "Discovery-Profil (optional)",
         create_school_btn: "Initialisierung ausführen",
         username_exists_msg: "Dieser Benutzername ist bereits vergeben. Bitte wähle einen anderen.",
         class_location: "Standort",
@@ -1346,6 +1389,13 @@ const DANCE_LOCALES = {
         password_changed_success: "Passwort aktualisiert.",
         auth_password_sync_failed: "Hinweis: Der Anmeldedienst konnte nicht aktualisiert werden. Melde dich einmal mit deinem ALTEN Passwort an und ändere es danach unter Einstellungen erneut.",
         admin_password_sync_hint: "Dein Passwort ist für diese Schule korrekt, wurde aber vom Anmeldedienst nicht akzeptiert. Wenn du kürzlich das Passwort in den Einstellungen geändert hast, melde dich mit dem vorherigen Passwort an und ändere es danach erneut.",
+        admin_account_needs_activation: "Dein Admin-Konto wurde gerade erstellt, aber der Anmeldedienst verlangt E-Mail-Bestätigung. Bitte den Plattform-Administrator, in Supabase \"E-Mail bestätigen\" zu deaktivieren: Authentifizierung > Anbieter > E-Mail. Dann erneut anmelden.",
+        admin_email_modal_title: "E-Mail hinzufügen",
+        admin_email_modal_msg: "Für Passwort-Wiederherstellung und Kontosicherheit, bitte hinterlege deine echte E-Mail-Adresse. Du wirst dich künftig mit dieser E-Mail anmelden.",
+        admin_email_save: "Speichern",
+        admin_email_later: "Später",
+        admin_email_saved: "E-Mail gespeichert!",
+        admin_email_invalid: "Bitte gib eine gültige E-Mail-Adresse ein.",
         profile_saved_success: "Profil gespeichert.",
         password_mismatch: "Passwörter stimmen nicht überein.",
         password_too_short: "Passwort muss mindestens 4 Zeichen haben.",
@@ -1357,6 +1407,10 @@ const DANCE_LOCALES = {
         discovery_replace_title: "Bild ersetzen?",
         discovery_replace_message: "Es ist bereits ein Foto vorhanden. Möchtest du es durch das neue ersetzen?",
         discovery_replace_confirm: "Ersetzen",
+        discovery_logo_crop_title: "Logo für Discovery zuschneiden",
+        discovery_logo_crop_hint: "Positioniere und zoome, damit dein Logo im Quadrat gut aussieht. So wird es auf der Discovery-Seite angezeigt.",
+        discovery_logo_crop_preview_label: "Vorschau auf Discovery:",
+        discovery_logo_crop_apply: "Anwenden",
         discovery_remove_image: "Entfernen",
         country_label: "Land",
         city_label: "Stadt",
@@ -1903,6 +1957,18 @@ window.renderDiscoveryView = (path) => {
             ${subscriptions.length ? `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${subscriptions.map(s => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, detail.currency || 'MXN') : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="credit-card" size="24"></i><span>${placeholder}</span></div>`}
             <h2 class="discovery-detail-section-title">${t('discovery_where_we_teach')}</h2>
             ${locationsList.length ? locationsList.map(loc => { const locName = String(loc.name || '').replace(/</g, '&lt;'); const locAddr = String(loc.address || '').replace(/</g, '&lt;'); const locDesc = String(loc.description || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'); const imgs = Array.isArray(loc.image_urls) ? loc.image_urls : []; return `<div class="discovery-detail-location-card" style="margin-bottom: 1.25rem; padding: 1rem; border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; margin-bottom: 4px;">${locName || '—'}</div><div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 6px;"><i data-lucide="map-pin" size="14"></i> ${locAddr || placeholder}</div>${locDesc ? `<div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${locDesc}</div>` : ''}${imgs.length ? `<div class="discovery-detail-gallery-grid" style="margin-top: 8px;">${imgs.slice(0, 6).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : ''}</div>`; }).join('') : `<div class="discovery-detail-placeholder-block"><i data-lucide="map-pin" size="32"></i><span>${placeholder}</span></div>`}
+            <div class="discovery-detail-cta" style="margin-top: 2rem; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); background: var(--surface);">
+            ${(detail.active !== false) ? `
+                <button type="button" class="btn-primary" onclick="event.preventDefault(); const d=state.discoverySchoolDetail; if(d){ state.currentSchool={id:d.id,name:d.name,currency:d.currency||'MXN'}; state.currentView='auth'; state.discoveryPath=null; history.pushState({},'','/'); saveState(); renderView(); fetchAllData(); }" style="width: 100%; padding: 14px 24px; border-radius: 14px; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i data-lucide="log-in" size="20"></i> ${t('discovery_sign_in_btn')}
+                </button>
+            ` : `
+                <div style="display: flex; align-items: flex-start; gap: 12px; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                    <i data-lucide="info" size="20" style="flex-shrink: 0; opacity: 0.7;"></i>
+                    <p style="margin: 0;">${t('discovery_not_on_app')}</p>
+                </div>
+            `}
+            </div>
             </div>`;
         return html;
     }
@@ -2689,13 +2755,14 @@ function _renderViewImpl() {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
-    let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${viewChanged ? 'slide-in' : ''}">`;
+    const isDevDashboardView = ['platform-dev-dashboard', 'platform-school-details', 'platform-dev-edit-discovery', 'platform-dev-edit-school', 'super-admin-dashboard'].includes(view);
+    let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${isDevDashboardView ? 'container-dev' : ''} ${viewChanged ? 'slide-in' : ''}">`;
 
     if (view === 'school-selection') {
         const hasSchools = state.schools.length > 0;
         const triggerLabel = state.currentSchool?.name || (state.loading ? t.loading_schools : (t.search_school_placeholder || t.select_school_placeholder));
         html += `
-            <div class="auth-page-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70vh; text-align: center; width: 100%;">
+            <div class="auth-page-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100dvh; text-align: center; width: 100%;">
                 <div class="landing-branding slide-in" style="margin-bottom: 2.5rem;">
                     <img src="logo.png" alt="Bailadmin" class="auth-logo" style="width: 150px; height: 150px; margin-bottom: 0.5rem;">
                     <h1 style="font-size: 2.2rem; letter-spacing: -1.5px; font-weight: 800; margin-bottom: 0.2rem;">Bailadmin</h1>
@@ -2726,6 +2793,19 @@ function _renderViewImpl() {
                 <a href="/discovery" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" class="discovery-landing-btn">${t.discover_dance_btn || 'Discover all schools'}</a>
                 ` : ''}
             </div>
+            <footer class="sticky-footer">
+                <div class="sticky-footer-inner">
+                    <div class="sticky-footer-social">
+                        <a href="https://www.instagram.com/bailadmin.lat/" target="_blank" rel="noopener noreferrer" class="sticky-footer-icon-btn" aria-label="Instagram">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                        </a>
+                        <a href="https://wa.me/41786936898" target="_blank" rel="noopener noreferrer" class="sticky-footer-icon-btn" aria-label="WhatsApp">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+                        </a>
+                    </div>
+                    <p class="sticky-footer-copy">${String(t.footer_copy || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                </div>
+            </footer>
         `;
     }
     else if (view === 'super-admin-dashboard' || view === 'platform-dev-dashboard') {
@@ -2737,6 +2817,7 @@ function _renderViewImpl() {
         const showDashboardLoader = isDev && state.loading;
 
         html += `
+            <div class="dev-dashboard-inner">
             <div class="ios-header">
                 <div class="ios-large-title" style="letter-spacing: -1.2px;">${title}</div>
                 ${isDev ? '<div style="font-size: 13px; color: var(--system-blue); font-weight: 700; padding: 0 1.2rem; margin-top: -5px; letter-spacing: 0.1em; text-transform: uppercase;">' + t.admin_label + ' (God Mode)</div>' : ''}
@@ -2754,7 +2835,7 @@ function _renderViewImpl() {
                 <button type="button" onclick="state.devDashboardTab='audit'; renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: ${devTab === 'audit' ? 'var(--system-blue)' : 'var(--system-gray6)'}; color: ${devTab === 'audit' ? 'white' : 'var(--text-secondary)'}; transition: all 0.2s;">${t.dev_tab_account_audit || 'Account Audit'}</button>
             </div>
             ` : ''}
-            <div style="padding: 1.2rem;">
+            <div class="dev-dashboard-content" style="padding: 1.2rem;">
                 ${devTab === 'audit' && isDev ? `
                 <div style="margin-bottom: 2rem;">
                     <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.8;">${t.dev_audit_students || 'Students'} (${(state.platformData.students || []).length})</div>
@@ -2798,20 +2879,20 @@ function _renderViewImpl() {
                     </div>
                     ` : ''}
                     <!-- PREMIUM STATS -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2.5rem;">
-                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
+                    <div class="dev-stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2.5rem;">
+                        <div class="dev-stat-card" style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
                             <div style="position: absolute; top: -10px; right: -10px; opacity: 0.05; color: var(--system-blue); transform: rotate(-15deg);"><i data-lucide="building-2" size="80"></i></div>
                             <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.08em; opacity: 0.7;">${t.dev_stats_schools}</div>
-                            <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary);">${state.platformData.schools.length}</div>
+                            <div class="dev-stat-value" style="font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary);">${state.platformData.schools.length}</div>
                         </div>
-                        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
+                        <div class="dev-stat-card" style="background: var(--bg-card); padding: 1.5rem; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
                             <div style="position: absolute; top: -10px; right: -10px; opacity: 0.05; color: var(--system-green); transform: rotate(-15deg);"><i data-lucide="users" size="80"></i></div>
                             <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.08em; opacity: 0.7;">${t.dev_stats_students}</div>
-                            <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary);">${state.platformData.students.length}</div>
+                            <div class="dev-stat-value" style="font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--text-primary);">${state.platformData.students.length}</div>
                         </div>
                     </div>
                     <!-- Discovery site toggle -->
-                    <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                    <div class="card dev-discovery-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
                         <div>
                             <div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">${t.dev_discovery_site || 'Discovery site'}</div>
                             <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${t.discovery_title || 'Discover Dance'} ${t.dev_discovery_toggle_on ? '— ' + (state.platformData.discoveryEnabled ? t.dev_discovery_toggle_on : t.dev_discovery_toggle_off) : ''}</div>
@@ -2820,28 +2901,32 @@ function _renderViewImpl() {
                     </div>
                 ` : ''}
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0 0.2rem;">
+                <div class="dev-active-schools-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0 0.2rem;">
                     <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); opacity: 0.8;">${t.dev_active_schools}</div>
                     <button class="btn-primary" onclick="${isDev ? 'createNewSchoolWithAdmin()' : 'createNewSchool()'}" style="padding: 10px 20px; font-size: 13px; font-weight: 700; height: auto; border-radius: 14px; box-shadow: var(--shadow-sm);"><i data-lucide="plus" size="14" style="margin-right: 6px;"></i> ${t.add_school_btn}</button>
                 </div>
 
-                <div class="ios-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.2rem; background: transparent; padding: 0; box-shadow: none; border: none;">
+                <div class="dev-schools-grid">
                     ${schools.map(s => {
             const schoolStudents = state.platformData.students.filter(st => st.school_id === s.id).length;
             const schoolAdmins = state.platformData.admins.filter(a => a.school_id === s.id).map(a => a.username).join(', ');
             return `
-                            <div class="card card-premium" style="padding: 1.8rem; border-radius: 28px; display: flex; flex-direction: column; gap: 1.4rem; background: var(--bg-card); border: 1.5px solid var(--border); transition: all 0.4s var(--transition); position: relative;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="card card-premium dev-school-card" style="padding: 1.8rem; border-radius: 28px; display: flex; flex-direction: column; gap: 1.4rem; background: var(--bg-card); border: 1.5px solid var(--border); transition: all 0.4s var(--transition); position: relative;">
+                                <div class="dev-school-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                                     <div style="flex: 1;">
                                         <div style="font-size: 20px; font-weight: 900; margin-bottom: 4px; letter-spacing: -0.5px; color: var(--text-primary);">${s.name}</div>
                                         <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: monospace; letter-spacing: 0.05em;">${s.id}</div>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="dev-school-card-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         ${isDev ? `
-                                        <button type="button" onclick="window.toggleSchoolActive('${escapeHtml(s.id)}', ${s.active !== false})" title="${(s.active !== false ? (t.deactivate_school || 'Deactivate') : (t.activate_school || 'Activate')).replace(/"/g, '&quot;')}" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 14px; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; border: 1px solid transparent; cursor: pointer; transition: opacity 0.2s, background 0.2s, border-color 0.2s; ${s.active !== false ? 'color: var(--system-green); background: rgba(52, 199, 89, 0.12); border-color: rgba(52, 199, 89, 0.25);' : 'color: var(--text-secondary); background: rgba(142, 142, 147, 0.12); border-color: var(--border);'} " onmouseover="this.style.opacity='0.9'; this.style.background=${s.active !== false ? "'rgba(52, 199, 89, 0.2)'" : "'rgba(142, 142, 147, 0.2)'"};" onmouseout="this.style.opacity='1'; this.style.background=${s.active !== false ? "'rgba(52, 199, 89, 0.12)'" : "'rgba(142, 142, 147, 0.12)'"};">
-                                            <i data-lucide="${s.active !== false ? 'check-circle' : 'power'}" size="12" style="flex-shrink: 0;"></i>
-                                            <span>${s.active !== false ? (t.school_active || 'Active') : (t.school_inactive || 'Inactive')}</span>
-                                        </button>
+                                        <div class="dev-school-toggle-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; background: var(--system-gray6); border-radius: 12px; min-width: 140px;">
+                                            <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${t.school_on_platform || 'On the platform'}</span>
+                                            <button type="button" onclick="window.toggleSchoolActive('${escapeHtml(s.id)}', ${s.active !== false})" title="${(t.school_on_platform || 'On the platform').replace(/"/g, '&quot;')}" style="width: 48px; height: 28px; border-radius: 14px; border: none; cursor: pointer; background: ${s.active !== false ? 'var(--system-green)' : 'var(--system-gray5)'}; transition: background 0.2s; position: relative; flex-shrink: 0;"><span style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: white; top: 3px; left: ${s.active !== false ? '23px' : '3px'}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
+                                        </div>
+                                        <div class="dev-school-toggle-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; background: var(--system-gray6); border-radius: 12px; min-width: 140px;">
+                                            <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${t.school_on_discovery || 'On discovery'}</span>
+                                            <button type="button" onclick="window.toggleSchoolDiscoveryVisible('${escapeHtml(s.id)}', ${s.discovery_visible !== false})" title="${(t.school_on_discovery || 'On discovery').replace(/"/g, '&quot;')}" style="width: 48px; height: 28px; border-radius: 14px; border: none; cursor: pointer; background: ${s.discovery_visible !== false ? 'var(--system-blue)' : 'var(--system-gray5)'}; transition: background 0.2s; position: relative; flex-shrink: 0;"><span style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: white; top: 3px; left: ${s.discovery_visible !== false ? '23px' : '3px'}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
+                                        </div>
                                         ` : ''}
                                         <div style="font-size: 11px; font-weight: 800; color: var(--system-blue); background: rgba(0, 122, 255, 0.08); padding: 5px 12px; border-radius: 14px; letter-spacing: 0.02em; border: 1px solid rgba(0, 122, 255, 0.1);">
                                             ${schoolStudents} ${t.dev_students_label.toUpperCase()}
@@ -2860,7 +2945,7 @@ function _renderViewImpl() {
                                         <span style="font-weight: 700; color: var(--text-primary); opacity: 0.7;">${t.dev_admins_label}:</span> ${schoolAdmins || 'N/A'}
                                     </div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+                                <div class="dev-school-card-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
                                     <button class="btn-secondary" onclick="state.selectedDevSchoolId='${s.id}'; state.currentView='platform-school-details'; renderView();" style="width: 100%; border-radius: 16px; height: 50px; font-size: 14px; font-weight: 700; background: var(--system-gray6); color: var(--text-primary); border: 1px solid var(--border); box-shadow: none;">
                                         <i data-lucide="info" size="14" style="margin-right: 6px; opacity: 0.6;"></i> ${t.dev_view_details}
                                     </button>
@@ -2887,6 +2972,7 @@ function _renderViewImpl() {
                 ` : ''}
             </div>
             ` : ''}
+            </div>
         `;
     } else if (view === 'platform-add-school') {
         html += `
@@ -2932,6 +3018,31 @@ function _renderViewImpl() {
                                 <input type="text" id="new-school-admin-pass" placeholder="••••••••" style="width: 100%; border: none; background: transparent; color: var(--text-primary); outline: none; font-size: 17px; font-weight: 700; padding: 0; letter-spacing: -0.3px;">
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- DISCOVERY PROFILE (OPTIONAL) -->
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1rem; padding: 0 0.5rem; opacity: 0.7;">${t.dev_discovery_optional}</div>
+                <div class="ios-list" style="margin-bottom: 2rem; overflow: hidden;">
+                    <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;">
+                        <span style="font-size: 14px; opacity: 0.8;">${t.discovery_slug_label}</span>
+                        <input type="text" id="new-school-discovery-slug" placeholder="${t.discovery_slug_placeholder || 'e.g. royal_latin'}" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;">
+                        <span style="font-size: 14px; opacity: 0.8;">${t.country_label}</span>
+                        <select id="new-school-country" onchange="window.updateNewSchoolCityOptions()" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;"><option value="">—</option>${DISCOVERY_COUNTRIES.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}">${String(c).replace(/</g, '&lt;')}</option>`).join('')}</select>
+                    </div>
+                    <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;">
+                        <span style="font-size: 14px; opacity: 0.8;">${t.city_label}</span>
+                        <select id="new-school-city" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;"><option value="">—</option></select>
+                    </div>
+                    <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;">
+                        <span style="font-size: 14px; opacity: 0.8;">${t.discovery_description_label}</span>
+                        <textarea id="new-school-discovery-description" rows="2" placeholder="Short description for discovery page" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
+                    </div>
+                    <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;">
+                        <span style="font-size: 14px; opacity: 0.8;">${t.discovery_genres_label}</span>
+                        <input type="text" id="new-school-discovery-genres" placeholder="Salsa, Bachata" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;">
                     </div>
                 </div>
 
@@ -4743,6 +4854,14 @@ function _renderViewImpl() {
     document.getElementById('dev-login-trigger').classList.toggle('hidden', state.currentUser !== null);
     document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
     document.getElementById('admin-nav').classList.toggle('hidden', !showNav || !state.isAdmin);
+    const siteFooter = document.querySelector('.site-footer');
+    if (siteFooter) siteFooter.classList.toggle('hidden', view === 'school-selection');
+    document.body.classList.toggle('landing-page', view === 'school-selection');
+
+    // Sticky footer: show only when scrolled to bottom (school-selection)
+    if (typeof window.updateStickyFooterVisibility === 'function') {
+        window.updateStickyFooterVisibility();
+    }
 
     // Sync active nav items
     document.querySelectorAll('.nav-item').forEach(btn => {
@@ -5476,20 +5595,28 @@ window.loginAdminWithCreds = async () => {
                 });
                 if (!rpcError && Array.isArray(legacyRows) && legacyRows.length > 0) {
                     adminRow = legacyRows[0];
-                    const { error: signUpErr } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
-                    if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
+                    const { error: signUpErr, data: signUpData } = await supabaseClient.auth.signUp({ email: pseudoEmail, password: pass });
+                    if (!signUpErr && signUpData?.user) {
+                        const hasIdentity = Array.isArray(signUpData.user.identities) && signUpData.user.identities.length > 0;
+                        if (hasIdentity) {
+                            await supabaseClient.rpc('link_admin_auth');
+                        } else {
+                            const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
+                            if (!signInAgain) {
+                                await supabaseClient.rpc('link_admin_auth');
+                            } else {
+                                console.warn('Admin Auth: credentials valid but Auth sign-in failed:', signInAgain?.message);
+                            }
+                        }
+                    } else if (signUpErr && signUpErr.message && signUpErr.message.includes('already registered')) {
                         const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: pseudoEmail, password: pass });
                         if (!signInAgain) {
                             await supabaseClient.rpc('link_admin_auth');
                         } else {
-                            // Auth user exists but password does not match – e.g. password was changed in DB but Auth sync failed
-                            adminRow = null;
-                            state._adminLoginLegacyOkAuthFailed = true;
+                            console.warn('Admin Auth: credentials valid but Auth sign-in failed:', signInAgain?.message);
                         }
-                    } else if (!signUpErr) {
-                        await supabaseClient.rpc('link_admin_auth');
                     } else {
-                        adminRow = null;
+                        console.warn('Admin Auth signUp failed:', signUpErr?.message);
                     }
                 }
             }
@@ -5510,13 +5637,76 @@ window.loginAdminWithCreds = async () => {
         saveState();
         renderView();
         await fetchAllData();
+        const adminEmail = adminRow.email || '';
+        const isPlaceholder = !adminEmail || adminEmail.endsWith('@temp.bailadmin.local') || adminEmail.endsWith('@admins.bailadmin.local');
+        if (isPlaceholder) {
+            window._showAdminEmailModal();
+        }
     } else {
-        if (state._adminLoginLegacyOkAuthFailed) {
+        if (state._adminAccountNeedsActivation) {
+            alert(t('admin_account_needs_activation') || 'Your admin account was just created but the login service requires email confirmation. Ask your platform administrator to turn off "Confirm email" in Supabase: Authentication > Providers > Email. Then try logging in again.');
+            state._adminAccountNeedsActivation = false;
+        } else if (state._adminLoginLegacyOkAuthFailed) {
             alert(t('admin_password_sync_hint') || 'Your password is correct for this school, but the login service could not accept it. If you recently changed your password in Settings, try logging in with your previous (old) password. Once in, go to Settings and change the password again.');
             state._adminLoginLegacyOkAuthFailed = false;
         } else {
             alert(t('invalid_login'));
         }
+    }
+};
+
+window._showAdminEmailModal = () => {
+    const t = window.t;
+    const modal = document.getElementById('admin-email-modal');
+    if (!modal) return;
+    const titleEl = document.getElementById('admin-email-modal-title');
+    const msgEl = document.getElementById('admin-email-modal-msg');
+    const laterBtn = document.getElementById('admin-email-later-btn');
+    const saveBtn = document.getElementById('admin-email-save-btn');
+    const inputEl = document.getElementById('admin-email-input');
+    const errEl = document.getElementById('admin-email-error');
+    if (titleEl) titleEl.textContent = t('admin_email_modal_title') || 'Add your email';
+    if (msgEl) msgEl.textContent = t('admin_email_modal_msg') || 'For password reset and account security, please add your real email address.';
+    if (laterBtn) laterBtn.textContent = t('admin_email_later') || 'Later';
+    if (saveBtn) saveBtn.textContent = t('admin_email_save') || 'Save';
+    if (inputEl) inputEl.value = '';
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+    if (inputEl) setTimeout(() => inputEl.focus(), 200);
+};
+
+window.dismissAdminEmailModal = () => {
+    const modal = document.getElementById('admin-email-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.saveAdminEmail = async () => {
+    const t = window.t;
+    const inputEl = document.getElementById('admin-email-input');
+    const errEl = document.getElementById('admin-email-error');
+    const saveBtn = document.getElementById('admin-email-save-btn');
+    const email = (inputEl?.value || '').trim().toLowerCase();
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        if (errEl) { errEl.textContent = t('admin_email_invalid') || 'Please enter a valid email address.'; errEl.style.display = 'block'; }
+        return;
+    }
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.style.opacity = '0.7'; }
+    try {
+        const { error } = await supabaseClient.rpc('admin_set_email', { p_email: email });
+        if (error) {
+            if (errEl) { errEl.textContent = error.message || 'Error saving email.'; errEl.style.display = 'block'; }
+            return;
+        }
+        const modal = document.getElementById('admin-email-modal');
+        if (modal) modal.classList.add('hidden');
+        alert(t('admin_email_saved') || 'Email saved!');
+    } catch (e) {
+        if (errEl) { errEl.textContent = e.message || 'Error saving email.'; errEl.style.display = 'block'; }
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
     }
 };
 
@@ -5682,6 +5872,18 @@ window.toggleSchoolActive = async (schoolId, currentlyActive) => {
     if (!supabaseClient) return;
     const t = typeof window.t === 'function' ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
     const { error } = await supabaseClient.rpc('school_set_active', { p_school_id: schoolId, p_active: !currentlyActive });
+    if (error) {
+        alert(t('error_generic') || 'Error: ' + (error.message || 'Could not update school.'));
+        return;
+    }
+    await fetchPlatformData();
+    renderView();
+};
+
+window.toggleSchoolDiscoveryVisible = async (schoolId, currentlyVisible) => {
+    if (!supabaseClient) return;
+    const t = typeof window.t === 'function' ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
+    const { error } = await supabaseClient.rpc('school_set_discovery_visible', { p_school_id: schoolId, p_visible: !currentlyVisible });
     if (error) {
         alert(t('error_generic') || 'Error: ' + (error.message || 'Could not update school.'));
         return;
@@ -6066,6 +6268,15 @@ window.createNewSchoolWithAdmin = async () => {
     renderView();
 };
 
+window.updateNewSchoolCityOptions = () => {
+    const countrySel = document.getElementById('new-school-city');
+    const countrySel2 = document.getElementById('new-school-country');
+    if (!countrySel || !countrySel2) return;
+    const country = (countrySel2.value || '').trim();
+    const cities = DISCOVERY_COUNTRIES_CITIES[country] || [];
+    countrySel.innerHTML = '<option value="">—</option>' + cities.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}">${String(c).replace(/</g, '&lt;')}</option>`).join('');
+};
+
 window.submitNewSchoolWithAdmin = async () => {
     const schoolName = document.getElementById('new-school-name').value;
     const adminUser = document.getElementById('new-school-admin-user').value;
@@ -6091,8 +6302,25 @@ window.submitNewSchoolWithAdmin = async () => {
         renderView();
 
         try {
-            // 1. Create School (use RPC to bypass RLS when platform admin user_id may not be linked)
-            const { data: schoolRow, error: schoolError } = await supabaseClient.rpc('school_insert_by_platform', { p_name: schoolName });
+            // 1. Build discovery params (read before create so we can pass atomically)
+            const slug = (document.getElementById('new-school-discovery-slug')?.value || '').trim();
+            const country = (document.getElementById('new-school-country')?.value || '').trim();
+            const city = (document.getElementById('new-school-city')?.value || '').trim();
+            const description = (document.getElementById('new-school-discovery-description')?.value || '').trim();
+            const genresStr = (document.getElementById('new-school-discovery-genres')?.value || '').trim();
+            const genres = genresStr ? genresStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const hasDiscoveryData = slug || country || city || description || genres.length > 0;
+
+            // 2. Create School with discovery data in one RPC (avoids session/auth issues between calls)
+            const insertPayload = { p_name: schoolName };
+            if (hasDiscoveryData) {
+                insertPayload.p_discovery_slug = slug || null;
+                insertPayload.p_country = country || null;
+                insertPayload.p_city = city || null;
+                insertPayload.p_discovery_description = description || null;
+                insertPayload.p_discovery_genres = genres;
+            }
+            const { data: schoolRow, error: schoolError } = await supabaseClient.rpc('school_insert_by_platform', insertPayload);
 
             if (schoolError) throw schoolError;
             const schoolId = schoolRow?.id;
@@ -6446,6 +6674,19 @@ window.uploadDiscoveryImage = async (kind) => {
     if (!file || !supabaseClient || !state.currentSchool?.id) return;
     const urlEl = document.getElementById(urlId);
     const hasExisting = (urlEl?.value || '').trim().length > 0;
+    if (kind === 'logo') {
+        state._discoveryReplacePending = hasExisting ? { file, kind } : null;
+        if (hasExisting) {
+            window.showDiscoveryReplaceModal();
+            return;
+        }
+        window.showDiscoveryLogoCropModal(file, async (croppedBlob) => {
+            const f = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+            await window.doUploadDiscoveryImage(f, kind);
+            if (fileInput) fileInput.value = '';
+        });
+        return;
+    }
     if (hasExisting) {
         state._discoveryReplacePending = { file, kind };
         window.showDiscoveryReplaceModal();
@@ -6453,6 +6694,90 @@ window.uploadDiscoveryImage = async (kind) => {
     }
     await window.doUploadDiscoveryImage(file, kind);
     if (fileInput) fileInput.value = '';
+};
+
+window.showDiscoveryLogoCropModal = (file, onApply) => {
+    const t = (k) => (window.t ? window.t(k) : k);
+    const title = t('discovery_logo_crop_title');
+    const hint = t('discovery_logo_crop_hint');
+    const previewLabel = t('discovery_logo_crop_preview_label');
+    const applyLabel = t('discovery_logo_crop_apply') || 'Apply';
+    const cancelLabel = window.t ? window.t('cancel') : 'Cancel';
+
+    const existing = document.getElementById('discovery-logo-crop-modal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'discovery-logo-crop-modal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+    overlay.innerHTML = `
+        <div class="discovery-logo-crop-dialog" style="background:var(--bg-body,#fff);border-radius:20px;max-width:min(420px,100vw);width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.3);padding:24px;display:flex;flex-direction:column;gap:16px;max-height:90vh;">
+            <h2 style="margin:0;font-size:18px;font-weight:700;color:var(--text-primary,#111);">${(title || 'Crop logo').replace(/</g, '&lt;')}</h2>
+            <p style="margin:0;font-size:14px;color:var(--text-secondary,#666);line-height:1.45;">${(hint || '').replace(/</g, '&lt;')}</p>
+            <div id="discovery-logo-crop-container" style="height:260px;overflow:hidden;border-radius:12px;background:var(--system-gray6,#eee);">
+                <img id="discovery-logo-crop-img" src="" alt="Logo" style="max-width:100%;display:block;">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary);">${(previewLabel || 'Preview').replace(/</g, '&lt;')}</div>
+                <div class="discovery-card-media" style="width:120px;height:120px;aspect-ratio:1;overflow:hidden;border-radius:12px;background:var(--system-gray6);border:2px solid var(--border);">
+                    <img id="discovery-logo-crop-preview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;flex-shrink:0;">
+                <button type="button" class="discovery-crop-cancel" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--system-gray5,#e5e5ea);color:var(--text-primary);border:none;cursor:pointer;">${(cancelLabel || 'Cancel').replace(/</g, '&lt;')}</button>
+                <button type="button" class="discovery-crop-apply" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--system-blue,#007aff);color:#fff;border:none;cursor:pointer;">${(applyLabel || 'Apply').replace(/</g, '&lt;')}</button>
+            </div>
+        </div>`;
+
+    const imgEl = overlay.querySelector('#discovery-logo-crop-img');
+    const previewEl = overlay.querySelector('#discovery-logo-crop-preview');
+    imgEl.src = URL.createObjectURL(file);
+
+    let cropper = null;
+    const destroy = () => {
+        if (cropper) { cropper.destroy(); cropper = null; }
+        if (imgEl?.src) URL.revokeObjectURL(imgEl.src);
+        overlay.remove();
+    };
+
+    imgEl.onload = () => {
+        if (typeof Cropper === 'undefined') { alert('Cropper library not loaded'); destroy(); return; }
+        cropper = new Cropper(imgEl, {
+            aspectRatio: 1,
+            viewMode: 2,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+        });
+
+        const updatePreview = () => {
+            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+            if (canvas && previewEl) previewEl.src = canvas.toDataURL('image/jpeg', 0.9);
+        };
+        cropper.on('crop', updatePreview);
+        setTimeout(updatePreview, 100);
+    };
+
+    overlay.querySelector('.discovery-crop-cancel').addEventListener('click', () => { destroy(); });
+    overlay.querySelector('.discovery-crop-apply').addEventListener('click', async () => {
+        if (!cropper) { destroy(); return; }
+        const canvas = cropper.getCroppedCanvas({ width: 600, height: 600 });
+        canvas.toBlob((blob) => {
+            destroy();
+            if (blob && onApply) onApply(blob);
+        }, 'image/jpeg', 0.92);
+    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) destroy(); });
+
+    document.body.appendChild(overlay);
 };
 
 window.showDiscoveryReplaceModal = () => {
@@ -6491,10 +6816,20 @@ window.confirmDiscoveryReplace = async (confirmed) => {
     state._discoveryReplacePending = null;
     const id = pending?.kind === 'logo' ? 'discovery-logo-file' : 'discovery-teacher-file';
     const fileInput = document.getElementById(id);
-    if (fileInput) fileInput.value = '';
     const modal = document.getElementById('discovery-replace-modal');
     if (modal) modal.remove();
-    if (confirmed && pending?.file && pending?.kind) await window.doUploadDiscoveryImage(pending.file, pending.kind);
+    if (confirmed && pending?.file && pending?.kind) {
+        if (pending.kind === 'logo') {
+            window.showDiscoveryLogoCropModal(pending.file, async (croppedBlob) => {
+                const f = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+                await window.doUploadDiscoveryImage(f, pending.kind);
+                if (fileInput) fileInput.value = '';
+            });
+        } else {
+            await window.doUploadDiscoveryImage(pending.file, pending.kind);
+            if (fileInput) fileInput.value = '';
+        }
+    } else if (fileInput) fileInput.value = '';
 };
 
 window.doUploadDiscoveryImage = async (file, kind) => {
@@ -6921,7 +7256,12 @@ window.submitAddAdminModal = async () => {
         const tempClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
         if (tempClient) {
             const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: pseudoEmail, password });
-            if (!signUpErr && signUpData?.user) userId = signUpData.user.id;
+            if (!signUpErr && signUpData?.user) {
+                const hasIdentity = Array.isArray(signUpData.user.identities) && signUpData.user.identities.length > 0;
+                if (hasIdentity) {
+                    userId = signUpData.user.id;
+                }
+            }
         }
     } catch (e) { console.warn('Admin Auth signUp:', e); }
     const payload = { p_school_id: state.currentSchool.id, p_username: username, p_password: password };
@@ -7887,6 +8227,17 @@ window.confirmAttendance = async (studentId, count) => {
         }
     }, 2000);
 };
+
+// Sticky footer: show only when scrolled to bottom (school-selection)
+window.updateStickyFooterVisibility = function () {
+    if (state.currentView !== 'school-selection') return;
+    const el = document.querySelector('.sticky-footer-inner');
+    if (!el) return;
+    const threshold = 80;
+    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - threshold;
+    el.classList.toggle('sticky-footer-visible', atBottom);
+};
+window.addEventListener('scroll', () => { window.updateStickyFooterVisibility(); }, { passive: true });
 
 // --- INIT ---
 document.getElementById('lang-toggle').addEventListener('click', () => {

@@ -15,6 +15,7 @@ ON CONFLICT (id) DO UPDATE SET
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- RLS: Allow INSERT when path matches current student's school/competition/student_id
+DROP POLICY IF EXISTS "competition_videos_insert" ON storage.objects;
 CREATE POLICY "competition_videos_insert"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -28,6 +29,7 @@ WITH CHECK (
 );
 
 -- Allow anon for legacy clients that may use anon key with session
+DROP POLICY IF EXISTS "competition_videos_insert_anon" ON storage.objects;
 CREATE POLICY "competition_videos_insert_anon"
 ON storage.objects FOR INSERT
 TO anon
@@ -41,6 +43,7 @@ WITH CHECK (
 );
 
 -- RLS: Allow SELECT for school admins (school_id from path) or platform admins
+DROP POLICY IF EXISTS "competition_videos_select" ON storage.objects;
 CREATE POLICY "competition_videos_select"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -52,6 +55,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "competition_videos_select_anon" ON storage.objects;
 CREATE POLICY "competition_videos_select_anon"
 ON storage.objects FOR SELECT
 TO anon

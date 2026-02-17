@@ -1,4 +1,5 @@
 -- Allow students to SELECT objects in their own path (for upsert pre-checks or viewing own uploads)
+DROP POLICY IF EXISTS "competition_videos_select_own" ON storage.objects;
 CREATE POLICY "competition_videos_select_own"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -11,6 +12,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "competition_videos_select_own_anon" ON storage.objects;
 CREATE POLICY "competition_videos_select_own_anon"
 ON storage.objects FOR SELECT
 TO anon

@@ -13,6 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 
 <body class="dark-mode">
@@ -204,6 +205,25 @@
         </div>
     </div>
 
+    <div id="admin-email-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 380px; width: calc(100vw - 2rem); padding: 2rem 1.5rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0.05) 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; color: var(--system-blue);">
+                <i data-lucide="mail" size="28"></i>
+            </div>
+            <h2 id="admin-email-modal-title" style="margin: 0 0 0.5rem; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); text-align: center;">Add your email</h2>
+            <p id="admin-email-modal-msg" style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; line-height: 1.4;">For password reset and account security, please add your real email address.</p>
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Email</label>
+                <input type="email" id="admin-email-input" placeholder="you@example.com" autocomplete="email" style="width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 16px; box-sizing: border-box;">
+            </div>
+            <p id="admin-email-error" style="display: none; font-size: 13px; color: var(--system-red); margin-bottom: 12px; text-align: center;"></p>
+            <div style="display: flex; gap: 12px;">
+                <button type="button" id="admin-email-later-btn" class="btn-secondary" onclick="window.dismissAdminEmailModal()" style="flex: 1; border-radius: 14px; height: 50px; font-weight: 600;">Later</button>
+                <button type="button" id="admin-email-save-btn" class="btn-primary" onclick="window.saveAdminEmail()" style="flex: 1; border-radius: 14px; height: 50px; font-weight: 600;">Save</button>
+            </div>
+        </div>
+    </div>
+
     <div id="location-modal" class="modal hidden">
         <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2.5rem 1.5rem;">
             <div
@@ -240,6 +260,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <script src="app.js?v=3"></script>
 </body>
 

@@ -13,6 +13,7 @@ ON CONFLICT (id) DO UPDATE SET
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- RLS: Admins can upload logos for their school
+DROP POLICY IF EXISTS "competition_logos_insert" ON storage.objects;
 CREATE POLICY "competition_logos_insert"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
@@ -20,6 +21,7 @@ WITH CHECK (
   AND (public.is_school_admin((split_part(name, '/', 1))::uuid) OR public.is_platform_admin())
 );
 
+DROP POLICY IF EXISTS "competition_logos_insert_anon" ON storage.objects;
 CREATE POLICY "competition_logos_insert_anon"
 ON storage.objects FOR INSERT TO anon
 WITH CHECK (
@@ -28,6 +30,7 @@ WITH CHECK (
 );
 
 -- Public read (bucket is public)
+DROP POLICY IF EXISTS "competition_logos_select" ON storage.objects;
 CREATE POLICY "competition_logos_select"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'competition-logos');
@@ -46,6 +49,7 @@ ON CONFLICT (id) DO UPDATE SET
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- RLS: School admins can upload logos for their school's competitions
+DROP POLICY IF EXISTS "competition_logos_insert" ON storage.objects;
 CREATE POLICY "competition_logos_insert"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -54,6 +58,7 @@ WITH CHECK (
   AND (public.is_school_admin((split_part(name, '/', 1))::uuid) OR public.is_platform_admin())
 );
 
+DROP POLICY IF EXISTS "competition_logos_insert_anon" ON storage.objects;
 CREATE POLICY "competition_logos_insert_anon"
 ON storage.objects FOR INSERT
 TO anon
@@ -63,8 +68,10 @@ WITH CHECK (
 );
 
 -- Public read (bucket is public)
+DROP POLICY IF EXISTS "competition_logos_select_anon" ON storage.objects;
 CREATE POLICY "competition_logos_select_anon"
 ON storage.objects FOR SELECT TO anon USING (bucket_id = 'competition-logos');
+DROP POLICY IF EXISTS "competition_logos_select_auth" ON storage.objects;
 CREATE POLICY "competition_logos_select_auth"
 ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'competition-logos');
 

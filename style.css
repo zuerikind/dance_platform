@@ -300,6 +300,9 @@ body {
     display: flex;
     flex-direction: column;
 }
+body.landing-page {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
 
 main#app-root {
     flex: 1;
@@ -470,6 +473,10 @@ h1 {
     max-width: 800px;
     /* Slightly wider for admin screens */
     margin: 0 auto;
+}
+.container.container-dev {
+    max-width: 100%;
+    padding: 1.5rem 2rem;
 }
 
 /* Fix for standard select inside card/list */
@@ -1732,6 +1739,116 @@ select option {
 @media (min-width: 500px) {
     .platform-stats-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* Dev dashboard: responsive school cards grid - 1 col phone, 2 tablet, 3–4 laptop */
+.dev-schools-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+}
+@media (min-width: 480px) {
+    .dev-schools-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 768px) {
+    .dev-schools-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+}
+@media (min-width: 1024px) {
+    .dev-schools-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1280px) {
+    .dev-schools-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1536px) {
+    .dev-schools-grid { grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+}
+
+/* Dev school card: stack toggles on small screens */
+@media (max-width: 400px) {
+    .dev-school-toggle-row { min-width: 100% !important; }
+}
+
+/* Dev dashboard responsive – smaller screens */
+@media (max-width: 640px) {
+    .container.container-dev {
+        padding: 1rem 1rem;
+    }
+    .dev-dashboard-content {
+        padding: 1rem !important;
+    }
+    .dev-stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    .dev-stat-card {
+        padding: 1rem !important;
+        border-radius: 20px !important;
+    }
+    .dev-stat-value {
+        font-size: 24px !important;
+    }
+    .dev-discovery-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+    .dev-active-schools-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1rem !important;
+    }
+    .dev-active-schools-header .btn-primary {
+        width: 100%;
+    }
+    .dev-school-card {
+        padding: 1.25rem !important;
+        border-radius: 20px !important;
+        gap: 1rem !important;
+    }
+    .dev-school-card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+    .dev-school-card-controls {
+        width: 100%;
+    }
+    .dev-school-card .dev-school-toggle-row {
+        min-width: 0 !important;
+        flex: 1 1 120px !important;
+    }
+    .dev-school-card .dev-school-card-controls [style*="background: rgba(0, 122, 255"] {
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .dev-schools-grid {
+        gap: 1rem !important;
+    }
+    .dev-school-card [style*="font-size: 20px"] {
+        font-size: 17px !important;
+    }
+    .dev-school-card-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Dev dashboard: center content, use full width up to 1600px */
+.dev-dashboard-inner {
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+.dev-dashboard-content {
+    width: 100%;
+}
+
 .platform-stat-card {
     padding: 1.25rem 1rem;
     border-radius: 14px;
@@ -4634,4 +4751,69 @@ select.filter-control {
 .discovery-location-add-btn:hover {
   background: var(--system-gray6);
   border-color: var(--text-muted);
+}
+
+/* Sticky Footer – reveal on scroll (landing page) */
+.sticky-footer {
+  position: relative;
+  min-height: 200px;
+  clip-path: none;
+}
+.sticky-footer-inner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.5rem 1rem calc(3rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-body, #000);
+  z-index: 500;
+  overflow: visible;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(100%);
+  transition: opacity 0.3s, transform 0.3s, visibility 0.3s;
+  pointer-events: none;
+}
+.sticky-footer-inner.sticky-footer-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.sticky-footer-social {
+  display: flex;
+  gap: 12px;
+}
+.sticky-footer-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card, rgba(255,255,255,0.06));
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  text-decoration: none;
+}
+.sticky-footer-icon-btn:hover {
+  background: var(--system-gray6, rgba(255,255,255,0.1));
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+.sticky-footer-copy {
+  font-size: 12px;
+  color: var(--text-muted, rgba(255,255,255,0.3));
+  margin: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  line-height: 1.5;
 }
