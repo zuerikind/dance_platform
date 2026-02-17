@@ -5683,7 +5683,7 @@ window.openPrivateClassesModal = async () => {
     modal.classList.remove('hidden');
     if (window.lucide) window.lucide.createIcons();
     try {
-        const { data, error } = await supabaseClient.rpc('get_private_classes_contact', { p_school_id: sid });
+        const { data, error } = await supabaseClient.rpc('get_private_classes_contact', { p_school_id: sid, p_bust: Date.now() });
         if (error) throw error;
         if (!data || !data.name || !data.phone) {
             content.innerHTML = `<p class="text-muted">${t('contact_not_configured')}</p><button class="btn-primary" onclick="document.getElementById('private-classes-modal').classList.add('hidden')" style="margin-top:1rem;">${t('close')}</button>`;
