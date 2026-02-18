@@ -162,6 +162,8 @@ const DANCE_LOCALES = {
         private_classes_remaining: "Private",
         scan_mode_group: "Group",
         scan_mode_private: "Private",
+        deduct_group_classes: "Deduct group classes",
+        deduct_private_classes: "Deduct private classes",
         price_mxd_label: "Price MXD",
         transfer_details_label: "Transfer Details",
         bank_name_label: "Nombre del banco",
@@ -482,6 +484,8 @@ const DANCE_LOCALES = {
         private_classes_remaining: "Private",
         scan_mode_group: "Group",
         scan_mode_private: "Private",
+        deduct_group_classes: "Deduct group classes",
+        deduct_private_classes: "Deduct private classes",
         my_profile_section: "My Profile",
         display_name_label: "Display Name",
         phone_label: "Phone (for WhatsApp)",
@@ -701,6 +705,8 @@ const DANCE_LOCALES = {
         private_classes_remaining: "Particular",
         scan_mode_group: "Grupal",
         scan_mode_private: "Particular",
+        deduct_group_classes: "Descontar clases grupales",
+        deduct_private_classes: "Descontar clases particulares",
         price_mxd_label: "Precio MXD",
         transfer_details_label: "Detalles de Transferencia",
         bank_name_label: "Nombre del banco",
@@ -1020,6 +1026,8 @@ const DANCE_LOCALES = {
         private_classes_remaining: "Particular",
         scan_mode_group: "Grupal",
         scan_mode_private: "Particular",
+        deduct_group_classes: "Descontar clases grupales",
+        deduct_private_classes: "Descontar clases particulares",
         my_profile_section: "Mi Perfil",
         display_name_label: "Nombre para mostrar",
         phone_label: "Teléfono (para WhatsApp)",
@@ -1222,6 +1230,8 @@ const DANCE_LOCALES = {
         private_classes_remaining: "Privat",
         scan_mode_group: "Gruppe",
         scan_mode_private: "Privat",
+        deduct_group_classes: "Gruppenstunden abziehen",
+        deduct_private_classes: "Privatstunden abziehen",
         price_mxd_label: "Preis MXD",
         transfer_details_label: "Überweisungsdaten",
         bank_name_label: "Nombre del banco",
@@ -1517,6 +1527,8 @@ const DANCE_LOCALES = {
         private_classes_remaining: "Privat",
         scan_mode_group: "Gruppe",
         scan_mode_private: "Privat",
+        deduct_group_classes: "Gruppenstunden abziehen",
+        deduct_private_classes: "Privatstunden abziehen",
         my_profile_section: "Mein Profil",
         display_name_label: "Anzeigename",
         phone_label: "Telefon (für WhatsApp)",
@@ -9099,13 +9111,12 @@ window.handleScan = async (scannedId) => {
     if (!state.scanDeductionType || (state.scanDeductionType !== 'group' && state.scanDeductionType !== 'private')) {
         state.scanDeductionType = isPT ? 'private' : 'group';
     }
-    const deductPrivate = hasDualScanMode && state.scanDeductionType === 'private';
-    const hasValidPass = deductPrivate
-        ? (student.paid && (student.balance_private != null) && student.balance_private > 0)
-        : (student.paid && (isUnlimitedGroup || (student.balance != null && student.balance > 0)));
-    const hasNoClasses = deductPrivate
-        ? (student.paid && (student.balance_private == null || student.balance_private < 1))
-        : (student.paid && !isUnlimitedGroup && (student.balance == null || student.balance < 1));
+    const hasValidPass = student.paid && (
+        hasDualScanMode
+            ? (isUnlimitedGroup || (student.balance != null && student.balance > 0) || (student.balance_private != null && student.balance_private > 0))
+            : (isUnlimitedGroup || (student.balance != null && student.balance > 0))
+    );
+    const hasNoClasses = student.paid && !isUnlimitedGroup && (student.balance == null || student.balance < 1) && (!hasDualScanMode || (student.balance_private == null || student.balance_private < 1));
 
     // If student has today's registrations, show registration-aware scan result
     if (todayRegs.length > 0 && hasValidPass) {
@@ -9157,22 +9168,40 @@ window.handleScan = async (scannedId) => {
             </div>
         `;
     } else if (hasValidPass) {
-        const maxDeduct = deductPrivate
-            ? Math.max(1, student.balance_private ?? 0)
-            : ((student.balance === null || student.balance === undefined) ? 99 : Math.max(1, student.balance));
-        const balanceLabel = deductPrivate
-            ? `${t('private_classes_remaining') || 'Private'}: ${student.balance_private ?? 0}`
-            : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}`;
-        const scanToggleHtml = hasDualScanMode ? `
-                <div class="scan-deduction-toggle" style="display: flex; gap: 6px; margin-bottom: 1rem; background: var(--system-gray6); border-radius: 12px; padding: 4px;">
-                    <button type="button" class="scan-toggle-btn ${state.scanDeductionType === 'group' ? 'active' : ''}" onclick="state.scanDeductionType='group'; window.handleScan('${escapeHtml(student.id)}');" style="flex:1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; background: ${state.scanDeductionType === 'group' ? 'var(--system-blue)' : 'transparent'}; color: ${state.scanDeductionType === 'group' ? 'white' : 'var(--text-secondary)'}; cursor: pointer; transition: all 0.2s;">
-                        ${t('scan_mode_group') || 'Group'}
-                    </button>
-                    <button type="button" class="scan-toggle-btn ${state.scanDeductionType === 'private' ? 'active' : ''}" onclick="state.scanDeductionType='private'; window.handleScan('${escapeHtml(student.id)}');" style="flex:1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; background: ${state.scanDeductionType === 'private' ? 'var(--system-blue)' : 'transparent'}; color: ${state.scanDeductionType === 'private' ? 'white' : 'var(--text-secondary)'}; cursor: pointer; transition: all 0.2s;">
-                        ${t('scan_mode_private') || 'Private'}
-                    </button>
-                </div>
-                ` : '';
+        const maxDeductGroup = (student.balance === null || student.balance === undefined) ? 99 : Math.max(1, student.balance);
+        const maxDeductPrivate = Math.max(1, student.balance_private ?? 0);
+        const balanceLabelDual = `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${student.balance_private ?? 0}`;
+        const balanceLabelSingle = `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}`;
+        const balanceLabel = hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
+
+        const groupRow = `
+                <div style="margin-bottom: ${hasDualScanMode ? '1rem' : '0'};">
+                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; text-transform: uppercase;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.25rem;">
+                        <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'group')" style="padding: 0.8rem; font-size: 0.85rem;">${t('one_class')}</button>
+                        <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'group')" style="padding: 0.8rem; font-size: 0.85rem;">${t('two_classes')}</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                        <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">${t('deduct_btn')}</button>
+                    </div>
+                </div>`;
+
+        const privateRow = hasDualScanMode ? `
+                <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; text-transform: uppercase;">${t('deduct_private_classes') || 'Deduct private classes'}</div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.25rem;">
+                        <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('one_class')}</button>
+                        <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('two_classes')}</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                        <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">${t('deduct_btn')}</button>
+                    </div>
+                </div>` : '';
+
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -9183,24 +9212,8 @@ window.handleScan = async (scannedId) => {
                         </div>
                     </div>
                 </div>
-                ${scanToggleHtml}
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: ${hasDualScanMode ? '0' : '1rem'}; margin-top: 0.5rem;">
-                    <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1)" style="padding: 0.8rem; font-size: 0.85rem;">
-                        ${t('one_class')}
-                    </button>
-                    <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2)" style="padding: 0.8rem; font-size: 0.85rem;">
-                        ${t('two_classes')}
-                    </button>
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem;">
-                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
-                    <input type="number" id="scan-custom-count" min="1" max="${maxDeduct}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                    <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">
-                        ${t('deduct_btn')}
-                    </button>
-                </div>
-                
+                ${groupRow}
+                ${privateRow}
                 <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.5rem; opacity:0.5;">
                     ${t('cancel')}
                 </button>
@@ -9273,10 +9286,10 @@ window.confirmRegisteredAttendance = async (registrationId) => {
     }
 };
 
-window.confirmAttendance = async (studentId, count) => {
+window.confirmAttendance = async (studentId, count, classType) => {
     const student = state.students.find(s => s.id === studentId);
     if (!student) return;
-    const classType = (state.scanDeductionType === 'private') ? 'private' : 'group';
+    if (classType !== 'group' && classType !== 'private') classType = (state.scanDeductionType === 'private') ? 'private' : 'group';
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
