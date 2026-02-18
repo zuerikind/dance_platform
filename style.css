@@ -5350,3 +5350,14 @@ select.filter-control {
 .booking-success-btn:active {
   transform: scale(0.98);
 }
+
+/* --- QR Scanner: Group/Private deduction toggle --- */
+.scan-deduction-toggle {
+  -webkit-tap-highlight-color: transparent;
+}
+.scan-toggle-btn {
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+.scan-toggle-btn:active {
+  transform: scale(0.97);
+}

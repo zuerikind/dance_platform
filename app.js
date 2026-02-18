@@ -154,6 +154,14 @@ const DANCE_LOCALES = {
         plans_label: "Plans",
         limit_classes_label: "Class Limit",
         limit_classes_placeholder: "Classes (0 = Unlimited)",
+        offer_private_classes: "Offer private classes",
+        offer_private_classes_desc: "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.",
+        group_classes: "Group",
+        private_classes: "Private",
+        group_classes_remaining: "Group",
+        private_classes_remaining: "Private",
+        scan_mode_group: "Group",
+        scan_mode_private: "Private",
         price_mxd_label: "Price MXD",
         transfer_details_label: "Transfer Details",
         bank_name_label: "Nombre del banco",
@@ -466,6 +474,14 @@ const DANCE_LOCALES = {
         contact_not_configured: "Contact not configured. Please try again later.",
         private_contact_section: "Private Classes Contact",
         private_contact_desc: "Select which admin students see when they ask about private classes",
+        offer_private_classes: "Offer private classes",
+        offer_private_classes_desc: "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.",
+        group_classes: "Group classes",
+        private_classes: "Private classes",
+        group_classes_remaining: "Group",
+        private_classes_remaining: "Private",
+        scan_mode_group: "Group",
+        scan_mode_private: "Private",
         my_profile_section: "My Profile",
         display_name_label: "Display Name",
         phone_label: "Phone (for WhatsApp)",
@@ -677,6 +693,14 @@ const DANCE_LOCALES = {
         plans_label: "Planes",
         limit_classes_label: "Límite de Clases",
         limit_classes_placeholder: "Clases (0 = Ilimitado)",
+        offer_private_classes: "Ofrecer clases particulares",
+        offer_private_classes_desc: "Permite que los alumnos compren y usen paquetes de clases particulares. Cuando está activo, los planes pueden incluir clases en grupo, particulares o ambas.",
+        group_classes: "Grupal",
+        private_classes: "Particular",
+        group_classes_remaining: "Grupal",
+        private_classes_remaining: "Particular",
+        scan_mode_group: "Grupal",
+        scan_mode_private: "Particular",
         price_mxd_label: "Precio MXD",
         transfer_details_label: "Detalles de Transferencia",
         bank_name_label: "Nombre del banco",
@@ -988,6 +1012,14 @@ const DANCE_LOCALES = {
         contact_not_configured: "Contacto no configurado. Intenta más tarde.",
         private_contact_section: "Contacto Clases Particulares",
         private_contact_desc: "Selecciona qué admin ven los alumnos al preguntar por clases particulares",
+        offer_private_classes: "Ofrecer clases particulares",
+        offer_private_classes_desc: "Permite que los alumnos compren y usen paquetes de clases particulares. Cuando está activo, los planes pueden incluir clases grupales, particulares o ambas.",
+        group_classes: "Clases grupales",
+        private_classes: "Clases particulares",
+        group_classes_remaining: "Grupal",
+        private_classes_remaining: "Particular",
+        scan_mode_group: "Grupal",
+        scan_mode_private: "Particular",
         my_profile_section: "Mi Perfil",
         display_name_label: "Nombre para mostrar",
         phone_label: "Teléfono (para WhatsApp)",
@@ -1182,6 +1214,14 @@ const DANCE_LOCALES = {
         plans_label: "Pläne",
         limit_classes_label: "Stundenlimit",
         limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
+        offer_private_classes: "Privatunterricht anbieten",
+        offer_private_classes_desc: "Ermöglicht Schülern den Kauf und die Nutzung von Privatstunden-Paketen. Wenn aktiv, können Pläne Gruppen-, Privatstunden oder beides enthalten.",
+        group_classes: "Gruppe",
+        private_classes: "Privat",
+        group_classes_remaining: "Gruppe",
+        private_classes_remaining: "Privat",
+        scan_mode_group: "Gruppe",
+        scan_mode_private: "Privat",
         price_mxd_label: "Preis MXD",
         transfer_details_label: "Überweisungsdaten",
         bank_name_label: "Nombre del banco",
@@ -1469,6 +1509,14 @@ const DANCE_LOCALES = {
         contact_not_configured: "Kontakt nicht eingerichtet. Bitte später versuchen.",
         private_contact_section: "Privatunterricht-Kontakt",
         private_contact_desc: "Wähle den Admin, den Schüler bei Fragen zu Privatunterricht sehen",
+        offer_private_classes: "Privatunterricht anbieten",
+        offer_private_classes_desc: "Ermöglicht Schülern, Privatunterricht-Pakete zu kaufen und zu nutzen. Wenn aktiv, können Pläne Gruppen-, Privat- oder beides enthalten.",
+        group_classes: "Gruppenstunden",
+        private_classes: "Privatstunden",
+        group_classes_remaining: "Gruppe",
+        private_classes_remaining: "Privat",
+        scan_mode_group: "Gruppe",
+        scan_mode_private: "Privat",
         my_profile_section: "Mein Profil",
         display_name_label: "Anzeigename",
         phone_label: "Telefon (für WhatsApp)",
@@ -1628,7 +1676,8 @@ let state = {
     teacherAcceptedCalendarDate: null,     // YYYY-MM-DD first of displayed month; null = current month
     teacherAcceptedCalendarSelectedDate: null, // selected day for detail panel
     studentsFilterExpanded: false, // student filters section collapsed by default to save space
-    adminRevenueFiltersExpanded: false // revenue page filters collapsed by default
+    adminRevenueFiltersExpanded: false, // revenue page filters collapsed by default
+    scanDeductionType: 'group' // 'group' | 'private' - default for QR scanner
 };
 
 // --- DATA FETCHING ---
@@ -4031,7 +4080,7 @@ function _renderViewImpl() {
     } else if (view === 'shop') {
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
-            if (name.includes('ilimitad') || name.includes('unlimited') || s.limit_count === 0 || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
+            if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0)) || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
             const n = parseInt(s.limit_count, 10);
             if (!isNaN(n)) return n;
             const m = (s.name || '').match(/\d+/);
@@ -4104,23 +4153,35 @@ function _renderViewImpl() {
                         ${t.student_id}: <span style="color: var(--primary);">${state.currentUser.id}</span>
                     </div>
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
-                    <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">${t.remaining_classes}</div>
-                        <div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">
-                            ${(() => {
-                                const packs = state.currentUser.active_packs || [];
-                                const now = new Date();
-                                const activePacks = packs.filter(p => new Date(p.expires_at) > now);
-                                const hasUnlimited = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
-                                return hasUnlimited ? '∞' : (state.currentUser.balance ?? 0);
-                            })()}
-                        </div>
+                    ${(() => {
+                        const isPT = state.currentSchool?.profile_type === 'private_teacher';
+                        const hasPrivate = (state.currentUser.balance_private != null && state.currentUser.balance_private > 0) || (state.currentUser.active_packs || []).some(p => (p.private_count || 0) > 0);
+                        const showDual = isPT || hasPrivate;
+                        const packs = state.currentUser.active_packs || [];
+                        const now = new Date();
+                        const activePacks = packs.filter(p => new Date(p.expires_at) > now);
+                        const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
+                        if (showDual && isPT) {
+                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + (t.private_classes_remaining || t.remaining_classes) + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + (state.currentUser.balance_private ?? 0) + '</div>';
+                        }
+                        if (showDual) {
+                            const groupVal = hasUnlimitedGroup ? '∞' : (state.currentUser.balance ?? 0);
+                            const privVal = state.currentUser.balance_private ?? 0;
+                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase;">' + (t.group_classes_remaining || 'Group') + '</div><div style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + groupVal + '</div><div class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem; margin-bottom: 0.2rem; font-weight: 600;">' + (t.private_classes_remaining || 'Private') + '</div><div style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + privVal + '</div>';
+                        }
+                        return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + (hasUnlimitedGroup ? '∞' : (state.currentUser.balance ?? 0)) + '</div>';
+                    })()}
                         ${(() => {
                             const balance = state.currentUser.balance ?? 0;
+                            const balancePrivate = state.currentUser.balance_private ?? 0;
                             const packs = state.currentUser.active_packs || [];
                             const now = new Date();
                             const activePacks = packs.filter(p => new Date(p.expires_at) > now);
-                            const hasUnlimited = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
-                            if (balance <= 0 && !hasUnlimited) return ''; // hide next expiry when no classes left
+                            const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
+                            const isPT = state.currentSchool?.profile_type === 'private_teacher';
+                            const hasPrivate = (state.currentUser.active_packs || []).some(p => (p.private_count || 0) > 0);
+                            const noClassesLeft = isPT ? (balancePrivate <= 0) : (balance <= 0 && !hasUnlimitedGroup);
+                            if (noClassesLeft) return ''; // hide next expiry when no classes left
                             const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
                             if (nextExpiry) {
                                 const d = new Date(nextExpiry);
@@ -4148,6 +4209,20 @@ function _renderViewImpl() {
                     const sc = isExp ? 'var(--system-red)' : (isSoon ? 'var(--system-orange)' : 'var(--system-blue)');
                     const bg = isExp ? 'var(--system-gray6)' : 'linear-gradient(145deg, var(--bg-card), var(--bg-body))';
                     const statusText = isExp ? 'Expirado' : (isSoon ? (days + 'd Restantes') : 'Activo');
+                    const privCount = p.private_count ?? 0;
+                    const groupCount = p.count;
+                    const groupHas = groupCount == null || groupCount === 'null' || (parseInt(groupCount, 10) || 0) > 0;
+                    const hasBoth = groupHas && privCount > 0;
+                    const isPrivateOnly = !groupHas && privCount > 0;
+                    let countHtml = '';
+                    if (isPrivateOnly) {
+                        countHtml = '<div style="text-align: right;"><div style="font-size: 20px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + privCount + '</div><div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">' + (t.private_classes || 'Private') + '</div></div>';
+                    } else if (hasBoth) {
+                        const gVal = groupCount == null || groupCount === 'null' ? '∞' : groupCount;
+                        countHtml = '<div style="text-align: right;"><div style="font-size: 16px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + (t.group_classes || 'Group') + ': ' + gVal + ' · ' + (t.private_classes || 'Private') + ': ' + privCount + '</div></div>';
+                    } else {
+                        countHtml = '<div style="text-align: right;"><div style="font-size: 20px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + (groupCount == null || groupCount === 'null' ? '∞' : groupCount) + '</div><div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">Clases</div></div>';
+                    }
                     return '<div class="card" style="padding: 1.2rem; border-radius: 22px; border: 1px solid var(--border); background: ' + bg + '; opacity: ' + (isExp ? 0.7 : 1) + ';">' +
                         '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">' +
                         '<div><div style="font-size: 15px; font-weight: 700;">' + (p.name || '').replace(/</g, '&lt;') + '</div>' +
@@ -4156,8 +4231,7 @@ function _renderViewImpl() {
                         '<div style="display: flex; align-items: flex-end; justify-content: space-between;">' +
                         '<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);">' +
                         '<i data-lucide="calendar" size="14" style="opacity: 0.6;"></i><span>' + t.expires_label + ': ' + new Date(p.expires_at).toLocaleDateString() + '</span></div>' +
-                        '<div style="text-align: right;"><div style="font-size: 20px; font-weight: 800; color: ' + (isExp ? 'var(--text-secondary)' : 'var(--primary)') + ';">' + (p.count == null || p.count === 'null' ? '∞' : p.count) + '</div>' +
-                        '<div style="font-size: 9px; font-weight: 700; opacity: 0.4; text-transform: uppercase;">Clases</div></div></div></div>';
+                        countHtml + '</div></div>';
                 };
 
                 // Sort: current school first, then alphabetically
@@ -4194,13 +4268,14 @@ function _renderViewImpl() {
                     const expired = packs.filter(p => new Date(p.expires_at) <= now).sort((a, b) => new Date(b.expires_at) - new Date(a.expires_at));
                     if (active.length === 0 && expired.length === 0) continue;
                     const isCurrent = enrollment.school_id === currentSchoolId;
-                    const enrollBalance = enrollment.balance === null ? '∞' : (enrollment.balance ?? 0);
+                    const hasPriv = (enrollment.balance_private != null && enrollment.balance_private > 0) || packs.some(p => (p.private_count || 0) > 0);
+                    const enrollLabel = hasPriv ? (t.group_classes_remaining || 'G') + ' ' + (enrollment.balance === null ? '∞' : (enrollment.balance ?? 0)) + ' ' + (t.private_classes_remaining || 'P') + ' ' + (enrollment.balance_private ?? 0) : (enrollment.balance === null ? '∞' : (enrollment.balance ?? 0)) + ' clases';
 
                     if (hasMultipleSchools) {
                         out += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; margin-top: 12px; padding: 0 4px;">' +
                             '<div style="width: 6px; height: 6px; border-radius: 50%; background: ' + (isCurrent ? 'var(--system-blue)' : 'var(--text-secondary)') + '; opacity: ' + (isCurrent ? 1 : 0.4) + ';"></div>' +
                             '<div style="font-size: 13px; font-weight: 700; color: ' + (isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)') + ';">' + sName + '</div>' +
-                            '<div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); opacity: 0.6; margin-left: auto;">' + enrollBalance + ' clases</div>' +
+                            '<div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); opacity: 0.6; margin-left: auto;">' + enrollLabel + '</div>' +
                             '</div>';
                     }
 
@@ -4811,7 +4886,7 @@ function _renderViewImpl() {
         const classesList = [...(Array.isArray(state.classes) ? state.classes : [])].sort((a, b) => (a.id || 0) - (b.id || 0));
         const planSortKey = (s) => {
             const name = (s.name || '').toLowerCase();
-            if (name.includes('ilimitad') || name.includes('unlimited') || s.limit_count === 0 || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
+            if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0)) || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9;
             const n = parseInt(s.limit_count, 10);
             if (!isNaN(n)) return n;
             const m = (s.name || '').match(/\d+/);
@@ -5013,10 +5088,29 @@ function _renderViewImpl() {
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>
-                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                ${(() => {
+                                    const isPT = state.currentSchool?.profile_type === 'private_teacher';
+                                    const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+                                    if (hasDual && isPT) {
+                                        return `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>`;
+                                    }
+                                    if (hasDual) {
+                                        return `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="users" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div><div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>`;
+                                    }
+                                    return `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
-                                </div>
+                                </div>`;
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -5138,6 +5232,19 @@ function _renderViewImpl() {
                     <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
                 </div>
                 <div id="settings-advanced-content" style="padding: 1rem 0; display: ${state.settingsAdvancedExpanded ? '' : 'none'};">
+                    ${state.currentSchool?.profile_type === 'school' ? `
+                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
+                        <div class="admin-private-contact-title">${t.offer_private_classes || 'Offer private classes'}</div>
+                        <p class="admin-private-contact-desc">${t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.'}</p>
+                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
+                            <span style="font-size: 15px; font-weight: 600;">${t.offer_private_classes || 'Offer private classes'}</span>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${(state.adminSettings?.private_classes_offering_enabled === 'true') ? 'checked' : ''} onchange="window.togglePrivateClassesOffering(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
+                    ` : ''}
                     <!-- Contacto clases particulares -->
                     <div class="admin-private-contact-card" style="margin-bottom: 1.5rem;">
                         <div class="admin-private-contact-title">${t.private_contact_section}</div>
@@ -7368,7 +7475,7 @@ window.activatePackage = async (studentId, packageName) => {
     if (!pkg && packageName) {
         const numMatch = String(packageName).match(/\d+/);
         const inferredCount = numMatch ? parseInt(numMatch[0], 10) : 1;
-        pkg = { name: packageName, limit_count: inferredCount, validity_days: 30 };
+        pkg = { name: packageName, limit_count: inferredCount, limit_count_private: 0, validity_days: 30 };
     }
 
     if (!student) {
@@ -7376,19 +7483,30 @@ window.activatePackage = async (studentId, packageName) => {
         return;
     }
 
+    const isPT = state.currentSchool?.profile_type === 'private_teacher';
+    let incomingGroup = pkg ? parseInt(pkg.limit_count, 10) : 0;
+    let incomingPrivate = pkg ? parseInt(pkg.limit_count_private, 10) : 0;
+    if (isNaN(incomingGroup)) incomingGroup = 0;
+    if (isNaN(incomingPrivate)) incomingPrivate = 0;
+    if (isPT) {
+        incomingGroup = 0;
+        if (incomingPrivate <= 0) incomingPrivate = parseInt(pkg?.limit_count, 10) || 1;
+    }
+    const isUnlimitedGroup = pkg && incomingGroup <= 0 && (incomingPrivate == null || incomingPrivate <= 0) && !isPT;
+
     let newBalance;
-    const incomingLimit = pkg ? parseInt(pkg.limit_count, 10) : 0;
-    const effectiveLimit = isNaN(incomingLimit) ? 0 : incomingLimit;
-    const isUnlimited = pkg && effectiveLimit === 0;
+    let newBalancePrivate = (student.balance_private ?? 0) + incomingPrivate;
 
     if (!pkg) {
         newBalance = student.balance ?? 0;
-    } else if (isUnlimited) {
+    } else if (isUnlimitedGroup) {
         newBalance = null;
+    } else if (student.balance === null && incomingGroup > 0) {
+        newBalance = incomingGroup;
     } else if (student.balance === null) {
         newBalance = null;
     } else {
-        newBalance = (student.balance || 0) + effectiveLimit;
+        newBalance = (student.balance || 0) + incomingGroup;
     }
 
     const days = (pkg && pkg.validity_days && !isNaN(parseInt(pkg.validity_days, 10))) ? parseInt(pkg.validity_days, 10) : 30;
@@ -7398,17 +7516,19 @@ window.activatePackage = async (studentId, packageName) => {
     const newPack = {
         id: "PACK-" + Date.now().toString(36).toUpperCase(),
         name: pkg ? pkg.name : packageName,
-        count: isUnlimited ? null : effectiveLimit,
+        count: isUnlimitedGroup ? null : incomingGroup,
+        private_count: incomingPrivate,
         expires_at: expiry.toISOString(),
         created_at: new Date().toISOString()
     };
 
     const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
-    if (pkg && (effectiveLimit > 0 || isUnlimited)) activePacks.push(newPack);
+    if (pkg && (incomingGroup > 0 || isUnlimitedGroup || incomingPrivate > 0)) activePacks.push(newPack);
 
     const updates = {
         package: pkg ? pkg.name : null,
         balance: newBalance,
+        balance_private: newBalancePrivate,
         paid: !!pkg,
         active_packs: activePacks,
         package_expires_at: activePacks.length > 0 ? expiry.toISOString() : null
@@ -7421,7 +7541,8 @@ window.activatePackage = async (studentId, packageName) => {
             p_active_packs: updates.active_packs,
             p_package_expires_at: updates.package_expires_at,
             p_package_name: updates.package,
-            p_paid: updates.paid
+            p_paid: updates.paid,
+            p_balance_private: updates.balance_private ?? 0
         });
         if (rpcError) {
             const { error: tableError } = await supabaseClient.from('students').update(updates).eq('id', studentId);
@@ -7435,6 +7556,7 @@ window.activatePackage = async (studentId, packageName) => {
 
     student.package = updates.package;
     student.balance = updates.balance;
+    student.balance_private = updates.balance_private ?? 0;
     student.paid = updates.paid;
     student.active_packs = updates.active_packs;
     student.package_expires_at = updates.package_expires_at;
@@ -7902,7 +8024,7 @@ window.getDiscoveryPreviewFullHtml = (opts) => {
         </div>`;
     }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="calendar" size="24"></i><span>${placeholder}</span></div>`;
     const currency = opts.currency || 'MXN';
-    const planSortKey = (s) => { const name = (s.name || '').toLowerCase(); if (name.includes('ilimitad') || name.includes('unlimited') || s.limit_count === 0 || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9; const n = parseInt(s.limit_count, 10); if (!isNaN(n)) return n; const m = (s.name || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
+    const planSortKey = (s) => { const name = (s.name || '').toLowerCase(); if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0)) || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9; const n = parseInt(s.limit_count, 10); if (!isNaN(n)) return n; const m = (s.name || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
     const sortedSubs = [...subscriptions].sort((a, b) => planSortKey(a) - planSortKey(b));
     const packagesHtml = sortedSubs.length ? `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${sortedSubs.map(s => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, currency) : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="credit-card" size="24"></i><span>${placeholder}</span></div>`;
     const locationsHtml = locations.length ? locations.map(loc => { const locName = String(loc.name || '').replace(/</g, '&lt;'); const locAddr = String(loc.address || '').replace(/</g, '&lt;'); const locDesc = String(loc.description || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'); const imgs = Array.isArray(loc.image_urls) ? loc.image_urls : []; return `<div class="discovery-detail-location-card" style="margin-bottom: 1rem; padding: 1rem; border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; margin-bottom: 4px;">${locName || '—'}</div><div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 6px;"><i data-lucide="map-pin" size="14"></i> ${locAddr || placeholder}</div>${locDesc ? `<div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${locDesc}</div>` : ''}${imgs.length ? `<div class="discovery-detail-gallery-grid" style="margin-top: 8px;">${imgs.slice(0, 6).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : ''}</div>`; }).join('') : (gallery.length ? `<div class="discovery-detail-gallery-grid">${gallery.slice(0, 12).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="map-pin" size="32"></i><span>${placeholder}</span></div>`);
@@ -8071,6 +8193,12 @@ window.updateAdminSetting = async (key, value) => {
 window.savePrivateContactAdmin = async (adminId) => {
     if (!state.currentSchool?.id) return;
     await window.updateAdminSetting('private_contact_admin_id', adminId || '');
+};
+
+window.togglePrivateClassesOffering = async (enabled) => {
+    if (!state.currentSchool?.id) return;
+    await window.updateAdminSetting('private_classes_offering_enabled', enabled ? 'true' : 'false');
+    renderView();
 };
 
 window.saveAdminProfile = async () => {
@@ -8422,6 +8550,7 @@ window.updateSub = async (id, field, value) => {
         let val;
         if (field === 'price') val = parseFloat(value);
         else if (field === 'limit_count') val = value === '' ? 0 : (parseInt(value, 10) || 0);
+        else if (field === 'limit_count_private') val = value === '' ? 0 : (parseInt(value, 10) || 0);
         else if (field === 'validity_days') val = parseInt(value, 10) || 30;
         else val = value;
         if (supabaseClient) {
@@ -8439,13 +8568,17 @@ window.updateSub = async (id, field, value) => {
 
 window.addSubscription = async () => {
     const schoolId = state.currentSchool?.id;
+    const isPT = state.currentSchool?.profile_type === 'private_teacher';
+    const defaultGroup = isPT ? 0 : 10;
+    const defaultPrivate = isPT ? 10 : 0;
     if (supabaseClient && schoolId) {
         const { data: row, error: rpcError } = await supabaseClient.rpc('subscription_insert_for_school', {
             p_school_id: schoolId,
             p_name: 'New Plan',
             p_price: 50,
-            p_limit_count: 10,
-            p_validity_days: 30
+            p_limit_count: defaultGroup,
+            p_validity_days: 30,
+            p_limit_count_private: defaultPrivate
         });
         if (rpcError) {
             const msg = (rpcError.message || '').toLowerCase();
@@ -8458,10 +8591,10 @@ window.addSubscription = async () => {
         if (row) {
             const created = typeof row === 'object' && !Array.isArray(row) ? row : (Array.isArray(row) ? row[0] : null);
             if (created) state.subscriptions.push(created);
-            else state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId });
+            else state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: defaultGroup, limit_count_private: defaultPrivate, validity_days: 30, school_id: schoolId });
         }
     } else {
-        state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: 10, validity_days: 30, school_id: schoolId });
+        state.subscriptions.push({ id: 'S' + Date.now(), name: 'New Plan', price: 50, limit_count: defaultGroup, limit_count_private: defaultPrivate, validity_days: 30, school_id: schoolId });
     }
     saveState();
     renderView();
@@ -8960,9 +9093,19 @@ window.handleScan = async (scannedId) => {
     const now = new Date();
     const activePacks = packs.filter(p => new Date(p.expires_at) > now);
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
-    const isUnlimited = student.balance === null || hasUnlimitedPack;
-    const hasValidPass = student.paid && (isUnlimited || (student.balance != null && student.balance > 0));
-    const hasNoClasses = student.paid && !isUnlimited && (student.balance == null || student.balance < 1);
+    const isUnlimitedGroup = student.balance === null || hasUnlimitedPack;
+    const isPT = state.currentSchool?.profile_type === 'private_teacher';
+    const hasDualScanMode = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+    if (!state.scanDeductionType || (state.scanDeductionType !== 'group' && state.scanDeductionType !== 'private')) {
+        state.scanDeductionType = isPT ? 'private' : 'group';
+    }
+    const deductPrivate = hasDualScanMode && state.scanDeductionType === 'private';
+    const hasValidPass = deductPrivate
+        ? (student.paid && (student.balance_private != null) && student.balance_private > 0)
+        : (student.paid && (isUnlimitedGroup || (student.balance != null && student.balance > 0)));
+    const hasNoClasses = deductPrivate
+        ? (student.paid && (student.balance_private == null || student.balance_private < 1))
+        : (student.paid && !isUnlimitedGroup && (student.balance == null || student.balance < 1));
 
     // If student has today's registrations, show registration-aware scan result
     if (todayRegs.length > 0 && hasValidPass) {
@@ -8983,11 +9126,14 @@ window.handleScan = async (scannedId) => {
             </button>
         `).join('');
 
+        const regBalanceLabel = hasDualScanMode
+            ? `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${student.balance_private ?? 0}`
+            : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}`;
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 1rem; margin:0 0 0.5rem;">${escapeHtml(student.name)}</h3>
                 <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.8rem;">
-                    ${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}
+                    ${regBalanceLabel}
                 </div>
                 ${regsHtml}
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.5rem 0;">
@@ -9011,19 +9157,34 @@ window.handleScan = async (scannedId) => {
             </div>
         `;
     } else if (hasValidPass) {
-        const maxDeduct = (student.balance === null || student.balance === undefined) ? 99 : Math.max(1, student.balance);
+        const maxDeduct = deductPrivate
+            ? Math.max(1, student.balance_private ?? 0)
+            : ((student.balance === null || student.balance === undefined) ? 99 : Math.max(1, student.balance));
+        const balanceLabel = deductPrivate
+            ? `${t('private_classes_remaining') || 'Private'}: ${student.balance_private ?? 0}`
+            : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}`;
+        const scanToggleHtml = hasDualScanMode ? `
+                <div class="scan-deduction-toggle" style="display: flex; gap: 6px; margin-bottom: 1rem; background: var(--system-gray6); border-radius: 12px; padding: 4px;">
+                    <button type="button" class="scan-toggle-btn ${state.scanDeductionType === 'group' ? 'active' : ''}" onclick="state.scanDeductionType='group'; window.handleScan('${escapeHtml(student.id)}');" style="flex:1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; background: ${state.scanDeductionType === 'group' ? 'var(--system-blue)' : 'transparent'}; color: ${state.scanDeductionType === 'group' ? 'white' : 'var(--text-secondary)'}; cursor: pointer; transition: all 0.2s;">
+                        ${t('scan_mode_group') || 'Group'}
+                    </button>
+                    <button type="button" class="scan-toggle-btn ${state.scanDeductionType === 'private' ? 'active' : ''}" onclick="state.scanDeductionType='private'; window.handleScan('${escapeHtml(student.id)}');" style="flex:1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; background: ${state.scanDeductionType === 'private' ? 'var(--system-blue)' : 'transparent'}; color: ${state.scanDeductionType === 'private' ? 'white' : 'var(--text-secondary)'}; cursor: pointer; transition: all 0.2s;">
+                        ${t('scan_mode_private') || 'Private'}
+                    </button>
+                </div>
+                ` : '';
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
                         <h3 style="font-size: 1rem; margin:0;">${escapeHtml(student.name)}</h3>
                         <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">
-                            ${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}
+                            ${balanceLabel}
                         </div>
                     </div>
                 </div>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                ${scanToggleHtml}
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: ${hasDualScanMode ? '0' : '1rem'}; margin-top: 0.5rem;">
                     <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1)" style="padding: 0.8rem; font-size: 0.85rem;">
                         ${t('one_class')}
                     </button>
@@ -9115,6 +9276,7 @@ window.confirmRegisteredAttendance = async (registrationId) => {
 window.confirmAttendance = async (studentId, count) => {
     const student = state.students.find(s => s.id === studentId);
     if (!student) return;
+    const classType = (state.scanDeductionType === 'private') ? 'private' : 'group';
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
@@ -9131,12 +9293,16 @@ window.confirmAttendance = async (studentId, count) => {
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
     const isUnlimited = student.balance === null || hasUnlimitedPack;
 
-    if (!isUnlimited && student.balance !== null && student.balance < countNum) {
+    const checkBalance = classType === 'private'
+        ? (student.balance_private != null && student.balance_private < countNum)
+        : (!isUnlimited && student.balance !== null && student.balance < countNum);
+    if (checkBalance) {
         alert(t('not_enough_balance'));
         return;
     }
 
-    if (!isUnlimited && student.balance !== null) {
+    const shouldDeduct = classType === 'private' ? (student.balance_private != null && student.balance_private >= countNum) : (!isUnlimited && student.balance !== null);
+    if (shouldDeduct) {
         const schoolId = student.school_id || state.currentSchool?.id;
         let updated = false;
 
@@ -9144,28 +9310,39 @@ window.confirmAttendance = async (studentId, count) => {
             const { error: rpcError } = await supabaseClient.rpc('deduct_student_classes', {
                 p_student_id: String(studentId),
                 p_school_id: schoolId,
-                p_count: countNum
+                p_count: countNum,
+                p_class_type: classType
             });
             if (!rpcError) {
                 updated = true;
                 const now = new Date();
-                const activeOnly = (student.active_packs || []).filter(p => new Date(p.expires_at) > now);
                 const packs = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
                 let remaining = countNum;
                 for (const pack of packs) {
                     if (remaining <= 0) break;
-                    if (new Date(pack.expires_at) <= now) continue; // skip expired
-                    const c = (pack.count || 0);
-                    const deduct = Math.min(c, remaining);
-                    pack.count = c - deduct;
-                    remaining -= deduct;
+                    if (new Date(pack.expires_at) <= now) continue;
+                    if (classType === 'private') {
+                        const c = pack.private_count ?? 0;
+                        const deduct = Math.min(c, remaining);
+                        pack.private_count = c - deduct;
+                        remaining -= deduct;
+                    } else {
+                        const c = (pack.count || 0);
+                        const deduct = Math.min(c, remaining);
+                        pack.count = c - deduct;
+                        remaining -= deduct;
+                    }
                 }
-                student.active_packs = packs.filter(p => (p.count || 0) > 0 || new Date(p.expires_at) <= now);
-                student.balance = (student.balance || 0) - countNum;
+                student.active_packs = packs.filter(p => (classType === 'private' ? (p.private_count || 0) : (p.count || 0)) > 0 || new Date(p.expires_at) <= now);
+                if (classType === 'private') {
+                    student.balance_private = Math.max(0, (student.balance_private ?? 0) - countNum);
+                } else {
+                    student.balance = (student.balance || 0) - countNum;
+                }
             }
         }
 
-        if (!updated) {
+        if (!updated && classType === 'group') {
             const now = new Date();
             const allPacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
             const activePacks = allPacks.filter(p => new Date(p.expires_at) > now).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
@@ -9206,7 +9383,9 @@ window.confirmAttendance = async (studentId, count) => {
         await fetchAllData();
     }
 
-    const newRemaining = isUnlimited ? t('unlimited') : (student.balance ?? 0);
+    const newRemaining = classType === 'private'
+        ? (student.balance_private ?? 0)
+        : (isUnlimited ? t('unlimited') : (student.balance ?? 0));
     resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
