@@ -9189,18 +9189,22 @@ window.handleScan = async (scannedId) => {
                 </div>`;
 
         const privateRow = hasDualScanMode ? `
-                <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
-                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; text-transform: uppercase;">${t('deduct_private_classes') || 'Deduct private classes'}</div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.25rem;">
-                        <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('one_class')}</button>
-                        <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('two_classes')}</button>
+                <details style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
+                    <summary class="scan-private-summary" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0;">
+                        <span class="scan-private-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_private_classes') || 'Deduct private classes'}
+                    </summary>
+                    <div style="margin-top: 0.5rem;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('one_class')}</button>
+                            <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('two_classes')}</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                            <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">${t('deduct_btn')}</button>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-                        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
-                        <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">${t('deduct_btn')}</button>
-                    </div>
-                </div>` : '';
+                </details>` : '';
 
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">

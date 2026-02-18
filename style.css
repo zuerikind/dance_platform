@@ -5361,3 +5361,12 @@ select.filter-control {
 .scan-toggle-btn:active {
   transform: scale(0.97);
 }
+
+/* QR Scanner: Private classes section collapsed by default */
+details .scan-private-summary::-webkit-details-marker,
+details .scan-private-summary::marker {
+  display: none;
+}
+details[open] .scan-private-arrow {
+  transform: rotate(90deg);
+}
