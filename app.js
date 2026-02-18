@@ -152,6 +152,8 @@ const DANCE_LOCALES = {
         classes_label: "Classes",
         add_label: "Add",
         plans_label: "Plans",
+        plans_section_group: "Group classes",
+        plans_section_private: "Private / mixed",
         limit_classes_label: "Class Limit",
         limit_classes_placeholder: "Classes (0 = Unlimited)",
         offer_private_classes: "Offer private classes",
@@ -695,6 +697,8 @@ const DANCE_LOCALES = {
         classes_label: "Clases",
         add_label: "Añadir",
         plans_label: "Planes",
+        plans_section_group: "Clases grupales",
+        plans_section_private: "Particulares / mixtos",
         limit_classes_label: "Límite de Clases",
         limit_classes_placeholder: "Clases (0 = Ilimitado)",
         offer_private_classes: "Ofrecer clases particulares",
@@ -1220,6 +1224,8 @@ const DANCE_LOCALES = {
         classes_label: "Kurse",
         add_label: "Hinzufügen",
         plans_label: "Pläne",
+        plans_section_group: "Gruppenstunden",
+        plans_section_private: "Privat / gemischt",
         limit_classes_label: "Stundenlimit",
         limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
         offer_private_classes: "Privatunterricht anbieten",
@@ -4098,12 +4104,16 @@ function _renderViewImpl() {
             const m = (s.name || '').match(/\d+/);
             return m ? parseInt(m[0], 10) : 0;
         };
-        const sortedShopPlans = [...(state.subscriptions || [])].sort((a, b) => planSortKey(a) - planSortKey(b));
+        const hasPrivateInPlan = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
+        const shopGroupOnly = [...(state.subscriptions || [])].filter(s => !hasPrivateInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const shopWithPrivate = [...(state.subscriptions || [])].filter(hasPrivateInPlan).sort((a, b) => planSortKey(a) - planSortKey(b));
         html += `<h1>${t.shop_title}</h1>`;
-        html += `<p class="text-muted" style="margin-bottom: 3.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
-        html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">`;
-        sortedShopPlans.forEach(s => {
-            html += `
+        html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
+        if (shopGroupOnly.length > 0) {
+            html += `<div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.6rem;">${t.plans_section_group || 'Group classes'}</div>`;
+            html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${shopWithPrivate.length > 0 ? '2rem' : '0'};">`;
+            shopGroupOnly.forEach(s => {
+                html += `
                 <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;">
                     <div>
                         <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${s.name}</h3>
@@ -4115,8 +4125,28 @@ function _renderViewImpl() {
                     <button class="btn-primary w-full" onclick="openPaymentModal('${s.id}')" style="padding: 0.75rem; font-size: 0.9rem;">${t.buy}</button>
                 </div>
             `;
-        });
-        html += `</div>`;
+            });
+            html += `</div>`;
+        }
+        if (shopWithPrivate.length > 0) {
+            html += `<div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.6rem;">${t.plans_section_private || 'Private / mixed'}</div>`;
+            html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">`;
+            shopWithPrivate.forEach(s => {
+                html += `
+                <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${s.name}</h3>
+                        <p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">
+                            ${t.valid_for_days.replace('{days}', s.validity_days || 30)}
+                        </p>
+                        <div style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.04em;">${formatPrice(s.price, state.currentSchool?.currency || 'MXN')}</div>
+                    </div>
+                    <button class="btn-primary w-full" onclick="openPaymentModal('${s.id}')" style="padding: 0.75rem; font-size: 0.9rem;">${t.buy}</button>
+                </div>
+            `;
+            });
+            html += `</div>`;
+        }
     } else if (view === 'qr') {
         const compBlockHtml = state.currentCompetitionForStudent ? (() => {
             const comp = state.currentCompetitionForStudent;
@@ -4904,7 +4934,9 @@ function _renderViewImpl() {
             const m = (s.name || '').match(/\d+/);
             return m ? parseInt(m[0], 10) : 0;
         };
-        const subscriptionsList = [...(Array.isArray(state.subscriptions) ? state.subscriptions : [])].sort((a, b) => planSortKey(a) - planSortKey(b));
+        const hasPrivateInPlanSub = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
+        const adminGroupOnly = [...(Array.isArray(state.subscriptions) ? state.subscriptions : [])].filter(s => !hasPrivateInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const adminWithPrivate = [...(Array.isArray(state.subscriptions) ? state.subscriptions : [])].filter(hasPrivateInPlanSub).sort((a, b) => planSortKey(a) - planSortKey(b));
 
         html += `
             <div class="ios-header">
@@ -5078,8 +5110,10 @@ function _renderViewImpl() {
             <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.plans_label}
             </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem;">
-                ${subscriptionsList.map(s => `
+            ${adminGroupOnly.length > 0 ? `
+            <div style="padding: 0 1.2rem; margin-top: 0.6rem; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_group || 'Group classes'}</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
+                ${adminGroupOnly.map(s => `
                     <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
@@ -5127,7 +5161,63 @@ function _renderViewImpl() {
                         </div>
                     </div>
                 `).join('')}
-                <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; grid-column: span 2;">
+            </div>
+            ` : ''}
+            ${adminWithPrivate.length > 0 ? `
+            <div style="padding: 0 1.2rem; margin-top: ${adminGroupOnly.length > 0 ? '1.25rem' : '0.6rem'}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_private || 'Private / mixed'}</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
+                ${adminWithPrivate.map(s => `
+                    <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                         <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
+                                <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                            </div>
+                            <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 4px; cursor: pointer; flex-shrink: 0;">
+                                <i data-lucide="trash-2" size="16"></i>
+                            </button>
+                        </div>
+                         <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || 'MXN'] || '$').trim()}</span>
+                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>
+                                ${(() => {
+                                    const isPT = state.currentSchool?.profile_type === 'private_teacher';
+                                    const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+                                    if (hasDual && isPT) {
+                                        return `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>`;
+                                    }
+                                    if (hasDual) {
+                                        return `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="users" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div><div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>`;
+                                    }
+                                    return `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                    <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                </div>`;
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            ` : ''}
+            <div style="padding: 0 1.2rem; margin-top: 1rem;">
+                <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} Plan
                 </div>
             </div>
@@ -8037,8 +8127,14 @@ window.getDiscoveryPreviewFullHtml = (opts) => {
     }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="calendar" size="24"></i><span>${placeholder}</span></div>`;
     const currency = opts.currency || 'MXN';
     const planSortKey = (s) => { const name = (s.name || '').toLowerCase(); if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0)) || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9; const n = parseInt(s.limit_count, 10); if (!isNaN(n)) return n; const m = (s.name || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
-    const sortedSubs = [...subscriptions].sort((a, b) => planSortKey(a) - planSortKey(b));
-    const packagesHtml = sortedSubs.length ? `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${sortedSubs.map(s => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, currency) : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; }).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="credit-card" size="24"></i><span>${placeholder}</span></div>`;
+    const hasPrivateInPlanDiscovery = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
+    const discoveryGroupOnly = [...subscriptions].filter(s => !hasPrivateInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+    const discoveryWithPrivate = [...subscriptions].filter(hasPrivateInPlanDiscovery).sort((a, b) => planSortKey(a) - planSortKey(b));
+    const cardHtml = (s) => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, currency) : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; };
+    const packagesHtml = (discoveryGroupOnly.length > 0 || discoveryWithPrivate.length > 0) ? [
+        discoveryGroupOnly.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_group') || 'Group classes'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${discoveryWithPrivate.length > 0 ? '1.5rem' : '0'};">${discoveryGroupOnly.map(cardHtml).join('')}</div>` : '',
+        discoveryWithPrivate.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_private') || 'Private / mixed'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${discoveryWithPrivate.map(cardHtml).join('')}</div>` : ''
+    ].filter(Boolean).join('') : `<div class="discovery-detail-placeholder-block"><i data-lucide="credit-card" size="24"></i><span>${placeholder}</span></div>`;
     const locationsHtml = locations.length ? locations.map(loc => { const locName = String(loc.name || '').replace(/</g, '&lt;'); const locAddr = String(loc.address || '').replace(/</g, '&lt;'); const locDesc = String(loc.description || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'); const imgs = Array.isArray(loc.image_urls) ? loc.image_urls : []; return `<div class="discovery-detail-location-card" style="margin-bottom: 1rem; padding: 1rem; border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; margin-bottom: 4px;">${locName || '—'}</div><div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 6px;"><i data-lucide="map-pin" size="14"></i> ${locAddr || placeholder}</div>${locDesc ? `<div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${locDesc}</div>` : ''}${imgs.length ? `<div class="discovery-detail-gallery-grid" style="margin-top: 8px;">${imgs.slice(0, 6).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : ''}</div>`; }).join('') : (gallery.length ? `<div class="discovery-detail-gallery-grid">${gallery.slice(0, 12).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="map-pin" size="32"></i><span>${placeholder}</span></div>`);
     return `<div class="discovery-detail-page" style="padding-top: 0;">
             <div class="discovery-detail-hero">
