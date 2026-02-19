@@ -6364,6 +6364,8 @@ window.loginStudent = async () => {
     });
 
     let student;
+    let authSucceeded = false;
+    let enrollError = null;
     if (supabaseClient && email && passInput) {
         try {
             const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
@@ -6371,6 +6373,7 @@ window.loginStudent = async () => {
                 password: passInput
             });
             if (!authError && authData?.user) {
+                authSucceeded = true;
                 const uid = authData.user.id;
                 const { data: enrollRows } = await supabaseClient.rpc('get_student_by_user_id', {
                     p_user_id: uid,
@@ -6384,10 +6387,11 @@ window.loginStudent = async () => {
                         p_school_id: state.currentSchool.id
                     });
                     if (enrollErr) {
-                        console.warn('auto_enroll_student error:', enrollErr.message || enrollErr);
+                        enrollError = enrollErr.message || enrollErr.code || String(enrollErr);
+                        console.warn('auto_enroll_student error:', enrollError);
                     } else if (enrolled != null) {
                         const raw = Array.isArray(enrolled) ? enrolled[0] : enrolled;
-                        student = typeof raw === 'object' ? raw : (typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch (_) { return null; } })() : null);
+                        student = typeof raw === 'object' && raw !== null && raw.id ? raw : (typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch (_) { return null; } })() : null);
                     }
                 }
             }
@@ -6407,7 +6411,11 @@ window.loginStudent = async () => {
         renderView();
         await fetchAllData();
     } else {
-        alert(t('invalid_login'));
+        if (authSucceeded && enrollError) {
+            alert((t('could_not_add_to_school') || 'Could not add you to this school.') + ' ' + (enrollError || ''));
+        } else {
+            alert(t('invalid_login'));
+        }
     }
 };
 
