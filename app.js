@@ -4288,29 +4288,32 @@ function _renderViewImpl() {
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
                     ${(() => {
                         const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                        const hasPrivate = (state.currentUser.balance_private != null && state.currentUser.balance_private > 0) || (state.currentUser.active_packs || []).some(p => (p.private_count || 0) > 0);
-                        const hasEvents = (state.currentUser.balance_events != null && state.currentUser.balance_events > 0) || (state.currentUser.active_packs || []).some(p => (p.event_count || 0) > 0);
-                        const showDual = isPT || hasPrivate;
                         const packs = state.currentUser.active_packs || [];
                         const now = new Date();
                         const activePacks = packs.filter(p => new Date(p.expires_at) > now);
                         const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
-                        const eventsLine = hasEvents ? ('<div class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem; margin-bottom: 0.2rem; font-weight: 600;">' + (t.events_remaining || 'Events') + '</div><div style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + (state.currentUser.balance_events ?? 0) + '</div>') : '';
-                        if (showDual && isPT) {
-                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + (t.private_classes_remaining || t.remaining_classes) + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + (state.currentUser.balance_private ?? 0) + '</div>' + eventsLine;
+                        const groupVal = hasUnlimitedGroup ? '∞' : (state.currentUser.balance ?? 0);
+                        const privVal = state.currentUser.balance_private ?? 0;
+                        const eventsFromPacks = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
+                        const effectiveEvents = Math.max(state.currentUser.balance_events ?? 0, eventsFromPacks);
+                        const hasGroup = hasUnlimitedGroup || (state.currentUser.balance != null && state.currentUser.balance > 0) || activePacks.some(p => (p.count != null && p.count !== 'null' && (parseInt(p.count, 10) || 0) > 0));
+                        const hasPrivate = (privVal > 0) || activePacks.some(p => (p.private_count || 0) > 0);
+                        const hasEvents = effectiveEvents > 0;
+                        const showDual = isPT || hasPrivate;
+                        const parts = [];
+                        if (hasGroup) parts.push({ label: t.group_classes_remaining || 'Group', value: groupVal });
+                        if (hasPrivate) parts.push({ label: t.private_classes_remaining || 'Private', value: privVal });
+                        if (hasEvents) parts.push({ label: t.events_remaining || 'Events', value: String(effectiveEvents) });
+                        if (parts.length === 0) {
+                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
                         }
-                        if (showDual) {
-                            const groupVal = hasUnlimitedGroup ? '∞' : (state.currentUser.balance ?? 0);
-                            const privVal = state.currentUser.balance_private ?? 0;
-                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase;">' + (t.group_classes_remaining || 'Group') + '</div><div style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + groupVal + '</div><div class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem; margin-bottom: 0.2rem; font-weight: 600;">' + (t.private_classes_remaining || 'Private') + '</div><div style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + privVal + '</div>' + eventsLine;
+                        if (parts.length === 1) {
+                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + parts[0].label + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + parts[0].value + '</div>';
                         }
-                        if (hasEvents && !showDual) {
-                            const groupVal = hasUnlimitedGroup ? '∞' : (state.currentUser.balance ?? 0);
-                            const hasGroup = state.currentUser.balance !== null || activePacks.some(p => p.count != null && p.count !== 'null');
-                            if (hasGroup) return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase;">' + (t.group_classes_remaining || 'Group') + '</div><div style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + groupVal + '</div>' + eventsLine;
-                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + (t.events_remaining || 'Events') + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + (state.currentUser.balance_events ?? 0) + '</div>';
-                        }
-                        return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + (hasUnlimitedGroup ? '∞' : (state.currentUser.balance ?? 0)) + '</div>';
+                        const row = (label, value) => '<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">' +
+                            '<span class="text-muted" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">' + label + '</span>' +
+                            '<span style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + value + '</span></div>';
+                        return parts.map(p => row(p.label, p.value)).join('');
                     })()}
                         ${(() => {
                             const balance = state.currentUser.balance ?? 0;
@@ -4321,7 +4324,9 @@ function _renderViewImpl() {
                             const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
                             const isPT = state.currentSchool?.profile_type === 'private_teacher';
                             const hasPrivate = (state.currentUser.active_packs || []).some(p => (p.private_count || 0) > 0);
-                            const noClassesLeft = isPT ? (balancePrivate <= 0) : (balance <= 0 && !hasUnlimitedGroup);
+                            const eventsFromPacksExp = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
+                            const hasEventsLeft = (state.currentUser.balance_events ?? 0) > 0 || eventsFromPacksExp > 0;
+                            const noClassesLeft = isPT ? (balancePrivate <= 0 && !hasEventsLeft) : (balance <= 0 && !hasUnlimitedGroup && !hasEventsLeft);
                             if (noClassesLeft) return ''; // hide next expiry when no classes left
                             const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
                             if (nextExpiry) {
@@ -4418,12 +4423,14 @@ function _renderViewImpl() {
                     if (active.length === 0 && expired.length === 0) continue;
                     const isCurrent = enrollment.school_id === currentSchoolId;
                     const hasPriv = (enrollment.balance_private != null && enrollment.balance_private > 0) || packs.some(p => (p.private_count || 0) > 0);
-                    const hasEv = (enrollment.balance_events != null && enrollment.balance_events > 0) || packs.some(p => (p.event_count || 0) > 0);
+                    const eventsFromPacksEn = packs.filter(p => new Date(p.expires_at) > now).reduce((s, p) => s + (p.event_count || 0), 0);
+                    const effectiveEvEn = Math.max(enrollment.balance_events ?? 0, eventsFromPacksEn);
+                    const hasEv = effectiveEvEn > 0 || packs.some(p => (p.event_count || 0) > 0);
                     let enrollLabel = (enrollment.balance === null ? '∞' : (enrollment.balance ?? 0)) + ' clases';
                     if (hasPriv || hasEv) {
                         const g = (t.group_classes_remaining || 'G') + ' ' + (enrollment.balance === null ? '∞' : (enrollment.balance ?? 0));
                         const p_ = hasPriv ? ' ' + (t.private_classes_remaining || 'P') + ' ' + (enrollment.balance_private ?? 0) : '';
-                        const e = hasEv ? ' ' + (t.events_remaining || 'E') + ' ' + (enrollment.balance_events ?? 0) : '';
+                        const e = hasEv ? ' ' + (t.events_remaining || 'E') + ' ' + effectiveEvEn : '';
                         enrollLabel = g + p_ + e;
                     }
 
