@@ -221,6 +221,8 @@ const DANCE_LOCALES = {
         loading: "Loading...",
         select_school_placeholder: "Choose your school...",
         search_school_placeholder: "Type or select school...",
+        dropdown_schools: "Schools",
+        dropdown_private_teachers: "Private teachers",
         loading_schools: "Loading schools...",
         loading_dashboard: "Opening dashboard...",
         no_schools: "No schools found",
@@ -766,6 +768,8 @@ const DANCE_LOCALES = {
         loading: "Cargando...",
         select_school_placeholder: "Elige tu escuela...",
         search_school_placeholder: "Escribe o elige escuela...",
+        dropdown_schools: "Escuelas",
+        dropdown_private_teachers: "Profesores privados",
         loading_schools: "Cargando academias...",
         loading_dashboard: "Abriendo panel...",
         no_schools: "No hay academias",
@@ -1293,6 +1297,8 @@ const DANCE_LOCALES = {
         loading: "Lädt...",
         select_school_placeholder: "Wähle deine Schule...",
         search_school_placeholder: "Tippen oder Schule wählen...",
+        dropdown_schools: "Schulen",
+        dropdown_private_teachers: "Privatlehrer",
         loading_schools: "Schulen werden geladen...",
         loading_dashboard: "Dashboard wird geöffnet...",
         no_schools: "Keine Schulen gefunden",
@@ -1782,15 +1788,14 @@ async function fetchAllData() {
         const isStudent = state.currentUser && !state.isAdmin;
 
         // Privacy: only admins / platform devs should ever load ALL students.
-        // Regular students only fetch their own record.
-        let studentsQuery = supabaseClient.from('students').select('*');
+        // Use RPC (returns students_with_profile) for admin so name/email/phone come from profile when set.
+        let studentsQuery;
         if (state.isAdmin || state.isPlatformDev) {
-            studentsQuery = studentsQuery.eq('school_id', sid).order('name');
+            studentsQuery = supabaseClient.rpc('get_school_students', { p_school_id: sid }).then(r => ({ data: r.data || [], error: r.error }));
         } else if (state.currentUser && state.currentUser.id) {
-            studentsQuery = studentsQuery.eq('id', state.currentUser.id);
+            studentsQuery = supabaseClient.from('students_with_profile').select('*').eq('id', state.currentUser.id);
         } else {
-            // Not logged in as student or admin – do not fetch any student rows
-            studentsQuery = studentsQuery.eq('school_id', sid).limit(0);
+            studentsQuery = Promise.resolve({ data: [], error: null });
         }
 
         // Students without Auth session (legacy login) can't pass RLS on classes/subscriptions;
@@ -2987,8 +2992,11 @@ function _renderViewImpl() {
         return;
     }
 
+    if (!root) return;
+    try {
     // Magic Proxy: supports both t.key and t('key')
-    const t = new Proxy(window.t, {
+    const tFn = typeof window.t === 'function' ? window.t : (k) => k;
+    const t = new Proxy(tFn, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
@@ -2996,7 +3004,8 @@ function _renderViewImpl() {
     let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${isDevDashboardView ? 'container-dev' : ''} ${viewChanged ? 'slide-in' : ''}">`;
 
     if (view === 'school-selection') {
-        const hasSchools = state.schools.length > 0;
+        const schools = state.schools || [];
+        const hasSchools = schools.length > 0;
         const triggerLabel = state.currentSchool?.name || (state.loading ? t.loading_schools : (t.search_school_placeholder || t.select_school_placeholder));
         html += `
             <div class="auth-page-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100dvh; text-align: center; width: 100%;">
@@ -3007,18 +3016,31 @@ function _renderViewImpl() {
                 </div>
                 
                 <div class="school-combobox-container custom-dropdown-container" style="width: 100%; max-width: 300px; margin: 0 auto; z-index: 50;">
-                    <div class="school-combobox-trigger" onclick="var list = document.getElementById('school-dropdown-list'); if (list && list.classList.contains('open')) closeSchoolDropdown(); else openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
-                        <span id="school-trigger-label" class="school-combobox-label" style="flex: 1; min-width: 0; font: inherit; color: inherit; text-align: left;">${triggerLabel.replace(/</g, '&lt;')}</span>
+                    <div class="school-combobox-trigger" onclick="openSchoolDropdown();" style="width: 100%; box-sizing: border-box;">
+                        <span id="school-trigger-label" class="school-combobox-label" style="flex: 1; min-width: 0; font: inherit; color: inherit; text-align: left;">${(triggerLabel ?? '').replace(/</g, '&lt;')}</span>
                         <input type="text" id="school-search-input" class="school-combobox-input school-search-when-open" placeholder="${t.search_school_placeholder || t.select_school_placeholder}" value="" autocomplete="off" oninput="filterSchoolDropdown(this.value)" onkeydown="handleSchoolComboboxKeydown(event)" style="display: none;" ${state.loading || !hasSchools ? 'disabled' : ''} />
                         <i data-lucide="chevron-down" size="18" class="school-combobox-chevron"></i>
                     </div>
                     <div id="school-dropdown-list" class="custom-dropdown-list school-dropdown-list" style="width: 100%; box-sizing: border-box;">
-                        ${hasSchools ? state.schools.map(s => `
-                            <div class="dropdown-item" data-school-id="${s.id}" data-school-name="${(s.name || '').replace(/"/g, '&quot;')}" onclick="event.preventDefault(); selectSchool('${s.id}');">
+                        ${hasSchools ? (() => {
+                            const schoolsList = schools.filter(s => s.profile_type !== 'private_teacher');
+                            const teachersList = schools.filter(s => s.profile_type === 'private_teacher');
+                            const itemHtml = (s, section) => `<div class="dropdown-item" data-school-id="${s.id}" data-school-name="${(s.name || '').replace(/"/g, '&quot;')}" data-section="${section}" onclick="event.preventDefault(); selectSchool('${s.id}');">
                                 <span>${(s.name || '').replace(/</g, '&lt;')}</span>
                                 ${state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : ''}
-                            </div>
-                        `).join('') : `<div class="school-dropdown-empty" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${state.loading ? t.connecting : t.could_not_load_schools}</div>`}
+                            </div>`;
+                            let out = '';
+                            if (schoolsList.length > 0) {
+                                out += `<div class="school-dropdown-section-header" data-section="schools" style="padding: 0.5rem 0.75rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); opacity: 0.85;">${t.dropdown_schools || 'Schools'}</div>`;
+                                out += schoolsList.map(s => itemHtml(s, 'schools')).join('');
+                            }
+                            if (teachersList.length > 0) {
+                                out += `<div class="school-dropdown-section-divider" style="border-top: 1px solid var(--border); margin: 0.35rem 0;"></div>`;
+                                out += `<div class="school-dropdown-section-header" data-section="teachers" style="padding: 0.5rem 0.75rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); opacity: 0.85;">${t.dropdown_private_teachers || 'Private teachers'}</div>`;
+                                out += teachersList.map(s => itemHtml(s, 'teachers')).join('');
+                            }
+                            return out;
+                        })() : `<div class="school-dropdown-empty" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${state.loading ? t.connecting : t.could_not_load_schools}</div>`}
                         ${hasSchools ? `<div class="school-dropdown-no-match" style="display: none; padding: 1rem; text-align: center; color: var(--text-muted); font-size: 14px;">${t.no_schools}</div>` : ''}
                     </div>
                 </div>
@@ -5693,6 +5715,11 @@ function _renderViewImpl() {
             badge.classList.toggle('hidden', pendingCount === 0);
         }
     }
+    } catch (e) {
+        console.error('Render error:', e);
+        if (root) root.innerHTML = '<div class="container" style="padding:2rem;text-align:center;"><p style="color:var(--text-muted);">Something went wrong. <a href="#" onclick="location.reload()" style="color:var(--system-blue);">Reload</a>.</p></div>';
+        if (window.lucide) window.lucide.createIcons();
+    }
 }
 
 // --- ACTIONS ---
@@ -6913,7 +6940,7 @@ async function fetchPlatformData() {
     try {
         const [schools, students, admins, classes, subs] = await Promise.all([
             supabaseClient.from('schools').select('*').order('name'),
-            supabaseClient.from('students').select('*'),
+            supabaseClient.from('students_with_profile').select('*'),
             supabaseClient.from('admins').select('*'),
             supabaseClient.from('classes').select('*'),
             supabaseClient.from('subscriptions').select('*')
@@ -8782,12 +8809,23 @@ window.filterSchoolDropdown = (query) => {
     const items = list.querySelectorAll('.dropdown-item[data-school-name]');
     const noMatch = list.querySelector('.school-dropdown-no-match');
     let visibleCount = 0;
+    const visibleBySection = { schools: 0, teachers: 0 };
     items.forEach(item => {
         const name = (item.dataset.schoolName || '').toLowerCase();
         const show = !q || name.includes(q);
         item.style.display = show ? '' : 'none';
-        if (show) visibleCount++;
+        if (show) {
+            visibleCount++;
+            const sec = item.dataset.section || 'schools';
+            visibleBySection[sec] = (visibleBySection[sec] || 0) + 1;
+        }
     });
+    list.querySelectorAll('.school-dropdown-section-header').forEach(h => {
+        const sec = h.dataset.section || 'schools';
+        h.style.display = (visibleBySection[sec] || 0) > 0 ? '' : 'none';
+    });
+    const divider = list.querySelector('.school-dropdown-section-divider');
+    if (divider) divider.style.display = (visibleBySection.teachers || 0) > 0 ? '' : 'none';
     if (noMatch) noMatch.style.display = items.length > 0 && visibleCount === 0 ? '' : 'none';
 };
 
@@ -9052,26 +9090,37 @@ window.saveStudentDetails = async (id) => {
     const balanceVal = document.getElementById('edit-student-balance').value;
     const expiresVal = document.getElementById('edit-student-expires').value;
 
-    const updates = {
-        name: newName,
-        email: newEmail || null,
-        phone: newPhone,
-        balance: balanceVal === "" ? null : parseInt(balanceVal, 10),
-        package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
-    };
-    if (newPassword) updates.password = newPassword;
-
     if (!newName) {
         alert("Nombre is required.");
         return;
     }
 
-    if (supabaseClient) {
-        const { error } = await supabaseClient.from('students').update(updates).eq('id', id);
-        if (error) { alert("Error saving: " + error.message); return; }
+    const schoolId = s.school_id || state.currentSchool?.id;
+    if (supabaseClient && schoolId) {
+        const { error } = await supabaseClient.rpc('update_student_details', {
+            p_student_id: id,
+            p_school_id: schoolId,
+            p_name: newName,
+            p_email: newEmail || null,
+            p_phone: newPhone,
+            p_password: newPassword || null,
+            p_balance: balanceVal === '' ? null : parseInt(balanceVal, 10),
+            p_package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
+        });
+        if (error) {
+            alert("Error saving: " + error.message);
+            return;
+        }
     }
 
-    Object.assign(s, updates);
+    Object.assign(s, {
+        name: newName,
+        email: newEmail || null,
+        phone: newPhone,
+        balance: balanceVal === '' ? null : parseInt(balanceVal, 10),
+        package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
+    });
+    if (newPassword) s.password = newPassword;
     document.getElementById('student-modal').classList.add('hidden');
     saveState();
     renderView();
