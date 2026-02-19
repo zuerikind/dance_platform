@@ -9548,15 +9548,16 @@ window.handleScan = async (scannedId) => {
     const isPT = state.currentSchool?.profile_type === 'private_teacher';
     const hasDualScanMode = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
     const hasEventsEnabled = state.adminSettings?.events_offering_enabled === 'true';
+    const effectivePrivate = Math.max(student.balance_private ?? 0, activePacks.reduce((s, p) => s + (p.private_count || 0), 0));
+    const effectiveEvents = Math.max(student.balance_events ?? 0, activePacks.reduce((s, p) => s + (p.event_count || 0), 0));
+    const hasGroupLeft = isUnlimitedGroup || (student.balance != null && student.balance > 0) || activePacks.some(p => (parseInt(p.count, 10) || 0) > 0);
+    const hasPrivateLeft = effectivePrivate > 0;
+    const hasEventsLeft = effectiveEvents > 0;
     if (!state.scanDeductionType || (state.scanDeductionType !== 'group' && state.scanDeductionType !== 'private' && state.scanDeductionType !== 'event')) {
         state.scanDeductionType = isPT ? 'private' : 'group';
     }
-    const hasValidPass = student.paid && (
-        hasDualScanMode
-            ? (isUnlimitedGroup || (student.balance != null && student.balance > 0) || (student.balance_private != null && student.balance_private > 0) || (hasEventsEnabled && (student.balance_events ?? 0) > 0))
-            : (isUnlimitedGroup || (student.balance != null && student.balance > 0) || (hasEventsEnabled && (student.balance_events ?? 0) > 0))
-    );
-    const hasNoClasses = student.paid && !isUnlimitedGroup && (student.balance == null || student.balance < 1) && (!hasDualScanMode || (student.balance_private == null || student.balance_private < 1)) && (!hasEventsEnabled || (student.balance_events == null || student.balance_events < 1));
+    const hasValidPass = student.paid && (hasGroupLeft || (hasDualScanMode && hasPrivateLeft) || (hasEventsEnabled && hasEventsLeft));
+    const hasNoClasses = student.paid && !hasGroupLeft && !hasPrivateLeft && !hasEventsLeft;
 
     // If student has today's registrations, show registration-aware scan result
     if (todayRegs.length > 0 && hasValidPass) {
@@ -9578,8 +9579,8 @@ window.handleScan = async (scannedId) => {
         `).join('');
 
         const regBalanceLabel = hasDualScanMode
-            ? `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${student.balance_private ?? 0}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + (student.balance_events ?? 0) : ''}`
-            : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + (student.balance_events ?? 0) : ''}`;
+            ? `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
+            : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 1rem; margin:0 0 0.5rem;">${escapeHtml(student.name)}</h3>
@@ -9609,12 +9610,12 @@ window.handleScan = async (scannedId) => {
         `;
     } else if (hasValidPass) {
         const maxDeductGroup = (student.balance === null || student.balance === undefined) ? 99 : Math.max(1, student.balance);
-        const maxDeductPrivate = Math.max(1, student.balance_private ?? 0);
-        const balanceLabelDual = `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${student.balance_private ?? 0}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + (student.balance_events ?? 0) : ''}`;
-        const balanceLabelSingle = `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + (student.balance_events ?? 0) : ''}`;
+        const maxDeductPrivate = Math.max(1, effectivePrivate);
+        const balanceLabelDual = `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
+        const balanceLabelSingle = `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         const balanceLabel = hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
 
-        const groupRow = `
+        const groupRow = hasGroupLeft ? `
                 <div style="margin-bottom: ${hasDualScanMode ? '1rem' : '0'};">
                     ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; text-transform: uppercase;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.25rem;">
@@ -9626,9 +9627,9 @@ window.handleScan = async (scannedId) => {
                         <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
                         <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">${t('deduct_btn')}</button>
                     </div>
-                </div>`;
+                </div>` : '';
 
-        const privateRow = hasDualScanMode ? `
+        const privateRow = (hasDualScanMode && hasPrivateLeft) ? `
                 <details style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
                     <summary class="scan-private-summary" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0;">
                         <span class="scan-private-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_private_classes') || 'Deduct private classes'}
@@ -9646,7 +9647,7 @@ window.handleScan = async (scannedId) => {
                     </div>
                 </details>` : '';
 
-        const eventRow = hasEventsEnabled ? `
+        const eventRow = (hasEventsEnabled && hasEventsLeft) ? `
                 <details style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
                     <summary class="scan-event-summary" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0;">
                         <span class="scan-event-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_one_event') || 'Deduct event'}
