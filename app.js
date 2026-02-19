@@ -4166,9 +4166,17 @@ function _renderViewImpl() {
         };
         const hasPrivateInPlan = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
         const hasEventsInPlan = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
-        const shopGroupOnly = [...(state.subscriptions || [])].filter(s => !hasPrivateInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopWithPrivate = [...(state.subscriptions || [])].filter(hasPrivateInPlan).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopSociales = [...(state.subscriptions || [])].filter(hasEventsInPlan).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
+        const isPT = state.currentSchool?.profile_type === 'private_teacher';
+        const hasDualShop = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+        const hasEventsEnabledShop = state.adminSettings?.events_offering_enabled === 'true';
+        const visibleSubsShop = (state.subscriptions || []).filter(s => {
+            if (!hasEventsEnabledShop && hasEventsInPlan(s)) return false;
+            if (!hasDualShop && hasPrivateInPlan(s)) return false;
+            return true;
+        });
+        const shopGroupOnly = visibleSubsShop.filter(s => !hasPrivateInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const shopWithPrivate = visibleSubsShop.filter(hasPrivateInPlan).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const shopSociales = visibleSubsShop.filter(hasEventsInPlan).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
         html += `<h1>${t.shop_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
         if (shopGroupOnly.length > 0) {
@@ -5058,11 +5066,18 @@ function _renderViewImpl() {
         const hasPrivateInPlanSub = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
         const hasEventsInPlanSub = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
         const lastAddedId = state.lastAddedSubscriptionId || '';
-        const adminGroupOnly = [...(Array.isArray(state.subscriptions) ? state.subscriptions : [])].filter(s => !hasPrivateInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminWithPrivate = [...(Array.isArray(state.subscriptions) ? state.subscriptions : [])].filter(s => hasPrivateInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminSociales = [...(Array.isArray(state.subscriptions) ? state.subscriptions : [])].filter(s => hasEventsInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
-        const lastAddedPlan = lastAddedId ? (state.subscriptions || []).find(s => s.id === lastAddedId) : null;
+        const isPT = state.currentSchool?.profile_type === 'private_teacher';
+        const hasDualAdmin = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
         const hasEventsEnabled = state.adminSettings?.events_offering_enabled === 'true';
+        const visibleSubsAdmin = (Array.isArray(state.subscriptions) ? state.subscriptions : []).filter(s => {
+            if (!hasEventsEnabled && hasEventsInPlanSub(s)) return false;
+            if (!hasDualAdmin && hasPrivateInPlanSub(s)) return false;
+            return true;
+        });
+        const adminGroupOnly = visibleSubsAdmin.filter(s => !hasPrivateInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const adminWithPrivate = visibleSubsAdmin.filter(s => hasPrivateInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const adminSociales = visibleSubsAdmin.filter(s => hasEventsInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
+        const lastAddedPlan = lastAddedId ? (state.subscriptions || []).find(s => s.id === lastAddedId) : null;
 
         html += `
             <div class="ios-header">
@@ -5421,7 +5436,7 @@ function _renderViewImpl() {
                 `).join('')}
             </div>
             ` : ''}
-            ${lastAddedPlan ? `
+            ${lastAddedPlan && visibleSubsAdmin.some(sub => sub.id === lastAddedPlan.id) ? `
             <div style="padding: 0 1.2rem; margin-top: 1rem; margin-bottom: 0.5rem;">
                 <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9; margin-bottom: 0.4rem;">New plan — edit below</div>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
@@ -9280,6 +9295,18 @@ window.updateStudentPrompt = async (id) => {
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('total_classes_label')}</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
+                ${(state.currentSchool?.profile_type === 'private_teacher' || state.adminSettings?.private_classes_offering_enabled === 'true') ? `
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('private_classes_remaining') || 'Private classes'}</label>
+                    <input type="number" id="edit-student-balance-private" class="minimal-input" value="${s.balance_private ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                </div>
+                ` : ''}
+                ${state.adminSettings?.events_offering_enabled === 'true' ? `
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('events_remaining') || 'Events'}</label>
+                    <input type="number" id="edit-student-balance-events" class="minimal-input" value="${s.balance_events ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                </div>
+                ` : ''}
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 8px; letter-spacing: 0.05em;">${t('pack_details_title')}</label>
@@ -9383,6 +9410,10 @@ window.saveStudentDetails = async (id) => {
     const newPassword = document.getElementById('edit-student-password')?.value ?? '';
     const balanceVal = document.getElementById('edit-student-balance').value;
     const expiresVal = document.getElementById('edit-student-expires').value;
+    const balancePrivateEl = document.getElementById('edit-student-balance-private');
+    const balanceEventsEl = document.getElementById('edit-student-balance-events');
+    const balancePrivateVal = balancePrivateEl ? balancePrivateEl.value : null;
+    const balanceEventsVal = balanceEventsEl ? balanceEventsEl.value : null;
 
     if (!newName) {
         alert("Nombre is required.");
@@ -9391,7 +9422,7 @@ window.saveStudentDetails = async (id) => {
 
     const schoolId = s.school_id || state.currentSchool?.id;
     if (supabaseClient && schoolId) {
-        const { error } = await supabaseClient.rpc('update_student_details', {
+        const payload = {
             p_student_id: id,
             p_school_id: schoolId,
             p_name: newName,
@@ -9400,20 +9431,26 @@ window.saveStudentDetails = async (id) => {
             p_password: newPassword || null,
             p_balance: balanceVal === '' ? null : parseInt(balanceVal, 10),
             p_package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
-        });
+        };
+        if (balancePrivateEl) payload.p_balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
+        if (balanceEventsEl) payload.p_balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
+        const { error } = await supabaseClient.rpc('update_student_details', payload);
         if (error) {
             alert("Error saving: " + error.message);
             return;
         }
     }
 
-    Object.assign(s, {
+    const updates = {
         name: newName,
         email: newEmail || null,
         phone: newPhone,
         balance: balanceVal === '' ? null : parseInt(balanceVal, 10),
         package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
-    });
+    };
+    if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
+    if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
+    Object.assign(s, updates);
     if (newPassword) s.password = newPassword;
     document.getElementById('student-modal').classList.add('hidden');
     saveState();
