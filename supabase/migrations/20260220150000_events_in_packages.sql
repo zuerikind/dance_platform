@@ -45,6 +45,8 @@ DECLARE
   v_expires_at timestamptz;
   v_is_private boolean;
   v_is_event boolean;
+  v_effective_private int;
+  v_effective_events int;
 BEGIN
   IF p_count IS NULL OR p_count < 1 THEN
     RETURN;
@@ -58,11 +60,23 @@ BEGIN
   END IF;
 
   IF v_is_private THEN
-    IF COALESCE(v_student.balance_private, 0) < p_count THEN
+    v_effective_private := COALESCE(v_student.balance_private, 0);
+    IF jsonb_array_length(COALESCE(v_student.active_packs, '[]'::jsonb)) > 0 THEN
+      v_effective_private := GREATEST(v_effective_private, (SELECT COALESCE(SUM((elem->>'private_count')::int), 0)
+        FROM jsonb_array_elements(v_student.active_packs) AS elem
+        WHERE (elem->>'expires_at')::timestamptz IS NULL OR (elem->>'expires_at')::timestamptz > v_now));
+    END IF;
+    IF v_effective_private < p_count THEN
       RETURN;
     END IF;
   ELSIF v_is_event THEN
-    IF COALESCE(v_student.balance_events, 0) < p_count THEN
+    v_effective_events := COALESCE(v_student.balance_events, 0);
+    IF jsonb_array_length(COALESCE(v_student.active_packs, '[]'::jsonb)) > 0 THEN
+      v_effective_events := GREATEST(v_effective_events, (SELECT COALESCE(SUM((elem->>'event_count')::int), 0)
+        FROM jsonb_array_elements(v_student.active_packs) AS elem
+        WHERE (elem->>'expires_at')::timestamptz IS NULL OR (elem->>'expires_at')::timestamptz > v_now));
+    END IF;
+    IF v_effective_events < p_count THEN
       RETURN;
     END IF;
   ELSE

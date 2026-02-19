@@ -9761,18 +9761,20 @@ window.confirmAttendance = async (studentId, count, classType) => {
     const activePacks = packs.filter(p => new Date(p.expires_at) > now);
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
     const isUnlimited = student.balance === null || hasUnlimitedPack;
+    const effectivePrivate = Math.max(student.balance_private ?? 0, activePacks.reduce((s, p) => s + (p.private_count || 0), 0));
+    const effectiveEvents = Math.max(student.balance_events ?? 0, activePacks.reduce((s, p) => s + (p.event_count || 0), 0));
 
     const checkBalance = classType === 'private'
-        ? (student.balance_private != null && student.balance_private < countNum)
+        ? (effectivePrivate < countNum)
         : classType === 'event'
-        ? (student.balance_events == null || student.balance_events < countNum)
+        ? (effectiveEvents < countNum)
         : (!isUnlimited && student.balance !== null && student.balance < countNum);
     if (checkBalance) {
         alert(t('not_enough_balance'));
         return;
     }
 
-    const shouldDeduct = classType === 'private' ? (student.balance_private != null && student.balance_private >= countNum) : classType === 'event' ? (student.balance_events != null && student.balance_events >= countNum) : (!isUnlimited && student.balance !== null);
+    const shouldDeduct = classType === 'private' ? (effectivePrivate >= countNum) : classType === 'event' ? (effectiveEvents >= countNum) : (!isUnlimited && student.balance !== null);
     if (shouldDeduct) {
         const schoolId = student.school_id || state.currentSchool?.id;
         let updated = false;
