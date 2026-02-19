@@ -6383,8 +6383,11 @@ window.loginStudent = async () => {
                         p_user_id: uid,
                         p_school_id: state.currentSchool.id
                     });
-                    if (!enrollErr && enrolled) {
-                        student = typeof enrolled === 'object' ? enrolled : JSON.parse(enrolled);
+                    if (enrollErr) {
+                        console.warn('auto_enroll_student error:', enrollErr.message || enrollErr);
+                    } else if (enrolled != null) {
+                        const raw = Array.isArray(enrolled) ? enrolled[0] : enrolled;
+                        student = typeof raw === 'object' ? raw : (typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch (_) { return null; } })() : null);
                     }
                 }
             }
