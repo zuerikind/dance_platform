@@ -229,6 +229,7 @@ const DANCE_LOCALES = {
         search_school_placeholder: "Type or select school...",
         dropdown_schools: "Schools",
         dropdown_private_teachers: "Private teachers",
+        dropdown_country_other: "Other",
         loading_schools: "Loading schools...",
         loading_dashboard: "Opening dashboard...",
         no_schools: "No schools found",
@@ -794,6 +795,7 @@ const DANCE_LOCALES = {
         search_school_placeholder: "Escribe o elige escuela...",
         dropdown_schools: "Escuelas",
         dropdown_private_teachers: "Profesores privados",
+        dropdown_country_other: "Otro",
         loading_schools: "Cargando academias...",
         loading_dashboard: "Abriendo panel...",
         no_schools: "No hay academias",
@@ -1341,6 +1343,7 @@ const DANCE_LOCALES = {
         search_school_placeholder: "Tippen oder Schule wählen...",
         dropdown_schools: "Schulen",
         dropdown_private_teachers: "Privatlehrer",
+        dropdown_country_other: "Sonstige",
         loading_schools: "Schulen werden geladen...",
         loading_dashboard: "Dashboard wird geöffnet...",
         no_schools: "Keine Schulen gefunden",
@@ -3084,19 +3087,40 @@ function _renderViewImpl() {
                         ${hasSchools ? (() => {
                             const schoolsList = schools.filter(s => s.profile_type !== 'private_teacher');
                             const teachersList = schools.filter(s => s.profile_type === 'private_teacher');
-                            const itemHtml = (s, section) => `<div class="dropdown-item" data-school-id="${s.id}" data-school-name="${(s.name || '').replace(/"/g, '&quot;')}" data-section="${section}" onclick="event.preventDefault(); selectSchool('${s.id}');">
-                                <span>${(s.name || '').replace(/</g, '&lt;')}</span>
-                                ${state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : ''}
-                            </div>`;
+                            const getCountry = (s) => (s.country || '').trim() || (t.dropdown_country_other || 'Other');
+                            const itemHtml = (s, section) => {
+                                const country = getCountry(s);
+                                const nameEsc = (s.name || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                                const countryEsc = String(country).replace(/"/g, '&quot;');
+                                const check = state.currentSchool?.id === s.id ? '<i data-lucide="check" size="16"></i>' : '';
+                                const idEsc = String(s.id).replace(/'/g, "\\'");
+                                return '<div class="dropdown-item" data-school-id="' + s.id + '" data-school-name="' + nameEsc + '" data-section="' + section + '" data-country="' + countryEsc + '" onclick="event.preventDefault(); selectSchool(\'' + idEsc + '\');"><span>' + nameEsc + '</span>' + check + '</div>';
+                            };
+                            const renderByCountry = (list, section) => {
+                                const byCountry = {};
+                                list.forEach(s => {
+                                    const c = getCountry(s);
+                                    if (!byCountry[c]) byCountry[c] = [];
+                                    byCountry[c].push(s);
+                                });
+                                const countries = Object.keys(byCountry).sort((a, b) => a.localeCompare(b));
+                                let html = '';
+                                countries.forEach(c => {
+                                    const cEsc = String(c).replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                                    html += '<div class="school-dropdown-country-header" data-section="' + section + '" data-country="' + cEsc + '" style="padding: 0.35rem 0.75rem 0.15rem; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); opacity: 0.7;">' + cEsc + '</div>';
+                                    html += byCountry[c].map(s => itemHtml(s, section)).join('');
+                                });
+                                return html;
+                            };
                             let out = '';
                             if (schoolsList.length > 0) {
-                                out += `<div class="school-dropdown-section-header" data-section="schools" style="padding: 0.5rem 0.75rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); opacity: 0.85;">${t.dropdown_schools || 'Schools'}</div>`;
-                                out += schoolsList.map(s => itemHtml(s, 'schools')).join('');
+                                out += '<div class="school-dropdown-section-header" data-section="schools" style="padding: 0.5rem 0.75rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); opacity: 0.85;">' + (t.dropdown_schools || 'Schools') + '</div>';
+                                out += renderByCountry(schoolsList, 'schools');
                             }
                             if (teachersList.length > 0) {
-                                out += `<div class="school-dropdown-section-divider" style="border-top: 1px solid var(--border); margin: 0.35rem 0;"></div>`;
-                                out += `<div class="school-dropdown-section-header" data-section="teachers" style="padding: 0.5rem 0.75rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); opacity: 0.85;">${t.dropdown_private_teachers || 'Private teachers'}</div>`;
-                                out += teachersList.map(s => itemHtml(s, 'teachers')).join('');
+                                out += '<div class="school-dropdown-section-divider" style="border-top: 1px solid var(--border); margin: 0.35rem 0;"></div>';
+                                out += '<div class="school-dropdown-section-header" data-section="teachers" style="padding: 0.5rem 0.75rem; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); opacity: 0.85;">' + (t.dropdown_private_teachers || 'Private teachers') + '</div>';
+                                out += renderByCountry(teachersList, 'teachers');
                             }
                             return out;
                         })() : `<div class="school-dropdown-empty" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 14px;">${state.loading ? t.connecting : t.could_not_load_schools}</div>`}
@@ -9272,6 +9296,7 @@ window.filterSchoolDropdown = (query) => {
     const noMatch = list.querySelector('.school-dropdown-no-match');
     let visibleCount = 0;
     const visibleBySection = { schools: 0, teachers: 0 };
+    const visibleByCountry = {};
     items.forEach(item => {
         const name = (item.dataset.schoolName || '').toLowerCase();
         const show = !q || name.includes(q);
@@ -9280,11 +9305,20 @@ window.filterSchoolDropdown = (query) => {
             visibleCount++;
             const sec = item.dataset.section || 'schools';
             visibleBySection[sec] = (visibleBySection[sec] || 0) + 1;
+            const country = item.dataset.country || '';
+            const key = sec + '::' + country;
+            visibleByCountry[key] = (visibleByCountry[key] || 0) + 1;
         }
     });
     list.querySelectorAll('.school-dropdown-section-header').forEach(h => {
         const sec = h.dataset.section || 'schools';
         h.style.display = (visibleBySection[sec] || 0) > 0 ? '' : 'none';
+    });
+    list.querySelectorAll('.school-dropdown-country-header').forEach(h => {
+        const sec = h.dataset.section || 'schools';
+        const country = h.dataset.country || '';
+        const key = sec + '::' + country;
+        h.style.display = (visibleByCountry[key] || 0) > 0 ? '' : 'none';
     });
     const divider = list.querySelector('.school-dropdown-section-divider');
     if (divider) divider.style.display = (visibleBySection.teachers || 0) > 0 ? '' : 'none';
