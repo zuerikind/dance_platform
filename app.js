@@ -270,6 +270,10 @@ const DANCE_LOCALES = {
         dev_save_school_info: "Save",
         dev_school_info_desc: "Name and address",
         dev_school_info_saved: "School information saved.",
+        dev_events_packages_feature: "Events as packages",
+        dev_events_packages_feature_desc: "Allow this school to offer events in packages (school admin can toggle in Settings)",
+        dev_private_packages_feature: "Private classes as packages",
+        dev_private_packages_feature_desc: "Allow this school to offer private classes in packages (school admin can toggle in Settings)",
         dev_events_feature: "Jack and Jill / Events",
         dev_events_feature_desc: "Allow this school to create Jack and Jill events (premium feature)",
         dev_events_enabled: "Enabled",
@@ -538,6 +542,7 @@ const DANCE_LOCALES = {
         discovery_remove_image: "Remove",
         country_label: "Country",
         city_label: "City",
+        school_name_label: "School name",
         address_label: "Address",
         discovery_description_label: "Description",
         discovery_genres_label: "Genres (comma-separated)",
@@ -827,6 +832,10 @@ const DANCE_LOCALES = {
         dev_save_school_info: "Guardar",
         dev_school_info_desc: "Nombre y dirección",
         dev_school_info_saved: "Información de la escuela guardada.",
+        dev_events_packages_feature: "Eventos como paquetes",
+        dev_events_packages_feature_desc: "Permitir a esta escuela ofrecer eventos en paquetes (el admin puede activarlo en Ajustes)",
+        dev_private_packages_feature: "Clases privadas como paquetes",
+        dev_private_packages_feature_desc: "Permitir a esta escuela ofrecer clases privadas en paquetes (el admin puede activarlo en Ajustes)",
         dev_events_feature: "Jack and Jill / Eventos",
         dev_events_feature_desc: "Permitir a esta escuela crear eventos Jack and Jill (función premium)",
         dev_events_enabled: "Activado",
@@ -1095,6 +1104,7 @@ const DANCE_LOCALES = {
         discovery_remove_image: "Quitar",
         country_label: "País",
         city_label: "Ciudad",
+        school_name_label: "Nombre de la escuela",
         address_label: "Dirección",
         discovery_description_label: "Descripción",
         discovery_genres_label: "Géneros (separados por coma)",
@@ -1367,6 +1377,10 @@ const DANCE_LOCALES = {
         dev_save_school_info: "Speichern",
         dev_school_info_desc: "Name und Adresse",
         dev_school_info_saved: "Schulinformationen gespeichert.",
+        dev_events_packages_feature: "Events als Pakete",
+        dev_events_packages_feature_desc: "Erlaubt dieser Schule, Events in Paketen anzubieten (Admin kann in Einstellungen schalten)",
+        dev_private_packages_feature: "Privatstunden als Pakete",
+        dev_private_packages_feature_desc: "Erlaubt dieser Schule, Privatstunden in Paketen anzubieten (Admin kann in Einstellungen schalten)",
         dev_events_feature: "Jack and Jill / Events",
         dev_events_feature_desc: "Erlaube dieser Schule Jack and Jill Events zu erstellen (Premium-Funktion)",
         dev_events_enabled: "Aktiviert",
@@ -1611,6 +1625,7 @@ const DANCE_LOCALES = {
         discovery_remove_image: "Entfernen",
         country_label: "Land",
         city_label: "Stadt",
+        school_name_label: "Schulname",
         address_label: "Adresse",
         discovery_description_label: "Beschreibung",
         discovery_genres_label: "Stile (kommagetrennt)",
@@ -3398,6 +3413,8 @@ function _renderViewImpl() {
                 });
             const subs = state.platformData.subscriptions.filter(s => s.school_id === schoolId);
             const jjEnabled = !!school.jack_and_jill_enabled;
+            const eventsPkgsEnabled = school.events_packages_enabled !== false;
+            const privatePkgsEnabled = school.private_packages_enabled !== false;
 
             html += `
                 <div class="platform-school-details-page">
@@ -3412,13 +3429,33 @@ function _renderViewImpl() {
                             <div class="platform-school-hero-icon"><i data-lucide="building-2" size="36"></i></div>
                             <h1 class="platform-school-title">${(school.name || '').replace(/</g, '&lt;')}</h1>
                             <div class="platform-school-id">${String(schoolId).slice(0, 8)}…</div>
-                            <button class="platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();">
+                            <button class="platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},events_packages_enabled:${eventsPkgsEnabled},private_packages_enabled:${privatePkgsEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();">
                                 <i data-lucide="shield-check" size="20"></i> ${t.dev_enter_as_admin}
                             </button>
                         </div>
                     </div>
                     <div class="platform-school-detail-body">
                         <div class="platform-settings-group">
+                            <div class="platform-setting-row">
+                                <div class="platform-setting-info">
+                                    <div class="platform-setting-icon platform-setting-icon-blue"><i data-lucide="ticket" size="22"></i></div>
+                                    <div>
+                                        <div class="platform-setting-title">${t.dev_events_packages_feature || 'Events as packages'}</div>
+                                        <div class="platform-setting-desc">${t.dev_events_packages_feature_desc || 'Allow this school to offer events in packages'}</div>
+                                    </div>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" class="toggle-switch-input" ${eventsPkgsEnabled ? 'checked' : ''} onchange="toggleSchoolEventsPackagesEnabled('${school.id}', this.checked)"><span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span></label>
+                            </div>
+                            <div class="platform-setting-row">
+                                <div class="platform-setting-info">
+                                    <div class="platform-setting-icon platform-setting-icon-purple"><i data-lucide="user" size="22"></i></div>
+                                    <div>
+                                        <div class="platform-setting-title">${t.dev_private_packages_feature || 'Private classes as packages'}</div>
+                                        <div class="platform-setting-desc">${t.dev_private_packages_feature_desc || 'Allow this school to offer private classes in packages'}</div>
+                                    </div>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" class="toggle-switch-input" ${privatePkgsEnabled ? 'checked' : ''} onchange="toggleSchoolPrivatePackagesEnabled('${school.id}', this.checked)"><span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span></label>
+                            </div>
                             <div class="platform-setting-row">
                                 <div class="platform-setting-info">
                                     <div class="platform-setting-icon platform-setting-icon-orange"><i data-lucide="trophy" size="22"></i></div>
@@ -4167,8 +4204,8 @@ function _renderViewImpl() {
         const hasPrivateInPlan = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
         const hasEventsInPlan = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
         const isPT = state.currentSchool?.profile_type === 'private_teacher';
-        const hasDualShop = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
-        const hasEventsEnabledShop = state.adminSettings?.events_offering_enabled === 'true';
+        const hasDualShop = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+        const hasEventsEnabledShop = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
         const visibleSubsShop = (state.subscriptions || []).filter(s => {
             if (!hasEventsEnabledShop && hasEventsInPlan(s)) return false;
             if (!hasDualShop && hasPrivateInPlan(s)) return false;
@@ -5067,8 +5104,8 @@ function _renderViewImpl() {
         const hasEventsInPlanSub = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
         const lastAddedId = state.lastAddedSubscriptionId || '';
         const isPT = state.currentSchool?.profile_type === 'private_teacher';
-        const hasDualAdmin = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
-        const hasEventsEnabled = state.adminSettings?.events_offering_enabled === 'true';
+        const hasDualAdmin = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+        const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
         const visibleSubsAdmin = (Array.isArray(state.subscriptions) ? state.subscriptions : []).filter(s => {
             if (!hasEventsEnabled && hasEventsInPlanSub(s)) return false;
             if (!hasDualAdmin && hasPrivateInPlanSub(s)) return false;
@@ -5625,6 +5662,7 @@ function _renderViewImpl() {
                 </div>
                 <div id="settings-advanced-content" style="padding: 1rem 0; display: ${state.settingsAdvancedExpanded ? '' : 'none'};">
                     ${state.currentSchool?.profile_type === 'school' ? `
+                    ${state.currentSchool?.private_packages_enabled !== false ? `
                     <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
                         <div class="admin-private-contact-title">${t.offer_private_classes || 'Offer private classes'}</div>
                         <p class="admin-private-contact-desc">${t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.'}</p>
@@ -5636,6 +5674,8 @@ function _renderViewImpl() {
                             </label>
                         </div>
                     </div>
+                    ` : ''}
+                    ${state.currentSchool?.events_packages_enabled !== false ? `
                     <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
                         <div class="admin-private-contact-title">${t.offer_events || 'Offer events'}</div>
                         <p class="admin-private-contact-desc">${t.offer_events_desc || 'Allow students to buy and use event tokens. When enabled, plans can include group, private, and event counts.'}</p>
@@ -5647,6 +5687,7 @@ function _renderViewImpl() {
                             </label>
                         </div>
                     </div>
+                    ` : ''}
                     ` : ''}
                     <!-- Contacto clases particulares -->
                     <div class="admin-private-contact-card" style="margin-bottom: 1.5rem;">
@@ -7168,6 +7209,54 @@ window.toggleSchoolJackAndJill = async (schoolId, enabled) => {
     }
     if (state.currentSchool?.id === schoolId) {
         state.currentSchool = { ...state.currentSchool, jack_and_jill_enabled: !!enabled };
+    }
+    renderView();
+};
+
+window.toggleSchoolEventsPackagesEnabled = async (schoolId, enabled) => {
+    if (!supabaseClient) { alert("No database connection"); return; }
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (!sessionData?.session?.user) {
+        alert("Your Dev session is missing or expired. Log in again with your Dev credentials.");
+        return;
+    }
+    const { data, error } = await supabaseClient.rpc('school_update_events_packages_enabled', { p_school_id: schoolId, p_enabled: !!enabled });
+    if (error) {
+        alert("Error: " + (error.message || 'Could not update feature'));
+        return;
+    }
+    if (state.platformData?.schools) {
+        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, events_packages_enabled: !!enabled } : s);
+    }
+    if (state.schools) {
+        state.schools = state.schools.map(s => s.id === schoolId ? { ...s, events_packages_enabled: !!enabled } : s);
+    }
+    if (state.currentSchool?.id === schoolId) {
+        state.currentSchool = { ...state.currentSchool, events_packages_enabled: !!enabled };
+    }
+    renderView();
+};
+
+window.toggleSchoolPrivatePackagesEnabled = async (schoolId, enabled) => {
+    if (!supabaseClient) { alert("No database connection"); return; }
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (!sessionData?.session?.user) {
+        alert("Your Dev session is missing or expired. Log in again with your Dev credentials.");
+        return;
+    }
+    const { data, error } = await supabaseClient.rpc('school_update_private_packages_enabled', { p_school_id: schoolId, p_enabled: !!enabled });
+    if (error) {
+        alert("Error: " + (error.message || 'Could not update feature'));
+        return;
+    }
+    if (state.platformData?.schools) {
+        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, private_packages_enabled: !!enabled } : s);
+    }
+    if (state.schools) {
+        state.schools = state.schools.map(s => s.id === schoolId ? { ...s, private_packages_enabled: !!enabled } : s);
+    }
+    if (state.currentSchool?.id === schoolId) {
+        state.currentSchool = { ...state.currentSchool, private_packages_enabled: !!enabled };
     }
     renderView();
 };
@@ -9583,8 +9672,8 @@ window.handleScan = async (scannedId) => {
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
     const isUnlimitedGroup = student.balance === null || hasUnlimitedPack;
     const isPT = state.currentSchool?.profile_type === 'private_teacher';
-    const hasDualScanMode = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
-    const hasEventsEnabled = state.adminSettings?.events_offering_enabled === 'true';
+    const hasDualScanMode = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+    const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
     const effectivePrivate = Math.max(student.balance_private ?? 0, activePacks.reduce((s, p) => s + (p.private_count || 0), 0));
     const effectiveEvents = Math.max(student.balance_events ?? 0, activePacks.reduce((s, p) => s + (p.event_count || 0), 0));
     const hasGroupLeft = isUnlimitedGroup || (student.balance != null && student.balance > 0) || activePacks.some(p => (parseInt(p.count, 10) || 0) > 0);
