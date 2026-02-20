@@ -370,6 +370,8 @@ const DANCE_LOCALES = {
         leave_blank_keep: "leave blank to keep",
         invalid_pass_msg: "Incorrect Admin Password.",
         save_btn: "Save",
+        save_schedule_btn: "Save schedule",
+        save_plans_btn: "Save plans",
         remove_admin_confirm: "Are you sure you want to remove this administrator?",
         admin_removed: "Administrator removed successfully!",
         error_creating_admin: "Error creating administrator:",
@@ -932,6 +934,8 @@ const DANCE_LOCALES = {
         leave_blank_keep: "dejar en blanco para mantener",
         invalid_pass_msg: "Contraseña Incorrecta.",
         save_btn: "Guardar",
+        save_schedule_btn: "Guardar horario",
+        save_plans_btn: "Guardar planes",
         remove_admin_confirm: "¿Estás seguro de que quieres eliminar a este administrador?",
         admin_removed: "Administrador eliminado con éxito.",
         error_creating_admin: "Error al crear administrador:",
@@ -1479,6 +1483,8 @@ const DANCE_LOCALES = {
         leave_blank_keep: "leer lassen um beizubehalten",
         invalid_pass_msg: "Falsches Admin-Passwort.",
         save_btn: "Speichern",
+        save_schedule_btn: "Stundenplan speichern",
+        save_plans_btn: "Pakete speichern",
         remove_admin_confirm: "Sind Sie sicher, dass Sie diesen Administrator entfernen möchten?",
         admin_removed: "Administrator erfolgreich entfernt!",
         error_creating_admin: "Fehler beim Erstellen des Administrators:",
@@ -5241,6 +5247,12 @@ function _renderViewImpl() {
                 <div class="ios-list-item" onclick="addClass()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} ${t.new_class_label}
                 </div>
+                <div style="padding: 0 1.2rem; margin-top: 1rem; margin-bottom: 0.5rem;">
+                    <button type="button" class="btn-primary" onclick="window.flushScheduleSave()" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
+                        <i data-lucide="save" size="18" style="margin-right: 8px;"></i> ${t.save_schedule_btn || 'Save schedule'}
+                    </button>
+                    ${state._scheduleSaveStatus ? `<div style="font-size: 13px; color: var(--secondary); font-weight: 600; margin-top: 0.5rem; text-align: center;">${state._scheduleSaveStatus}</div>` : ''}
+                </div>
             </div>
 
             <!-- WEEKLY PREVIEW FOR ADMINS -->
@@ -5473,7 +5485,7 @@ function _renderViewImpl() {
                 `).join('')}
             </div>
             ` : ''}
-            ${lastAddedPlan && visibleSubsAdmin.some(sub => sub.id === lastAddedPlan.id) ? `
+            ${lastAddedPlan ? `
             <div style="padding: 0 1.2rem; margin-top: 1rem; margin-bottom: 0.5rem;">
                 <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9; margin-bottom: 0.4rem;">New plan — edit below</div>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
@@ -5537,6 +5549,10 @@ function _renderViewImpl() {
             </div>
             ` : ''}
             <div style="padding: 0 1.2rem; margin-top: 1rem;">
+                <button type="button" class="btn-primary" onclick="window.saveAllPlans()" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600; margin-bottom: 0.75rem;">
+                    <i data-lucide="save" size="18" style="margin-right: 8px;"></i> ${t.save_plans_btn || 'Save plans'}
+                </button>
+                ${state._plansSaveStatus ? `<div style="font-size: 13px; color: var(--secondary); font-weight: 600; margin-bottom: 0.5rem; text-align: center;">${state._plansSaveStatus}</div>` : ''}
                 <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} Plan
                 </div>
@@ -9001,6 +9017,27 @@ window.debouncedUpdateClass = (id, field, value) => {
     }, CLASS_UPDATE_DEBOUNCE_MS);
 };
 
+window.flushScheduleSave = async () => {
+    if (_classUpdateDebounceTimer) {
+        clearTimeout(_classUpdateDebounceTimer);
+        _classUpdateDebounceTimer = null;
+    }
+    const toFlush = [..._classUpdatePending.values()];
+    _classUpdatePending.clear();
+    for (const { id: classId, field: fieldName } of toFlush) {
+        const c = state.classes.find(x => x.id === classId);
+        if (!c) continue;
+        await window._doClassUpdateOnly(classId, fieldName, c[fieldName]);
+    }
+    if (toFlush.length > 0) saveState();
+    state._scheduleSaveStatus = (typeof window.t === 'function' ? window.t('saved_success_msg') : null) || 'Saved!';
+    if (window.renderView) renderView();
+    setTimeout(() => {
+        state._scheduleSaveStatus = '';
+        if (window.renderView) renderView();
+    }, 2500);
+};
+
 window._doClassUpdateOnly = async (id, field, value) => {
     const cls = state.classes.find(c => c.id === id);
     if (!cls) return;
@@ -9071,25 +9108,52 @@ window.removeClass = async (id) => {
     renderView();
 };
 
+window.saveAllPlans = async () => {
+    const subs = state.subscriptions || [];
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    for (const sub of subs) {
+        await window._updateSubNoRender(sub.id, 'name', sub.name);
+        await window._updateSubNoRender(sub.id, 'price', sub.price);
+        await window._updateSubNoRender(sub.id, 'validity_days', sub.validity_days ?? 30);
+        await window._updateSubNoRender(sub.id, 'limit_count', sub.limit_count ?? 0);
+        await window._updateSubNoRender(sub.id, 'limit_count_private', sub.limit_count_private ?? 0);
+        await window._updateSubNoRender(sub.id, 'limit_count_events', sub.limit_count_events ?? 0);
+    }
+    saveState();
+    state._plansSaveStatus = t('saved_success_msg') || 'Saved!';
+    if (window.renderView) renderView();
+    setTimeout(() => {
+        state._plansSaveStatus = '';
+        if (window.renderView) renderView();
+    }, 2500);
+};
+
+window._updateSubNoRender = async (id, field, value) => {
+    const sub = state.subscriptions.find(s => s.id === id);
+    if (!sub) return;
+    let val;
+    if (field === 'price') val = parseFloat(value);
+    else if (field === 'limit_count') val = value === '' ? 0 : (parseInt(value, 10) || 0);
+    else if (field === 'limit_count_private') val = value === '' ? 0 : (parseInt(value, 10) || 0);
+    else if (field === 'limit_count_events') val = value === '' ? 0 : (parseInt(value, 10) || 0);
+    else if (field === 'validity_days') val = parseInt(value, 10) || 30;
+    else val = value;
+    if (supabaseClient) {
+        const { error: rpcError } = await supabaseClient.rpc('subscription_update_field', { p_id: String(id), p_field: field, p_value: val !== undefined && val !== null ? String(val) : '' });
+        if (rpcError) {
+            const { error } = await supabaseClient.from('subscriptions').update({ [field]: val }).eq('id', id);
+            if (error) console.error('Subscription update failed:', error);
+        }
+    }
+    sub[field] = val;
+};
+
 window.updateSub = async (id, field, value) => {
+    await window._updateSubNoRender(id, field, value);
     const sub = state.subscriptions.find(s => s.id === id);
     if (sub) {
-        let val;
-        if (field === 'price') val = parseFloat(value);
-        else if (field === 'limit_count') val = value === '' ? 0 : (parseInt(value, 10) || 0);
-        else if (field === 'limit_count_private') val = value === '' ? 0 : (parseInt(value, 10) || 0);
-        else if (field === 'limit_count_events') val = value === '' ? 0 : (parseInt(value, 10) || 0);
-        else if (field === 'validity_days') val = parseInt(value, 10) || 30;
-        else val = value;
-        if (supabaseClient) {
-            const { error: rpcError } = await supabaseClient.rpc('subscription_update_field', { p_id: String(id), p_field: field, p_value: String(val) });
-            if (rpcError) {
-                const { error } = await supabaseClient.from('subscriptions').update({ [field]: val }).eq('id', id);
-                if (error) { console.error(error); return; }
-            }
-        }
-        sub[field] = val;
         saveState();
+        renderView();
     }
 };
 
