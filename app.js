@@ -4039,18 +4039,18 @@ function _renderViewImpl() {
                         return subs.length ? `
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                             ${subs.map(s => `
-                                <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;">
+                                <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;">
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <input type="text" value="${(s.name || '').replace(/"/g, '&quot;')}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; flex: 1; color: var(--text-primary); outline: none; margin-right: 6px;">
+                                        <input type="text" data-field="name" value="${(s.name || '').replace(/"/g, '&quot;')}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; flex: 1; color: var(--text-primary); outline: none; margin-right: 6px;">
                                         <button type="button" onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.5; padding: 4px; cursor: pointer;" aria-label="${(t.delete_label || 'Delete').replace(/"/g, '&quot;')}"><i data-lucide="trash-2" size="14"></i></button>
                                     </div>
                                     <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                         <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${currencySym}</span>
-                                        <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                        <input type="number" data-field="price" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                     </div>
                                     <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                         <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
-                                        <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="${(t.validity_days_placeholder || 'Days').replace(/"/g, '&quot;')}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                        <input type="number" data-field="validity_days" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="${(t.validity_days_placeholder || 'Days').replace(/"/g, '&quot;')}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                     </div>
                                 </div>
                             `).join('')}
@@ -5768,11 +5768,11 @@ function _renderViewImpl() {
             <div style="padding: 0 1.2rem; margin-top: 0.6rem; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_group || 'Group classes'}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminGroupOnly.map(s => `
-                    <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
-                                <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                                <input type="text" data-field="name" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
                             </div>
                             <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 4px; cursor: pointer; flex-shrink: 0;">
                                 <i data-lucide="trash-2" size="16"></i>
@@ -5781,12 +5781,12 @@ function _renderViewImpl() {
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || 'MXN'] || '$').trim()}</span>
-                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                <input type="number" data-field="price" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                 ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="validity_days" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
@@ -5796,32 +5796,32 @@ function _renderViewImpl() {
                                     if (hasDual && isPT) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else if (hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="users" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div><div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     }
                                     if (hasEvents) out += `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="ticket" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_events ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_events" value="${s.limit_count_events ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     return out;
                                 })()}
                             </div>
                             ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                <input type="date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                                <input type="date" data-field="expiry_date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
                             </div>` : ''}
                         </div>
                     </div>
@@ -5832,11 +5832,11 @@ function _renderViewImpl() {
             <div style="padding: 0 1.2rem; margin-top: ${adminGroupOnly.length > 0 ? '1.25rem' : '0.6rem'}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_private || 'Private / mixed'}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminWithPrivate.map(s => `
-                    <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
-                                <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                                <input type="text" data-field="name" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
                             </div>
                             <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 4px; cursor: pointer; flex-shrink: 0;">
                                 <i data-lucide="trash-2" size="16"></i>
@@ -5845,12 +5845,12 @@ function _renderViewImpl() {
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || 'MXN'] || '$').trim()}</span>
-                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                <input type="number" data-field="price" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                 ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="validity_days" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
@@ -5860,32 +5860,32 @@ function _renderViewImpl() {
                                     if (hasDual && isPT) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else if (hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="users" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div><div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     }
                                     if (hasEvents) out += `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="ticket" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_events ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_events" value="${s.limit_count_events ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     return out;
                                 })()}
                             </div>
                             ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                <input type="date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                                <input type="date" data-field="expiry_date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
                             </div>` : ''}
                         </div>
                     </div>
@@ -5896,11 +5896,11 @@ function _renderViewImpl() {
             <div style="padding: 0 1.2rem; margin-top: ${(adminGroupOnly.length > 0 || adminWithPrivate.length > 0) ? '1.25rem' : '0.6rem'}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_sociales || 'Sociales (events)'}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminSociales.map(s => `
-                    <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
-                                <input type="text" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                                <input type="text" data-field="name" value="${s.name}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
                             </div>
                             <button onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 4px; cursor: pointer; flex-shrink: 0;">
                                 <i data-lucide="trash-2" size="16"></i>
@@ -5909,12 +5909,12 @@ function _renderViewImpl() {
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || 'MXN'] || '$').trim()}</span>
-                                <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                <input type="number" data-field="price" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                 ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="validity_days" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
@@ -5924,32 +5924,32 @@ function _renderViewImpl() {
                                     if (hasDual && isPT) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else if (hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="users" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div><div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${s.limit_count === 0 ? 0 : (s.limit_count || '')}" min="0" onchange="updateSub('${s.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     }
                                     out += `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="ticket" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${s.limit_count_events ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_events" value="${s.limit_count_events ?? 0}" min="0" onchange="updateSub('${s.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     return out;
                                 })()}
                             </div>
                             ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                <input type="date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                                <input type="date" data-field="expiry_date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
                             </div>` : ''}
                         </div>
                     </div>
@@ -5961,11 +5961,11 @@ function _renderViewImpl() {
                 <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9; margin-bottom: 0.4rem;">New plan — edit below</div>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                     ${(s => {
-                        const card = (sub) => `<div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                        const card = (sub) => `<div class="card ios-list-item" data-plan-block data-sub-id="${sub.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
-                                <input type="text" value="${sub.name}" onchange="updateSub('${sub.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
+                                <input type="text" data-field="name" value="${sub.name}" onchange="updateSub('${sub.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; width: 100%; color: var(--text-primary); outline: none;">
                             </div>
                             <button onclick="removeSubscription('${sub.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.4; padding: 4px; cursor: pointer; flex-shrink: 0;">
                                 <i data-lucide="trash-2" size="16"></i>
@@ -5974,12 +5974,12 @@ function _renderViewImpl() {
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || 'MXN'] || '$').trim()}</span>
-                                <input type="number" value="${sub.price}" onchange="updateSub('${sub.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                <input type="number" data-field="price" value="${sub.price}" onchange="updateSub('${sub.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                 ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${sub.validity_days || 30}" onchange="updateSub('${sub.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="validity_days" value="${sub.validity_days || 30}" onchange="updateSub('${sub.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
@@ -5989,32 +5989,32 @@ function _renderViewImpl() {
                                     if (hasDual && isPT) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${sub.limit_count_private ?? sub.limit_count ?? ''}" min="0" onchange="updateSub('${sub.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${sub.limit_count_private ?? sub.limit_count ?? ''}" min="0" onchange="updateSub('${sub.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else if (hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="users" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${sub.limit_count === 0 ? 0 : (sub.limit_count || '')}" min="0" onchange="updateSub('${sub.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${sub.limit_count === 0 ? 0 : (sub.limit_count || '')}" min="0" onchange="updateSub('${sub.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.group_classes || 'Group'} (0=∞ if no private)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div><div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${sub.limit_count_private ?? 0}" min="0" onchange="updateSub('${sub.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_private" value="${sub.limit_count_private ?? 0}" min="0" onchange="updateSub('${sub.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     } else {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="layers" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${sub.limit_count === 0 ? 0 : (sub.limit_count || '')}" min="0" onchange="updateSub('${sub.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count" value="${sub.limit_count === 0 ? 0 : (sub.limit_count || '')}" min="0" onchange="updateSub('${sub.id}', 'limit_count', this.value === '' ? '0' : this.value)" placeholder="${t.limit_classes_placeholder || 'Clases (0 = Ilimitado)'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     }
                                     if (hasEvents) out += `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="ticket" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                    <input type="number" value="${sub.limit_count_events ?? 0}" min="0" onchange="updateSub('${sub.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    <input type="number" data-field="limit_count_events" value="${sub.limit_count_events ?? 0}" min="0" onchange="updateSub('${sub.id}', 'limit_count_events', this.value === '' ? '0' : this.value)" placeholder="${t.events || 'Events'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                                 </div>`;
                                     return out;
                                 })()}
                             </div>
                             ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
-                                <input type="date" value="${sub.expiry_date || ''}" onchange="updateSub('${sub.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                                <input type="date" data-field="expiry_date" value="${sub.expiry_date || ''}" onchange="updateSub('${sub.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
                             </div>` : ''}
                         </div>
                     </div>`;
@@ -9923,6 +9923,23 @@ window.saveAllPlans = async () => {
     if (window.renderView) renderView();
     if (window.lucide) window.lucide.createIcons();
     try {
+        // Flush current form values from DOM into state so we save what the user sees (onchange may not have fired if they didn't blur)
+        document.querySelectorAll('[data-plan-block]').forEach(block => {
+            const id = block.getAttribute('data-sub-id');
+            const sub = subs.find(s => String(s.id) === id);
+            if (!sub) return;
+            const get = (field) => {
+                const el = block.querySelector('[data-field="' + field + '"]');
+                return el ? el.value : undefined;
+            };
+            const nameVal = get('name'); if (nameVal !== undefined) sub.name = (nameVal || '').trim();
+            const priceVal = get('price'); if (priceVal !== undefined) sub.price = parseFloat(priceVal) || 0;
+            const daysVal = get('validity_days'); if (daysVal !== undefined) sub.validity_days = parseInt(daysVal, 10) || 30;
+            const limitVal = get('limit_count'); if (limitVal !== undefined) sub.limit_count = limitVal === '' ? 0 : (parseInt(limitVal, 10) || 0);
+            const privVal = get('limit_count_private'); if (privVal !== undefined) sub.limit_count_private = privVal === '' ? 0 : (parseInt(privVal, 10) || 0);
+            const evVal = get('limit_count_events'); if (evVal !== undefined) sub.limit_count_events = evVal === '' ? 0 : (parseInt(evVal, 10) || 0);
+            const expVal = get('expiry_date'); if (expVal !== undefined) sub.expiry_date = (expVal || '').trim();
+        });
         for (const sub of subs) {
             const promises = [
                 window._updateSubNoRender(sub.id, 'name', sub.name),
