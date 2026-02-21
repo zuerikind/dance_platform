@@ -130,6 +130,7 @@
     --border: rgba(0, 0, 0, 0.06);
     --danger: #ff3b30;
     --success: #34c759;
+    --secondary: #1d1d1f;
 
     --radius-xl: 24px;
     --radius-lg: 18px;
@@ -148,6 +149,7 @@ body.dark-mode {
     --text-secondary: #8E8E93;
     --border-color: #38383A;
     --system-gray6: #1C1C1E;
+    --secondary: #8E8E93;
     /* Grouped background in dark mode */
 }
 
@@ -1013,7 +1015,17 @@ select option {
 }
 
 .nav-item.active {
-    color: var(--system-blue);
+    color: var(--text-primary);
+}
+
+/* Light theme: active tab must stand out from bottom-nav background */
+body:not(.dark-mode) .bottom-nav .nav-item.active {
+    color: var(--text-primary);
+    background: var(--primary-soft);
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.06);
+}
+body.dark-mode .bottom-nav .nav-item.active {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-item i {
@@ -1542,6 +1554,33 @@ select option {
   flex-direction: row;
   justify-content: stretch;
 }
+.message-modal-actions.message-modal-actions-with-cancel {
+  flex-direction: column;
+}
+.message-modal-actions-with-cancel .message-modal-actions-main {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: stretch;
+}
+.message-modal-actions-with-cancel .message-modal-cancel {
+  min-height: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  align-self: center;
+}
+.message-modal-actions-with-cancel .message-modal-cancel:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+.dark-mode .message-modal-actions-with-cancel .message-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 .message-modal-actions .btn-primary,
 .message-modal-actions .btn-secondary {
   min-height: 50px;
@@ -1700,6 +1739,7 @@ select option {
 .dark-mode .platform-edit-group {
     border-color: rgba(255, 255, 255, 0.08);
 }
+
 .platform-edit-row {
     display: flex;
     align-items: center;
@@ -2037,9 +2077,9 @@ select option {
     }
 }
 
-/* FOOTER - Ultra Minimal */
+/* FOOTER - Ultra Minimal (same on all pages) */
 .site-footer {
-    padding: 0.05rem 0;
+    padding: 0.4rem 0.5rem calc(56px + env(safe-area-inset-bottom, 0px)) 0.5rem;
     border-top: none;
     opacity: 0.25;
 }
@@ -2068,6 +2108,27 @@ select option {
     gap: 0.6rem;
     font-size: 8px;
     margin: 0;
+}
+
+.footer-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.footer-icon-btn {
+    color: inherit;
+    opacity: 0.6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+.footer-icon-btn:hover {
+    opacity: 1;
 }
 
 .footer-copyright {
@@ -2584,6 +2645,18 @@ select option {
   background: rgba(255, 255, 255, 0.03);
   border-top-color: rgba(255, 255, 255, 0.06);
 }
+
+/* Discovery logo crop modal – Cancel button */
+.discovery-crop-cancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+body:not(.dark-mode) .discovery-crop-cancel:hover {
+  background: var(--primary-soft);
+  border-color: var(--text-muted);
+}
+
 .jandj-form-done {
   flex: 1;
   min-width: 140px;
@@ -3576,6 +3649,19 @@ select.filter-control {
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
 }
 
+/* Dark mode: make native date/time picker calendar icon visible (it's dark by default) */
+.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+.dark-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
+  cursor: pointer;
+}
+.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
+  cursor: pointer;
+}
+
 .filter-btn {
   min-height: 48px;
   padding: 12px 18px;
@@ -3803,6 +3889,17 @@ select.filter-control {
 @keyframes spinRotate {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Global spin animation for loader/saving icons (buttons, modals, etc.) */
+.spin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: spinRotate 0.9s linear infinite;
+}
+.spin svg {
+  display: block;
 }
 
 /* ============================================================================
@@ -4060,20 +4157,23 @@ select.filter-control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border-radius: 20px;
-  border: 1.5px solid var(--secondary);
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--secondary);
   background: transparent;
   color: var(--secondary);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .tile-join-btn:hover {
   background: var(--secondary);
-  color: white;
+  color: var(--bg-card);
+}
+.dark-mode .tile-join-btn:hover {
+  color: var(--text-primary);
 }
 .tile-join-btn:active {
   transform: scale(0.96);
@@ -4132,7 +4232,10 @@ select.filter-control {
 /* Today highlight in weekly view */
 .day-tile-today {
   border: 2px solid var(--secondary) !important;
-  box-shadow: 0 0 0 1px rgba(52, 199, 89, 0.15);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+body.dark-mode .day-tile-today {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 .day-tile-today .day-tile-header {
   color: var(--secondary) !important;
@@ -4752,6 +4855,23 @@ select.filter-control {
 .discovery-location-add-btn:hover {
   background: var(--system-gray6);
   border-color: var(--text-muted);
+}
+
+/* Discovery profile edit page: section dividers */
+.discovery-edit-section {
+  margin-bottom: 1.5rem;
+}
+.discovery-edit-section .discovery-locations-wrap {
+  padding: 0;
+}
+.discovery-edit-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem 0;
+  padding: 0;
 }
 
 /* Sticky Footer – reveal on scroll (landing page) */

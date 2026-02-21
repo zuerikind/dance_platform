@@ -213,7 +213,13 @@ const DANCE_LOCALES = {
         discovery_filter_all: "All",
         discovery_not_found: "This studio doesn't have a detail page yet.",
         discovery_sign_in_btn: "Sign in",
-        discovery_not_on_app: "This school is not on the app. Contact the teachers to see their classes and how to buy packages.",
+        discovery_not_on_app: "This school is not using Bailadmin. Please contact the school directly.",
+        discovery_sign_in_edit_profile: "Sign in to edit your studio profile",
+        discovery_back_to_page: "Back to discovery page",
+        discovery_studio_admin_signin: "Studio admin? Sign in",
+        discovery_pick_school_to_signin: "Choose your studio to sign in and edit your discovery profile.",
+        discovery_admin_signin_title: "Edit discovery profile",
+        discovery_admin_signin_subtitle: "This studio only appears on the discovery page. Sign in with your admin email and password.",
         discovery_placeholder_upload_soon: "Will be uploaded soon.",
         discovery_location: "Location",
         discovery_classes: "Classes",
@@ -275,6 +281,25 @@ const DANCE_LOCALES = {
         dev_events_packages_feature_desc: "Allow this school to offer events in packages (school admin can toggle in Settings)",
         dev_private_packages_feature: "Private classes as packages",
         dev_private_packages_feature_desc: "Allow this school to offer private classes in packages (school admin can toggle in Settings)",
+        dev_monthly_registration_feature: "Monthly class registration",
+        dev_monthly_registration_feature_desc: "Allow this school to offer monthly class registration (sign up for all classes in a month)",
+        offer_monthly_registration: "Offer monthly class registration",
+        offer_monthly_registration_desc: "Students can register for all remaining classes of a course in the current month at once.",
+        register_single: "Register for this class only",
+        register_monthly: "Register for all {n} classes this month",
+        monthly_badge: "Monthly",
+        monthly_balance_insufficient: "You need at least {n} classes to register for the full month.",
+        monthly_registration_success: "Successfully registered for {n} classes this month!",
+        monthly_capacity_full: "Class is full on {date}. Cannot complete monthly registration.",
+        fixed_expiry_date_label: "Fixed expiry date (optional)",
+        plan_expiry_display_title: "Plan expiry display",
+        plan_expiry_display_desc: "Choose how expiry is shown on each plan and to students.",
+        plan_expiry_option_date: "Fixed expiry date",
+        plan_expiry_option_date_hint: "e.g. 28.02.2026",
+        plan_expiry_option_days: "Validity in days",
+        plan_expiry_option_days_hint: "e.g. 30 days",
+        plan_expiry_fixed_date_label: "Use fixed expiry date",
+        plan_expiry_fixed_date_desc: "When ON: Plans and students see a fixed expiry date (e.g. 28.02.2026). When OFF: Plans and students see validity in days (e.g. 30 days left).",
         dev_events_feature: "Jack and Jill / Events",
         dev_events_feature_desc: "Allow this school to create Jack and Jill events (premium feature)",
         dev_events_enabled: "Enabled",
@@ -371,6 +396,7 @@ const DANCE_LOCALES = {
         leave_blank_keep: "leave blank to keep",
         invalid_pass_msg: "Incorrect Admin Password.",
         save_btn: "Save",
+        saving_label: "Saving…",
         save_schedule_btn: "Save schedule",
         save_plans_btn: "Save plans",
         remove_admin_confirm: "Are you sure you want to remove this administrator?",
@@ -470,6 +496,7 @@ const DANCE_LOCALES = {
         register_error: "Could not register. Please try again.",
         cancel_success: "Registration cancelled.",
         cancel_error: "Could not cancel. Please try again.",
+        cancel_too_late_error: "Cannot cancel less than 4 hours before the class.",
         cancel_confirm: "Cancel your registration for this class?",
         cancel_confirm_full: "You are cancelling this class. If the class gets full, you will not be able to register again.",
         register_success_4h_note: "If you don't cancel at least 4 hours before the class starts, one class will be deducted from your pass automatically.",
@@ -532,6 +559,7 @@ const DANCE_LOCALES = {
         password_too_short: "Password must be at least 4 characters.",
         select_contact_admin: "Select contact",
         discovery_profile_section: "Discovery profile",
+        discovery_offerings_section: "Offerings",
         discovery_slug_label: "URL slug",
         discovery_slug_placeholder: "e.g. royal_latin",
         discovery_upload_btn: "Upload",
@@ -779,7 +807,13 @@ const DANCE_LOCALES = {
         discovery_filter_all: "Todos",
         discovery_not_found: "Este estudio aún no tiene página de detalle.",
         discovery_sign_in_btn: "Iniciar sesión",
-        discovery_not_on_app: "Esta escuela no está en la app. Contacta a los profesores para ver sus clases y cómo comprar los paquetes.",
+        discovery_not_on_app: "Esta escuela no utiliza Bailadmin. Por favor contacta a la escuela directamente.",
+        discovery_sign_in_edit_profile: "Iniciar sesión para editar el perfil de tu estudio",
+        discovery_back_to_page: "Volver a la página de descubrimiento",
+        discovery_studio_admin_signin: "¿Eres administrador? Inicia sesión",
+        discovery_pick_school_to_signin: "Elige tu estudio para iniciar sesión y editar tu perfil de descubrimiento.",
+        discovery_admin_signin_title: "Editar perfil de descubrimiento",
+        discovery_admin_signin_subtitle: "Este estudio solo aparece en la página de descubrimiento. Inicia sesión con tu correo y contraseña de administrador.",
         discovery_placeholder_upload_soon: "Se subirá pronto.",
         discovery_location: "Ubicación",
         discovery_classes: "Clases",
@@ -840,6 +874,25 @@ const DANCE_LOCALES = {
         dev_events_packages_feature_desc: "Permitir a esta escuela ofrecer eventos en paquetes (el admin puede activarlo en Ajustes)",
         dev_private_packages_feature: "Clases privadas como paquetes",
         dev_private_packages_feature_desc: "Permitir a esta escuela ofrecer clases privadas en paquetes (el admin puede activarlo en Ajustes)",
+        dev_monthly_registration_feature: "Inscripción mensual a clases",
+        dev_monthly_registration_feature_desc: "Permitir a esta escuela ofrecer inscripción mensual (inscribirse a todas las clases del mes)",
+        offer_monthly_registration: "Ofrecer inscripción mensual",
+        offer_monthly_registration_desc: "Los estudiantes pueden inscribirse a todas las clases restantes de un curso en el mes actual de una vez.",
+        register_single: "Inscribirse solo a esta clase",
+        register_monthly: "Inscribirse a las {n} clases de este mes",
+        monthly_badge: "Mensual",
+        monthly_balance_insufficient: "Necesitas al menos {n} clases para inscribirte al mes completo.",
+        monthly_registration_success: "¡Te inscribiste exitosamente a {n} clases este mes!",
+        monthly_capacity_full: "La clase está llena el {date}. No se puede completar la inscripción mensual.",
+        fixed_expiry_date_label: "Fecha de vencimiento fija (opcional)",
+        plan_expiry_display_title: "Vencimiento de los planes",
+        plan_expiry_display_desc: "Elige cómo se muestra el vencimiento en cada plan y a los alumnos.",
+        plan_expiry_option_date: "Fecha de vencimiento fija",
+        plan_expiry_option_date_hint: "ej. 28.02.2026",
+        plan_expiry_option_days: "Validez en días",
+        plan_expiry_option_days_hint: "ej. 30 días",
+        plan_expiry_fixed_date_label: "Usar fecha de vencimiento fija",
+        plan_expiry_fixed_date_desc: "Activado: En los planes y para los alumnos se muestra una fecha fija (ej. 28.02.2026). Desactivado: Se muestra la validez en días (ej. 30 días restantes).",
         dev_events_feature: "Jack and Jill / Eventos",
         dev_events_feature_desc: "Permitir a esta escuela crear eventos Jack and Jill (función premium)",
         dev_events_enabled: "Activado",
@@ -936,6 +989,7 @@ const DANCE_LOCALES = {
         leave_blank_keep: "dejar en blanco para mantener",
         invalid_pass_msg: "Contraseña Incorrecta.",
         save_btn: "Guardar",
+        saving_label: "Guardando…",
         save_schedule_btn: "Guardar horario",
         save_plans_btn: "Guardar planes",
         remove_admin_confirm: "¿Estás seguro de que quieres eliminar a este administrador?",
@@ -1035,6 +1089,7 @@ const DANCE_LOCALES = {
         register_error: "No se pudo registrar. Intenta de nuevo.",
         cancel_success: "Registro cancelado.",
         cancel_error: "No se pudo cancelar. Intenta de nuevo.",
+        cancel_too_late_error: "No se puede cancelar con menos de 4 horas antes del inicio de la clase.",
         cancel_confirm: "¿Cancelar tu registro para esta clase?",
         cancel_confirm_full: "Estás cancelando esta clase. Si la clase se llena, no podrás inscribirte de nuevo.",
         register_success_4h_note: "Si no cancelas al menos 4 horas antes del inicio de la clase, se descontará una clase de tu pase automáticamente.",
@@ -1097,6 +1152,7 @@ const DANCE_LOCALES = {
         password_too_short: "La contraseña debe tener al menos 4 caracteres.",
         select_contact_admin: "Seleccionar contacto",
         discovery_profile_section: "Perfil Discovery",
+        discovery_offerings_section: "Oferta",
         discovery_slug_label: "Slug URL",
         discovery_slug_placeholder: "ej. royal_latin",
         discovery_upload_btn: "Subir",
@@ -1327,7 +1383,13 @@ const DANCE_LOCALES = {
         discovery_filter_all: "Alle",
         discovery_not_found: "Dieses Studio hat noch keine Detailseite.",
         discovery_sign_in_btn: "Anmelden",
-        discovery_not_on_app: "Diese Schule ist nicht in der App. Kontaktiere die Lehrer, um ihre Kurse und den Paketkauf zu erfahren.",
+        discovery_not_on_app: "Diese Schule nutzt Bailadmin nicht. Bitte kontaktiere die Schule direkt.",
+        discovery_sign_in_edit_profile: "Anmelden, um dein Studio-Profil zu bearbeiten",
+        discovery_back_to_page: "Zurück zur Discovery-Seite",
+        discovery_studio_admin_signin: "Studio-Admin? Anmelden",
+        discovery_pick_school_to_signin: "Wähle dein Studio, um dich anzumelden und dein Discovery-Profil zu bearbeiten.",
+        discovery_admin_signin_title: "Discovery-Profil bearbeiten",
+        discovery_admin_signin_subtitle: "Dieses Studio erscheint nur auf der Discovery-Seite. Melde dich mit deiner Admin-E-Mail und deinem Passwort an.",
         discovery_placeholder_upload_soon: "Wird demnächst hochgeladen.",
         discovery_location: "Standort",
         discovery_classes: "Kurse",
@@ -1388,6 +1450,25 @@ const DANCE_LOCALES = {
         dev_events_packages_feature_desc: "Erlaubt dieser Schule, Events in Paketen anzubieten (Admin kann in Einstellungen schalten)",
         dev_private_packages_feature: "Privatstunden als Pakete",
         dev_private_packages_feature_desc: "Erlaubt dieser Schule, Privatstunden in Paketen anzubieten (Admin kann in Einstellungen schalten)",
+        dev_monthly_registration_feature: "Monatliche Kursanmeldung",
+        dev_monthly_registration_feature_desc: "Erlaubt dieser Schule, monatliche Kursanmeldung anzubieten (für alle Kurse im Monat anmelden)",
+        offer_monthly_registration: "Monatliche Kursanmeldung anbieten",
+        offer_monthly_registration_desc: "Schüler können sich auf einmal für alle verbleibenden Kurse eines Kurses im aktuellen Monat anmelden.",
+        register_single: "Nur für diesen Kurs anmelden",
+        register_monthly: "Für alle {n} Kurse diesen Monat anmelden",
+        monthly_badge: "Monatlich",
+        monthly_balance_insufficient: "Du brauchst mindestens {n} Kurse, um dich für den ganzen Monat anzumelden.",
+        monthly_registration_success: "Erfolgreich für {n} Kurse diesen Monat angemeldet!",
+        monthly_capacity_full: "Kurs ist am {date} voll. Monatliche Anmeldung nicht möglich.",
+        fixed_expiry_date_label: "Festes Ablaufdatum (optional)",
+        plan_expiry_display_title: "Ablauf-Anzeige der Pakete",
+        plan_expiry_display_desc: "Wähle, wie das Ablaufdatum in jedem Paket und für Schüler angezeigt wird.",
+        plan_expiry_option_date: "Festes Ablaufdatum",
+        plan_expiry_option_date_hint: "z.B. 28.02.2026",
+        plan_expiry_option_days: "Gültigkeit in Tagen",
+        plan_expiry_option_days_hint: "z.B. 30 Tage",
+        plan_expiry_fixed_date_label: "Festes Ablaufdatum verwenden",
+        plan_expiry_fixed_date_desc: "An: Pläne und Schüler sehen ein festes Ablaufdatum (z.B. 28.02.2026). Aus: Es wird die Gültigkeit in Tagen angezeigt (z.B. 30 Tage übrig).",
         dev_events_feature: "Jack and Jill / Events",
         dev_events_feature_desc: "Erlaube dieser Schule Jack and Jill Events zu erstellen (Premium-Funktion)",
         dev_events_enabled: "Aktiviert",
@@ -1486,6 +1567,7 @@ const DANCE_LOCALES = {
         leave_blank_keep: "leer lassen um beizubehalten",
         invalid_pass_msg: "Falsches Admin-Passwort.",
         save_btn: "Speichern",
+        saving_label: "Speichern…",
         save_schedule_btn: "Stundenplan speichern",
         save_plans_btn: "Pakete speichern",
         remove_admin_confirm: "Sind Sie sicher, dass Sie diesen Administrator entfernen möchten?",
@@ -1559,6 +1641,7 @@ const DANCE_LOCALES = {
         register_error: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
         cancel_success: "Anmeldung storniert.",
         cancel_error: "Stornierung fehlgeschlagen. Bitte erneut versuchen.",
+        cancel_too_late_error: "Stornierung weniger als 4 Stunden vor Kursbeginn nicht möglich.",
         cancel_confirm: "Anmeldung für diesen Kurs stornieren?",
         cancel_confirm_full: "Du stornierst diesen Kurs. Wenn der Kurs voll wird, kannst du dich nicht erneut anmelden.",
         register_success_4h_note: "Wenn du nicht mindestens 4 Stunden vor Kursbeginn stornierst, wird automatisch eine Klasse von deinem Pass abgezogen.",
@@ -1621,6 +1704,7 @@ const DANCE_LOCALES = {
         password_too_short: "Passwort muss mindestens 4 Zeichen haben.",
         select_contact_admin: "Kontakt auswählen",
         discovery_profile_section: "Discovery-Profil",
+        discovery_offerings_section: "Angebote",
         discovery_slug_label: "URL-Slug",
         discovery_slug_placeholder: "z.B. royal_latin",
         discovery_upload_btn: "Hochladen",
@@ -1763,8 +1847,13 @@ let state = {
     settingsPlansExpanded: false,    // packages/plans section in Settings (collapsed by default)
     lastAddedSubscriptionId: null,   // show newly added plan above "Add Plan" button
     settingsTransferExpanded: false,  // transfer details in Settings (collapsed by default)
-    settingsDiscoveryExpanded: false  // discovery profile in Settings (collapsed by default)
+    settingsDiscoveryExpanded: false, // discovery profile in Settings (collapsed by default)
+    _discoveryOnlyEdit: false,  // true when signed in from discovery detail to edit only discovery profile
+    mockDate: null  // optional URL ?mockDate=YYYY-MM-DD for testing monthly registration (first 14 days) without changing system date
 };
+
+// Safe stub so templates can call this before full init (overwritten below)
+window.getPlanExpiryUseFixedDate = () => false;
 
 // --- DATA FETCHING ---
 const FETCH_THROTTLE_MS = 1500;
@@ -1802,12 +1891,22 @@ async function fetchAllData() {
         }
         state.schoolsLoadError = schoolsError || null;
         state.schools = schoolsData ?? [];
+        // Discovery-only edit: always load via RPC (same as public discovery page) so form gets country, city, description, logo, etc., and RLS cannot block
+        if (state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
+            const { data: detail } = await supabaseClient.rpc('discovery_school_detail_by_id', { p_school_id: state.currentSchool.id });
+            if (detail && typeof detail === 'object' && detail.id) {
+                const schoolPart = { id: detail.id, name: detail.name, discovery_slug: detail.discovery_slug, country: detail.country, city: detail.city, address: detail.address, discovery_description: detail.discovery_description, discovery_genres: detail.discovery_genres, discovery_levels: detail.discovery_levels, logo_url: detail.logo_url, teacher_photo_url: detail.teacher_photo_url, gallery_urls: detail.gallery_urls, discovery_locations: detail.discovery_locations, currency: detail.currency, active: detail.active };
+                state.currentSchool = { ...state.currentSchool, ...schoolPart };
+                state._discoveryLocationsSchoolId = null;
+                state.discoveryLocations = Array.isArray(detail.discovery_locations) ? detail.discovery_locations.map(l => ({ name: l.name || '', address: l.address || '', description: l.description || '', image_urls: Array.isArray(l.image_urls) ? [...l.image_urls] : [] })) : [];
+            }
+        }
         if (!state.currentSchool && supabaseClient) {
             const { data: discEnabled } = await supabaseClient.rpc('discovery_is_enabled');
             state.discoveryEnabled = !!discEnabled;
         }
-        // If current school was deactivated, clear it so user must pick an active school
-        if (!state.isPlatformDev && state.currentSchool && !state.schools.some(s => s.id === state.currentSchool.id)) {
+        // If current school was deactivated, clear it so user must pick an active school (unless discovery-only edit)
+        if (!state.isPlatformDev && !state._discoveryOnlyEdit && state.currentSchool && !state.schools.some(s => s.id === state.currentSchool.id)) {
             state.currentSchool = null;
             state.currentUser = null;
             state.isAdmin = false;
@@ -2087,8 +2186,10 @@ async function fetchAllData() {
         // --- Class Registration: process expired registrations & load availability ---
         if (sid && supabaseClient && state.currentSchool?.class_registration_enabled) {
             try {
-                // Lazy-process expired registrations (idempotent)
-                await supabaseClient.rpc('process_expired_registrations', { p_school_id: sid });
+                // When mock date is set, skip auto-deduction so backend doesn't use real now() and mark past classes as no_show
+                if (!state.mockDate) {
+                    await supabaseClient.rpc('process_expired_registrations', { p_school_id: sid });
+                }
             } catch (e) { console.warn('process_expired_registrations error:', e); }
 
             // For students: pre-load availability and registrations
@@ -2101,32 +2202,28 @@ async function fetchAllData() {
                 }).catch(() => {});
             }
 
-            // For admins: load registrations for the current week + next occurrences
+            // For admins: load registrations from start of current month through end of next month so all monthly signups (e.g. every Thursday) appear
             if (state.isAdmin) {
                 const allWeekRegs = [];
-                const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
                 const allDates = new Set();
-                // Current week dates (to see attended/no-show for past days)
-                daysOrder.forEach(d => {
-                    const cwDate = window.getCurrentWeekDate(d);
-                    if (cwDate) allDates.add(window.formatClassDate(cwDate));
-                });
-                // Next occurrence dates (to see upcoming registrations — may be next week for past days)
-                (state.classes || []).forEach(c => {
-                    const nextDate = window.getNextClassDate(c.day);
-                    if (nextDate) allDates.add(window.formatClassDate(nextDate));
-                });
-                for (const dateStr of allDates) {
-                    try {
-                        const { data, error } = await supabaseClient.rpc('get_class_registrations_for_date', {
-                            p_school_id: sid,
-                            p_class_date: dateStr
-                        });
-                        if (!error && data) {
-                            const arr = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
-                            arr.forEach(r => allWeekRegs.push(r));
-                        }
-                    } catch (e) { console.warn('Error loading admin registrations for', dateStr, e); }
+                const now = getTodayForMonthly();
+                const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                const end = new Date(now.getFullYear(), now.getMonth() + 2, 0); // last day of next month
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    allDates.add(window.formatClassDate(d));
+                }
+                const dateArr = [...allDates];
+                const BATCH = 10;
+                for (let i = 0; i < dateArr.length; i += BATCH) {
+                    const chunk = dateArr.slice(i, i + BATCH);
+                    const results = await Promise.all(chunk.map(dateStr =>
+                        supabaseClient.rpc('get_class_registrations_for_date', { p_school_id: sid, p_class_date: dateStr })
+                    ));
+                    results.forEach((res, idx) => {
+                        if (res.error || !res.data) return;
+                        const arr = Array.isArray(res.data) ? res.data : (typeof res.data === 'string' ? JSON.parse(res.data) : []);
+                        arr.forEach(r => allWeekRegs.push(r));
+                    });
                 }
                 state.adminWeekRegistrations = allWeekRegs;
             }
@@ -2185,13 +2282,23 @@ window.fetchDiscoveryData = async () => {
             }
         } else if (path.startsWith('/discovery/')) {
             state.discoverySchoolDetail = null;
-            let slug = path.replace(/^\/discovery\//, '').trim();
-            try { slug = decodeURIComponent(slug); } catch (_) { /* keep raw */ }
-            if (slug && supabaseClient) {
+            const afterPrefix = path.replace(/^\/discovery\//, '').trim();
+            let decoded = afterPrefix;
+            try { decoded = decodeURIComponent(afterPrefix); } catch (_) { /* keep raw */ }
+            if (supabaseClient) {
                 try {
-                    const { data, error } = await supabaseClient.rpc('discovery_school_detail', { p_slug: slug });
-                    if (error) throw error;
-                    state.discoverySchoolDetail = data || null;
+                    if (decoded.startsWith('id/')) {
+                        const schoolId = decoded.replace(/^id\/?/, '').trim();
+                        if (schoolId) {
+                            const { data, error } = await supabaseClient.rpc('discovery_school_detail_by_id', { p_school_id: schoolId });
+                            if (error) throw error;
+                            state.discoverySchoolDetail = data || null;
+                        }
+                    } else if (decoded) {
+                        const { data, error } = await supabaseClient.rpc('discovery_school_detail', { p_slug: decoded });
+                        if (error) throw error;
+                        state.discoverySchoolDetail = data || null;
+                    }
                 } catch (err) {
                     console.error('Discovery detail error:', err);
                     state.discoverySchoolDetail = null;
@@ -2201,6 +2308,12 @@ window.fetchDiscoveryData = async () => {
     } finally {
         window._discoveryFetchInProgress = false;
     }
+};
+
+window.slugFromName = (name) => {
+    if (!name || typeof name !== 'string') return '';
+    const s = String(name).trim().toLowerCase().replace(/[^a-z0-9\s\-]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    return s || '';
 };
 
 window.navigateDiscovery = (path) => {
@@ -2268,6 +2381,9 @@ window.renderDiscoveryView = (path) => {
                     <i data-lucide="info" size="20" style="flex-shrink: 0; opacity: 0.7;"></i>
                     <p style="margin: 0;">${t('discovery_not_on_app')}</p>
                 </div>
+                <button type="button" onclick="event.preventDefault(); const d=state.discoverySchoolDetail; if(d){ state.currentSchool={id:d.id,name:d.name,currency:d.currency||'MXN'}; state._discoveryOnlyEdit=true; state.currentView='discovery-admin-auth'; state.discoveryPath=null; history.pushState({},'','/'); saveState(); renderView(); }" style="margin-top: 1rem; padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--system-gray6); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer;">
+                    <i data-lucide="edit-3" size="16"></i> ${t('discovery_sign_in_edit_profile')}
+                </button>
             `}
             </div>
             </div>`;
@@ -2339,13 +2455,15 @@ window.renderDiscoveryView = (path) => {
             <h2 class="discovery-country-title">${String(country).replace(/</g, '&lt;')}</h2>
             <div class="discovery-grid">
                 ${byCountry[country].map(s => {
-                    const slug = s.discovery_slug || s.slug || '';
+                    const rawSlug = (s.discovery_slug || s.slug || '').trim();
+                    const effectiveSlug = rawSlug || (window.slugFromName ? window.slugFromName(s.name || '') : '');
+                    const path = effectiveSlug ? '/discovery/' + encodeURIComponent(effectiveSlug) : '/discovery/id/' + encodeURIComponent(s.id || '');
                     const name = (s.name || '').trim();
                     const city = (s.city || '').trim();
                     const loc = [city, country].filter(Boolean).join(', ');
                     const logo = s.logo_url || '';
                     const placeholder = t('discovery_placeholder_upload_soon');
-                    return `<a href="#" class="discovery-card" onclick="event.preventDefault(); window.navigateDiscovery('/discovery/${encodeURIComponent(slug)}');">
+                    return `<a href="#" class="discovery-card" onclick="event.preventDefault(); window.navigateDiscovery('${path.replace(/'/g, "\\'")}');">
                         <div class="discovery-card-media">${logo ? `<img src="${String(logo).replace(/"/g, '&quot;')}" alt="" class="discovery-card-logo" />` : `<div class="discovery-card-no-logo"><i data-lucide="image" size="32"></i></div>`}</div>
                         <div class="discovery-card-body">
                             <span class="discovery-card-name">${name ? String(name).replace(/</g, '&lt;') : placeholder}</span>
@@ -2357,13 +2475,16 @@ window.renderDiscoveryView = (path) => {
         </div>
     `).join('') : `<p class="discovery-empty-state">${t('discovery_no_schools')}</p>`;
     return `<div class="container discovery-page">
-        <a href="/" class="discovery-back-link" onclick="event.preventDefault(); state.discoveryPath=null; history.pushState({},'','/'); renderView();"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back')}</a>
+        <a href="/" class="discovery-back-link" onclick="event.preventDefault(); state.discoveryPath=null; history.pushState({},'','/'); renderView();" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back')}</a>
         <header class="discovery-hero">
             <h1 class="discovery-hero-title">${t('discovery_title')}</h1>
             <p class="discovery-hero-subtitle">${t('discovery_subtitle')}</p>
         </header>
         <div class="discovery-filters-wrap">${filtersHtml}</div>
         <main class="discovery-content">${cardsHtml}</main>
+        <p style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
+            <button type="button" onclick="event.preventDefault(); state._discoveryOnlyEdit=true; state.currentView='discovery-admin-pick-school'; state.discoveryPath=null; history.pushState({},'','/'); saveState(); renderView();" style="background: none; border: none; padding: 0; font-size: 12px; color: var(--text-muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">${t('discovery_studio_admin_signin')}</button>
+        </p>
     </div>`;
 };
 
@@ -2388,7 +2509,8 @@ function saveState() {
         currentSchool: state.currentSchool,
         competitionId: state.competitionId,
         competitionSchoolId: state.competitionSchoolId,
-        competitionTab: state.competitionTab
+        competitionTab: state.competitionTab,
+        _discoveryOnlyEdit: state._discoveryOnlyEdit
     }));
 }
 
@@ -3034,6 +3156,12 @@ function renderView() {
 }
 
 function _renderViewImpl() {
+    try {
+        state._usePlanExpiryFixedDate = state.adminSettings?.plan_expiry_fixed_date === 'true' ||
+            (state.adminSettings?.plan_expiry_fixed_date !== 'false' && (state.adminSettings?.monthly_registration_enabled === 'true' || !!state.currentSchool?.monthly_registration_enabled));
+    } catch (_) {
+        state._usePlanExpiryFixedDate = false;
+    }
     const root = document.getElementById('app-root');
     const view = state.currentView;
     const isSignup = state.authMode === 'signup';
@@ -3135,19 +3263,6 @@ function _renderViewImpl() {
                 <a href="/discovery" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" class="discovery-landing-btn">${t.discover_dance_btn || 'Discover all schools'}</a>
                 ` : ''}
             </div>
-            <footer class="sticky-footer">
-                <div class="sticky-footer-inner">
-                    <div class="sticky-footer-social">
-                        <a href="https://www.instagram.com/bailadmin.lat/" target="_blank" rel="noopener noreferrer" class="sticky-footer-icon-btn" aria-label="Instagram">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                        </a>
-                        <a href="https://wa.me/41786936898" target="_blank" rel="noopener noreferrer" class="sticky-footer-icon-btn" aria-label="WhatsApp">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
-                        </a>
-                    </div>
-                    <p class="sticky-footer-copy">${String(t.footer_copy || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
-                </div>
-            </footer>
         `;
     }
     else if (view === 'super-admin-dashboard' || view === 'platform-dev-dashboard') {
@@ -3445,6 +3560,7 @@ function _renderViewImpl() {
             const jjEnabled = !!school.jack_and_jill_enabled;
             const eventsPkgsEnabled = school.events_packages_enabled !== false;
             const privatePkgsEnabled = school.private_packages_enabled !== false;
+            const monthlyRegEnabled = !!school.monthly_registration_enabled;
 
             html += `
                 <div class="platform-school-details-page">
@@ -3459,13 +3575,23 @@ function _renderViewImpl() {
                             <div class="platform-school-hero-icon"><i data-lucide="building-2" size="36"></i></div>
                             <h1 class="platform-school-title">${(school.name || '').replace(/</g, '&lt;')}</h1>
                             <div class="platform-school-id">${String(schoolId).slice(0, 8)}…</div>
-                            <button class="platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},events_packages_enabled:${eventsPkgsEnabled},private_packages_enabled:${privatePkgsEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();">
+                            <button class="platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},events_packages_enabled:${eventsPkgsEnabled},private_packages_enabled:${privatePkgsEnabled},monthly_registration_enabled:${monthlyRegEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();">
                                 <i data-lucide="shield-check" size="20"></i> ${t.dev_enter_as_admin}
                             </button>
                         </div>
                     </div>
                     <div class="platform-school-detail-body">
                         <div class="platform-settings-group">
+                            <div class="platform-setting-row platform-setting-row-monthly">
+                                <div class="platform-setting-info">
+                                    <div class="platform-setting-icon platform-setting-icon-green"><i data-lucide="calendar-range" size="22"></i></div>
+                                    <div>
+                                        <div class="platform-setting-title">${t.dev_monthly_registration_feature || 'Monthly class registration'}</div>
+                                        <div class="platform-setting-desc">${t.dev_monthly_registration_feature_desc || 'Allow this school to offer monthly class registration and fixed expiry date on plans'}</div>
+                                    </div>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" class="toggle-switch-input" ${monthlyRegEnabled ? 'checked' : ''} onchange="toggleSchoolMonthlyRegistration('${school.id}', this.checked)"><span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span></label>
+                            </div>
                             <div class="platform-setting-row">
                                 <div class="platform-setting-info">
                                     <div class="platform-setting-icon platform-setting-icon-blue"><i data-lucide="ticket" size="22"></i></div>
@@ -3644,7 +3770,7 @@ function _renderViewImpl() {
                     <span style="font-size: 14px; opacity: 0.8;">${t.address_label || 'Address'}</span>
                     <input type="text" id="dev-edit-school-address" value="${(school.address || '').replace(/"/g, '&quot;')}" placeholder="${t.address_label || 'Address'}" style="border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; width: 100%; box-sizing: border-box;">
                 </div>
-                <div class="ios-list-item" onclick="window.saveSchoolInfoByPlatform('${school.id}')" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                <div class="ios-list-item" onclick="window.saveSchoolInfoByPlatform('${school.id}', this)" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
                     <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.dev_save_school_info || 'Save'}
                 </div>
             </div>
@@ -3670,7 +3796,7 @@ function _renderViewImpl() {
             <div style="padding: 0 1.2rem 2rem;">
             <div style="padding: 0 1.2rem; margin-top: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.discovery_profile_section || 'Discovery profile'}</div>
             <div class="ios-list" style="margin-bottom: 1rem;">
-                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_slug_label}</span><input type="text" id="discovery-slug" value="${(school.discovery_slug || '').replace(/"/g, '&quot;')}" placeholder="${t.discovery_slug_placeholder || 'royal_latin'}" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_slug_label}</span><input type="text" id="discovery-slug" value="${((school.discovery_slug || '').trim() || (window.slugFromName ? window.slugFromName(school.name || '') : '')).replace(/"/g, '&quot;')}" placeholder="${t.discovery_slug_placeholder || 'royal_latin'}" oninput="window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
                 <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.country_label}</span><select id="discovery-country" onchange="window.updateDiscoveryCityDropdown(); window.updateDiscoveryPreview();" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;"><option value="">—</option>${DISCOVERY_COUNTRIES.map(c => { const v = (school.country || '').trim(); return `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === v ? 'selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`; }).join('')}</select></div>
                 <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.city_label}</span><select id="discovery-city" onchange="window.updateDiscoveryPreview()" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;">${(() => { const country = (school.country || '').trim(); const city = (school.city || '').trim(); const cities = DISCOVERY_COUNTRIES_CITIES[country] || []; const list = (city && !cities.includes(city) ? [city, ...cities] : cities); return '<option value="">—</option>' + list.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === city ? ' selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`).join(''); })()}</select></div>
                 <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_description_label}</span><textarea id="discovery-description" rows="3" placeholder="Short description for the discovery page" oninput="window.updateDiscoveryPreview()" style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;">${(school.discovery_description || '').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</textarea></div>
@@ -3701,7 +3827,7 @@ function _renderViewImpl() {
                         </div>
                     </div>`).join('') + `<button type="button" class="discovery-location-add-btn" onclick="window.addDiscoveryLocation()"><i data-lucide="plus" size="20"></i> ${t.discovery_add_location || 'Add location'}</button>`; })()}
                 </div>
-                <div class="ios-list-item" onclick="window.saveDiscoveryProfile()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                <div class="ios-list-item save-discovery-btn" onclick="window.saveDiscoveryProfile(event)" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
                     <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_discovery_btn || 'Save discovery profile'}
                 </div>
             </div>
@@ -3722,6 +3848,298 @@ function _renderViewImpl() {
             <div style="height: 80px;"></div>
             </div>`;
         }
+    }
+    else if (view === 'discovery-profile-only') {
+        // Flush current form values into state so any re-render (e.g. from fetchAllData) doesn't wipe unsaved country/city/description
+        const countryEl = document.getElementById('discovery-country');
+        if (countryEl && state.currentSchool?.id) {
+            const slug = (document.getElementById('discovery-slug')?.value ?? '').trim();
+            const country = (countryEl.value ?? '').trim();
+            const city = (document.getElementById('discovery-city')?.value ?? '').trim();
+            const desc = (document.getElementById('discovery-description')?.value ?? '').trim();
+            const genresStr = (document.getElementById('discovery-genres')?.value ?? '').trim();
+            const levelsStr = (document.getElementById('discovery-levels')?.value ?? '').trim();
+            const logoUrl = (document.getElementById('discovery-logo-url')?.value ?? '').trim();
+            const teacherUrl = (document.getElementById('discovery-teacher-url')?.value ?? '').trim();
+            state.currentSchool = {
+                ...state.currentSchool,
+                ...(slug && { discovery_slug: slug }),
+                ...(country && { country }),
+                ...(city && { city }),
+                ...(desc && { discovery_description: desc }),
+                ...(genresStr && { discovery_genres: genresStr.split(',').map(s => s.trim()).filter(Boolean) }),
+                ...(levelsStr && { discovery_levels: levelsStr.split(',').map(s => s.trim()).filter(Boolean) }),
+                ...(logoUrl && { logo_url: logoUrl }),
+                ...(teacherUrl && { teacher_photo_url: teacherUrl })
+            };
+        }
+        const school = state.currentSchool;
+        const discoverySlugDisplay = (school?.discovery_slug || '').trim() || (window.slugFromName ? window.slugFromName(school?.name || '') : '');
+        const backPath = discoverySlugDisplay ? '/discovery/' + encodeURIComponent(discoverySlugDisplay) : (school?.id ? '/discovery/id/' + encodeURIComponent(school.id) : '/discovery');
+        if (!school || !school.id) {
+            html += `<div style="padding: 2rem 1.2rem;"><p style="color: var(--text-secondary); margin-bottom: 1rem;">${t.not_found_msg}</p><button type="button" class="btn-primary" onclick="state._discoveryOnlyEdit=false; state.currentView='school-selection'; saveState(); renderView();">${t.discovery_back_to_page}</button></div>`;
+        } else {
+            html += `
+            <div class="ios-header" style="display: flex; align-items: center; gap: 1rem; padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);">
+                <button type="button" class="btn-back" onclick="state._discoveryOnlyEdit=false; state.discoveryPath='${backPath.replace(/'/g, "\\'")}'; history.pushState({},'','${backPath.replace(/'/g, "\\'")}'); window.fetchDiscoveryData().then(function(){ state.currentView=null; renderView(); });">
+                    <i data-lucide="arrow-left" size="20"></i>
+                </button>
+                <div>
+                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);">${t.dev_edit_discovery_profile || 'Edit discovery profile'}</div>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${(school.name || '').replace(/</g, '&lt;')}</div>
+                </div>
+            </div>
+            <div style="padding: 0 1.2rem 2rem;">
+            <!-- Section: General info -->
+            <section class="discovery-edit-section" style="margin-bottom: 1.5rem;">
+                <h2 class="discovery-edit-section-title">${t.discovery_profile_section || 'Discovery profile'}</h2>
+                <div class="card" style="border-radius: 14px; border: 1px solid var(--border); overflow: hidden;">
+                    <div class="ios-list" style="margin: 0;">
+                        <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_slug_label}</span><input type="text" id="discovery-slug" value="${(discoverySlugDisplay || '').replace(/"/g, '&quot;')}" placeholder="${t.discovery_slug_placeholder || 'royal_latin'}" oninput="window.updateDiscoveryPreview && window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                        <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.country_label}</span><select id="discovery-country" onchange="window.updateDiscoveryCityDropdown && window.updateDiscoveryCityDropdown(); window.updateDiscoveryPreview && window.updateDiscoveryPreview();" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;"><option value="">—</option>${DISCOVERY_COUNTRIES.map(c => { const v = (school.country || '').trim(); return `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === v ? 'selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`; }).join('')}</select></div>
+                        <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.city_label}</span><select id="discovery-city" onchange="window.updateDiscoveryPreview && window.updateDiscoveryPreview()" style="background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px; outline: none; min-width: 140px;">${(() => { const country = (school.country || '').trim(); const city = (school.city || '').trim(); const cities = DISCOVERY_COUNTRIES_CITIES[country] || []; const list = (city && !cities.includes(city) ? [city, ...cities] : cities); return '<option value="">—</option>' + list.map(c => `<option value="${String(c).replace(/"/g, '&quot;')}" ${c === city ? ' selected' : ''}>${String(c).replace(/</g, '&lt;')}</option>`).join(''); })()}</select></div>
+                        <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 6px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_description_label}</span><textarea id="discovery-description" rows="3" placeholder="Short description for the discovery page" oninput="window.updateDiscoveryPreview && window.updateDiscoveryPreview()" style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box;">${(school.discovery_description || '').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</textarea></div>
+                        <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_genres_label}</span><input type="text" id="discovery-genres" value="${(Array.isArray(school.discovery_genres) ? school.discovery_genres.join(', ') : (school.discovery_genres || '')).toString().replace(/"/g, '&quot;')}" placeholder="Salsa, Bachata" oninput="window.updateDiscoveryPreview && window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                        <div class="ios-list-item" style="padding: 12px 16px;"><span style="font-size: 14px; opacity: 0.8;">${t.discovery_levels_label}</span><input type="text" id="discovery-levels" value="${(Array.isArray(school.discovery_levels) ? school.discovery_levels.join(', ') : (school.discovery_levels || '')).toString().replace(/"/g, '&quot;')}" placeholder="Beginner, Intermediate" oninput="window.updateDiscoveryPreview && window.updateDiscoveryPreview()" style="text-align: right; border: none; background: transparent; width: 55%; color: var(--text-primary); font-size: 14px; outline: none;"></div>
+                        <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;"><span style="font-size: 14px; opacity: 0.8;">${t.logo_url_label}</span><div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"><input type="file" id="discovery-logo-file" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryImage && window.uploadDiscoveryImage('logo')"><button type="button" onclick="document.getElementById('discovery-logo-file').click();" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--system-gray6); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer;">${t.discovery_upload_btn || 'Upload'}</button>${(school.logo_url || '').trim() ? `<button type="button" onclick="window.clearDiscoveryImage && window.clearDiscoveryImage('logo')" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; border: 1px solid var(--border); color: var(--system-red, #ff3b30); cursor: pointer;">${(t.discovery_remove_image || 'Remove').replace(/</g, '&lt;')}</button>` : ''}<input type="text" id="discovery-logo-url" value="${(school.logo_url || '').replace(/"/g, '&quot;')}" placeholder="https://... or upload" oninput="window.updateDiscoveryPreview && window.updateDiscoveryPreview()" style="flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none;"></div></div>
+                        <div class="ios-list-item" style="padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 8px;"><span style="font-size: 14px; opacity: 0.8;">${t.teacher_photo_url_label}</span><div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"><input type="file" id="discovery-teacher-file" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryImage && window.uploadDiscoveryImage('teacher')"><button type="button" onclick="document.getElementById('discovery-teacher-file').click();" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--system-gray6); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer;">${t.discovery_upload_btn || 'Upload'}</button>${(school.teacher_photo_url || '').trim() ? `<button type="button" onclick="window.clearDiscoveryImage && window.clearDiscoveryImage('teacher')" style="padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; border: 1px solid var(--border); color: var(--system-red, #ff3b30); cursor: pointer;">${(t.discovery_remove_image || 'Remove').replace(/</g, '&lt;')}</button>` : ''}<input type="text" id="discovery-teacher-url" value="${(school.teacher_photo_url || '').replace(/"/g, '&quot;')}" placeholder="https://... or upload" oninput="window.updateDiscoveryPreview && window.updateDiscoveryPreview()" style="flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none;"></div></div>
+                    </div>
+                </div>
+            </section>
+            <!-- Section: Locations -->
+            <section class="discovery-edit-section" style="margin-bottom: 1.5rem;">
+                <h2 class="discovery-edit-section-title">${t.discovery_locations_label || 'Where we teach'}</h2>
+                <div class="card" style="border-radius: 14px; border: 1px solid var(--border); overflow: hidden; padding: 1rem;">
+                <div class="discovery-locations-wrap">
+                    ${(() => { if (state._discoveryLocationsSchoolId !== school?.id) { state._discoveryLocationsSchoolId = school?.id; state.discoveryLocations = Array.isArray(school?.discovery_locations) ? school.discovery_locations.map(l => ({ name: l.name || '', address: l.address || '', description: l.description || '', image_urls: Array.isArray(l.image_urls) ? [...l.image_urls] : [] })) : []; } const locs = state.discoveryLocations || []; return locs.map((loc, i) => `<div class="discovery-location-card">
+                        <div class="discovery-location-card-header">
+                            <span class="discovery-location-card-badge">${t.discovery_where_we_teach || 'Location'} ${i + 1}</span>
+                            <button type="button" class="discovery-location-remove" onclick="window.removeDiscoveryLocation(${i})" aria-label="${t.discovery_remove_location || 'Remove'}"><i data-lucide="trash-2" size="16"></i></button>
+                        </div>
+                        <div class="discovery-location-fields">
+                            <label class="discovery-location-label">${t.discovery_location_name || 'Name'}</label>
+                            <input type="text" class="discovery-location-input" value="${(loc.name || '').replace(/"/g, '&quot;')}" oninput="window.setDiscoveryLocationField(${i}, 'name', this.value)" placeholder="e.g. Studio Central">
+                            <label class="discovery-location-label">${t.discovery_location_address || 'Address'} <span class="discovery-location-required">*</span></label>
+                            <input type="text" class="discovery-location-input" value="${(loc.address || '').replace(/"/g, '&quot;')}" oninput="window.setDiscoveryLocationField(${i}, 'address', this.value)" placeholder="Street, number, city">
+                            <label class="discovery-location-label">${t.discovery_location_description || 'Description'}</label>
+                            <textarea rows="2" class="discovery-location-textarea" oninput="window.setDiscoveryLocationField(${i}, 'description', this.value)" placeholder="Condition, facilities…">${(loc.description || '').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</textarea>
+                            <label class="discovery-location-label">${t.discovery_upload_btn || 'Photos'}</label>
+                            <div class="discovery-location-photos-row">
+                                <input type="file" id="discovery-loc-file-${i}" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="window.uploadDiscoveryLocationImage(${i}, this)">
+                                <button type="button" class="discovery-location-upload-btn" onclick="document.getElementById('discovery-loc-file-${i}').click();"><i data-lucide="plus" size="18"></i> ${t.discovery_upload_btn || 'Upload'}</button>
+                                ${(loc.image_urls || []).length ? `<div class="discovery-location-thumbs">${(loc.image_urls || []).map((url, j) => `<span class="discovery-location-thumb-wrap"><img src="${String(url).replace(/"/g, '&quot;')}" alt="" class="discovery-location-thumb"><button type="button" class="discovery-location-thumb-remove" onclick="window.removeDiscoveryLocationImage(${i}, ${j})" aria-label="Remove">×</button></span>`).join('')}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>`).join('') + `<button type="button" class="discovery-location-add-btn" onclick="window.addDiscoveryLocation()"><i data-lucide="plus" size="20"></i> ${t.discovery_add_location || 'Add location'}</button>`; })()}
+                </div>
+                </div>
+            </section>
+            <!-- Section: Offerings (private classes & events toggles) -->
+            ${(school?.private_packages_enabled !== false || school?.events_packages_enabled !== false) ? `
+            <section class="discovery-edit-section" style="margin-bottom: 1.5rem;">
+                <h2 class="discovery-edit-section-title">${t.discovery_offerings_section || 'Offerings'}</h2>
+                <div class="card" style="border-radius: 14px; border: 1px solid var(--border); overflow: hidden; padding: 1rem 1.25rem;">
+                    ${school?.private_packages_enabled !== false ? `
+                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1rem;">
+                        <div class="admin-private-contact-title">${t.offer_private_classes || 'Offer private classes'}</div>
+                        <p class="admin-private-contact-desc">${t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.'}</p>
+                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
+                            <span style="font-size: 15px; font-weight: 600;">${t.offer_private_classes || 'Offer private classes'}</span>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${(state.adminSettings?.private_classes_offering_enabled === 'true') ? 'checked' : ''} onchange="window.togglePrivateClassesOffering(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${school?.events_packages_enabled !== false ? `
+                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 0;">
+                        <div class="admin-private-contact-title">${t.offer_events || 'Offer events'}</div>
+                        <p class="admin-private-contact-desc">${t.offer_events_desc || 'Allow students to buy and use event tokens. When enabled, plans can include group, private, and event counts.'}</p>
+                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
+                            <span style="font-size: 15px; font-weight: 600;">${t.offer_events || 'Offer events'}</span>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${(state.adminSettings?.events_offering_enabled === 'true') ? 'checked' : ''} onchange="window.toggleEventsOffering(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            </section>
+            ` : ''}
+            <!-- Section: Classes (schedule) -->
+            <section class="discovery-edit-section" style="margin-bottom: 1.5rem;">
+                <h2 class="discovery-edit-section-title">${t.discovery_classes || 'Classes'}</h2>
+                <div class="card" style="border-radius: 14px; border: 1px solid var(--border); overflow: hidden; padding: 1rem 1.2rem;">
+                <div style="margin-bottom: 0;">
+                    ${(() => {
+                        const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                        const dayAliases = { Mon: ['Mon','Mo','Monday'], Tue: ['Tue','Tu','Tuesday'], Wed: ['Wed','We','Wednesday'], Thu: ['Thu','Th','Thursday'], Fri: ['Fri','Fr','Friday'], Sat: ['Sat','Sa','Saturday'], Sun: ['Sun','Su','Sunday'] };
+                        const dayIndex = (day) => { const d = daysOrder.find(d => d === day || (dayAliases[d] && dayAliases[d].includes(day))); return d ? daysOrder.indexOf(d) : 999; };
+                        const classesList = [...(state.classes || [])].sort((a, b) => dayIndex(a.day) - dayIndex(b.day));
+                        return classesList.length ? `
+                        <div class="ios-list" style="overflow: visible;">
+                            ${classesList.map(c => `
+                                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <input type="text" value="${(c.name || '').replace(/"/g, '&quot;')}" oninput="debouncedUpdateClass(${c.id}, 'name', this.value)" style="border: none; background: transparent; font-size: 15px; font-weight: 600; flex: 1; color: var(--text-primary); outline: none; margin-right: 8px;">
+                                        <button type="button" onclick="removeClass(${c.id})" style="background: none; border: none; color: var(--text-secondary); opacity: 0.5; padding: 4px; cursor: pointer;" aria-label="${(t.delete_label || 'Delete').replace(/"/g, '&quot;')}"><i data-lucide="trash-2" size="16"></i></button>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        <div style="background: var(--system-gray6); border-radius: 10px; padding: 6px 10px;">
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.7;">${t.day_label || 'Day'}</label>
+                                            <select onchange="updateClass(${c.id}, 'day', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-size: 13px; font-weight: 600; outline: none; cursor: pointer; padding: 0;">
+                                                ${daysOrder.map(d => `<option value="${d}" ${(c.day === d || (dayAliases[d] && dayAliases[d].includes(c.day))) ? 'selected' : ''}>${(t[d.toLowerCase()] || d)}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                        <div style="background: var(--system-gray6); border-radius: 10px; padding: 6px 10px;">
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.7;">${t.start_time_label || 'Time'}</label>
+                                            <input type="time" value="${(c.time || '09:00').replace(/"/g, '&quot;')}" onblur="scheduleTimeBlurSave(${c.id}, this)" onfocus="cancelTimeBlurSave(this)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-size: 13px; font-weight: 600; outline: none; cursor: pointer; padding: 0;">
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        <div style="background: var(--system-gray6); border-radius: 10px; padding: 6px 10px;">
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.7;">${t.class_location || 'Location'}</label>
+                                            <input type="text" value="${(c.location || '').replace(/"/g, '&quot;')}" oninput="debouncedUpdateClass(${c.id}, 'location', this.value)" placeholder="${(t.location_placeholder || '').replace(/"/g, '&quot;')}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-size: 12px; font-weight: 600; outline: none; padding: 0;">
+                                        </div>
+                                        <div style="background: var(--system-gray6); border-radius: 10px; padding: 6px 10px;">
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.7;">${t.level_tag_label || 'Tag'}</label>
+                                            <input type="text" value="${(c.tag || 'Clase').replace(/"/g, '&quot;')}" oninput="debouncedUpdateClass(${c.id}, 'tag', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-size: 12px; font-weight: 600; outline: none; padding: 0;">
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <div class="ios-list-item" onclick="addClass()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                                <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label || 'Add'} ${t.new_class_label || 'class'}
+                            </div>
+                        </div>
+                        <div style="padding: 0 1.2rem; margin-top: 0.75rem;">
+                            <button type="button" class="btn-primary" onclick="window.flushScheduleSave()" ${state._scheduleSaving ? 'disabled' : ''} style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px; font-weight: 600;">
+                                ${state._scheduleSaving ? `<i data-lucide="loader-2" class="spin" size="16" style="margin-right: 6px;"></i> ${t.saving_label || 'Saving…'}` : `<i data-lucide="save" size="16" style="margin-right: 6px;"></i> ${t.save_schedule_btn || 'Save schedule'}`}
+                            </button>
+                            ${state._scheduleSaveStatus ? `<div style="font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-top: 0.4rem; text-align: center;">${state._scheduleSaveStatus}</div>` : ''}
+                        </div>
+                        ` : `<p style="font-size: 13px; color: var(--text-muted);">${(t('discovery_placeholder_upload_soon') || 'Will be uploaded soon.').replace(/</g, '&lt;')}</p>
+                        <div class="ios-list-item" onclick="addClass()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; margin-top: 0.5rem;">
+                            <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label || 'Add'} ${t.new_class_label || 'class'}
+                        </div>`;
+                    })()}
+                </div>
+                </div>
+            </section>
+            <!-- Section: Packages -->
+            <section class="discovery-edit-section" style="margin-bottom: 1.5rem;">
+                <h2 class="discovery-edit-section-title">${t.discovery_packages || 'Packages'}</h2>
+                <div class="card" style="border-radius: 14px; border: 1px solid var(--border); overflow: hidden; padding: 1rem 1.2rem;">
+                <div style="margin-bottom: 0;">
+                    ${(() => {
+                        const subs = state.subscriptions || [];
+                        const currencySym = (CURRENCY_SYMBOLS[school?.currency || 'MXN'] || '$').trim();
+                        return subs.length ? `
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                            ${subs.map(s => `
+                                <div class="card ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <input type="text" value="${(s.name || '').replace(/"/g, '&quot;')}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; flex: 1; color: var(--text-primary); outline: none; margin-right: 6px;">
+                                        <button type="button" onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.5; padding: 4px; cursor: pointer;" aria-label="${(t.delete_label || 'Delete').replace(/"/g, '&quot;')}"><i data-lucide="trash-2" size="14"></i></button>
+                                    </div>
+                                    <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                        <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${currencySym}</span>
+                                        <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    </div>
+                                    <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                        <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5;"></i>
+                                        <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="${(t.validity_days_placeholder || 'Days').replace(/"/g, '&quot;')}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="padding: 0 1.2rem; margin-top: 0.75rem;">
+                            <button type="button" class="btn-primary" onclick="window.saveAllPlans()" ${state._plansSaving ? 'disabled' : ''} style="width: 100%; border-radius: 12px; height: 44px; font-size: 14px; font-weight: 600; margin-bottom: 0.5rem;">
+                                ${state._plansSaving ? `<i data-lucide="loader-2" class="spin" size="16" style="margin-right: 6px;"></i> ${t.saving_label || 'Saving…'}` : `<i data-lucide="save" size="16" style="margin-right: 6px;"></i> ${t.save_plans_btn || 'Save plans'}`}
+                            </button>
+                            ${state._plansSaveStatus ? `<div style="font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.5rem; text-align: center;">${state._plansSaveStatus}</div>` : ''}
+                            <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
+                                <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label || 'Add'} Plan
+                            </div>
+                        </div>
+                        ` : `<p style="font-size: 13px; color: var(--text-muted);">${(t('discovery_placeholder_upload_soon') || 'Will be uploaded soon.').replace(/</g, '&lt;')}</p>
+                        <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; margin-top: 0.5rem;">
+                            <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label || 'Add'} Plan
+                        </div>`;
+                    })()}
+                </div>
+                </div>
+            </section>
+                <div class="ios-list-item save-discovery-btn" onclick="window.saveDiscoveryProfile(event)" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;">
+                    <i data-lucide="save" size="18" style="opacity: 0.7; margin-right: 8px;"></i> ${t.save_discovery_btn || 'Save discovery profile'}
+                </div>
+            </div>
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem;">
+                <button onclick="window.toggleDiscoveryPreview && window.toggleDiscoveryPreview()" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                    <i data-lucide="${state.showDiscoveryPreview ? 'eye-off' : 'eye'}" size="16" style="opacity: 0.6;"></i>
+                    ${state.showDiscoveryPreview ? t.hide_discovery_preview_btn : t.show_discovery_preview_btn}
+                </button>
+            </div>
+            ${state.showDiscoveryPreview ? `
+            <div style="padding: 0 1.2rem; margin-top: 1rem; margin-bottom: 0.8rem;" class="slide-in">
+                <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">${t.discovery_preview_title || 'Preview on Discover'}</div>
+            </div>
+            <div class="card slide-in" style="margin: 0 1.2rem 1.5rem; padding: 0; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;">
+                <div id="discovery-preview-inner" style="font-size: 13px; color: var(--text-primary); max-height: 70vh; overflow-y: auto; padding: 1rem; background: var(--bg-body);">${(() => { const sc = state.currentSchool; const loc = [sc?.city, sc?.country].filter(Boolean).join(', ') || '—'; return window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || '', loc, desc: (sc?.discovery_description || '').toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(' · ') : '', logoUrl: (sc?.logo_url || '').trim(), teacherUrl: (sc?.teacher_photo_url || '').trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : (Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : []), currency: sc?.currency || 'MXN', classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t.discovery_placeholder_upload_soon || 'Will be uploaded soon.' }) : ''; })()}</div>
+            </div>
+            ` : ''}
+            <div style="height: 80px;"></div>
+            </div>`;
+        }
+    }
+    else if (view === 'discovery-admin-pick-school') {
+        const list = state.discoverySchools || [];
+        html += `
+            <div class="ios-header" style="display: flex; align-items: center; gap: 1rem; padding: 0 1.2rem 1rem;">
+                <button type="button" class="btn-back" onclick="state._discoveryOnlyEdit=false; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ state.currentView=null; renderView(); });">
+                    <i data-lucide="arrow-left" size="20"></i>
+                </button>
+                <div style="font-size: 15px; font-weight: 800; color: var(--text-primary);">${(t('discovery_sign_in_edit_profile') || 'Sign in to edit your studio profile').replace(/</g, '&lt;')}</div>
+            </div>
+            <div style="padding: 1.2rem 1.2rem 2rem;">
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 1.25rem;">${(t('discovery_pick_school_to_signin') || 'Choose your studio to sign in and edit your discovery profile.').replace(/</g, '&lt;')}</p>
+                ${list.length ? `<div style="display: flex; flex-direction: column; gap: 0.75rem;">${list.map(s => {
+                    const name = (s.name || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                    const loc = [s.city, s.country].filter(Boolean).join(', ');
+                    const idEsc = String(s.id).replace(/'/g, "\\'");
+                    const nameEsc = (s.name || '').replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+                    const currencyEsc = (s.currency || 'MXN').replace(/'/g, "\\'");
+                    return `<button type="button" onclick="state.currentSchool={id:'${idEsc}',name:'${nameEsc}',currency:'${currencyEsc}'}; state.currentView='discovery-admin-auth'; saveState(); renderView();" style="width: 100%; padding: 1rem 1.25rem; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <span>${name}</span>${loc ? `<span style="font-size: 13px; color: var(--text-secondary); font-weight: 400;">${loc.replace(/</g, '&lt;')}</span>` : ''}
+                    </button>`;
+                }).join('')}</div>` : `<p style="color: var(--text-muted); margin-bottom: 1rem;">${(t('discovery_no_schools') || 'No studios listed.').replace(/</g, '&lt;')}</p><button type="button" class="btn-primary" onclick="state._discoveryOnlyEdit=false; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ state.currentView=null; renderView(); });">${(t('discovery_back') || 'Back to discovery').replace(/</g, '&lt;')}</button>`}
+            </div>`;
+    }
+    else if (view === 'discovery-admin-auth') {
+        const schoolName = (state.currentSchool?.name || '').replace(/</g, '&lt;');
+        html += `
+            <div class="auth-page-container" style="max-width: 420px; margin: 0 auto; padding: 2rem 1.25rem;">
+                <button type="button" onclick="state._discoveryOnlyEdit=false; state.currentView='discovery-admin-pick-school'; state.discoveryPath=null; saveState(); renderView();" style="background: none; border: none; padding: 0; font-size: 13px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 1.5rem;">
+                    <i data-lucide="arrow-left" size="18"></i> ${(t('discovery_back') || 'Back').replace(/</g, '&lt;')}
+                </button>
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <h1 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">${(t('discovery_admin_signin_title') || 'Edit discovery profile').replace(/</g, '&lt;')}</h1>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0;">${schoolName ? schoolName + ' · ' : ''}${(t('discovery_admin_signin_subtitle') || 'This studio only appears on the discovery page. Sign in with your admin email and password.').replace(/</g, '&lt;')}</p>
+                </div>
+                <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
+                    <input type="email" id="admin-user-input" class="minimal-input" placeholder="${(window.t('admin_email_placeholder') || window.t('admin_user_placeholder') || 'Admin email').replace(/"/g, '&quot;')}" autocomplete="email" style="margin-bottom: 0.75rem;">
+                    <div class="password-input-wrap" style="margin-bottom: 1rem;">
+                        <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${(window.t('admin_pass_placeholder') || 'Password').replace(/"/g, '&quot;')}" autocomplete="current-password">
+                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                    </div>
+                    <button id="admin-login-button" type="button" class="btn-auth-primary" onclick="loginAdminWithCreds()" style="width: 100%; padding: 14px; font-weight: 600; background: var(--text-primary); color: var(--bg-body); border: none; border-radius: 12px; cursor: pointer;">
+                        ${(window.t('admin_login_btn') || 'Sign in').replace(/</g, '&lt;')}
+                    </button>
+                </div>
+            </div>
+        `;
     }
     else if (view === 'auth') {
         const isSignup = state.authMode === 'signup';
@@ -3820,7 +4238,7 @@ function _renderViewImpl() {
             const cheapestSub = (state.subscriptions || []).filter(s => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
             const priceStr = cheapestSub ? (typeof window.formatPrice === 'function' ? window.formatPrice(cheapestSub.price, school.currency || 'MXN') : cheapestSub.price) : '—';
             const weekStart = state._teacherBookingWeekStart || (() => {
-                const d = new Date();
+                const d = getTodayForMonthly();
                 const day = d.getDay();
                 const diff = d.getDate() - day + (day === 0 ? -6 : 1);
                 const monday = new Date(d);
@@ -3952,17 +4370,21 @@ function _renderViewImpl() {
             }).catch(() => {});
         }
 
-        // Helper to get registration info for a class
-        const getRegInfo = (classObj) => {
+        // Helper to get registration info for a class. Pass dateOverride in weekly view so we show status for that tile's date, not "next occurrence".
+        const getRegInfo = (classObj, dateOverride) => {
             if (!regEnabled || !state.classRegLoaded) return null;
-            const nextDate = window.getNextClassDate(classObj.day);
-            if (!nextDate) return null;
-            const dateStr = window.formatClassDate(nextDate);
+            const useDate = dateOverride != null ? new Date(dateOverride) : window.getNextClassDate(classObj.day);
+            if (!useDate) return null;
+            const dateStr = window.formatClassDate(useDate);
             const key = classObj.id + '_' + dateStr;
             const avail = state.classAvailability[key] || {};
-            const myReg = (state.studentRegistrations || []).find(r => r.class_id === classObj.id && r.class_date === dateStr && r.status === 'registered');
+            const regPool = state.mockDate
+                ? [...(state.studentRegistrations || []), ...(state.studentPastRegistrations || [])]
+                : (state.studentRegistrations || []);
+            const myReg = regPool.find(r => r.class_id === classObj.id && r.class_date === dateStr && r.status === 'registered');
             const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
-            const isOver = classDateTime.getTime() <= Date.now();
+            const nowMs = getVirtualNow().getTime();
+            const isOver = classDateTime.getTime() <= nowMs;
             return {
                 dateStr,
                 maxCapacity: avail.max_capacity,
@@ -3970,7 +4392,7 @@ function _renderViewImpl() {
                 spotsLeft: avail.spots_left,
                 isRegistered: !!myReg,
                 registrationId: myReg?.id,
-                canCancel: myReg ? (classDateTime.getTime() - Date.now()) > 4 * 60 * 60 * 1000 : false,
+                canCancel: myReg ? (classDateTime.getTime() - nowMs) > 4 * 60 * 60 * 1000 : false,
                 isOver
             };
         };
@@ -4022,7 +4444,7 @@ function _renderViewImpl() {
             }
             let urgency = '';
             if (info.maxCapacity != null && info.spotsLeft <= 10) {
-                urgency = `<div class="tile-reg-urgency">${info.spotsLeft} left</div>`;
+                urgency = `<div class="tile-reg-urgency">${(t.spots_left || '').replace('{n}', info.spotsLeft)}</div>`;
             }
             return `<div class="tile-reg-actions">
                 ${urgency}
@@ -4099,7 +4521,7 @@ function _renderViewImpl() {
                 const isPastDay = regEnabled && window.isDayPastInCurrentWeek(dayKey);
                 const dayDate = window.getCurrentWeekDate(dayKey);
                 const dayDateStr = dayDate ? dayDate.toLocaleDateString(state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short' }) : '';
-                const isToday = dayDate && (() => { const td = new Date(); td.setHours(0,0,0,0); return dayDate.getTime() === td.getTime(); })();
+                const isToday = dayDate && (() => { const td = new Date(getTodayForMonthly()); td.setHours(0,0,0,0); return dayDate.getTime() === td.getTime(); })();
 
                 html += `
                     <div class="day-tile ${isPastDay ? 'day-tile-past' : ''}">
@@ -4109,7 +4531,7 @@ function _renderViewImpl() {
                         </div>
                         <div style="display:flex; flex-direction:column; gap:0.6rem;">
                             ${dayClasses.length > 0 ? dayClasses.map(c => {
-                                const info = isPastDay ? null : getRegInfo(c);
+                                const info = isPastDay ? null : getRegInfo(c, dayDate);
                                 const isRegistered = info && info.isRegistered;
                                 const showRegisteredHighlight = isRegistered && info && !info.isOver;
                                 return `
@@ -4409,7 +4831,9 @@ function _renderViewImpl() {
                                 const days = window.getDaysRemaining(nextExpiry);
                                 const isSoon = days !== null && days <= 5 && days > 0;
                                 const isExpired = days !== null && days <= 0;
-                                return `<div style="margin-top: 10px; font-size: 11px; font-weight: 600; color: var(--text-secondary);">${t.next_expiry_label}: <span style="color: ${isExpired ? 'var(--system-red)' : isSoon ? 'var(--system-orange)' : 'var(--primary)'};">${d.toLocaleDateString()}</span>${days !== null && days > 0 && days <= 31 ? ` (${days} ${t.days_left || 'days left'})` : ''}</div>`;
+                                const useFixedExpiryDisplay = state._usePlanExpiryFixedDate || false;
+                                const displayValue = useFixedExpiryDisplay ? d.toLocaleDateString() : (days !== null ? `${days} ${t.days_left || 'days left'}` : d.toLocaleDateString());
+                                return `<div style="margin-top: 10px; font-size: 11px; font-weight: 600; color: var(--text-secondary);">${t.next_expiry_label}: <span style="color: ${isExpired ? 'var(--system-red)' : isSoon ? 'var(--system-orange)' : 'var(--primary)'};">${displayValue}</span></div>`;
                             }
                             return '';
                         })()}
@@ -4424,12 +4848,14 @@ function _renderViewImpl() {
                     : [{ ...state.currentUser, school_name: state.currentSchool?.name || '' }];
                 const hasMultipleSchools = enrollments.length > 1 || (enrollments.length === 1 && enrollments[0].school_id !== currentSchoolId);
 
+                const useFixedExpiryDisplay = state._usePlanExpiryFixedDate || false;
                 const renderPackCard = (p, isExp, schoolName) => {
                     const days = window.getDaysRemaining(p.expires_at);
                     const isSoon = !isExp && days > 0 && days <= 5;
                     const sc = isExp ? 'var(--system-red)' : (isSoon ? 'var(--system-orange)' : 'var(--system-blue)');
                     const bg = isExp ? 'var(--system-gray6)' : 'linear-gradient(145deg, var(--bg-card), var(--bg-body))';
-                    const statusText = isExp ? 'Expirado' : (isSoon ? (days + 'd Restantes') : 'Activo');
+                    const statusText = isExp ? 'Expirado' : (useFixedExpiryDisplay ? 'Activo' : (isSoon ? (days + 'd Restantes') : 'Activo'));
+                    const expiryDisplay = useFixedExpiryDisplay ? new Date(p.expires_at).toLocaleDateString() : (days !== null ? (days + ' ' + (t.days_left || 'days left')) : new Date(p.expires_at).toLocaleDateString());
                     const privCount = p.private_count ?? 0;
                     const eventCount = p.event_count ?? 0;
                     const groupCount = p.count;
@@ -4459,7 +4885,7 @@ function _renderViewImpl() {
                         '<div style="background: ' + sc + '; color: white; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase;">' + statusText + '</div></div>' +
                         '<div style="display: flex; align-items: flex-end; justify-content: space-between;">' +
                         '<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);">' +
-                        '<i data-lucide="calendar" size="14" style="opacity: 0.6;"></i><span>' + t.expires_label + ': ' + new Date(p.expires_at).toLocaleDateString() + '</span></div>' +
+                        '<i data-lucide="calendar" size="14" style="opacity: 0.6;"></i><span>' + t.expires_label + ': ' + expiryDisplay + '</span></div>' +
                         countHtml + '</div></div>';
                 };
 
@@ -4705,7 +5131,7 @@ function _renderViewImpl() {
                 </div>
                 ${state.currentSchool?.class_registration_enabled ? (() => {
                     const weekRegs = state.adminWeekRegistrations || [];
-                    const activeRegs = weekRegs.filter(r => r.status === 'registered' || r.status === 'attended');
+                    const activeRegs = weekRegs;
                     // Group by class_id + class_date
                     const grouped = {};
                     activeRegs.forEach(r => {
@@ -4762,11 +5188,13 @@ function _renderViewImpl() {
                                     </div>
                                     <div class="admin-reg-students">
                                         ${g.students.map(s => {
-                                            const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
+                                            const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
+                                            const statusLabel = s.status === 'attended' ? t.attended : s.status === 'no_show' ? (t.auto_deducted || 'No show') : s.status === 'cancelled' ? (t.cancelled || 'Cancelled') : t.registered;
+                                            const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t.monthly_badge || 'Monthly') + '</span>' : '';
                                             return `<div class="admin-reg-student-row">
                                                 ${statusIcon}
-                                                <span style="font-size: 0.8rem; font-weight: 500;">${s.student_name}</span>
-                                                <span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${s.status === 'attended' ? t.attended : t.registered}</span>
+                                                <span style="font-size: 0.8rem; font-weight: 500;">${s.student_name}${monthlyTag}</span>
+                                                <span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>
                                             </div>`;
                                         }).join('')}
                                     </div>
@@ -5145,6 +5573,13 @@ function _renderViewImpl() {
         const adminWithPrivate = visibleSubsAdmin.filter(s => hasPrivateInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => planSortKey(a) - planSortKey(b));
         const adminSociales = visibleSubsAdmin.filter(s => hasEventsInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
         const lastAddedPlan = lastAddedId ? (state.subscriptions || []).find(s => s.id === lastAddedId) : null;
+        let discoveryPreviewInnerHtml = '';
+        if (state.settingsDiscoveryExpanded && state.showDiscoveryPreview && state.currentSchool) {
+            const sc = state.currentSchool;
+            const loc = [sc?.city, sc?.country].filter(Boolean).join(', ') || (sc?.address || '—');
+            const gallery = Array.isArray(sc?.gallery_urls) ? sc.gallery_urls : (typeof sc?.gallery_urls === 'string' ? sc.gallery_urls.split(/\r?\n/).map(s => s.trim()).filter(Boolean) : []);
+            discoveryPreviewInnerHtml = window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || '', loc, desc: (sc?.discovery_description || '').toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(' · ') : '', logoUrl: (sc?.logo_url || '').trim(), teacherUrl: (sc?.teacher_photo_url || '').trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : (Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : []), currency: sc?.currency || 'MXN', classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t.discovery_placeholder_upload_soon || 'Will be uploaded soon.' }) : '';
+        }
 
         html += `
             <div class="ios-header">
@@ -5272,8 +5707,8 @@ function _renderViewImpl() {
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_label} ${t.new_class_label}
                 </div>
                 <div style="padding: 0 1.2rem; margin-top: 1rem; margin-bottom: 0.5rem;">
-                    <button type="button" class="btn-primary" onclick="window.flushScheduleSave()" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
-                        <i data-lucide="save" size="18" style="margin-right: 8px;"></i> ${t.save_schedule_btn || 'Save schedule'}
+                    <button type="button" class="btn-primary" id="save-schedule-btn" onclick="window.flushScheduleSave()" ${state._scheduleSaving ? 'disabled' : ''} style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
+                        ${state._scheduleSaving ? `<i data-lucide="loader-2" class="spin" size="18" style="margin-right: 8px;"></i> ${t.saving_label || 'Saving…'}` : `<i data-lucide="save" size="18" style="margin-right: 8px;"></i> ${t.save_schedule_btn || 'Save schedule'}`}
                     </button>
                     ${state._scheduleSaveStatus ? `<div style="font-size: 13px; color: var(--secondary); font-weight: 600; margin-top: 0.5rem; text-align: center;">${state._scheduleSaveStatus}</div>` : ''}
                 </div>
@@ -5349,10 +5784,10 @@ function _renderViewImpl() {
                                 <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
-                                </div>
+                                </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
                                     const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
@@ -5384,6 +5819,10 @@ function _renderViewImpl() {
                                     return out;
                                 })()}
                             </div>
+                            ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                <input type="date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                            </div>` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -5409,10 +5848,10 @@ function _renderViewImpl() {
                                 <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
-                                </div>
+                                </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
                                     const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
@@ -5444,6 +5883,10 @@ function _renderViewImpl() {
                                     return out;
                                 })()}
                             </div>
+                            ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                <input type="date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                            </div>` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -5469,10 +5912,10 @@ function _renderViewImpl() {
                                 <input type="number" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" value="${s.validity_days || 30}" onchange="updateSub('${s.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
-                                </div>
+                                </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
                                     const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
@@ -5504,6 +5947,10 @@ function _renderViewImpl() {
                                     return out;
                                 })()}
                             </div>
+                            ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                <input type="date" value="${s.expiry_date || ''}" onchange="updateSub('${s.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                            </div>` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -5530,10 +5977,10 @@ function _renderViewImpl() {
                                 <input type="number" value="${sub.price}" onchange="updateSub('${sub.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                <div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                ${!state._usePlanExpiryFixedDate ? `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="calendar" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" value="${sub.validity_days || 30}" onchange="updateSub('${sub.id}', 'validity_days', this.value)" placeholder="Días" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
-                                </div>
+                                </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
                                     const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
@@ -5565,6 +6012,10 @@ function _renderViewImpl() {
                                     return out;
                                 })()}
                             </div>
+                            ${state._usePlanExpiryFixedDate ? `<div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
+                                <i data-lucide="calendar-range" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
+                                <input type="date" value="${sub.expiry_date || ''}" onchange="updateSub('${sub.id}', 'expiry_date', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 11px; padding: 0;" title="${t.fixed_expiry_date_label || 'Fixed expiry date (optional)'}">
+                            </div>` : ''}
                         </div>
                     </div>`;
                         return card(lastAddedPlan);
@@ -5573,8 +6024,8 @@ function _renderViewImpl() {
             </div>
             ` : ''}
             <div style="padding: 0 1.2rem; margin-top: 1rem;">
-                <button type="button" class="btn-primary" onclick="window.saveAllPlans()" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600; margin-bottom: 0.75rem;">
-                    <i data-lucide="save" size="18" style="margin-right: 8px;"></i> ${t.save_plans_btn || 'Save plans'}
+                <button type="button" class="btn-primary" id="save-plans-btn" onclick="window.saveAllPlans()" ${state._plansSaving ? 'disabled' : ''} style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600; margin-bottom: 0.75rem;">
+                    ${state._plansSaving ? `<i data-lucide="loader-2" class="spin" size="18" style="margin-right: 8px;"></i> ${t.saving_label || 'Saving…'}` : `<i data-lucide="save" size="18" style="margin-right: 8px;"></i> ${t.save_plans_btn || 'Save plans'}`}
                 </button>
                 ${state._plansSaveStatus ? `<div style="font-size: 13px; color: var(--secondary); font-weight: 600; margin-bottom: 0.5rem; text-align: center;">${state._plansSaveStatus}</div>` : ''}
                 <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
@@ -5674,7 +6125,7 @@ function _renderViewImpl() {
                         </div>
                     </div>`).join('') + `<button type="button" class="discovery-location-add-btn" onclick="window.addDiscoveryLocation()"><i data-lucide="plus" size="20"></i> ${t.discovery_add_location || 'Add location'}</button>`; })()}
                 </div>
-                <div class="ios-list-item" onclick="window.saveDiscoveryProfile()" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                <div class="ios-list-item save-discovery-btn" onclick="window.saveDiscoveryProfile(event)" style="color: var(--system-blue); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
                     <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_discovery_btn || 'Save discovery profile'}
                 </div>
             </div>
@@ -5689,7 +6140,7 @@ function _renderViewImpl() {
                 <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">${t.discovery_preview_title || 'Preview on Discover'}</div>
             </div>
             <div class="card slide-in" style="margin: 0 1.2rem 1.5rem; padding: 0; border-radius: 16px; border: 1px solid var(--border); overflow: hidden;">
-                <div id="discovery-preview-inner" style="font-size: 13px; color: var(--text-primary); max-height: 70vh; overflow-y: auto; padding: 1rem; background: var(--bg-body);">${(() => { const sc = state.currentSchool; const loc = [sc?.city, sc?.country].filter(Boolean).join(', ') || (sc?.address || '—'); const gallery = Array.isArray(sc?.gallery_urls) ? sc.gallery_urls : (typeof sc?.gallery_urls === 'string' ? sc.gallery_urls.split(/\\r?\\n/).map(s => s.trim()).filter(Boolean) : []); return window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || '', loc, desc: (sc?.discovery_description || '').toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(' · ') : '', logoUrl: (sc?.logo_url || '').trim(), teacherUrl: (sc?.teacher_photo_url || '').trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : (Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : []), currency: sc?.currency || 'MXN', classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t.discovery_placeholder_upload_soon || 'Will be uploaded soon.' }) : ''; })()}</div>
+                <div id="discovery-preview-inner" style="font-size: 13px; color: var(--text-primary); max-height: 70vh; overflow-y: auto; padding: 1rem; background: var(--bg-body);">${discoveryPreviewInnerHtml}</div>
             </div>
             ` : ''}
             ` : ''}
@@ -5728,7 +6179,30 @@ function _renderViewImpl() {
                         </div>
                     </div>
                     ` : ''}
+                    ${(state.currentSchool?.monthly_registration_enabled || state.currentSchool?.profile_type === 'private_teacher') ? `
+                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
+                        <div class="admin-private-contact-title">${t.offer_monthly_registration || 'Offer monthly class registration'}</div>
+                        <p class="admin-private-contact-desc">${t.offer_monthly_registration_desc || 'Students can register for all remaining classes of a course in the current month at once.'}</p>
+                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
+                            <span style="font-size: 15px; font-weight: 600;">${t.offer_monthly_registration || 'Offer monthly class registration'}</span>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${(state.adminSettings?.monthly_registration_enabled === 'true') ? 'checked' : ''} onchange="window.toggleMonthlyRegistration(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
                     ` : ''}
+                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
+                        <div class="admin-private-contact-title">${t.plan_expiry_fixed_date_label || 'Use fixed expiry date'}</div>
+                        <p class="admin-private-contact-desc">${t.plan_expiry_fixed_date_desc || 'When ON: Plans and students see a fixed expiry date (e.g. 28.02.2026). When OFF: Plans and students see validity in days (e.g. 30 days left).'}</p>
+                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
+                            <span style="font-size: 15px; font-weight: 600;">${t.plan_expiry_fixed_date_label || 'Use fixed expiry date'}</span>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${state._usePlanExpiryFixedDate ? 'checked' : ''} onchange="window.togglePlanExpiryFixedDate(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
                     <!-- Contacto clases particulares -->
                     <div class="admin-private-contact-card" style="margin-bottom: 1.5rem;">
                         <div class="admin-private-contact-title">${t.private_contact_section}</div>
@@ -5760,7 +6234,7 @@ function _renderViewImpl() {
                             <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.phone_label}</span>
                             <input type="text" id="profile-phone" value="${(state.currentAdmin.phone || '').replace(/"/g, '&quot;')}" placeholder="+52 55 1234 5678" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                         </div>
-                        <div class="ios-list-item" onclick="window.saveAdminProfile()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
+                        <div class="ios-list-item" id="save-admin-profile-btn" onclick="window.saveAdminProfile()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px; background: var(--system-gray6);">
                             <i data-lucide="save" size="18" style="opacity: 0.6; margin-right: 8px;"></i> ${t.save_profile_btn}
                         </div>
                     </div>
@@ -5826,8 +6300,9 @@ function _renderViewImpl() {
                     </div>
                 </div>
             </div>
+                    ` : ''}
 
-            <div style="height: 100px;"></div> <!-- Spacer for bottom nav padding -->
+            <div style="height:100px"></div>
     `;
     } else if (view === 'admin-competition-jack-and-jill') {
         const schoolId = state.competitionSchoolId || state.currentSchool?.id;
@@ -6016,7 +6491,7 @@ function _renderViewImpl() {
 
     html += `</div>`;
     root.innerHTML = html;
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     if (view === 'platform-school-details') window.scrollTo(0, 0);
 
     // Global UI Updates
@@ -6024,35 +6499,39 @@ function _renderViewImpl() {
     const isAdminView = (view && view.startsWith('admin-'));
     const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
     const isLanding = view === 'school-selection' || view === 'auth';
+    const isDiscoveryOnlyView = state._discoveryOnlyEdit || view === 'discovery-profile-only' || view === 'discovery-admin-pick-school' || view === 'discovery-admin-auth';
     // On landing page: show logout only for platform dev; otherwise hide so unauthenticated users never see it
     const showLogout = hasSession && (!isLanding || state.isPlatformDev);
-    const showNav = hasSession && !isLanding && !isDevView;
+    const showNav = hasSession && !isLanding && !isDevView && !isDiscoveryOnlyView;
     document.getElementById('logout-btn').classList.toggle('hidden', !showLogout);
     document.getElementById('dev-login-trigger').classList.toggle('hidden', state.currentUser !== null);
     document.getElementById('student-nav').classList.toggle('hidden', !showNav || state.isAdmin);
     document.getElementById('admin-nav').classList.toggle('hidden', !showNav || !state.isAdmin);
 
-    // Swap student nav first tab for private teachers
-    const studentNavFirst = document.querySelector('#student-nav .nav-item[data-view="schedule"], #student-nav .nav-item[data-view="teacher-booking"]');
-    if (studentNavFirst) {
+    // Ensure all student nav items have fresh <i data-lucide="..."> so Lucide.createIcons() can render them (fixes missing tab icons)
+    const studentNav = document.getElementById('student-nav');
+    if (studentNav) {
         const isPrivateTeacher = state.currentSchool?.profile_type === 'private_teacher';
+        const navItems = [
+            { view: isPrivateTeacher ? 'teacher-booking' : 'schedule', icon: isPrivateTeacher ? 'calendar-clock' : 'calendar', labelKey: isPrivateTeacher ? 'nav_book_class' : 'nav_schedule', labelFallback: isPrivateTeacher ? 'Book Class' : 'Schedule' },
+            { view: 'shop', icon: 'shopping-bag', labelKey: 'nav_shop', labelFallback: 'Shop' },
+            { view: 'qr', icon: 'qr-code', labelKey: 'nav_qr', labelFallback: 'My QR' }
+        ];
         const t = DANCE_LOCALES[state.language || 'en'];
-        if (isPrivateTeacher) {
-            studentNavFirst.setAttribute('data-view', 'teacher-booking');
-            const icon = studentNavFirst.querySelector('[data-lucide]');
-            if (icon) icon.setAttribute('data-lucide', 'calendar-clock');
-            const label = studentNavFirst.querySelector('span');
-            if (label) label.textContent = t.nav_book_class || 'Book Class';
-        } else {
-            studentNavFirst.setAttribute('data-view', 'schedule');
-            const icon = studentNavFirst.querySelector('[data-lucide]');
-            if (icon) icon.setAttribute('data-lucide', 'calendar');
-            const label = studentNavFirst.querySelector('span');
-            if (label) label.textContent = t.nav_schedule || 'Schedule';
-        }
+        navItems.forEach(({ view, icon, labelKey, labelFallback }, idx) => {
+            const btn = studentNav.children[idx];
+            if (!btn || !btn.classList.contains('nav-item')) return;
+            btn.setAttribute('data-view', view);
+            const oldIcon = btn.querySelector('[data-lucide], i, svg');
+            if (oldIcon) {
+                const newIcon = document.createElement('i');
+                newIcon.setAttribute('data-lucide', icon);
+                oldIcon.replaceWith(newIcon);
+            }
+            const label = btn.querySelector('span');
+            if (label) label.textContent = t[labelKey] || labelFallback;
+        });
     }
-    const siteFooter = document.querySelector('.site-footer');
-    if (siteFooter) siteFooter.classList.toggle('hidden', view === 'school-selection');
     document.body.classList.toggle('landing-page', view === 'school-selection');
 
     // Sticky footer: show only when scrolled to bottom (school-selection)
@@ -6075,10 +6554,14 @@ function _renderViewImpl() {
             badge.classList.toggle('hidden', pendingCount === 0);
         }
     }
+    // Re-run Lucide so bottom nav and any updated icons render (nav is outside #app-root). UMD may expose as window.lucide or global lucide.
+    const lucideLib = window.lucide || (typeof globalThis !== 'undefined' && globalThis.lucide);
+    if (lucideLib && typeof lucideLib.createIcons === 'function') lucideLib.createIcons();
     } catch (e) {
         console.error('Render error:', e);
         if (root) root.innerHTML = '<div class="container" style="padding:2rem;text-align:center;"><p style="color:var(--text-muted);">Something went wrong. <a href="#" onclick="location.reload()" style="color:var(--system-blue);">Reload</a>.</p></div>';
-        if (window.lucide) window.lucide.createIcons();
+        const lucideLib = window.lucide || (typeof globalThis !== 'undefined' && globalThis.lucide);
+        if (lucideLib && typeof lucideLib.createIcons === 'function') lucideLib.createIcons();
     }
 }
 
@@ -6131,9 +6614,9 @@ window.formatClassDate = (date) => {
     return `${y}-${m}-${day}`;
 };
 
-// Returns the Monday of the current week (Mon-Sun week)
+// Returns the Monday of the current week (Mon-Sun week). Uses mockDate when set (e.g. ?mockDate=2026-02-04).
 window.getCurrentWeekMonday = () => {
-    const now = new Date();
+    const now = getTodayForMonthly();
     const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
     const diff = day === 0 ? -6 : 1 - day; // if Sunday, go back 6 days; else go to Monday
     const monday = new Date(now);
@@ -6163,11 +6646,11 @@ window.getCurrentWeekRange = () => {
     return { start: monday, end: sunday };
 };
 
-// Check if a day code is in the past (before today) within the current week
+// Check if a day code is in the past (before today) within the current week. Uses mockDate when set.
 window.isDayPastInCurrentWeek = (dayCode) => {
     const dayDate = window.getCurrentWeekDate(dayCode);
     if (!dayDate) return false;
-    const today = new Date();
+    const today = new Date(getTodayForMonthly());
     today.setHours(0, 0, 0, 0);
     return dayDate < today;
 };
@@ -6216,9 +6699,13 @@ window.loadClassAvailability = async () => {
     const schoolId = state.currentSchool?.id;
     if (!schoolId || !supabaseClient || !state.currentSchool?.class_registration_enabled) return;
 
-    // Get availability for each day of the coming week
+    // Get availability for each day of the current week (so weekly view shows correct status per date) and next occurrence per class (for list view)
     const availability = {};
     const dates = new Set();
+    const weekRange = window.getCurrentWeekRange();
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+        dates.add(window.formatClassDate(d));
+    }
     (state.classes || []).forEach(c => {
         const nextDate = window.getNextClassDate(c.day);
         if (nextDate) dates.add(window.formatClassDate(nextDate));
@@ -6322,17 +6809,30 @@ window.showMessageModal = (opts) => {
     bodyEl.style.display = bodyText ? '' : 'none';
     const primaryLabel = typeof opts.primaryLabel === 'function' ? opts.primaryLabel() : (opts.primaryLabel || t('got_it'));
     const secondaryLabel = opts.secondaryLabel != null ? (typeof opts.secondaryLabel === 'function' ? opts.secondaryLabel() : opts.secondaryLabel) : null;
-    actionsEl.className = 'message-modal-actions' + (secondaryLabel ? ' message-modal-actions-row' : '');
-    actionsEl.innerHTML = secondaryLabel
-        ? `<button type="button" class="btn-secondary" style="flex:1;">${secondaryLabel}</button><button type="button" class="btn-primary" style="flex:1;">${primaryLabel}</button>`
-        : `<button type="button" class="btn-primary" style="width:100%;">${primaryLabel}</button>`;
+    const cancelLabel = opts.cancelLabel != null ? (typeof opts.cancelLabel === 'function' ? opts.cancelLabel() : opts.cancelLabel) : null;
+    const hasRow = secondaryLabel || cancelLabel;
+    actionsEl.className = 'message-modal-actions' + (hasRow ? ' message-modal-actions-row' : '') + (cancelLabel ? ' message-modal-actions-with-cancel' : '');
+    if (cancelLabel) {
+        actionsEl.innerHTML = `<div class="message-modal-actions-main">` +
+            (secondaryLabel ? `<button type="button" class="btn-secondary" style="flex:1;">${secondaryLabel}</button>` : '') +
+            `<button type="button" class="btn-primary" style="flex:1;">${primaryLabel}</button>` +
+            `</div><button type="button" class="btn-secondary message-modal-cancel">${cancelLabel}</button>`;
+    } else {
+        actionsEl.innerHTML = secondaryLabel
+            ? `<button type="button" class="btn-secondary" style="flex:1;">${secondaryLabel}</button><button type="button" class="btn-primary" style="flex:1;">${primaryLabel}</button>`
+            : `<button type="button" class="btn-primary" style="width:100%;">${primaryLabel}</button>`;
+    }
     actionsEl.querySelector('.btn-primary').onclick = () => {
         if (opts.onPrimary) opts.onPrimary(close);
         else close();
     };
     if (secondaryLabel) {
-        actionsEl.querySelector('.btn-secondary').onclick = () => {
-            if (opts.onSecondary) opts.onSecondary(close);
+        const sec = actionsEl.querySelector('.message-modal-actions-main .btn-secondary') || actionsEl.querySelector('.btn-secondary');
+        if (sec) sec.onclick = () => { if (opts.onSecondary) opts.onSecondary(close); else close(); };
+    }
+    if (cancelLabel) {
+        actionsEl.querySelector('.message-modal-cancel').onclick = () => {
+            if (opts.onCancel) opts.onCancel(close);
             else close();
         };
     }
@@ -6340,34 +6840,16 @@ window.showMessageModal = (opts) => {
     if (window.lucide) window.lucide.createIcons();
 };
 
-window.showRegisterSuccessModal = (registrationId) => {
+window.showRegisterSuccessModal = (registrationId, canCancelFromSuccess) => {
     const t = typeof window.t === 'function' ? window.t : (k) => k;
-    const studentId = state.currentUser?.id;
-    const canCancel = registrationId && studentId && supabaseClient;
     window.showMessageModal({
         icon: 'success',
         title: t('registered_title'),
         body: t('register_success_4h_note'),
         primaryLabel: t('got_it'),
-        secondaryLabel: canCancel ? t('cancel_registration') : null,
+        secondaryLabel: t('close'),
         onPrimary: (close) => { close(); },
-        onSecondary: canCancel ? async (close) => {
-            try {
-                const { error } = await supabaseClient.rpc('cancel_class_registration', {
-                    p_registration_id: registrationId,
-                    p_student_id: String(studentId)
-                });
-                if (error) throw error;
-                close();
-                await window.loadClassAvailability();
-                if (shouldDeferRender()) scheduleDeferredRender();
-                else { renderView(); if (window.lucide) window.lucide.createIcons(); }
-            } catch (e) {
-                console.error('Cancel error:', e);
-                close();
-                alert(e.message || t('cancel_error'));
-            }
-        } : undefined
+        onSecondary: (close) => { close(); }
     });
 };
 
@@ -6396,10 +6878,131 @@ window.showCancelConfirmModal = (registrationId) => {
             } catch (e) {
                 console.error('Cancel error:', e);
                 close();
-                alert(e.message || t('cancel_error'));
+                const msg = (e && e.message) || '';
+                const is4HourRule = /4\s*hours?|4\s*horas|before\s*class|antes del inicio|less than/i.test(msg);
+                alert(is4HourRule ? t('cancel_too_late_error') : (msg || t('cancel_error')));
             }
         }
     });
+};
+
+function getTodayForMonthly() {
+    if (state.mockDate) {
+        const d = new Date(state.mockDate);
+        return isNaN(d.getTime()) ? new Date() : d;
+    }
+    return new Date();
+}
+
+// For schedule: "has class started?" and cancel deadline. Use start of mock day when mocking so classes on that day are still registerable.
+function getVirtualNow() {
+    if (state.mockDate) {
+        const d = new Date(state.mockDate + 'T00:00:00');
+        return isNaN(d.getTime()) ? new Date() : d;
+    }
+    return new Date();
+}
+
+window.getMonthlyDates = (dayCode) => {
+    const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
+    const dayAliases = { 'Mo': 1, 'Monday': 1, 'Tu': 2, 'Tuesday': 2, 'We': 3, 'Wednesday': 3, 'Th': 4, 'Thursday': 4, 'Fr': 5, 'Friday': 5, 'Sa': 6, 'Saturday': 6, 'Su': 0, 'Sunday': 0 };
+    let targetDay = dayMap[dayCode];
+    if (targetDay === undefined) targetDay = dayAliases[dayCode];
+    if (targetDay === undefined) return [];
+    const now = getTodayForMonthly();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const today = new Date(year, month, now.getDate());
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const dates = [];
+    for (let d = 1; d <= lastDay; d++) {
+        const dt = new Date(year, month, d);
+        if (dt.getDay() === targetDay && dt >= today) {
+            dates.push(window.formatClassDate(dt));
+        }
+    }
+    return dates;
+};
+
+window.isMonthlyRegistrationAvailable = () => {
+    const school = state.currentSchool;
+    if (school?.monthly_registration_enabled === false) return false;
+    if (!school?.class_registration_enabled) return false;
+    const dayOfMonth = getTodayForMonthly().getDate();
+    if (dayOfMonth > 14) return false;
+    // Show when admin has turned it on, or when platform enabled it and admin has not explicitly turned it off (students may not have adminSettings loaded).
+    if (state.adminSettings?.monthly_registration_enabled === 'false') return false;
+    const adminOffers = state.adminSettings?.monthly_registration_enabled === 'true';
+    const platformAllows = school?.monthly_registration_enabled === true;
+    return adminOffers || platformAllows;
+};
+
+window.registerForClassSingle = async (classId, className) => {
+    const schoolId = state.currentSchool?.id;
+    const studentId = state.currentUser?.id;
+    if (!schoolId || !studentId || !supabaseClient) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const classObj = (state.classes || []).find(c => c.id === classId);
+    if (!classObj) return;
+    const nextDate = window.getNextClassDate(classObj.day);
+    if (!nextDate) return;
+    const dateStr = window.formatClassDate(nextDate);
+
+    try {
+        const { data, error } = await supabaseClient.rpc('register_for_class', {
+            p_student_id: String(studentId),
+            p_class_id: classId,
+            p_school_id: schoolId,
+            p_class_date: dateStr
+        });
+        if (error) throw error;
+        const registrationId = data?.id || (data && typeof data === 'object' ? data.id : null);
+        const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
+        const canCancel = classDateTime.getTime() - getVirtualNow().getTime() > 4 * 60 * 60 * 1000;
+        window.showRegisterSuccessModal(registrationId, canCancel);
+        window.loadClassAvailability().then(() => {
+            if (shouldDeferRender()) scheduleDeferredRender();
+            else { renderView(); if (window.lucide) window.lucide.createIcons(); }
+        }).catch(() => {});
+    } catch (e) {
+        console.error('Registration error:', e);
+        alert(e.message || t('register_error'));
+    }
+};
+
+window.registerForClassMonthly = async (classId, className) => {
+    const schoolId = state.currentSchool?.id;
+    const studentId = state.currentUser?.id;
+    if (!schoolId || !studentId || !supabaseClient) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const classObj = (state.classes || []).find(c => c.id === classId);
+    if (!classObj) return;
+    const dates = window.getMonthlyDates(classObj.day);
+    if (dates.length === 0) return;
+
+    try {
+        const { data, error } = await supabaseClient.rpc('register_for_class_monthly', {
+            p_student_id: String(studentId),
+            p_class_id: classId,
+            p_school_id: schoolId,
+            p_dates: dates
+        });
+        if (error) throw error;
+        const count = Array.isArray(data) ? data.length : (data ? JSON.parse(data).length : dates.length);
+        window.showMessageModal({
+            icon: 'success',
+            title: (t('monthly_registration_success') || 'Successfully registered for {n} classes this month!').replace('{n}', count),
+            body: '',
+            primaryLabel: t('got_it')
+        });
+        window.loadClassAvailability().then(() => {
+            if (shouldDeferRender()) scheduleDeferredRender();
+            else { renderView(); if (window.lucide) window.lucide.createIcons(); }
+        }).catch(() => {});
+    } catch (e) {
+        console.error('Monthly registration error:', e);
+        alert(e.message || t('register_error'));
+    }
 };
 
 window.registerForClass = async (classId, className) => {
@@ -6415,7 +7018,7 @@ window.registerForClass = async (classId, className) => {
     if (!nextDate) return;
     const dateStr = window.formatClassDate(nextDate);
     const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
-    if (classDateTime.getTime() <= Date.now()) {
+    if (classDateTime.getTime() <= getVirtualNow().getTime()) {
         window.showMessageModal({
             icon: 'warning',
             title: t('class_already_started'),
@@ -6425,25 +7028,33 @@ window.registerForClass = async (classId, className) => {
         return;
     }
 
-    try {
-        const { data, error } = await supabaseClient.rpc('register_for_class', {
-            p_student_id: String(studentId),
-            p_class_id: classId,
-            p_school_id: schoolId,
-            p_class_date: dateStr
-        });
-        if (error) throw error;
-        const registrationId = data?.id || (data && typeof data === 'object' ? data.id : null);
-        // Show success modal immediately; refresh availability in background so phone feels fast
-        window.showRegisterSuccessModal(registrationId);
-        window.loadClassAvailability().then(() => {
-            if (shouldDeferRender()) scheduleDeferredRender();
-            else { renderView(); if (window.lucide) window.lucide.createIcons(); }
-        }).catch(() => {});
-    } catch (e) {
-        console.error('Registration error:', e);
-        alert(e.message || t('register_error'));
+    if (window.isMonthlyRegistrationAvailable()) {
+        const monthlyDates = window.getMonthlyDates(classObj.day);
+        if (monthlyDates.length > 1) {
+            const dayNames = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday' };
+            const dayName = dayNames[classObj.day] || classObj.day;
+            window.showMessageModal({
+                icon: 'success',
+                title: className || classObj.name,
+                body: (t('register_monthly') || 'Register for all {n} classes this month').replace('{n}', monthlyDates.length) + ' (' + dayName + ')',
+                primaryLabel: (t('register_monthly') || 'Register for all {n} classes this month').replace('{n}', monthlyDates.length),
+                secondaryLabel: t('register_single') || 'Register for this class only',
+                cancelLabel: t('cancel'),
+                onPrimary: (close) => {
+                    close();
+                    window.registerForClassMonthly(classId, className);
+                },
+                onSecondary: (close) => {
+                    close();
+                    window.registerForClassSingle(classId, className);
+                },
+                onCancel: (close) => { close(); }
+            });
+            return;
+        }
     }
+
+    window.registerForClassSingle(classId, className);
 };
 
 window.cancelRegistrationFromSchedule = (registrationId) => {
@@ -6880,11 +7491,12 @@ window.loginAdminWithCreds = async () => {
             role: "admin"
         };
         state.isAdmin = true;
-        state.currentView = 'admin-students';
+        state.currentView = state._discoveryOnlyEdit ? 'discovery-profile-only' : 'admin-students';
         setSessionIdentity();
         saveState();
         renderView();
         await fetchAllData();
+        if (state._discoveryOnlyEdit) renderView();
         const adminEmail = adminRow.email || '';
         const isPlaceholder = !adminEmail || adminEmail.endsWith('@temp.bailadmin.local') || adminEmail.endsWith('@admins.bailadmin.local');
         if (isPlaceholder) {
@@ -7142,33 +7754,60 @@ window.toggleSchoolDiscoveryVisible = async (schoolId, currentlyVisible) => {
     renderView();
 };
 
-window.saveSchoolInfoByPlatform = async (schoolId) => {
+window.saveSchoolInfoByPlatform = async (schoolId, btn) => {
     const t = typeof window.t === 'function' ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
     if (!supabaseClient) { alert(t('error_generic') || 'No database connection'); return; }
-    const nameEl = document.getElementById('dev-edit-school-name');
-    const addressEl = document.getElementById('dev-edit-school-address');
-    const name = (nameEl?.value ?? '').trim() || null;
-    const address = (addressEl?.value ?? '').trim();
-    const { data, error } = await supabaseClient.rpc('school_update_info_by_platform', {
-        p_school_id: schoolId,
-        p_name: name,
-        p_address: address || null
-    });
-    if (error) {
-        alert(t('error_generic') || 'Error: ' + (error.message || 'Could not update school.'));
-        return;
+    const originalHtml = btn ? btn.innerHTML : null;
+    if (btn) {
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.8';
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="18" style="margin-right: 8px;"></i> ' + (t('saving_label') || 'Saving…');
+        if (window.lucide) window.lucide.createIcons();
     }
-    const updated = (data && typeof data === 'object') ? data : (data ? JSON.parse(data) : null);
-    if (updated && state.platformData?.schools) {
-        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, ...updated } : s);
+    try {
+        const nameEl = document.getElementById('dev-edit-school-name');
+        const addressEl = document.getElementById('dev-edit-school-address');
+        const name = (nameEl?.value ?? '').trim() || null;
+        const address = (addressEl?.value ?? '').trim();
+        const { data, error } = await supabaseClient.rpc('school_update_info_by_platform', {
+            p_school_id: schoolId,
+            p_name: name,
+            p_address: address || null
+        });
+        if (error) {
+            alert(t('error_generic') || 'Error: ' + (error.message || 'Could not update school.'));
+            return;
+        }
+        const updated = (data && typeof data === 'object') ? data : (data ? JSON.parse(data) : null);
+        if (updated && state.platformData?.schools) {
+            state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, ...updated } : s);
+        }
+        if (state.currentSchool?.id === schoolId && updated) {
+            state.currentSchool = { ...state.currentSchool, ...updated };
+        }
+        if (btn) {
+            btn.innerHTML = '<i data-lucide="check" size="18" style="margin-right: 8px;"></i> ' + (t('saved_success_msg') || 'Saved!');
+            if (window.lucide) window.lucide.createIcons();
+            setTimeout(() => {
+                if (btn && originalHtml) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.pointerEvents = '';
+                    btn.style.opacity = '';
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }, 2000);
+        }
+        state.currentView = state._devEditSchoolReturnView || 'platform-dev-dashboard';
+        state.selectedDevSchoolId = state._devEditSchoolReturnSchoolId || schoolId;
+        renderView();
+    } finally {
+        if (btn && !btn.innerHTML.includes('check')) {
+            btn.style.pointerEvents = '';
+            btn.style.opacity = '';
+            if (originalHtml) btn.innerHTML = originalHtml;
+            if (window.lucide) window.lucide.createIcons();
+        }
     }
-    if (state.currentSchool?.id === schoolId && updated) {
-        state.currentSchool = { ...state.currentSchool, ...updated };
-    }
-    state.currentView = state._devEditSchoolReturnView || 'platform-dev-dashboard';
-    state.selectedDevSchoolId = state._devEditSchoolReturnSchoolId || schoolId;
-    renderView();
-    alert(t('dev_school_info_saved') || t('rename_school_success') || 'School info saved.');
 };
 
 window.renameSchool = async (schoolId) => {
@@ -7297,6 +7936,30 @@ window.toggleSchoolPrivatePackagesEnabled = async (schoolId, enabled) => {
     }
     if (state.currentSchool?.id === schoolId) {
         state.currentSchool = { ...state.currentSchool, private_packages_enabled: !!enabled };
+    }
+    renderView();
+};
+
+window.toggleSchoolMonthlyRegistration = async (schoolId, enabled) => {
+    if (!supabaseClient) { alert("No database connection"); return; }
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (!sessionData?.session?.user) {
+        alert("Your Dev session is missing or expired. Log in again with your Dev credentials.");
+        return;
+    }
+    const { data, error } = await supabaseClient.rpc('school_update_monthly_registration_enabled', { p_school_id: schoolId, p_enabled: !!enabled });
+    if (error) {
+        alert("Error: " + (error.message || 'Could not update feature'));
+        return;
+    }
+    if (state.platformData?.schools) {
+        state.platformData.schools = state.platformData.schools.map(s => s.id === schoolId ? { ...s, monthly_registration_enabled: !!enabled } : s);
+    }
+    if (state.schools) {
+        state.schools = state.schools.map(s => s.id === schoolId ? { ...s, monthly_registration_enabled: !!enabled } : s);
+    }
+    if (state.currentSchool?.id === schoolId) {
+        state.currentSchool = { ...state.currentSchool, monthly_registration_enabled: !!enabled };
     }
     renderView();
 };
@@ -7504,6 +8167,7 @@ window.selectSchool = (id) => {
 
 window.backToSchoolSelection = () => {
     clearSessionIdentity();
+    state._discoveryOnlyEdit = false;
     state.currentSchool = null;
     state.currentUser = null;
     state.isAdmin = false;
@@ -7749,7 +8413,7 @@ window.studentHasPackageWithSchool = (schoolId) => {
 window.fetchTeacherBookingSlots = async () => {
     if (!supabaseClient || !state.currentSchool?.id) return;
     const weekStart = state._teacherBookingWeekStart || (() => {
-        const d = new Date();
+        const d = getTodayForMonthly();
         const day = d.getDay();
         const diff = d.getDate() - day + (day === 0 ? -6 : 1);
         const m = new Date(d);
@@ -7774,7 +8438,7 @@ window.fetchTeacherBookingSlots = async () => {
 
 window.changeTeacherBookingWeek = (delta) => {
     const cur = state._teacherBookingWeekStart || (() => {
-        const d = new Date();
+        const d = getTodayForMonthly();
         const day = d.getDay();
         const diff = d.getDate() - day + (day === 0 ? -6 : 1);
         const m = new Date(d);
@@ -8060,9 +8724,14 @@ window.activatePackage = async (studentId, packageName) => {
         newBalance = (student.balance || 0) + incomingGroup;
     }
 
-    const days = (pkg && pkg.validity_days && !isNaN(parseInt(pkg.validity_days, 10))) ? parseInt(pkg.validity_days, 10) : 30;
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + days);
+    let expiry;
+    if (pkg && pkg.expiry_date) {
+        expiry = new Date(pkg.expiry_date + 'T23:59:59');
+    } else {
+        const days = (pkg && pkg.validity_days && !isNaN(parseInt(pkg.validity_days, 10))) ? parseInt(pkg.validity_days, 10) : 30;
+        expiry = new Date();
+        expiry.setDate(expiry.getDate() + days);
+    }
 
     const newPack = {
         id: "PACK-" + Date.now().toString(36).toUpperCase(),
@@ -8359,30 +9028,44 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
         <div class="discovery-logo-crop-dialog" style="background:var(--bg-body,#fff);border-radius:20px;max-width:min(420px,100vw);width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.3);padding:24px;display:flex;flex-direction:column;gap:16px;max-height:90vh;">
             <h2 style="margin:0;font-size:18px;font-weight:700;color:var(--text-primary,#111);">${(title || 'Crop logo').replace(/</g, '&lt;')}</h2>
             <p style="margin:0;font-size:14px;color:var(--text-secondary,#666);line-height:1.45;">${(hint || '').replace(/</g, '&lt;')}</p>
-            <div id="discovery-logo-crop-container" style="height:260px;overflow:hidden;border-radius:12px;background:var(--system-gray6,#eee);">
-                <img id="discovery-logo-crop-img" src="" alt="Logo" style="max-width:100%;display:block;">
+            <div id="discovery-logo-crop-container" style="width:100%;height:260px;overflow:hidden;border-radius:12px;background:var(--system-gray6,#eee);position:relative;">
+                <img id="discovery-logo-crop-img" src="" alt="Logo" style="display:block;max-width:100%;max-height:100%;">
             </div>
             <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
                 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary);">${(previewLabel || 'Preview').replace(/</g, '&lt;')}</div>
                 <div class="discovery-card-media" style="width:120px;height:120px;aspect-ratio:1;overflow:hidden;border-radius:12px;background:var(--system-gray6);border:2px solid var(--border);">
-                    <img id="discovery-logo-crop-preview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
+                    <img id="discovery-logo-crop-preview" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
                 </div>
             </div>
             <div style="display:flex;gap:12px;justify-content:flex-end;flex-shrink:0;">
-                <button type="button" class="discovery-crop-cancel" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--system-gray5,#e5e5ea);color:var(--text-primary);border:none;cursor:pointer;">${(cancelLabel || 'Cancel').replace(/</g, '&lt;')}</button>
-                <button type="button" class="discovery-crop-apply" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--system-blue,#007aff);color:#fff;border:none;cursor:pointer;">${(applyLabel || 'Apply').replace(/</g, '&lt;')}</button>
+                <button type="button" class="discovery-crop-cancel" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:transparent;color:var(--text-secondary);border:1px solid var(--border);cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s;">${(cancelLabel || 'Cancel').replace(/</g, '&lt;')}</button>
+                <button type="button" class="discovery-crop-apply" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--text-primary,#111);color:var(--bg-body,#fff);border:none;cursor:pointer;">${(applyLabel || 'Apply').replace(/</g, '&lt;')}</button>
             </div>
         </div>`;
 
     const imgEl = overlay.querySelector('#discovery-logo-crop-img');
     const previewEl = overlay.querySelector('#discovery-logo-crop-preview');
-    imgEl.src = URL.createObjectURL(file);
+    const blobUrl = URL.createObjectURL(file);
 
     let cropper = null;
     const destroy = () => {
         if (cropper) { cropper.destroy(); cropper = null; }
-        if (imgEl?.src) URL.revokeObjectURL(imgEl.src);
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
         overlay.remove();
+    };
+
+    // Show full image in preview until cropper provides cropped data URL (avoids broken image)
+    if (previewEl) previewEl.src = blobUrl;
+
+    const updatePreview = () => {
+        if (!cropper || !previewEl) return;
+        try {
+            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+            if (canvas) {
+                const dataUrl = canvas.toDataURL('image/png');
+                if (dataUrl && dataUrl.length > 100) previewEl.src = dataUrl;
+            }
+        } catch (e) { /* keep current preview (blobUrl or previous crop) */ }
     };
 
     imgEl.onload = () => {
@@ -8400,19 +9083,17 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
             cropBoxResizable: true,
             toggleDragModeOnDblclick: false,
         });
-
-        const updatePreview = () => {
-            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
-            if (canvas && previewEl) previewEl.src = canvas.toDataURL('image/jpeg', 0.9);
-        };
         cropper.on('crop', updatePreview);
-        setTimeout(updatePreview, 100);
+        cropper.on('cropmove', updatePreview);
+        cropper.on('cropend', updatePreview);
+        cropper.on('ready', () => { setTimeout(updatePreview, 50); });
     };
 
     overlay.querySelector('.discovery-crop-cancel').addEventListener('click', () => { destroy(); });
     overlay.querySelector('.discovery-crop-apply').addEventListener('click', async () => {
         if (!cropper) { destroy(); return; }
         const canvas = cropper.getCroppedCanvas({ width: 600, height: 600 });
+        if (!canvas) { destroy(); return; }
         canvas.toBlob((blob) => {
             destroy();
             if (blob && onApply) onApply(blob);
@@ -8421,6 +9102,7 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) destroy(); });
 
     document.body.appendChild(overlay);
+    imgEl.src = blobUrl;
 };
 
 window.showDiscoveryReplaceModal = () => {
@@ -8442,8 +9124,8 @@ window.showDiscoveryReplaceModal = () => {
             <h2 id="discovery-replace-title" style="margin:0 0 12px;font-size:18px;font-weight:600;color:var(--text-primary,#111);">${title.replace(/</g, '&lt;')}</h2>
             <p style="margin:0 0 20px;font-size:15px;color:var(--text-secondary,#666);line-height:1.4;">${message.replace(/</g, '&lt;')}</p>
             <div style="display:flex;gap:12px;justify-content:flex-end;">
-                <button type="button" class="discovery-replace-cancel" style="padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;background:var(--system-gray5,#e5e5ea);color:var(--text-primary);border:none;cursor:pointer;">${cancelLabel.replace(/</g, '&lt;')}</button>
-                <button type="button" class="discovery-replace-confirm" style="padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;background:var(--system-blue,#007aff);color:#fff;border:none;cursor:pointer;">${replaceLabel.replace(/</g, '&lt;')}</button>
+                <button type="button" class="discovery-replace-cancel" style="padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;background:var(--system-gray5,#e5e5ea);color:var(--text-primary);border:1px solid var(--border, rgba(0,0,0,0.1));cursor:pointer;">${cancelLabel.replace(/</g, '&lt;')}</button>
+                <button type="button" class="discovery-replace-confirm" style="padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;background:var(--text-primary,#111);color:var(--bg-body,#fff);border:none;cursor:pointer;">${replaceLabel.replace(/</g, '&lt;')}</button>
             </div>
         </div>`;
     overlay.addEventListener('click', (e) => { if (e.target === overlay) window.confirmDiscoveryReplace(false); });
@@ -8641,56 +9323,105 @@ window.updateDiscoveryPreview = () => {
     if (window.lucide) window.lucide.createIcons();
 };
 
-window.saveDiscoveryProfile = async () => {
+window.saveDiscoveryProfile = async (ev) => {
     if (!supabaseClient || !state.currentSchool?.id) return;
-    const slug = (document.getElementById('discovery-slug')?.value || '').trim();
-    const country = (document.getElementById('discovery-country')?.value || '').trim();
-    const city = (document.getElementById('discovery-city')?.value || '').trim();
-    const description = (document.getElementById('discovery-description')?.value || '').trim();
-    const genresStr = (document.getElementById('discovery-genres')?.value || '').trim();
-    const levelsStr = (document.getElementById('discovery-levels')?.value || '').trim();
-    const logoUrl = (document.getElementById('discovery-logo-url')?.value || '').trim();
-    const teacherPhotoUrl = (document.getElementById('discovery-teacher-url')?.value || '').trim();
-    const genres = genresStr ? genresStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-    const levels = levelsStr ? levelsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-    const locationsRaw = (state.discoveryLocations || []).map(l => ({
-        name: (l.name || '').trim(),
-        address: (l.address || '').trim(),
-        description: (l.description || '').trim(),
-        image_urls: Array.isArray(l.image_urls) ? l.image_urls : []
-    }));
-    const locations = locationsRaw.filter(l => l.name || l.address || l.description || (l.image_urls && l.image_urls.length));
-    const missingAddress = locations.some(l => !(l.address && l.address.length));
-    if (locations.length && missingAddress) {
-        alert(window.t ? window.t('discovery_location_address') : 'Address is required for each location.');
-        return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const btn = ev && ev.target ? ev.target.closest('.save-discovery-btn') : null;
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    if (btn) {
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.8';
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="18" style="margin-right: 8px;"></i> ' + (t('saving_label') || 'Saving…');
+        if (window.lucide) window.lucide.createIcons();
     }
-    const locationsToSave = locations.filter(l => l.address && l.address.length);
-    const { error } = await supabaseClient.rpc('school_update_discovery', {
-        p_school_id: state.currentSchool.id,
-        p_discovery_slug: slug || null,
-        p_country: country || null,
-        p_city: city || null,
-        p_address: null,
-        p_discovery_description: description || null,
-        p_discovery_genres: genres,
-        p_discovery_levels: levels,
-        p_logo_url: logoUrl || null,
-        p_teacher_photo_url: teacherPhotoUrl || null,
-        p_gallery_urls: [],
-        p_discovery_locations: locationsToSave
-    });
-    if (error) { alert(error.message || 'Failed to save discovery profile'); return; }
-    state.currentSchool = { ...state.currentSchool, discovery_slug: slug || null, country: country || null, city: city || null, address: null, discovery_description: description || null, discovery_genres: genres, discovery_levels: levels, logo_url: logoUrl || null, teacher_photo_url: teacherPhotoUrl || null, discovery_locations: locationsToSave };
-    if (state.platformData && state.platformData.schools) {
-        const idx = state.platformData.schools.findIndex(s => s.id === state.currentSchool.id);
-        if (idx >= 0) state.platformData.schools[idx] = { ...state.platformData.schools[idx], ...state.currentSchool };
+
+    try {
+        const slug = (document.getElementById('discovery-slug')?.value || '').trim();
+        const country = (document.getElementById('discovery-country')?.value || '').trim();
+        const city = (document.getElementById('discovery-city')?.value || '').trim();
+        const description = (document.getElementById('discovery-description')?.value || '').trim();
+        const genresStr = (document.getElementById('discovery-genres')?.value || '').trim();
+        const levelsStr = (document.getElementById('discovery-levels')?.value || '').trim();
+        const logoUrl = (document.getElementById('discovery-logo-url')?.value || '').trim();
+        const teacherPhotoUrl = (document.getElementById('discovery-teacher-url')?.value || '').trim();
+        const genres = genresStr ? genresStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const levels = levelsStr ? levelsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const locationsRaw = (state.discoveryLocations || []).map(l => ({
+            name: (l.name || '').trim(),
+            address: (l.address || '').trim(),
+            description: (l.description || '').trim(),
+            image_urls: Array.isArray(l.image_urls) ? l.image_urls : []
+        }));
+        const locations = locationsRaw.filter(l => l.name || l.address || l.description || (l.image_urls && l.image_urls.length));
+        const missingAddress = locations.some(l => !(l.address && l.address.length));
+        if (locations.length && missingAddress) {
+            alert(t('discovery_location_address') || 'Address is required for each location.');
+            return;
+        }
+        const locationsToSave = locations.filter(l => l.address && l.address.length);
+
+        const schoolId = state.currentSchool.id;
+        let existing = state.currentSchool;
+        const { data: existingDetail } = await supabaseClient.rpc('discovery_school_detail_by_id', { p_school_id: schoolId });
+        if (existingDetail && typeof existingDetail === 'object' && existingDetail.id) {
+            existing = { ...existing, ...existingDetail };
+        }
+        const slugToSave = slug || existing.discovery_slug || null;
+        const countryToSave = country || existing.country || null;
+        const cityToSave = city || existing.city || null;
+        const descriptionToSave = description || existing.discovery_description || null;
+        const genresToSave = genres.length ? genres : (Array.isArray(existing.discovery_genres) ? existing.discovery_genres : []);
+        const levelsToSave = levels.length ? levels : (Array.isArray(existing.discovery_levels) ? existing.discovery_levels : []);
+        const logoUrlToSave = logoUrl || existing.logo_url || null;
+        const teacherPhotoUrlToSave = teacherPhotoUrl || existing.teacher_photo_url || null;
+        const locationsFinal = locationsToSave.length ? locationsToSave : (Array.isArray(existing.discovery_locations) ? existing.discovery_locations : []);
+
+        const { error } = await supabaseClient.rpc('school_update_discovery', {
+            p_school_id: schoolId,
+            p_discovery_slug: slugToSave,
+            p_country: countryToSave,
+            p_city: cityToSave,
+            p_address: existing.address || null,
+            p_discovery_description: descriptionToSave,
+            p_discovery_genres: genresToSave,
+            p_discovery_levels: levelsToSave,
+            p_logo_url: logoUrlToSave,
+            p_teacher_photo_url: teacherPhotoUrlToSave,
+            p_gallery_urls: existing.gallery_urls || [],
+            p_discovery_locations: locationsFinal
+        });
+        if (error) { alert(error.message || 'Failed to save discovery profile'); return; }
+        state.currentSchool = { ...state.currentSchool, discovery_slug: slugToSave, country: countryToSave, city: cityToSave, address: existing.address || null, discovery_description: descriptionToSave, discovery_genres: genresToSave, discovery_levels: levelsToSave, logo_url: logoUrlToSave, teacher_photo_url: teacherPhotoUrlToSave, discovery_locations: locationsFinal };
+        if (state.platformData && state.platformData.schools) {
+            const idx = state.platformData.schools.findIndex(s => s.id === state.currentSchool.id);
+            if (idx >= 0) state.platformData.schools[idx] = { ...state.platformData.schools[idx], ...state.currentSchool };
+        }
+        if (btn) {
+            btn.innerHTML = '<i data-lucide="check" size="18" style="margin-right: 8px;"></i> ' + (t('saved_success_msg') || 'Saved!');
+            if (window.lucide) window.lucide.createIcons();
+            setTimeout(() => {
+                if (btn && originalHtml) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.pointerEvents = '';
+                    btn.style.opacity = '';
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }, 2000);
+        }
+        renderView();
+    } finally {
+        if (btn && !btn.innerHTML.includes('check')) {
+            btn.style.pointerEvents = '';
+            btn.style.opacity = '';
+            if (originalHtml) btn.innerHTML = originalHtml;
+            if (window.lucide) window.lucide.createIcons();
+        }
     }
-    alert(window.t ? window.t('discovery_saved') : 'Discovery profile saved.');
-    renderView();
 };
 
 window.saveBankSettings = async (btn) => {
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
     const name = document.getElementById('set-bank-name').value;
     const cbu = document.getElementById('set-bank-cbu').value;
     const alias = document.getElementById('set-bank-alias').value;
@@ -8698,12 +9429,12 @@ window.saveBankSettings = async (btn) => {
 
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<i data-lucide="loader-2" class="spin" size="16"></i> Saving to Vault...`;
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="16"></i> ' + (t('saving_label') || 'Saving…');
         if (window.lucide) lucide.createIcons();
     }
 
     try {
-        // Serial awaits for maximum reliability
         await window.updateAdminSetting('bank_name', name);
         await window.updateAdminSetting('bank_cbu', cbu);
         await window.updateAdminSetting('bank_alias', alias);
@@ -8711,20 +9442,19 @@ window.saveBankSettings = async (btn) => {
 
         const status = document.getElementById('save-status');
         if (status) {
-            status.innerHTML = `<i data-lucide="check" size="14"></i> Database Updated!`;
+            status.innerHTML = '<i data-lucide="check" size="14"></i> ' + (t('saved_success_msg') || 'Saved!');
             status.classList.remove('hidden');
-            setTimeout(() => status.classList.add('hidden'), 4000);
+            setTimeout(() => status.classList.add('hidden'), 3000);
         }
-
         await fetchAllData();
-        alert("Settings saved successfully!");
     } catch (err) {
         console.error("Save Error:", err);
         alert("CRITICAL ERROR: Could not save settings. Info: " + err.message);
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = `<i data-lucide="save" size="16"></i> Save Bank Details`;
+            btn.style.pointerEvents = '';
+            btn.innerHTML = '<i data-lucide="save" size="16"></i> ' + (t('save_bank_btn') || 'Save Bank Details');
             if (window.lucide) lucide.createIcons();
         }
     }
@@ -8768,16 +9498,50 @@ window.toggleEventsOffering = async (enabled) => {
     renderView();
 };
 
+window.toggleMonthlyRegistration = async (enabled) => {
+    if (!state.currentSchool?.id) return;
+    await window.updateAdminSetting('monthly_registration_enabled', enabled ? 'true' : 'false');
+    renderView();
+};
+
+window.togglePlanExpiryFixedDate = async (enabled) => {
+    if (!state.currentSchool?.id) return;
+    await window.updateAdminSetting('plan_expiry_fixed_date', enabled ? 'true' : 'false');
+    renderView();
+};
+
+window.getPlanExpiryUseFixedDate = () => {
+    try {
+        if (!state) return false;
+        if (state.adminSettings?.plan_expiry_fixed_date === 'true') return true;
+        if (state.adminSettings?.plan_expiry_fixed_date === 'false') return false;
+        return state.adminSettings?.monthly_registration_enabled === 'true' || !!state.currentSchool?.monthly_registration_enabled;
+    } catch (e) {
+        return false;
+    }
+};
+
 window.saveAdminProfile = async () => {
     const adm = state.currentAdmin;
     if (!adm || !supabaseClient) return;
-    const t = window.t;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const btn = document.getElementById('save-admin-profile-btn');
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    if (btn) {
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.8';
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="18" style="margin-right: 8px;"></i> ' + (t('saving_label') || 'Saving…');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
     const displayName = (document.getElementById('profile-display-name')?.value || '').trim();
     const phone = (document.getElementById('profile-phone')?.value || '').trim();
     const newEmail = (document.getElementById('profile-email')?.value || '').trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (newEmail && !emailRegex.test(newEmail)) {
         alert(t('admin_email_invalid') || 'Please enter a valid email address.');
+        if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; if (originalHtml) btn.innerHTML = originalHtml; if (window.lucide) window.lucide.createIcons(); }
         return;
     }
     try {
@@ -8795,7 +9559,6 @@ window.saveAdminProfile = async () => {
             const { error: emailError } = await supabaseClient.rpc('admin_set_email', payload);
             if (emailError) throw emailError;
             adm.email = newEmail;
-            // Update Auth email immediately (bypasses confirmation) so login with new email works
             try {
                 const res = await supabaseClient.functions.invoke('admin-update-email', { body: { email: newEmail } });
                 if (res.error) throw res.error;
@@ -8810,10 +9573,22 @@ window.saveAdminProfile = async () => {
             state.admins[idx] = { ...state.admins[idx], display_name: adm.display_name, phone: adm.phone, email: adm.email };
         }
         saveState();
-        alert(t('profile_saved_success') || t('profile_saved') || 'Profile saved!');
+        if (btn) {
+            btn.innerHTML = '<i data-lucide="check" size="18" style="margin-right: 8px;"></i> ' + (t('saved_success_msg') || 'Saved!');
+            if (window.lucide) window.lucide.createIcons();
+            setTimeout(() => {
+                if (btn && originalHtml) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.pointerEvents = '';
+                    btn.style.opacity = '';
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }, 2000);
+        }
         renderView();
     } catch (err) {
         alert('Error: ' + (err.message || 'Could not save profile'));
+        if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; if (originalHtml) btn.innerHTML = originalHtml; if (window.lucide) window.lucide.createIcons(); }
     }
 };
 
@@ -9042,20 +9817,29 @@ window.debouncedUpdateClass = (id, field, value) => {
 };
 
 window.flushScheduleSave = async () => {
-    if (_classUpdateDebounceTimer) {
-        clearTimeout(_classUpdateDebounceTimer);
-        _classUpdateDebounceTimer = null;
-    }
-    const toFlush = [..._classUpdatePending.values()];
-    _classUpdatePending.clear();
-    for (const { id: classId, field: fieldName } of toFlush) {
-        const c = state.classes.find(x => x.id === classId);
-        if (!c) continue;
-        await window._doClassUpdateOnly(classId, fieldName, c[fieldName]);
-    }
-    if (toFlush.length > 0) saveState();
-    state._scheduleSaveStatus = (typeof window.t === 'function' ? window.t('saved_success_msg') : null) || 'Saved!';
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    state._scheduleSaving = true;
     if (window.renderView) renderView();
+    if (window.lucide) window.lucide.createIcons();
+    try {
+        if (_classUpdateDebounceTimer) {
+            clearTimeout(_classUpdateDebounceTimer);
+            _classUpdateDebounceTimer = null;
+        }
+        const toFlush = [..._classUpdatePending.values()];
+        _classUpdatePending.clear();
+        for (const { id: classId, field: fieldName } of toFlush) {
+            const c = state.classes.find(x => x.id === classId);
+            if (!c) continue;
+            await window._doClassUpdateOnly(classId, fieldName, c[fieldName]);
+        }
+        if (toFlush.length > 0) saveState();
+        state._scheduleSaveStatus = t('saved_success_msg') || 'Saved!';
+    } finally {
+        state._scheduleSaving = false;
+        if (window.renderView) renderView();
+        if (window.lucide) window.lucide.createIcons();
+    }
     setTimeout(() => {
         state._scheduleSaveStatus = '';
         if (window.renderView) renderView();
@@ -9135,17 +9919,29 @@ window.removeClass = async (id) => {
 window.saveAllPlans = async () => {
     const subs = state.subscriptions || [];
     const t = typeof window.t === 'function' ? window.t : (k) => k;
-    for (const sub of subs) {
-        await window._updateSubNoRender(sub.id, 'name', sub.name);
-        await window._updateSubNoRender(sub.id, 'price', sub.price);
-        await window._updateSubNoRender(sub.id, 'validity_days', sub.validity_days ?? 30);
-        await window._updateSubNoRender(sub.id, 'limit_count', sub.limit_count ?? 0);
-        await window._updateSubNoRender(sub.id, 'limit_count_private', sub.limit_count_private ?? 0);
-        await window._updateSubNoRender(sub.id, 'limit_count_events', sub.limit_count_events ?? 0);
-    }
-    saveState();
-    state._plansSaveStatus = t('saved_success_msg') || 'Saved!';
+    state._plansSaving = true;
     if (window.renderView) renderView();
+    if (window.lucide) window.lucide.createIcons();
+    try {
+        for (const sub of subs) {
+            const promises = [
+                window._updateSubNoRender(sub.id, 'name', sub.name),
+                window._updateSubNoRender(sub.id, 'price', sub.price),
+                window._updateSubNoRender(sub.id, 'validity_days', sub.validity_days ?? 30),
+                window._updateSubNoRender(sub.id, 'limit_count', sub.limit_count ?? 0),
+                window._updateSubNoRender(sub.id, 'limit_count_private', sub.limit_count_private ?? 0),
+                window._updateSubNoRender(sub.id, 'limit_count_events', sub.limit_count_events ?? 0),
+            ];
+            if (sub.expiry_date !== undefined) promises.push(window._updateSubNoRender(sub.id, 'expiry_date', sub.expiry_date || ''));
+            await Promise.all(promises);
+        }
+        saveState();
+        state._plansSaveStatus = t('saved_success_msg') || 'Saved!';
+    } finally {
+        state._plansSaving = false;
+        if (window.renderView) renderView();
+        if (window.lucide) window.lucide.createIcons();
+    }
     setTimeout(() => {
         state._plansSaveStatus = '';
         if (window.renderView) renderView();
@@ -9527,7 +10323,7 @@ window.updateStudentPrompt = async (id) => {
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2.5rem;">
                 <button class="btn-secondary" onclick="document.getElementById('student-modal').classList.add('hidden')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('cancel')}</button>
-                <button class="btn-primary" onclick="window.saveStudentDetails('${escapeHtml(s.id)}')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('save_btn')}</button>
+                <button type="button" class="btn-primary" id="save-student-details-btn" onclick="window.saveStudentDetails('${escapeHtml(s.id)}')" style="height: 50px; border-radius: 14px; font-weight: 600;">${t('save_btn')}</button>
             </div>
 
             <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(142,142,147,0.3);">
@@ -9590,6 +10386,15 @@ window.removeStudentPack = async (studentId, packId) => {
 window.saveStudentDetails = async (id) => {
     const s = state.students.find(x => x.id === id);
     if (!s) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const btn = document.getElementById('save-student-details-btn');
+    const originalText = btn ? btn.textContent : '';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="18" style="margin-right: 6px;"></i> ' + (t('saving_label') || 'Saving…');
+        if (window.lucide) window.lucide.createIcons();
+    }
 
     const newName = document.getElementById('edit-student-name').value.trim();
     const newEmail = document.getElementById('edit-student-email')?.value.trim() ?? '';
@@ -9604,6 +10409,7 @@ window.saveStudentDetails = async (id) => {
 
     if (!newName) {
         alert("Nombre is required.");
+        if (btn) { btn.disabled = false; btn.textContent = originalText; if (window.lucide) window.lucide.createIcons(); }
         return;
     }
 
@@ -9624,6 +10430,7 @@ window.saveStudentDetails = async (id) => {
         const { error } = await supabaseClient.rpc('update_student_details', payload);
         if (error) {
             alert("Error saving: " + error.message);
+            if (btn) { btn.disabled = false; btn.textContent = originalText; if (window.lucide) window.lucide.createIcons(); }
             return;
         }
     }
@@ -9639,9 +10446,20 @@ window.saveStudentDetails = async (id) => {
     if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
     Object.assign(s, updates);
     if (newPassword) s.password = newPassword;
-    document.getElementById('student-modal').classList.add('hidden');
     saveState();
-    renderView();
+
+    if (btn) {
+        btn.innerHTML = '<i data-lucide="check" size="18" style="margin-right: 6px;"></i> ' + (t('saved_success_msg') || 'Saved!');
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+            document.getElementById('student-modal').classList.add('hidden');
+            if (btn) { btn.disabled = false; btn.textContent = originalText; if (window.lucide) window.lucide.createIcons(); }
+            renderView();
+        }, 1500);
+    } else {
+        document.getElementById('student-modal').classList.add('hidden');
+        renderView();
+    }
 };
 
 // --- SCANNER ---
@@ -10221,6 +11039,13 @@ logoEl.addEventListener('click', () => {
     if (path === '/discovery' || path.startsWith('/discovery/')) {
         state.discoveryPath = path;
     }
+    // Optional ?mockDate=YYYY-MM-DD for testing monthly registration (first 14 days) without changing system date
+    const params = new URLSearchParams(window.location.search);
+    const mockDateStr = params.get('mockDate');
+    if (mockDateStr) {
+        const d = new Date(mockDateStr);
+        if (!isNaN(d.getTime())) state.mockDate = mockDateStr;
+    }
     const local = localStorage.getItem('dance_app_state');
     let saved = {};
     try {
@@ -10236,6 +11061,8 @@ logoEl.addEventListener('click', () => {
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved.currentSchool) state.currentSchool = saved.currentSchool;
+        if (saved._discoveryOnlyEdit !== undefined) state._discoveryOnlyEdit = !!saved._discoveryOnlyEdit;
+        if (state.currentView === 'discovery-profile-only') state._discoveryOnlyEdit = true;
         // Never show another school's data: if we have a logged-in student, force school to their school
         if (saved.currentUser?.school_id && !saved.isAdmin) {
             const match = saved.currentSchool && saved.currentSchool.id === saved.currentUser.school_id;
@@ -10248,6 +11075,7 @@ logoEl.addEventListener('click', () => {
             state.currentUser = null;
             state.isAdmin = false;
             state.isPlatformDev = false;
+            state._discoveryOnlyEdit = false;
             state.currentView = 'school-selection';
             state.currentSchool = null;
             state.competitionId = null;
@@ -10262,6 +11090,13 @@ logoEl.addEventListener('click', () => {
         state.theme = saved.theme || state.theme || 'dark';
     }
 
+    // First paint before any async: show UI immediately so page is never stuck on black/loader
+    updateI18n();
+    document.body.setAttribute('data-theme', state.theme);
+    document.body.classList.toggle('dark-mode', state.theme === 'dark');
+    renderView();
+    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+
     // Reconcile state with Supabase session: prevent stale localStorage from restoring admin after logout
     const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
     const sessRes = supabaseClient ? await supabaseClient.auth.getSession() : { data: { session: null } };
@@ -10270,6 +11105,7 @@ logoEl.addEventListener('click', () => {
         state.currentUser = null;
         state.isAdmin = false;
         state.isPlatformDev = false;
+        state._discoveryOnlyEdit = false;
         state.currentView = 'school-selection';
         state.currentSchool = null;
         if (local) saveState();
@@ -10322,7 +11158,7 @@ logoEl.addEventListener('click', () => {
         await window.fetchDiscoveryData();
     }
     renderView();
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
     window.addEventListener('popstate', () => {
         const path = (window.location.pathname || '').replace(/\/$/, '') || '/';
@@ -10417,8 +11253,16 @@ logoEl.addEventListener('click', () => {
         }
     });
 
-    // Fetch live data from Supabase (skip when on discovery path)
-    if (!state.discoveryPath) fetchAllData();
+    // Fetch live data from Supabase (skip when on discovery path). When restoring discovery-profile-only, await so form gets full school data then re-render.
+    if (!state.discoveryPath) {
+        if (state.currentView === 'discovery-profile-only' && state.currentSchool?.id) {
+            await fetchAllData();
+            renderView();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        } else {
+            fetchAllData();
+        }
+    }
 
     // Background Sync: Refresh every 2 minutes (less aggressive to avoid overwriting state / race conditions)
     setInterval(() => {
