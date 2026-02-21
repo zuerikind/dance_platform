@@ -1141,17 +1141,82 @@ body.dark-mode .bottom-nav .nav-item.active {
     color: var(--text-primary);
 }
 
-/* Admin: Private Classes Contact section (Settings) */
+/* Admin: Profile, password, admins & more — Apple-style section */
+.settings-advanced-expandable .expandable-section-header {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    transition: opacity 0.2s ease;
+}
+.settings-advanced-expandable .expandable-section-header:hover {
+    opacity: 0.9;
+}
+.settings-advanced-expandable .expandable-section-header span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    opacity: 0.95;
+}
+.settings-advanced-expandable #settings-advanced-content {
+    padding-top: 1.25rem;
+}
+
+/* Admin: Toggle cards (Offer private classes, Offer events, etc.) — Apple-style tiles */
+.admin-private-classes-toggle-card {
+    padding: 1.25rem 1.25rem 1.125rem;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dark-mode .admin-private-classes-toggle-card {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.03);
+}
+.admin-private-classes-toggle-card:last-of-type {
+    margin-bottom: 0;
+}
+.admin-private-classes-toggle-card .admin-private-contact-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+    opacity: 0.95;
+}
+.admin-private-classes-toggle-card .admin-private-contact-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+.admin-private-classes-toggle-card .ios-list-item {
+    padding: 10px 0 0;
+    border-top: 1px solid var(--border);
+    margin-top: 0;
+}
+.dark-mode .admin-private-classes-toggle-card .ios-list-item {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Admin: Private Classes Contact section (Settings) — match toggle cards */
 .admin-private-contact-card {
-    margin-top: 2rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
     padding: 1.25rem 1.25rem 1.5rem;
-    border-radius: 20px;
-    background: linear-gradient(145deg, rgba(91, 141, 217, 0.06), rgba(91, 141, 217, 0.02));
-    border: 1px solid rgba(91, 141, 217, 0.12);
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .dark-mode .admin-private-contact-card {
-    background: linear-gradient(145deg, rgba(91, 141, 217, 0.08), rgba(91, 141, 217, 0.03));
-    border-color: rgba(123, 171, 232, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.03);
 }
 .admin-private-contact-card .admin-private-contact-title {
     font-size: 11px;
@@ -1159,14 +1224,15 @@ body.dark-mode .bottom-nav .nav-item.active {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--text-secondary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
+    opacity: 0.95;
 }
 .admin-private-contact-card .admin-private-contact-desc {
     font-size: 13px;
-    line-height: 1.45;
+    line-height: 1.5;
     color: var(--text-secondary);
     margin-bottom: 1.25rem;
-    opacity: 0.95;
+    opacity: 0.9;
 }
 .admin-private-contact-card .admin-private-contact-select-wrap {
     display: flex;
@@ -1174,13 +1240,13 @@ body.dark-mode .bottom-nav .nav-item.active {
     justify-content: space-between;
     gap: 12px;
     padding: 14px 16px;
-    border-radius: 14px;
+    border-radius: 12px;
     background: var(--system-gray6);
     border: 1px solid var(--border);
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
 .admin-private-contact-card .admin-private-contact-select-wrap:focus-within {
-    border-color: rgba(91, 141, 217, 0.4);
+    border-color: rgba(91, 141, 217, 0.35);
 }
 .dark-mode .admin-private-contact-card .admin-private-contact-select-wrap {
     background: rgba(255, 255, 255, 0.06);
@@ -1386,9 +1452,11 @@ body.dark-mode .bottom-nav .nav-item.active {
     border-radius: 50%;
     background: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
+.dark-mode .toggle-switch-thumb {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
 .toggle-switch-input:checked + .toggle-switch-track .toggle-switch-thumb {
     transform: translateX(20px);
 }

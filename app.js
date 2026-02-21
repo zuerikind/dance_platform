@@ -6154,7 +6154,7 @@ function _renderViewImpl() {
                 <div id="settings-advanced-content" style="padding: 1rem 0; display: ${state.settingsAdvancedExpanded ? '' : 'none'};">
                     ${state.currentSchool?.profile_type === 'school' ? `
                     ${state.currentSchool?.private_packages_enabled !== false ? `
-                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
+                    <div class="admin-private-classes-toggle-card">
                         <div class="admin-private-contact-title">${t.offer_private_classes || 'Offer private classes'}</div>
                         <p class="admin-private-contact-desc">${t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.'}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
@@ -6167,7 +6167,7 @@ function _renderViewImpl() {
                     </div>
                     ` : ''}
                     ${state.currentSchool?.events_packages_enabled !== false ? `
-                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
+                    <div class="admin-private-classes-toggle-card">
                         <div class="admin-private-contact-title">${t.offer_events || 'Offer events'}</div>
                         <p class="admin-private-contact-desc">${t.offer_events_desc || 'Allow students to buy and use event tokens. When enabled, plans can include group, private, and event counts.'}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
@@ -6180,7 +6180,7 @@ function _renderViewImpl() {
                     </div>
                     ` : ''}
                     ${(state.currentSchool?.monthly_registration_enabled || state.currentSchool?.profile_type === 'private_teacher') ? `
-                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
+                    <div class="admin-private-classes-toggle-card">
                         <div class="admin-private-contact-title">${t.offer_monthly_registration || 'Offer monthly class registration'}</div>
                         <p class="admin-private-contact-desc">${t.offer_monthly_registration_desc || 'Students can register for all remaining classes of a course in the current month at once.'}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
@@ -6192,7 +6192,7 @@ function _renderViewImpl() {
                         </div>
                     </div>
                     ` : ''}
-                    <div class="admin-private-classes-toggle-card" style="margin-bottom: 1.5rem;">
+                    <div class="admin-private-classes-toggle-card">
                         <div class="admin-private-contact-title">${t.plan_expiry_fixed_date_label || 'Use fixed expiry date'}</div>
                         <p class="admin-private-contact-desc">${t.plan_expiry_fixed_date_desc || 'When ON: Plans and students see a fixed expiry date (e.g. 28.02.2026). When OFF: Plans and students see validity in days (e.g. 30 days left).'}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
@@ -6204,7 +6204,7 @@ function _renderViewImpl() {
                         </div>
                     </div>
                     <!-- Contacto clases particulares -->
-                    <div class="admin-private-contact-card" style="margin-bottom: 1.5rem;">
+                    <div class="admin-private-contact-card">
                         <div class="admin-private-contact-title">${t.private_contact_section}</div>
                         <p class="admin-private-contact-desc">${t.private_contact_desc}</p>
                         <div class="admin-private-contact-select-wrap">
