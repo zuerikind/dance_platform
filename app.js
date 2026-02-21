@@ -210,6 +210,9 @@ const DANCE_LOCALES = {
         discovery_subtitle: "Find studios and teachers near you",
         discovery_back: "Back to all studios",
         discovery_no_schools: "No studios listed yet.",
+        discovery_tab_schools: "Schools",
+        discovery_tab_private_teachers: "Private teachers",
+        discovery_no_teachers: "No private teachers listed yet.",
         discovery_filter_dance: "Dance style",
         discovery_filter_country: "Country",
         discovery_filter_city: "City",
@@ -808,6 +811,9 @@ const DANCE_LOCALES = {
         discovery_subtitle: "Encuentra estudios y profesores cerca de ti",
         discovery_back: "Volver a todos los estudios",
         discovery_no_schools: "Aún no hay estudios publicados.",
+        discovery_tab_schools: "Estudios",
+        discovery_tab_private_teachers: "Profesores privados",
+        discovery_no_teachers: "Aún no hay profesores privados publicados.",
         discovery_filter_dance: "Estilo de baile",
         discovery_filter_country: "País",
         discovery_filter_city: "Ciudad",
@@ -1388,6 +1394,9 @@ const DANCE_LOCALES = {
         discovery_subtitle: "Finde Studios und Lehrer in deiner Nähe",
         discovery_back: "Zurück zu allen Studios",
         discovery_no_schools: "Noch keine Studios gelistet.",
+        discovery_tab_schools: "Studios",
+        discovery_tab_private_teachers: "Privatlehrer",
+        discovery_no_teachers: "Noch keine Privatlehrer gelistet.",
         discovery_filter_dance: "Tanzstil",
         discovery_filter_country: "Land",
         discovery_filter_city: "Stadt",
@@ -2401,7 +2410,11 @@ window.renderDiscoveryView = (path) => {
             </div>`;
         return html;
     }
-    const allSchools = state.discoverySchools || [];
+    state.discoveryTab = state.discoveryTab || 'schools';
+    const allDiscovery = state.discoverySchools || [];
+    const schoolsOnly = allDiscovery.filter(s => (s.profile_type || 'school') !== 'private_teacher');
+    const teachersOnly = allDiscovery.filter(s => (s.profile_type || '') === 'private_teacher');
+    const allSchools = state.discoveryTab === 'schools' ? schoolsOnly : teachersOnly;
     state.discoveryFilterGenre = state.discoveryFilterGenre ?? '';
     state.discoveryFilterCountry = state.discoveryFilterCountry ?? '';
     state.discoveryFilterCity = state.discoveryFilterCity ?? '';
@@ -2485,13 +2498,25 @@ window.renderDiscoveryView = (path) => {
                 }).join('')}
             </div>
         </div>
-    `).join('') : `<p class="discovery-empty-state">${t('discovery_no_schools')}</p>`;
+    `).join('') : `<p class="discovery-empty-state">${state.discoveryTab === 'teachers' ? t('discovery_no_teachers') : t('discovery_no_schools')}</p>`;
+    const tabSchoolsActive = state.discoveryTab === 'schools';
+    const tabTeachersActive = state.discoveryTab === 'teachers';
+    const tabsHtml = `
+        <div class="discovery-tabs" role="tablist" style="display: flex; gap: 0; margin-bottom: 1.25rem; border-radius: 12px; background: var(--system-gray6); padding: 4px; border: 1px solid var(--border);">
+            <button type="button" role="tab" aria-selected="${tabSchoolsActive}" onclick="state.discoveryTab='schools'; renderView();" style="flex: 1; padding: 10px 16px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; background: ${tabSchoolsActive ? 'var(--surface)' : 'transparent'}; color: var(--text-primary); box-shadow: ${tabSchoolsActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'};">
+                ${t('discovery_tab_schools')}
+            </button>
+            <button type="button" role="tab" aria-selected="${tabTeachersActive}" onclick="state.discoveryTab='teachers'; renderView();" style="flex: 1; padding: 10px 16px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; background: ${tabTeachersActive ? 'var(--surface)' : 'transparent'}; color: var(--text-primary); box-shadow: ${tabTeachersActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'};">
+                ${t('discovery_tab_private_teachers')}
+            </button>
+        </div>`;
     return `<div class="container discovery-page">
-        <a href="/" class="discovery-back-link" onclick="event.preventDefault(); state.discoveryPath=null; history.pushState({},'','/'); renderView();" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back')}</a>
+        <a href="/" class="discovery-back-link" onclick="event.preventDefault(); state.discoveryPath=null; state.currentView='school-selection'; state.currentSchool=null; history.pushState({},'','/'); saveState(); renderView();" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back')}</a>
         <header class="discovery-hero">
             <h1 class="discovery-hero-title">${t('discovery_title')}</h1>
             <p class="discovery-hero-subtitle">${t('discovery_subtitle')}</p>
         </header>
+        ${tabsHtml}
         <div class="discovery-filters-wrap">${filtersHtml}</div>
         <main class="discovery-content">${cardsHtml}</main>
         <p style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
@@ -9207,7 +9232,13 @@ window.doUploadDiscoveryImage = async (file, kind) => {
 window.clearDiscoveryImage = (kind) => {
     const urlId = kind === 'logo' ? 'discovery-logo-url' : 'discovery-teacher-url';
     const urlEl = document.getElementById(urlId);
-    if (urlEl) { urlEl.value = ''; window.updateDiscoveryPreview(); }
+    if (urlEl) urlEl.value = '';
+    if (state.currentSchool) {
+        if (kind === 'logo') state.currentSchool.logo_url = '';
+        else if (kind === 'teacher') state.currentSchool.teacher_photo_url = '';
+    }
+    if (document.getElementById('discovery-preview-inner')) window.updateDiscoveryPreview();
+    renderView();
 };
 
 window.addDiscoveryLocation = () => {
