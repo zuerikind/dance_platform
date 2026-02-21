@@ -352,6 +352,7 @@ const DANCE_LOCALES = {
         all_schools_packs_label: "Your Packs Across Schools",
         no_packs_any_school: "You have no active packages at any school",
         expired_classes_label: "Expired Classes",
+        used_packs_label: "Used packages",
         no_expiration: "No expiration date",
         expires_in: "Expires in",
         days_left: "days left",
@@ -948,6 +949,7 @@ const DANCE_LOCALES = {
         all_schools_packs_label: "Tus Paquetes en Todas las Escuelas",
         no_packs_any_school: "No tienes paquetes activos en ninguna escuela",
         expired_classes_label: "Clases Expiradas",
+        used_packs_label: "Paquetes usados",
         no_expiration: "Sin fecha de vencimiento",
         expires_in: "Vence en",
         days_left: "días restantes",
@@ -1527,6 +1529,7 @@ const DANCE_LOCALES = {
         all_schools_packs_label: "Deine Pakete in allen Schulen",
         no_packs_any_school: "Du hast keine aktiven Pakete an einer Schule",
         expired_classes_label: "Abgelaufene Stunden",
+        used_packs_label: "Verbrauchte Pakete",
         no_expiration: "Kein Ablaufdatum",
         expires_in: "Läuft ab in",
         days_left: "Tage übrig",
@@ -4926,12 +4929,20 @@ function _renderViewImpl() {
                     return out;
                 }
 
+                const packHasRemaining = (p) => (p.count == null || p.count === 'null' || (parseInt(p.count, 10) || 0) > 0) || (p.private_count || 0) > 0 || (p.event_count || 0) > 0;
+                const usedOrExpiredPacks = [];
+
                 for (const enrollment of sorted) {
                     const sName = (enrollment.school_name || '').replace(/</g, '&lt;');
                     const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
                     const active = packs.filter(p => new Date(p.expires_at) > now).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
                     const expired = packs.filter(p => new Date(p.expires_at) <= now).sort((a, b) => new Date(b.expires_at) - new Date(a.expires_at));
-                    if (active.length === 0 && expired.length === 0) continue;
+                    const activeWithRemaining = active.filter(packHasRemaining);
+                    const activeEmpty = active.filter(p => !packHasRemaining(p));
+                    expired.forEach(p => usedOrExpiredPacks.push({ p, sName, isExp: true }));
+                    activeEmpty.forEach(p => usedOrExpiredPacks.push({ p, sName, isExp: false }));
+
+                    if (activeWithRemaining.length === 0 && activeEmpty.length === 0 && expired.length === 0) continue;
                     const isCurrent = enrollment.school_id === currentSchoolId;
                     const hasPriv = (enrollment.balance_private != null && enrollment.balance_private > 0) || packs.some(p => (p.private_count || 0) > 0);
                     const eventsFromPacksEn = packs.filter(p => new Date(p.expires_at) > now).reduce((s, p) => s + (p.event_count || 0), 0);
@@ -4945,23 +4956,28 @@ function _renderViewImpl() {
                         enrollLabel = g + p_ + e;
                     }
 
-                    if (hasMultipleSchools) {
-                        out += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; margin-top: 12px; padding: 0 4px;">' +
-                            '<div style="width: 6px; height: 6px; border-radius: 50%; background: ' + (isCurrent ? 'var(--system-blue)' : 'var(--text-secondary)') + '; opacity: ' + (isCurrent ? 1 : 0.4) + ';"></div>' +
-                            '<div style="font-size: 13px; font-weight: 700; color: ' + (isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)') + ';">' + sName + '</div>' +
-                            '<div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); opacity: 0.6; margin-left: auto;">' + enrollLabel + '</div>' +
-                            '</div>';
-                    }
-
-                    if (active.length > 0) {
-                        out += '<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: ' + (expired.length > 0 ? '1rem' : '0') + ';">';
-                        out += active.map(p => renderPackCard(p, false, sName)).join('');
+                    if (activeWithRemaining.length > 0) {
+                        if (hasMultipleSchools) {
+                            out += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; margin-top: 12px; padding: 0 4px;">' +
+                                '<div style="width: 6px; height: 6px; border-radius: 50%; background: ' + (isCurrent ? 'var(--system-blue)' : 'var(--text-secondary)') + '; opacity: ' + (isCurrent ? 1 : 0.4) + ';"></div>' +
+                                '<div style="font-size: 13px; font-weight: 700; color: ' + (isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)') + ';">' + sName + '</div>' +
+                                '<div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); opacity: 0.6; margin-left: auto;">' + enrollLabel + '</div>' +
+                                '</div>';
+                        }
+                        out += '<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1rem;">';
+                        out += activeWithRemaining.map(p => renderPackCard(p, false, sName)).join('');
                         out += '</div>';
                     }
-                    if (expired.length > 0) {
-                        out += '<div style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; margin-top: 8px; letter-spacing: 0.05em; opacity: 0.4; padding: 0 10px;">' + t.expired_classes_label + '</div>';
-                        out += '<div style="display: flex; flex-direction: column; gap: 12px;">' + expired.map(p => renderPackCard(p, true, sName)).join('') + '</div>';
-                    }
+                }
+
+                if (usedOrExpiredPacks.length > 0) {
+                    out += '<details style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">';
+                    out += '<summary style="cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.7; list-style: none; display: flex; align-items: center; gap: 6px;">';
+                    out += '<span style="opacity: 0.7;">▶</span> ' + (t.used_packs_label || 'Used packages') + ' (' + usedOrExpiredPacks.length + ')';
+                    out += '</summary>';
+                    out += '<div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">';
+                    usedOrExpiredPacks.forEach(({ p, sName, isExp }) => { out += renderPackCard(p, isExp, sName); });
+                    out += '</div></details>';
                 }
                 return out;
             })()}
