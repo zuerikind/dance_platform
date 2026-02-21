@@ -4663,9 +4663,9 @@ function _renderViewImpl() {
             if (!hasDualShop && hasPrivateInPlan(s)) return false;
             return true;
         });
-        const shopGroupOnly = visibleSubsShop.filter(s => !hasPrivateInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopWithPrivate = visibleSubsShop.filter(hasPrivateInPlan).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopSociales = visibleSubsShop.filter(hasEventsInPlan).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
+        const shopGroupOnly = visibleSubsShop.filter(s => !hasPrivateInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const shopWithPrivate = visibleSubsShop.filter(s => hasPrivateInPlan(s) || (hasEventsInPlan(s) && (s.limit_count || 0) > 0)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const shopSociales = visibleSubsShop.filter(s => hasEventsInPlan(s) && (s.limit_count || 0) === 0 && !hasPrivateInPlan(s)).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
         html += `<h1>${t.shop_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
         if (shopGroupOnly.length > 0) {
@@ -5569,9 +5569,10 @@ function _renderViewImpl() {
             if (!hasDualAdmin && hasPrivateInPlanSub(s)) return false;
             return true;
         });
-        const adminGroupOnly = visibleSubsAdmin.filter(s => !hasPrivateInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminWithPrivate = visibleSubsAdmin.filter(s => hasPrivateInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminSociales = visibleSubsAdmin.filter(s => hasEventsInPlanSub(s) && s.id !== lastAddedId).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
+        const notLastAdded = (s) => s.id !== lastAddedId;
+        const adminGroupOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && !hasPrivateInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const adminWithPrivate = visibleSubsAdmin.filter(s => notLastAdded(s) && (hasPrivateInPlanSub(s) || (hasEventsInPlanSub(s) && (s.limit_count || 0) > 0))).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const adminSociales = visibleSubsAdmin.filter(s => notLastAdded(s) && hasEventsInPlanSub(s) && (s.limit_count || 0) === 0 && !hasPrivateInPlanSub(s)).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
         const lastAddedPlan = lastAddedId ? (state.subscriptions || []).find(s => s.id === lastAddedId) : null;
         let discoveryPreviewInnerHtml = '';
         if (state.settingsDiscoveryExpanded && state.showDiscoveryPreview && state.currentSchool) {
@@ -9263,8 +9264,9 @@ window.getDiscoveryPreviewFullHtml = (opts) => {
     const currency = opts.currency || 'MXN';
     const planSortKey = (s) => { const name = (s.name || '').toLowerCase(); if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0)) || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9; const n = parseInt(s.limit_count, 10); if (!isNaN(n)) return n; const m = (s.name || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
     const hasPrivateInPlanDiscovery = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
-    const discoveryGroupOnly = [...subscriptions].filter(s => !hasPrivateInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-    const discoveryWithPrivate = [...subscriptions].filter(hasPrivateInPlanDiscovery).sort((a, b) => planSortKey(a) - planSortKey(b));
+    const hasEventsInPlanDiscovery = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
+    const discoveryGroupOnly = [...subscriptions].filter(s => !hasPrivateInPlanDiscovery(s) && !hasEventsInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+    const discoveryWithPrivate = [...subscriptions].filter(s => hasPrivateInPlanDiscovery(s) || hasEventsInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
     const cardHtml = (s) => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, currency) : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; };
     const packagesHtml = (discoveryGroupOnly.length > 0 || discoveryWithPrivate.length > 0) ? [
         discoveryGroupOnly.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_group') || 'Group classes'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${discoveryWithPrivate.length > 0 ? '1.5rem' : '0'};">${discoveryGroupOnly.map(cardHtml).join('')}</div>` : '',
