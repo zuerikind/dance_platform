@@ -108,11 +108,11 @@
     </nav>
 
     <div id="scanner-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 500px; padding: 1.5rem;">
-            <div id="reader" style="width: 100%; border-radius: 20px; overflow: hidden; background: #000;"></div>
-            <div id="inline-scan-result" style="margin-top: 1rem;"></div>
-            <p class="text-muted" style="font-size: 0.8rem; margin-top: 1rem;" data-i18n="scan_align_hint">Align QR code within the frame</p>
-            <button id="close-scanner" class="btn-primary mt-4" style="width: 100%;" data-i18n="close">Close</button>
+        <div class="modal-content scanner-modal-content" style="max-width: 500px; max-height: 90vh; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; box-sizing: border-box;">
+            <div id="reader" style="width: 100%; border-radius: 20px; overflow: hidden; background: #000; flex-shrink: 0;"></div>
+            <div id="inline-scan-result" style="margin-top: 1rem; min-height: 0;"></div>
+            <p class="text-muted" style="font-size: 0.8rem; margin-top: 1rem; flex-shrink: 0;" data-i18n="scan_align_hint">Align QR code within the frame</p>
+            <button id="close-scanner" class="btn-primary mt-4" style="width: 100%; flex-shrink: 0;" data-i18n="close">Close</button>
         </div>
     </div>
 

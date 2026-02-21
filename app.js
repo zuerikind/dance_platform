@@ -125,6 +125,8 @@ const DANCE_LOCALES = {
         two_classes: "2 Classes",
         class_unit: "class",
         classes_unit: "classes",
+        event_unit: "event",
+        events_unit: "events",
         custom_classes_label: "Custom",
         deduct_btn: "Deduct",
         deduct_invalid_amount: "Enter 1 or more classes to deduct.",
@@ -719,6 +721,8 @@ const DANCE_LOCALES = {
         two_classes: "2 Clases",
         class_unit: "clase",
         classes_unit: "clases",
+        event_unit: "evento",
+        events_unit: "eventos",
         custom_classes_label: "Otra cantidad",
         deduct_btn: "Descontar",
         deduct_invalid_amount: "Indica 1 o más clases a descontar.",
@@ -1295,6 +1299,8 @@ const DANCE_LOCALES = {
         two_classes: "2 Stunden",
         class_unit: "Stunde",
         classes_unit: "Stunden",
+        event_unit: "Event",
+        events_unit: "Events",
         custom_classes_label: "Anzahl",
         deduct_btn: "Abziehen",
         deduct_invalid_amount: "Gib 1 oder mehr Stunden zum Abziehen ein.",
@@ -10634,7 +10640,7 @@ window.handleScan = async (scannedId) => {
 
         // Build confirm buttons for each registration
         const regBtns = todayRegs.map(r => `
-            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}')" style="padding: 0.8rem; font-size: 0.85rem; margin-bottom: 0.4rem;">
+            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('confirm_attendance_registered')} – ${escapeHtml(r.class_name)}
             </button>
         `).join('');
@@ -10643,20 +10649,20 @@ window.handleScan = async (scannedId) => {
             ? `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
             : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         resultEl.innerHTML = `
-            <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
-                <h3 style="font-size: 1rem; margin:0 0 0.5rem;">${escapeHtml(student.name)}</h3>
-                <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.8rem;">
+            <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
+                <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml(student.name)}</h3>
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.6rem;">
                     ${regBalanceLabel}
                 </div>
                 ${regsHtml}
-                <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.5rem 0;">
+                <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
                     <i data-lucide="info" size="12" style="vertical-align: middle; margin-right: 4px;"></i>${t('class_will_deduct')}
                 </div>
                 ${regBtns}
-                <div style="border-top: 1px solid var(--border); margin-top: 0.5rem; padding-top: 0.5rem;">
-                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.3rem;">${t('no_manual_deduction')}</div>
+                <div style="border-top: 1px solid var(--border); margin-top: 0.4rem; padding-top: 0.4rem;">
+                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.25rem;">${t('no_manual_deduction')}</div>
                 </div>
-                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.3rem; opacity:0.5;">
+                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.35rem; font-size: 0.72rem; margin-top:0.25rem; opacity:0.5;">
                     ${t('cancel')}
                 </button>
             </div>
@@ -10677,53 +10683,53 @@ window.handleScan = async (scannedId) => {
         const balanceLabel = hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
 
         const groupRow = hasGroupLeft ? `
-                <div style="margin-bottom: ${hasDualScanMode ? '1rem' : '0'};">
-                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; text-transform: uppercase;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.25rem;">
-                        <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'group')" style="padding: 0.8rem; font-size: 0.85rem;">${t('one_class')}</button>
-                        <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'group')" style="padding: 0.8rem; font-size: 0.85rem;">${t('two_classes')}</button>
+                <div style="margin-bottom: ${hasDualScanMode ? '0.75rem' : '0'};">
+                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem; text-transform: uppercase;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
+                        <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('one_class')}</button>
+                        <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('two_classes')}</button>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-                        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
-                        <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">${t('deduct_btn')}</button>
+                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
+                        <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                        <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t('deduct_btn')}</button>
                     </div>
                 </div>` : '';
 
         const privateRow = (hasDualScanMode && hasPrivateLeft) ? `
-                <details style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
-                    <summary class="scan-private-summary" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0;">
+                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
+                    <summary class="scan-private-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
                         <span class="scan-private-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_private_classes') || 'Deduct private classes'}
                     </summary>
-                    <div style="margin-top: 0.5rem;">
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('one_class')}</button>
-                            <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.8rem; font-size: 0.85rem;">${t('two_classes')}</button>
+                    <div style="margin-top: 0.4rem;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+                            <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('one_class')}</button>
+                            <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('two_classes')}</button>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
-                            <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 80px; padding: 0.5rem 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.9rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.5rem 0.9rem; font-size: 0.85rem;">${t('deduct_btn')}</button>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                            <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t('deduct_btn')}</button>
                         </div>
                     </div>
                 </details>` : '';
 
         const eventRow = (hasEventsEnabled && hasEventsLeft) ? `
-                <details style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
-                    <summary class="scan-event-summary" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0;">
+                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
+                    <summary class="scan-event-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
                         <span class="scan-event-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_one_event') || 'Deduct event'}
                     </summary>
-                    <div style="margin-top: 0.5rem;">
-                        <button class="btn-primary w-full" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'event')" style="padding: 0.8rem; font-size: 0.85rem;">${t('deduct_one_event') || 'Deduct 1 event'}</button>
+                    <div style="margin-top: 0.4rem;">
+                        <button class="btn-primary w-full" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('deduct_one_event') || 'Deduct 1 event'}</button>
                     </div>
                 </details>` : '';
 
         resultEl.innerHTML = `
-            <div class="card" style="border-radius: 20px; padding: 1rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
-                        <h3 style="font-size: 1rem; margin:0;">${escapeHtml(student.name)}</h3>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">
+                        <h3 style="font-size: 0.95rem; margin:0;">${escapeHtml(student.name)}</h3>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--secondary);">
                             ${balanceLabel}
                         </div>
                     </div>
@@ -10731,7 +10737,7 @@ window.handleScan = async (scannedId) => {
                 ${groupRow}
                 ${privateRow}
                 ${eventRow}
-                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.4rem; font-size: 0.75rem; margin-top:0.5rem; opacity:0.5;">
+                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.35rem; font-size: 0.72rem; margin-top:0.4rem; opacity:0.5;">
                     ${t('cancel')}
                 </button>
             </div>
@@ -10926,13 +10932,23 @@ window.confirmAttendance = async (studentId, count, classType) => {
 
     const newRemaining = classType === 'private'
         ? (student.balance_private ?? 0)
+        : classType === 'event'
+        ? (student.balance_events ?? 0)
         : (isUnlimited ? t('unlimited') : (student.balance ?? 0));
+    const unitLabel = classType === 'event'
+        ? (countNum === 1 ? t('event_unit') : t('events_unit'))
+        : (countNum === 1 ? t('class_unit') : t('classes_unit'));
+    const remainingLabel = classType === 'event'
+        ? t('events_remaining')
+        : classType === 'private'
+        ? t('private_classes_remaining')
+        : t('remaining_classes');
     resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
-             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${countNum} ${countNum === 1 ? t('class_unit') : t('classes_unit')}</div>
-             <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${t('remaining_classes')}: ${newRemaining}</div>
+             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${countNum} ${unitLabel}</div>
+             <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${remainingLabel}: ${newRemaining}</div>
         </div>
         `;
     if (window.lucide) lucide.createIcons();

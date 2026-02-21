@@ -1376,6 +1376,11 @@ body.dark-mode .bottom-nav .nav-item.active {
     background: black;
 }
 
+.scanner-modal-content {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+}
+
 /* Registration answers modal: ensure content is visible (fixes invisible-content bug) */
 #registration-answers-body {
     visibility: visible !important;
