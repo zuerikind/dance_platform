@@ -10696,7 +10696,7 @@ window.handleScan = async (scannedId) => {
 
         const groupRow = hasGroupLeft ? `
                 <div style="margin-bottom: ${hasDualScanMode ? '0.75rem' : '0'};">
-                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem; text-transform: uppercase;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
+                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
                         <button class="btn-primary" onclick="confirmAttendance('${escapeHtml(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('one_class')}</button>
                         <button class="btn-secondary" onclick="confirmAttendance('${escapeHtml(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('two_classes')}</button>
@@ -10749,9 +10749,6 @@ window.handleScan = async (scannedId) => {
                 ${groupRow}
                 ${privateRow}
                 ${eventRow}
-                <div style="text-align: center; margin-top: 0.5rem;">
-                    <button type="button" onclick="cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t('cancel')}</button>
-                </div>
             </div>
         `;
     } else {
