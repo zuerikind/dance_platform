@@ -155,7 +155,8 @@ const DANCE_LOCALES = {
         add_label: "Add",
         plans_label: "Plans",
         plans_section_group: "Group classes",
-        plans_section_private: "Private / mixed",
+        plans_section_private: "Private classes",
+        plans_section_mixed: "Mixed classes",
         plans_section_sociales: "Sociales (events)",
         limit_classes_label: "Class Limit",
         limit_classes_placeholder: "Classes (0 = Unlimited)",
@@ -751,7 +752,8 @@ const DANCE_LOCALES = {
         add_label: "Añadir",
         plans_label: "Planes",
         plans_section_group: "Clases grupales",
-        plans_section_private: "Particulares / mixtos",
+        plans_section_private: "Clases particulares",
+        plans_section_mixed: "Clases mixtas",
         plans_section_sociales: "Sociales (eventos)",
         limit_classes_label: "Límite de Clases",
         limit_classes_placeholder: "Clases (0 = Ilimitado)",
@@ -1329,7 +1331,8 @@ const DANCE_LOCALES = {
         add_label: "Hinzufügen",
         plans_label: "Pläne",
         plans_section_group: "Gruppenstunden",
-        plans_section_private: "Privat / gemischt",
+        plans_section_private: "Privatstunden",
+        plans_section_mixed: "Gemischt",
         plans_section_sociales: "Sociales (Events)",
         limit_classes_label: "Stundenlimit",
         limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
@@ -4669,14 +4672,15 @@ function _renderViewImpl() {
             if (!hasDualShop && hasPrivateInPlan(s)) return false;
             return true;
         });
-        const shopGroupOnly = visibleSubsShop.filter(s => !hasPrivateInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopWithPrivate = visibleSubsShop.filter(s => hasPrivateInPlan(s) || (hasEventsInPlan(s) && (s.limit_count || 0) > 0)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopSociales = visibleSubsShop.filter(s => hasEventsInPlan(s) && (s.limit_count || 0) === 0 && !hasPrivateInPlan(s)).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
+        const hasGroupInPlan = (s) => (s.limit_count != null && s.limit_count > 0);
+        const shopGroupOnly = visibleSubsShop.filter(s => hasGroupInPlan(s) && !hasPrivateInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const shopPrivateOnly = visibleSubsShop.filter(s => hasPrivateInPlan(s) && !hasGroupInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const shopMixed = visibleSubsShop.filter(s => hasEventsInPlan(s) || (hasGroupInPlan(s) && hasPrivateInPlan(s))).sort((a, b) => planSortKey(a) - planSortKey(b));
         html += `<h1>${t.shop_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
         if (shopGroupOnly.length > 0) {
             html += `<div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.6rem;">${t.plans_section_group || 'Group classes'}</div>`;
-            html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${(shopWithPrivate.length > 0 || shopSociales.length > 0) ? '2rem' : '0'};">`;
+            html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${(shopPrivateOnly.length > 0 || shopMixed.length > 0) ? '2rem' : '0'};">`;
             shopGroupOnly.forEach(s => {
                 const ev = (s.limit_count_events != null && s.limit_count_events > 0) ? (t.events || 'Events') + ' ' + s.limit_count_events : '';
                 const detailLine = ev ? `<p class="text-muted" style="font-size: 0.75rem; margin-bottom: 0.5rem;">${(t.group_classes || 'Group')} ${s.limit_count || 0}${ev ? ' · ' + ev : ''}</p>` : '';
@@ -4696,10 +4700,10 @@ function _renderViewImpl() {
             });
             html += `</div>`;
         }
-        if (shopWithPrivate.length > 0) {
-            html += `<div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.6rem;">${t.plans_section_private || 'Private / mixed'}</div>`;
-            html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">`;
-            shopWithPrivate.forEach(s => {
+        if (shopPrivateOnly.length > 0) {
+            html += `<div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.6rem;">${t.plans_section_private || 'Private classes'}</div>`;
+            html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${shopMixed.length > 0 ? '2rem' : '0'};">`;
+            shopPrivateOnly.forEach(s => {
                 const parts = [(t.group_classes || 'Group') + ' ' + (s.limit_count ?? 0), (t.private_classes || 'Private') + ' ' + (s.limit_count_private ?? 0)];
                 if (s.limit_count_events != null && s.limit_count_events > 0) parts.push((t.events || 'Events') + ' ' + s.limit_count_events);
                 const detailLine = parts.length > 0 ? `<p class="text-muted" style="font-size: 0.75rem; margin-bottom: 0.5rem;">${parts.join(' · ')}</p>` : '';
@@ -4719,10 +4723,10 @@ function _renderViewImpl() {
             });
             html += `</div>`;
         }
-        if (shopSociales.length > 0) {
-            html += `<div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.6rem; margin-top: ${(shopGroupOnly.length > 0 || shopWithPrivate.length > 0) ? '1.5rem' : '0'};">${t.plans_section_sociales || 'Sociales (events)'}</div>`;
+        if (shopMixed.length > 0) {
+            html += `<div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.6rem; margin-top: ${(shopGroupOnly.length > 0 || shopPrivateOnly.length > 0) ? '1.5rem' : '0'};">${t.plans_section_mixed || 'Mixed classes'}</div>`;
             html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">`;
-            shopSociales.forEach(s => {
+            shopMixed.forEach(s => {
                 const parts = [(t.group_classes || 'Group') + ' ' + (s.limit_count ?? 0), (t.private_classes || 'Private') + ' ' + (s.limit_count_private ?? 0), (t.events || 'Events') + ' ' + (s.limit_count_events ?? 0)];
                 const detailLine = `<p class="text-muted" style="font-size: 0.75rem; margin-bottom: 0.5rem;">${parts.join(' · ')}</p>`;
                 html += `
@@ -5576,9 +5580,10 @@ function _renderViewImpl() {
             return true;
         });
         const notLastAdded = (s) => s.id !== lastAddedId;
-        const adminGroupOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && !hasPrivateInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminWithPrivate = visibleSubsAdmin.filter(s => notLastAdded(s) && (hasPrivateInPlanSub(s) || (hasEventsInPlanSub(s) && (s.limit_count || 0) > 0))).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminSociales = visibleSubsAdmin.filter(s => notLastAdded(s) && hasEventsInPlanSub(s) && (s.limit_count || 0) === 0 && !hasPrivateInPlanSub(s)).sort((a, b) => (a.limit_count_events || 0) - (b.limit_count_events || 0));
+        const hasGroupInPlanSub = (s) => (s.limit_count != null && s.limit_count > 0);
+        const adminGroupOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && hasGroupInPlanSub(s) && !hasPrivateInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const adminPrivateOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && hasPrivateInPlanSub(s) && !hasGroupInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        const adminMixed = visibleSubsAdmin.filter(s => notLastAdded(s) && (hasEventsInPlanSub(s) || (hasGroupInPlanSub(s) && hasPrivateInPlanSub(s)))).sort((a, b) => planSortKey(a) - planSortKey(b));
         const lastAddedPlan = lastAddedId ? (state.subscriptions || []).find(s => s.id === lastAddedId) : null;
         let discoveryPreviewInnerHtml = '';
         if (state.settingsDiscoveryExpanded && state.showDiscoveryPreview && state.currentSchool) {
@@ -5835,10 +5840,10 @@ function _renderViewImpl() {
                 `).join('')}
             </div>
             ` : ''}
-            ${adminWithPrivate.length > 0 ? `
-            <div style="padding: 0 1.2rem; margin-top: ${adminGroupOnly.length > 0 ? '1.25rem' : '0.6rem'}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_private || 'Private / mixed'}</div>
+            ${adminPrivateOnly.length > 0 ? `
+            <div style="padding: 0 1.2rem; margin-top: ${adminGroupOnly.length > 0 ? '1.25rem' : '0.6rem'}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_private || 'Private classes'}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
-                ${adminWithPrivate.map(s => `
+                ${adminPrivateOnly.map(s => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
@@ -5899,10 +5904,10 @@ function _renderViewImpl() {
                 `).join('')}
             </div>
             ` : ''}
-            ${hasEventsEnabled && adminSociales.length > 0 ? `
-            <div style="padding: 0 1.2rem; margin-top: ${(adminGroupOnly.length > 0 || adminWithPrivate.length > 0) ? '1.25rem' : '0.6rem'}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_sociales || 'Sociales (events)'}</div>
+            ${adminMixed.length > 0 ? `
+            <div style="padding: 0 1.2rem; margin-top: ${(adminGroupOnly.length > 0 || adminPrivateOnly.length > 0) ? '1.25rem' : '0.6rem'}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t.plans_section_mixed || 'Mixed classes'}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
-                ${adminSociales.map(s => `
+                ${adminMixed.map(s => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
@@ -9271,12 +9276,15 @@ window.getDiscoveryPreviewFullHtml = (opts) => {
     const planSortKey = (s) => { const name = (s.name || '').toLowerCase(); if (name.includes('ilimitad') || name.includes('unlimited') || (s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0)) || (s.limit_count == null && !(s.name || '').match(/\d+/))) return 1e9; const n = parseInt(s.limit_count, 10); if (!isNaN(n)) return n; const m = (s.name || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
     const hasPrivateInPlanDiscovery = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
     const hasEventsInPlanDiscovery = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
-    const discoveryGroupOnly = [...subscriptions].filter(s => !hasPrivateInPlanDiscovery(s) && !hasEventsInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-    const discoveryWithPrivate = [...subscriptions].filter(s => hasPrivateInPlanDiscovery(s) || hasEventsInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+    const hasGroupInPlanDiscovery = (s) => (s.limit_count != null && s.limit_count > 0);
+    const discoveryGroupOnly = [...subscriptions].filter(s => hasGroupInPlanDiscovery(s) && !hasPrivateInPlanDiscovery(s) && !hasEventsInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+    const discoveryPrivateOnly = [...subscriptions].filter(s => hasPrivateInPlanDiscovery(s) && !hasGroupInPlanDiscovery(s) && !hasEventsInPlanDiscovery(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+    const discoveryMixed = [...subscriptions].filter(s => hasEventsInPlanDiscovery(s) || (hasGroupInPlanDiscovery(s) && hasPrivateInPlanDiscovery(s))).sort((a, b) => planSortKey(a) - planSortKey(b));
     const cardHtml = (s) => { const sName = String(s.name || s.title || '').replace(/</g, '&lt;'); const priceStr = (typeof window.formatPrice === 'function' ? window.formatPrice(s.price, currency) : (s.price != null ? s.price : '')); const validDays = s.validity_days != null ? s.validity_days : 30; return `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-radius: 24px; padding: 1.2rem;"><div><h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">${sName}</h3><p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.8rem;">${(t('valid_for_days') || 'Valid for {days} days').replace('{days}', validDays)}</p><div style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em;">${priceStr}</div></div></div>`; };
-    const packagesHtml = (discoveryGroupOnly.length > 0 || discoveryWithPrivate.length > 0) ? [
-        discoveryGroupOnly.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_group') || 'Group classes'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${discoveryWithPrivate.length > 0 ? '1.5rem' : '0'};">${discoveryGroupOnly.map(cardHtml).join('')}</div>` : '',
-        discoveryWithPrivate.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_private') || 'Private / mixed'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${discoveryWithPrivate.map(cardHtml).join('')}</div>` : ''
+    const packagesHtml = (discoveryGroupOnly.length > 0 || discoveryPrivateOnly.length > 0 || discoveryMixed.length > 0) ? [
+        discoveryGroupOnly.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_group') || 'Group classes'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${(discoveryPrivateOnly.length > 0 || discoveryMixed.length > 0) ? '1.5rem' : '0'};">${discoveryGroupOnly.map(cardHtml).join('')}</div>` : '',
+        discoveryPrivateOnly.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_private') || 'Private classes'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: ${discoveryMixed.length > 0 ? '1.5rem' : '0'};">${discoveryPrivateOnly.map(cardHtml).join('')}</div>` : '',
+        discoveryMixed.length > 0 ? `<div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('plans_section_mixed') || 'Mixed classes'}</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">${discoveryMixed.map(cardHtml).join('')}</div>` : ''
     ].filter(Boolean).join('') : `<div class="discovery-detail-placeholder-block"><i data-lucide="credit-card" size="24"></i><span>${placeholder}</span></div>`;
     const locationsHtml = locations.length ? locations.map(loc => { const locName = String(loc.name || '').replace(/</g, '&lt;'); const locAddr = String(loc.address || '').replace(/</g, '&lt;'); const locDesc = String(loc.description || '').replace(/</g, '&lt;').replace(/\n/g, '<br>'); const imgs = Array.isArray(loc.image_urls) ? loc.image_urls : []; return `<div class="discovery-detail-location-card" style="margin-bottom: 1rem; padding: 1rem; border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; margin-bottom: 4px;">${locName || '—'}</div><div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 6px;"><i data-lucide="map-pin" size="14"></i> ${locAddr || placeholder}</div>${locDesc ? `<div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${locDesc}</div>` : ''}${imgs.length ? `<div class="discovery-detail-gallery-grid" style="margin-top: 8px;">${imgs.slice(0, 6).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : ''}</div>`; }).join('') : (gallery.length ? `<div class="discovery-detail-gallery-grid">${gallery.slice(0, 12).map(url => `<img src="${String(url).replace(/"/g, '&quot;')}" alt="">`).join('')}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="map-pin" size="32"></i><span>${placeholder}</span></div>`);
     return `<div class="discovery-detail-page" style="padding-top: 0;">
@@ -10494,6 +10502,8 @@ window.startScanner = async () => {
         const modal = document.getElementById('scanner-modal');
         modal.classList.remove('hidden');
         document.getElementById('inline-scan-result').innerHTML = '';
+        const scanHint = document.getElementById('scan-align-hint');
+        if (scanHint) scanHint.style.display = '';
 
         // If instance exists but isn't scanning, try to start it.
         // If it MUST be recreated, we stop it first.
@@ -10572,6 +10582,8 @@ window.handleScan = async (scannedId) => {
     const id = (scannedId || '').trim();
     const student = state.students.find(s => s.id === id || s.user_id === id);
     const resultEl = document.getElementById('inline-scan-result'); // TARGET INLINE
+    const scanHint = document.getElementById('scan-align-hint');
+    if (scanHint) scanHint.style.display = 'none';
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
@@ -10662,9 +10674,9 @@ window.handleScan = async (scannedId) => {
                 <div style="border-top: 1px solid var(--border); margin-top: 0.4rem; padding-top: 0.4rem;">
                     <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.25rem;">${t('no_manual_deduction')}</div>
                 </div>
-                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.35rem; font-size: 0.72rem; margin-top:0.25rem; opacity:0.5;">
-                    ${t('cancel')}
-                </button>
+                <div style="text-align: center; margin-top: 0.5rem;">
+                    <button type="button" onclick="cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t('cancel')}</button>
+                </div>
             </div>
         `;
     } else if (hasNoClasses) {
@@ -10737,9 +10749,9 @@ window.handleScan = async (scannedId) => {
                 ${groupRow}
                 ${privateRow}
                 ${eventRow}
-                <button class="btn-icon w-full" onclick="cancelAttendance()" style="padding: 0.35rem; font-size: 0.72rem; margin-top:0.4rem; opacity:0.5;">
-                    ${t('cancel')}
-                </button>
+                <div style="text-align: center; margin-top: 0.5rem;">
+                    <button type="button" onclick="cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t('cancel')}</button>
+                </div>
             </div>
         `;
     } else {
@@ -10757,6 +10769,8 @@ window.handleScan = async (scannedId) => {
 
 window.cancelAttendance = () => {
     document.getElementById('inline-scan-result').innerHTML = '';
+    const scanHint = document.getElementById('scan-align-hint');
+    if (scanHint) scanHint.style.display = '';
     if (html5QrCode) {
         try {
             html5QrCode.resume();
@@ -10955,6 +10969,8 @@ window.confirmAttendance = async (studentId, count, classType) => {
 
     setTimeout(() => {
         resultEl.innerHTML = '';
+        const scanHint = document.getElementById('scan-align-hint');
+        if (scanHint) scanHint.style.display = '';
         if (html5QrCode) {
             try {
                 html5QrCode.resume();
