@@ -687,6 +687,9 @@ const DANCE_LOCALES = {
         today: "Today",
         no_classes_this_day: "No classes this day",
         export_calendar_ics: "Export .ics",
+        export_to_calendar: "Export to your calendar",
+        export_all_to_calendar: "Export all to your calendar",
+        export_no_events: "No classes to export.",
         export_calendar_ics_hint: "Add to Google Calendar, Apple Calendar, or any .ics app.",
         check_in_btn: "Check in",
         mark_no_show_btn: "Mark no-show",
@@ -1282,6 +1285,9 @@ const DANCE_LOCALES = {
         today: "Hoy",
         no_classes_this_day: "No hay clases este día",
         export_calendar_ics: "Exportar .ics",
+        export_to_calendar: "Exportar a tu calendario",
+        export_all_to_calendar: "Exportar todo a tu calendario",
+        export_no_events: "No hay clases para exportar.",
         export_calendar_ics_hint: "Añadir a Google Calendar, Apple Calendar o cualquier app .ics.",
         check_in_btn: "Registrar",
         mark_no_show_btn: "Marcar ausencia",
@@ -1925,6 +1931,9 @@ const DANCE_LOCALES = {
         today: "Heute",
         no_classes_this_day: "Keine Stunden an diesem Tag",
         export_calendar_ics: "Export .ics",
+        export_to_calendar: "In deinen Kalender exportieren",
+        export_all_to_calendar: "Alle in deinen Kalender exportieren",
+        export_no_events: "Keine Stunden zum Exportieren.",
         export_calendar_ics_hint: "Zu Google Kalender, Apple Kalender oder einer .ics-App hinzufügen.",
         check_in_btn: "Einchecken",
         mark_no_show_btn: "Absage markieren",
@@ -5030,7 +5039,7 @@ function _renderViewImpl() {
                             ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ''}
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation();">
-                            <button type="button" class="btn-secondary" onclick="window.downloadCalendarIcs('student')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;"><i data-lucide="download" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_calendar_ics || 'Export .ics'}</button>
+                            <button type="button" class="btn-secondary" onclick="window.downloadCalendarIcs('student')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || 'Export all to your calendar'}</button>
                             <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
                         </div>
                     </div>
@@ -5049,13 +5058,15 @@ function _renderViewImpl() {
                             const hoursUntil = isLesson ? (new Date(item.start_at_utc).getTime() - Date.now()) / (60 * 60 * 1000) : 999;
                             const lateCancelWarning = canCancel && hoursUntil < 4 ? (t2.cancel_late_warning || 'Cancelling within 4 hours will use one private credit.') : '';
                             const cancelBtn = canCancel ? (function() { const cw = lateCancelWarning ? ("if(confirm('" + lateCancelWarning.replace(/'/g, "\\'") + "')) ") : ""; return "<button type=\"button\" class=\"btn-secondary\" style=\"padding: 6px 10px; font-size: 12px; flex-shrink: 0;\" onclick=\"" + cw + "window.studentCancelPrivateLesson('" + item.id + "')\">" + (t2.cancel_btn || "Cancel") + "</button>"; })() : "";
+                            const exportOneLabel = (t2.export_to_calendar || "Export to your calendar").replace(/"/g, "&quot;");
+                            const exportOneBtn = (item.start_at_utc && item.end_at_utc) ? "<button type=\"button\" class=\"btn-secondary\" style=\"padding: 6px 10px; font-size: 12px; flex-shrink: 0;\" onclick=\"window.downloadCalendarIcsOne('" + item.id + "', 'student')\"><i data-lucide=\"calendar-plus\" size=\"12\" style=\"vertical-align: middle; margin-right: 4px;\"></i>" + exportOneLabel + "</button>" : "";
                             return `
                             <div class="student-private-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
                                 <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 14px;">${dateLabel} &middot; ${(timeStr || '').replace(/</g, '&lt;')}${item.status === 'attended' ? ' &middot; <span style="color: var(--system-green); font-size: 12px;">' + (t2.checked_in || 'Checked in') + '</span>' : ''}</div>
                                 </div>
-                                ${cancelBtn}
+                                <div style="display: flex; gap: 6px; flex-shrink: 0;">${exportOneBtn} ${cancelBtn}</div>
                             </div>`;
                         }).join('')}
                     </div>
@@ -6013,7 +6024,7 @@ function _renderViewImpl() {
                                 ${(lessons.length || acceptedReqs.length) > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${lessons.length || acceptedReqs.length}</span>` : ''}
                                 <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
-                            <button type="button" class="btn-secondary" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; flex-shrink: 0;"><i data-lucide="download" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t.export_calendar_ics || 'Export .ics'}</button>
+                            <button type="button" class="btn-secondary" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; flex-shrink: 0;"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t.export_all_to_calendar || 'Export all to your calendar'}</button>
                         </div>
                         <div id="teacher-accepted-classes-content" style="padding: 0.8rem 0; display: ${expanded ? '' : 'none'};">
                             <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
@@ -6028,7 +6039,8 @@ function _renderViewImpl() {
                                     const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
                                     const canCheckIn = l.status === 'confirmed';
                                     const isPast = new Date(l.end_at_utc) < new Date();
-                                    return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === 'attended' ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t.checked_in || 'Checked in') + '</span>' : '<div><strong>' + (studentName || '').replace(/</g, '&lt;') + '</strong> &middot; ' + timeStr + '</div><div style="display: flex; gap: 6px;">' + (canCheckIn ? '<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended(\'' + l.id + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : '') + (isPast && l.status === 'confirmed' ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow(\'' + l.id + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : '') + '</div>') + '</div>';
+                                    const exportOneBtn = (l.start_at_utc && l.end_at_utc) ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.downloadCalendarIcsOne(\'' + l.id + '\', \'teacher\')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ' + (t.export_to_calendar || 'Export to your calendar') + '</button>' : '';
+                                    return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === 'attended' ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t.checked_in || 'Checked in') + '</span>' : '<div><strong>' + (studentName || '').replace(/</g, '&lt;') + '</strong> &middot; ' + timeStr + '</div><div style="display: flex; gap: 6px; flex-wrap: wrap;">' + exportOneBtn + (canCheckIn ? '<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended(\'' + l.id + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : '') + (isPast && l.status === 'confirmed' ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow(\'' + l.id + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : '') + '</div>') + '</div>';
                                 }).join('')}
                             </div>
                             ` : ''}
@@ -6054,6 +6066,7 @@ function _renderViewImpl() {
                                         <div style="font-weight: 600; font-size: 14px;">${(studentName || '').replace(/</g, '&lt;')}</div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(timeStr || '').replace(/</g, '&lt;')} ${attended ? ' &middot; <span style="color: var(--system-green);">' + (t.checked_in || 'Checked in') + '</span>' : ''}</div>
                                     </div>
+                                    ${lessonId && lesson.start_at_utc && lesson.end_at_utc ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.downloadCalendarIcsOne(\'' + lessonId + '\', \'teacher\')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ' + (t.export_to_calendar || 'Export to your calendar') + '</button>' : ''}
                                     ${lessonId && canCheckIn ? '<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonAttended(\'' + lessonId + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : ''}
                                     ${lessonId && isPast && lesson.status === 'confirmed' && !lesson.credit_deducted ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonNoShow(\'' + lessonId + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : ''}
                                 </div>`;
@@ -9248,20 +9261,116 @@ window.markPrivateLessonNoShow = async (lessonId) => {
     } catch (e) { alert('Error: ' + (e.message || e)); }
 };
 
-window.downloadCalendarIcs = async (type) => {
-    const sess = state.auth?.session || (supabaseClient && (await supabaseClient.auth.getSession()).data?.session);
-    if (!sess?.access_token) { alert('Please sign in to export calendar.'); return; }
-    const url = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '') + '/functions/v1/export_calendar_ics?type=' + (type || 'student') + '&include_group_classes=true&range_days=60';
+function formatUtcForIcs(d) {
+    const date = d instanceof Date ? d : new Date(d);
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const h = String(date.getUTCHours()).padStart(2, '0');
+    const min = String(date.getUTCMinutes()).padStart(2, '0');
+    const s = String(date.getUTCSeconds()).padStart(2, '0');
+    return `${y}${m}${day}T${h}${min}${s}Z`;
+}
+function buildIcsFromEvents(events) {
+    if (!events || events.length === 0) {
+        return 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Bailadmin//Calendar//EN\r\nCALSCALE:GREGORIAN\r\nEND:VCALENDAR';
+    }
+    const dtstamp = formatUtcForIcs(new Date());
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Bailadmin//Calendar//EN', 'CALSCALE:GREGORIAN'];
+    events.forEach(function(ev) {
+        lines.push('BEGIN:VEVENT');
+        lines.push('UID:' + (ev.uid || 'event-' + Date.now() + '-' + Math.random().toString(36).slice(2)) + '@bailadmin');
+        lines.push('DTSTAMP:' + dtstamp);
+        lines.push('DTSTART:' + formatUtcForIcs(ev.start));
+        lines.push('DTEND:' + formatUtcForIcs(ev.end));
+        lines.push('SUMMARY:' + (ev.summary || 'Private lesson').replace(/[,;\\]/g, function(c) { return '\\' + c; }));
+        if (ev.description) lines.push('DESCRIPTION:' + String(ev.description).replace(/[,;\\]/g, function(c) { return '\\' + c; }));
+        if (ev.location) lines.push('LOCATION:' + String(ev.location).replace(/[,;\\]/g, function(c) { return '\\' + c; }));
+        lines.push('STATUS:CONFIRMED');
+        lines.push('END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+}
+function downloadIcsBlob(icsString, filename) {
+    const blob = new Blob([icsString], { type: 'text/calendar; charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || 'schedule.ics';
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+window.downloadCalendarIcsOne = function(lessonOrEventOrId, type) {
+    let lesson = lessonOrEventOrId;
+    if (typeof lessonOrEventOrId === 'string' && type === 'teacher') {
+        lesson = (state.privateLessons || []).find(function(l) { return l.id === lessonOrEventOrId; });
+    } else if (typeof lessonOrEventOrId === 'string' && type === 'student') {
+        lesson = (state.studentPrivateLessons || []).find(function(l) { return l.id === lessonOrEventOrId; });
+    }
+    if (!lesson) return;
+    const start = lesson.start_at_utc ? new Date(lesson.start_at_utc) : (lesson.start ? new Date(lesson.start) : null);
+    const end = lesson.end_at_utc ? new Date(lesson.end_at_utc) : (lesson.end ? new Date(lesson.end) : null);
+    if (!start || !end) { alert('Cannot export: missing date/time.'); return; }
+    let summary = lesson.summary;
+    if (!summary && type === 'teacher' && lesson.student_id) {
+        const s = (state.students || []).find(function(x) { return String(x.id) === String(lesson.student_id); });
+        summary = 'Private lesson with ' + (s?.name || 'Student');
+    }
+    if (!summary && type === 'student') summary = 'Private lesson with ' + (state.currentSchool?.name || 'Teacher');
+    if (!summary) summary = 'Private lesson';
+    const events = [{ uid: 'lesson-' + (lesson.id || '') + '@bailadmin', start: start, end: end, summary: summary }];
+    downloadIcsBlob(buildIcsFromEvents(events), 'private-lesson.ics');
+};
+window.downloadCalendarIcs = async function(type, useClientOnly) {
+    const t = DANCE_LOCALES[state.language || 'en'];
+    const tryClientFallback = function() {
+        const events = [];
+        if (type === 'student') {
+            const lessons = (state.studentPrivateLessons || []).filter(function(l) { return (l.status === 'confirmed' || l.status === 'attended') && l.start_at_utc && l.end_at_utc; });
+            const schoolName = state.currentSchool?.name || 'Teacher';
+            lessons.forEach(function(l) {
+                events.push({
+                    uid: 'private-lesson-' + l.id + '@bailadmin',
+                    start: new Date(l.start_at_utc),
+                    end: new Date(l.end_at_utc),
+                    summary: 'Private lesson with ' + schoolName
+                });
+            });
+        } else {
+            const lessons = (state.privateLessons || []).filter(function(l) { return (l.status === 'confirmed' || l.status === 'attended') && l.start_at_utc && l.end_at_utc; });
+            const studentNames = state.students || [];
+            lessons.forEach(function(l) {
+                const name = studentNames.find(function(s) { return String(s.id) === String(l.student_id); })?.name || 'Student';
+                events.push({
+                    uid: 'private-lesson-' + l.id + '@bailadmin',
+                    start: new Date(l.start_at_utc),
+                    end: new Date(l.end_at_utc),
+                    summary: 'Private lesson with ' + name
+                });
+            });
+        }
+        if (events.length === 0) { alert(t.export_no_events || 'No classes to export.'); return; }
+        downloadIcsBlob(buildIcsFromEvents(events), 'schedule.ics');
+    };
+    if (useClientOnly) { tryClientFallback(); return; }
+    let sess = state.auth?.session;
+    if (!sess && supabaseClient) { try { sess = (await supabaseClient.auth.getSession()).data?.session; } catch (_) {} }
+    if (!sess?.access_token) { tryClientFallback(); return; }
+    const baseUrl = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '');
+    if (!baseUrl) { tryClientFallback(); return; }
+    const url = baseUrl + '/functions/v1/export_calendar_ics?type=' + encodeURIComponent(type || 'student') + '&include_group_classes=true&range_days=60';
     try {
         const res = await fetch(url, { headers: { Authorization: 'Bearer ' + sess.access_token } });
-        if (!res.ok) { const t = await res.text(); throw new Error(t || res.status); }
+        if (!res.ok) throw new Error(await res.text() || res.status);
         const blob = await res.blob();
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'schedule.ics';
         a.click();
         URL.revokeObjectURL(a.href);
-    } catch (e) { alert('Export failed: ' + (e.message || e)); }
+    } catch (e) {
+        tryClientFallback();
+    }
 };
 
 window.studentCancelPrivateLesson = async (lessonId) => {
