@@ -1,9 +1,14 @@
 {
-    "name": "dance-school-management",
-    "version": "1.6.0",
-    "description": "Premium Dance School Management Platform",
-    "scripts": {
-        "start": "serve . -s",
-        "build": "node build-vercel.js"
-    }
+  "name": "dance-school-management",
+  "version": "1.6.0",
+  "description": "Premium Dance School Management Platform",
+  "scripts": {
+    "start": "serve . -s",
+    "build:js": "node build-js.js",
+    "build": "node build-js.js && node build-vercel.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "supabase": "^2.0.0"
+  }
 }
