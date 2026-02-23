@@ -44,8 +44,11 @@ CREATE TRIGGER set_profiles_updated_at
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "profiles_select_own" ON public.profiles;
 CREATE POLICY "profiles_select_own" ON public.profiles FOR SELECT USING (auth.uid() = id);
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
 CREATE POLICY "profiles_insert_own" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- =============================================================================
@@ -65,6 +68,7 @@ CREATE INDEX IF NOT EXISTS idx_email_verifications_token_hash ON public.email_ve
 
 ALTER TABLE public.email_verifications ENABLE ROW LEVEL SECURITY;
 -- Prefer no direct client access; Edge Functions use service role. Optional: allow user to read own.
+DROP POLICY IF EXISTS "email_verifications_select_own" ON public.email_verifications;
 CREATE POLICY "email_verifications_select_own" ON public.email_verifications FOR SELECT USING (auth.uid() = user_id);
 
 -- =============================================================================
@@ -81,4 +85,5 @@ CREATE TABLE IF NOT EXISTS public.profile_school_links (
 CREATE INDEX IF NOT EXISTS idx_profile_school_links_profile_id ON public.profile_school_links(profile_id);
 
 ALTER TABLE public.profile_school_links ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "profile_school_links_select_own" ON public.profile_school_links;
 CREATE POLICY "profile_school_links_select_own" ON public.profile_school_links FOR SELECT USING (auth.uid() = profile_id);

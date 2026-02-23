@@ -82,7 +82,13 @@ export let state = {
     _discoveryOnlyEdit: false,
     mockDate: null,
     userProfile: null,
-    verifyEmailToken: null
+    verifyEmailToken: null,
+    activateToken: null,
+    studentActivationStatus: {},
+    auth: { session: null, user: null, profile: null, loading: false, error: null },
+    afterLogin: null,
+    afterVerify: null,
+    reviewDraft: null
 };
 
 const SESSION_IDENTITY_KEY = 'dance_session_identity';
@@ -107,7 +113,9 @@ export function saveState() {
         competitionId: state.competitionId,
         competitionSchoolId: state.competitionSchoolId,
         competitionTab: state.competitionTab,
-        _discoveryOnlyEdit: state._discoveryOnlyEdit
+        _discoveryOnlyEdit: state._discoveryOnlyEdit,
+        afterLogin: state.afterLogin,
+        reviewDraft: state.reviewDraft
     }));
 }
 

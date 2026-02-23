@@ -21,6 +21,11 @@ export function parseQueryAndHashForView() {
         state.verifyEmailToken = tokenParam || null;
         return true;
     }
+    if (viewParam === 'activate') {
+        state.currentView = 'activate';
+        state.activateToken = tokenParam || null;
+        return true;
+    }
     const hash = (window.location.hash || '').replace(/^#/, '');
     const [pathPart, hashQuery] = hash.split('?');
     const segments = pathPart.split('/').filter(Boolean);
@@ -46,6 +51,11 @@ export function parseHashRoute() {
     if (segments[0] === 'verify-email') {
         state.currentView = 'verify-email';
         state.verifyEmailToken = params.get('token') || null;
+        return true;
+    }
+    if (segments[0] === 'activate') {
+        state.currentView = 'activate';
+        state.activateToken = params.get('token') || null;
         return true;
     }
     if (segments[0] === 'dashboard' && segments[1] === 'profile') {

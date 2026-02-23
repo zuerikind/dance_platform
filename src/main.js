@@ -7,8 +7,10 @@ import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIden
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, getPlanExpiryUseFixedDate } from './utils.js';
 import { parseHashRoute, parseQueryAndHashForView, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
+import { getCapabilities, bootstrapAuth } from './auth.js';
 
 if (typeof window !== 'undefined') {
+    window.getCapabilities = getCapabilities;
     window.parseHashRoute = parseHashRoute;
     window.parseQueryAndHashForView = parseQueryAndHashForView;
     window.navigateToAdminJackAndJill = navigateToAdminJackAndJill;
@@ -143,12 +145,14 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (saved.currentUser) state.currentUser = saved.currentUser;
             if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
             if (saved.isPlatformDev !== undefined) state.isPlatformDev = saved.isPlatformDev;
-            if (saved.currentView && state.currentView !== 'verify-email') state.currentView = saved.currentView;
+            if (saved.currentView && state.currentView !== 'verify-email' && state.currentView !== 'activate') state.currentView = saved.currentView;
             if (saved.scheduleView) state.scheduleView = saved.scheduleView;
             if (saved.lastActivity) state.lastActivity = saved.lastActivity;
             if (saved.currentSchool) state.currentSchool = saved.currentSchool;
             if (saved._discoveryOnlyEdit !== undefined) state._discoveryOnlyEdit = !!saved._discoveryOnlyEdit;
             if (state.currentView === 'discovery-profile-only') state._discoveryOnlyEdit = true;
+            if (saved.afterLogin !== undefined) state.afterLogin = saved.afterLogin;
+            if (saved.reviewDraft !== undefined) state.reviewDraft = saved.reviewDraft;
             if (saved.currentUser?.school_id && !saved.isAdmin) {
                 const match = saved.currentSchool && saved.currentSchool.id === saved.currentUser.school_id;
                 state.currentSchool = match ? saved.currentSchool : { id: saved.currentUser.school_id, name: saved.currentSchool?.name || 'School' };
@@ -175,6 +179,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (saved.currentUser) state.currentUser = saved.currentUser;
             if (saved.lastActivity) state.lastActivity = saved.lastActivity;
             if (saved._discoveryOnlyEdit !== undefined) state._discoveryOnlyEdit = !!saved._discoveryOnlyEdit;
+            if (saved.afterLogin !== undefined) state.afterLogin = saved.afterLogin;
+            if (saved.reviewDraft !== undefined) state.reviewDraft = saved.reviewDraft;
         }
 
         updateI18n();
@@ -186,6 +192,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
         const sessRes = supabaseClient ? await supabaseClient.auth.getSession() : { data: { session: null } };
         const hasSupabaseSession = !!sessRes?.data?.session?.user;
+        if (hasSupabaseSession && supabaseClient) await bootstrapAuth(supabaseClient);
         if (hasAuthState && !hasSupabaseSession) {
             state.currentUser = null;
             state.isAdmin = false;
@@ -257,6 +264,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             const path = (window.location.pathname || '').replace(/\/$/, '') || '/';
             if (path === '/discovery' || path.startsWith('/discovery/')) {
                 state.discoveryPath = path;
+                if (path !== '/discovery') state.discoveryDetailFetched = false;
                 window.fetchDiscoveryData().then(() => window.renderView());
             } else {
                 state.discoveryPath = null;

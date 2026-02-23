@@ -143,9 +143,25 @@ export async function fetchAllData() {
                     saveState();
                 }
             }
+            if (state.isAdmin && sid && supabaseClient) {
+                const { data: activationStatus } = await supabaseClient.rpc('get_school_students_activation_status', { p_school_id: sid });
+                state.studentActivationStatus = {};
+                if (activationStatus && Array.isArray(activationStatus)) {
+                    activationStatus.forEach(row => {
+                        if (row && row.student_id) state.studentActivationStatus[row.student_id] = { linked: !!row.linked, invited_at: row.invited_at || null };
+                    });
+                }
+            }
         } else if (state.isAdmin && supabaseClient) {
             const { data: rpcStudents } = await supabaseClient.rpc('get_school_students', { p_school_id: sid });
             if (rpcStudents && Array.isArray(rpcStudents)) state.students = rpcStudents;
+            const { data: activationStatus } = await supabaseClient.rpc('get_school_students_activation_status', { p_school_id: sid });
+            state.studentActivationStatus = {};
+            if (activationStatus && Array.isArray(activationStatus)) {
+                activationStatus.forEach(row => {
+                    if (row && row.student_id) state.studentActivationStatus[row.student_id] = { linked: !!row.linked, invited_at: row.invited_at || null };
+                });
+            }
         } else if (isStudent && state.currentUser) {
             const schoolId = state.currentUser.school_id || sid;
             let myRow = null;
@@ -427,18 +443,36 @@ export async function fetchDiscoveryData() {
         if (path === '/discovery') {
             state.discoverySchools = [];
             state.discoverySchoolDetail = null;
+            state.discoveryMyReviewForTarget = null;
+            state.discoveryDetailFetched = false;
+            state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+            state.discoveryDetailReviews = [];
+            state.discoveryReviewSummary = {};
             if (supabaseClient) {
                 try {
-                    const { data, error } = await supabaseClient.rpc('discovery_list_schools');
-                    if (error) throw error;
-                    state.discoverySchools = Array.isArray(data) ? data : (data && typeof data === 'object' && data !== null ? [data] : []);
+                    const [listRes, summaryRes] = await Promise.all([
+                        supabaseClient.rpc('discovery_list_schools'),
+                        supabaseClient.rpc('get_reviews_summary_for_discovery')
+                    ]);
+                    if (listRes.error) throw listRes.error;
+                    state.discoverySchools = Array.isArray(listRes.data) ? listRes.data : (listRes.data && typeof listRes.data === 'object' && listRes.data !== null ? [listRes.data] : []);
+                    const rows = summaryRes.data || [];
+                    const byTarget = {};
+                    rows.forEach((r) => {
+                        const key = String(r.target_id || '');
+                        if (key) byTarget[key] = { review_count: r.review_count || 0, avg_rating: r.avg_rating != null ? Number(r.avg_rating) : null };
+                    });
+                    state.discoveryReviewSummary = byTarget;
                 } catch (err) {
                     console.error('Discovery list error:', err);
                     state.discoverySchools = [];
+                    state.discoveryReviewSummary = {};
                 }
             }
         } else if (path.startsWith('/discovery/')) {
             state.discoverySchoolDetail = null;
+            state.discoveryMyReviewForTarget = null;
+            state.discoveryDetailFetched = false;
             const afterPrefix = path.replace(/^\/discovery\//, '').trim();
             let decoded = afterPrefix;
             try { decoded = decodeURIComponent(afterPrefix); } catch (_) { /* keep raw */ }
@@ -447,18 +481,64 @@ export async function fetchDiscoveryData() {
                     if (decoded.startsWith('id/')) {
                         const schoolId = decoded.replace(/^id\/?/, '').trim();
                         if (schoolId) {
-                            const { data, error } = await supabaseClient.rpc('discovery_school_detail_by_id', { p_school_id: schoolId });
-                            if (error) throw error;
-                            state.discoverySchoolDetail = data || null;
+                            const [detailRes, summaryRes, reviewsRes] = await Promise.all([
+                                supabaseClient.rpc('discovery_school_detail_by_id', { p_school_id: schoolId }),
+                                supabaseClient.rpc('get_reviews_summary', { p_target_type: 'school', p_target_id: schoolId }),
+                                supabaseClient.rpc('get_reviews_public', { p_target_type: 'school', p_target_id: schoolId, p_limit: 5, p_offset: 0 })
+                            ]);
+                            if (detailRes.error) throw detailRes.error;
+                            state.discoverySchoolDetail = detailRes.data || null;
+                            const sumRow = summaryRes.data && summaryRes.data[0];
+                            state.discoveryDetailReviewSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : { review_count: 0, avg_rating: null };
+                            state.discoveryDetailReviews = reviewsRes.data || [];
+                            const { data: sess } = await supabaseClient.auth.getSession();
+                            if (sess?.session && schoolId) {
+                                const { data: myReview } = await supabaseClient.rpc('get_my_review_for_target', { p_target_type: 'school', p_target_id: schoolId });
+                                state.discoveryMyReviewForTarget = myReview?.[0] ?? null;
+                            } else {
+                                state.discoveryMyReviewForTarget = null;
+                            }
+                        } else {
+                            state.discoverySchoolDetail = null;
+                            state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+                            state.discoveryDetailReviews = [];
+                            state.discoveryMyReviewForTarget = null;
                         }
+                        state.discoveryDetailFetched = true;
                     } else if (decoded) {
-                        const { data, error } = await supabaseClient.rpc('discovery_school_detail', { p_slug: decoded });
-                        if (error) throw error;
-                        state.discoverySchoolDetail = data || null;
+                        const { data: detailData, error: detailError } = await supabaseClient.rpc('discovery_school_detail', { p_slug: decoded });
+                        if (detailError) throw detailError;
+                        state.discoverySchoolDetail = detailData || null;
+                        const detailId = state.discoverySchoolDetail && (state.discoverySchoolDetail.school?.id || state.discoverySchoolDetail.id);
+                        if (!detailId) {
+                            state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+                            state.discoveryDetailReviews = [];
+                            state.discoveryMyReviewForTarget = null;
+                        } else {
+                            const [summaryRes, reviewsRes] = await Promise.all([
+                                supabaseClient.rpc('get_reviews_summary', { p_target_type: 'school', p_target_id: detailId }),
+                                supabaseClient.rpc('get_reviews_public', { p_target_type: 'school', p_target_id: detailId, p_limit: 5, p_offset: 0 })
+                            ]);
+                            const sumRow = summaryRes.data && summaryRes.data[0];
+                            state.discoveryDetailReviewSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : { review_count: 0, avg_rating: null };
+                            state.discoveryDetailReviews = reviewsRes.data || [];
+                            const { data: sess } = await supabaseClient.auth.getSession();
+                            if (sess?.session && detailId) {
+                                const { data: myReview } = await supabaseClient.rpc('get_my_review_for_target', { p_target_type: 'school', p_target_id: detailId });
+                                state.discoveryMyReviewForTarget = myReview?.[0] ?? null;
+                            } else {
+                                state.discoveryMyReviewForTarget = null;
+                            }
+                        }
+                        state.discoveryDetailFetched = true;
                     }
                 } catch (err) {
                     console.error('Discovery detail error:', err);
                     state.discoverySchoolDetail = null;
+                    state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+                    state.discoveryDetailReviews = [];
+                    state.discoveryMyReviewForTarget = null;
+                    state.discoveryDetailFetched = true;
                 }
             }
         }

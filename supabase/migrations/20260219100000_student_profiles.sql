@@ -16,8 +16,11 @@ CREATE TABLE IF NOT EXISTS public.student_profiles (
 COMMENT ON TABLE public.student_profiles IS 'One row per student (auth user). Name, email, phone stored once; enrollments reference by user_id.';
 
 ALTER TABLE public.student_profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "student_profiles_select_own" ON public.student_profiles;
 CREATE POLICY "student_profiles_select_own" ON public.student_profiles FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "student_profiles_insert_own" ON public.student_profiles;
 CREATE POLICY "student_profiles_insert_own" ON public.student_profiles FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "student_profiles_update_own" ON public.student_profiles;
 CREATE POLICY "student_profiles_update_own" ON public.student_profiles FOR UPDATE USING (user_id = auth.uid());
 
 -- =============================================================================

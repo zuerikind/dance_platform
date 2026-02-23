@@ -112,7 +112,13 @@
     _discoveryOnlyEdit: false,
     mockDate: null,
     userProfile: null,
-    verifyEmailToken: null
+    verifyEmailToken: null,
+    activateToken: null,
+    studentActivationStatus: {},
+    auth: { session: null, user: null, profile: null, loading: false, error: null },
+    afterLogin: null,
+    afterVerify: null,
+    reviewDraft: null
   };
   var SESSION_IDENTITY_KEY = "dance_session_identity";
   function saveState() {
@@ -135,7 +141,9 @@
       competitionId: state.competitionId,
       competitionSchoolId: state.competitionSchoolId,
       competitionTab: state.competitionTab,
-      _discoveryOnlyEdit: state._discoveryOnlyEdit
+      _discoveryOnlyEdit: state._discoveryOnlyEdit,
+      afterLogin: state.afterLogin,
+      reviewDraft: state.reviewDraft
     }));
   }
   function setSessionIdentity() {
@@ -248,6 +256,11 @@
       state.verifyEmailToken = tokenParam || null;
       return true;
     }
+    if (viewParam === "activate") {
+      state.currentView = "activate";
+      state.activateToken = tokenParam || null;
+      return true;
+    }
     const hash = (window.location.hash || "").replace(/^#/, "");
     const [pathPart, hashQuery] = hash.split("?");
     const segments = pathPart.split("/").filter(Boolean);
@@ -271,6 +284,11 @@
     if (segments[0] === "verify-email") {
       state.currentView = "verify-email";
       state.verifyEmailToken = params.get("token") || null;
+      return true;
+    }
+    if (segments[0] === "activate") {
+      state.currentView = "activate";
+      state.activateToken = params.get("token") || null;
       return true;
     }
     if (segments[0] === "dashboard" && segments[1] === "profile") {
@@ -316,6 +334,98 @@
   function navigateToStudentJackAndJill(competitionId) {
     if (!competitionId) return;
     if (typeof window !== "undefined") window.location.hash = `#/student/competitions/${competitionId}/jack-and-jill`;
+  }
+
+  // src/auth.js
+  async function bootstrapAuth(supabaseClient2) {
+    if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+    state.auth.loading = true;
+    state.auth.error = null;
+    try {
+      if (!supabaseClient2) {
+        state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+        return;
+      }
+      const { data: sessData } = await supabaseClient2.auth.getSession();
+      const session = sessData?.session ?? null;
+      const user = session?.user ?? null;
+      if (!session || !user?.id) {
+        state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+        state.userProfile = null;
+        return;
+      }
+      let profile = (await supabaseClient2.from("profiles").select("*").eq("id", user.id).maybeSingle()).data;
+      if (!profile) {
+        await supabaseClient2.from("profiles").upsert({
+          id: user.id,
+          email: (user.email || "").toLowerCase() || null,
+          role: "dancer",
+          origin: "discovery",
+          email_confirmed: false
+        }, { onConflict: "id" });
+        profile = (await supabaseClient2.from("profiles").select("*").eq("id", user.id).single()).data ?? null;
+      }
+      state.auth = { session, user, profile, loading: false, error: null };
+      state.userProfile = profile;
+    } catch (err) {
+      state.auth = { session: state.auth?.session ?? null, user: state.auth?.user ?? null, profile: state.auth?.profile ?? null, loading: false, error: err?.message || "Auth failed" };
+    }
+  }
+  function getCapabilities(targetContext) {
+    const t2 = (key) => typeof window !== "undefined" && window.t ? window.t(key) : key;
+    const defaultCta = { label: t2("sign_in") || "Log in", action: "login" };
+    const profile = state.auth?.profile ?? state.userProfile;
+    const session = state.auth?.session;
+    const user = state.auth?.user ?? session?.user;
+    const isLoggedIn = !!(user?.id || state.currentUser?.id);
+    const hasProfile = !!profile;
+    const emailConfirmed = !profile ? false : profile.origin !== "discovery" || !!profile.email_confirmed;
+    const needReview = !targetContext || targetContext === "review";
+    const needSuggest = !targetContext || targetContext === "suggest";
+    if (!isLoggedIn) {
+      return {
+        isLoggedIn: false,
+        hasProfile: false,
+        emailConfirmed: false,
+        canReview: false,
+        canSuggestListing: false,
+        reason: "not_logged_in",
+        cta: defaultCta
+      };
+    }
+    if (!hasProfile) {
+      return {
+        isLoggedIn: true,
+        hasProfile: false,
+        emailConfirmed: false,
+        canReview: false,
+        canSuggestListing: false,
+        reason: "no_profile",
+        cta: { label: t2("profile_sign_in_required") || "Complete profile", action: "profile" }
+      };
+    }
+    if (!emailConfirmed) {
+      return {
+        isLoggedIn: true,
+        hasProfile: true,
+        emailConfirmed: false,
+        canReview: false,
+        canSuggestListing: false,
+        reason: "email_not_confirmed",
+        cta: { label: t2("resend_verification") || "Confirm email", action: "confirm_email" }
+      };
+    }
+    const canReview = needReview;
+    const canSuggestListing = needSuggest;
+    return {
+      isLoggedIn: true,
+      hasProfile: true,
+      emailConfirmed: true,
+      canReview,
+      canSuggestListing,
+      reason: "ok",
+      cta: { label: "", action: "" }
+    };
   }
 
   // src/data.js
@@ -439,9 +549,25 @@
             saveState();
           }
         }
+        if (state.isAdmin && sid && supabaseClient) {
+          const { data: activationStatus } = await supabaseClient.rpc("get_school_students_activation_status", { p_school_id: sid });
+          state.studentActivationStatus = {};
+          if (activationStatus && Array.isArray(activationStatus)) {
+            activationStatus.forEach((row) => {
+              if (row && row.student_id) state.studentActivationStatus[row.student_id] = { linked: !!row.linked, invited_at: row.invited_at || null };
+            });
+          }
+        }
       } else if (state.isAdmin && supabaseClient) {
         const { data: rpcStudents } = await supabaseClient.rpc("get_school_students", { p_school_id: sid });
         if (rpcStudents && Array.isArray(rpcStudents)) state.students = rpcStudents;
+        const { data: activationStatus } = await supabaseClient.rpc("get_school_students_activation_status", { p_school_id: sid });
+        state.studentActivationStatus = {};
+        if (activationStatus && Array.isArray(activationStatus)) {
+          activationStatus.forEach((row) => {
+            if (row && row.student_id) state.studentActivationStatus[row.student_id] = { linked: !!row.linked, invited_at: row.invited_at || null };
+          });
+        }
       } else if (isStudent && state.currentUser) {
         const schoolId = state.currentUser.school_id || sid;
         let myRow = null;
@@ -732,18 +858,36 @@
       if (path === "/discovery") {
         state.discoverySchools = [];
         state.discoverySchoolDetail = null;
+        state.discoveryMyReviewForTarget = null;
+        state.discoveryDetailFetched = false;
+        state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+        state.discoveryDetailReviews = [];
+        state.discoveryReviewSummary = {};
         if (supabaseClient) {
           try {
-            const { data, error } = await supabaseClient.rpc("discovery_list_schools");
-            if (error) throw error;
-            state.discoverySchools = Array.isArray(data) ? data : data && typeof data === "object" && data !== null ? [data] : [];
+            const [listRes, summaryRes] = await Promise.all([
+              supabaseClient.rpc("discovery_list_schools"),
+              supabaseClient.rpc("get_reviews_summary_for_discovery")
+            ]);
+            if (listRes.error) throw listRes.error;
+            state.discoverySchools = Array.isArray(listRes.data) ? listRes.data : listRes.data && typeof listRes.data === "object" && listRes.data !== null ? [listRes.data] : [];
+            const rows = summaryRes.data || [];
+            const byTarget = {};
+            rows.forEach((r) => {
+              const key = String(r.target_id || "");
+              if (key) byTarget[key] = { review_count: r.review_count || 0, avg_rating: r.avg_rating != null ? Number(r.avg_rating) : null };
+            });
+            state.discoveryReviewSummary = byTarget;
           } catch (err) {
             console.error("Discovery list error:", err);
             state.discoverySchools = [];
+            state.discoveryReviewSummary = {};
           }
         }
       } else if (path.startsWith("/discovery/")) {
         state.discoverySchoolDetail = null;
+        state.discoveryMyReviewForTarget = null;
+        state.discoveryDetailFetched = false;
         const afterPrefix = path.replace(/^\/discovery\//, "").trim();
         let decoded = afterPrefix;
         try {
@@ -755,18 +899,64 @@
             if (decoded.startsWith("id/")) {
               const schoolId = decoded.replace(/^id\/?/, "").trim();
               if (schoolId) {
-                const { data, error } = await supabaseClient.rpc("discovery_school_detail_by_id", { p_school_id: schoolId });
-                if (error) throw error;
-                state.discoverySchoolDetail = data || null;
+                const [detailRes, summaryRes, reviewsRes] = await Promise.all([
+                  supabaseClient.rpc("discovery_school_detail_by_id", { p_school_id: schoolId }),
+                  supabaseClient.rpc("get_reviews_summary", { p_target_type: "school", p_target_id: schoolId }),
+                  supabaseClient.rpc("get_reviews_public", { p_target_type: "school", p_target_id: schoolId, p_limit: 5, p_offset: 0 })
+                ]);
+                if (detailRes.error) throw detailRes.error;
+                state.discoverySchoolDetail = detailRes.data || null;
+                const sumRow = summaryRes.data && summaryRes.data[0];
+                state.discoveryDetailReviewSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : { review_count: 0, avg_rating: null };
+                state.discoveryDetailReviews = reviewsRes.data || [];
+                const { data: sess } = await supabaseClient.auth.getSession();
+                if (sess?.session && schoolId) {
+                  const { data: myReview } = await supabaseClient.rpc("get_my_review_for_target", { p_target_type: "school", p_target_id: schoolId });
+                  state.discoveryMyReviewForTarget = myReview?.[0] ?? null;
+                } else {
+                  state.discoveryMyReviewForTarget = null;
+                }
+              } else {
+                state.discoverySchoolDetail = null;
+                state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+                state.discoveryDetailReviews = [];
+                state.discoveryMyReviewForTarget = null;
               }
+              state.discoveryDetailFetched = true;
             } else if (decoded) {
-              const { data, error } = await supabaseClient.rpc("discovery_school_detail", { p_slug: decoded });
-              if (error) throw error;
-              state.discoverySchoolDetail = data || null;
+              const { data: detailData, error: detailError } = await supabaseClient.rpc("discovery_school_detail", { p_slug: decoded });
+              if (detailError) throw detailError;
+              state.discoverySchoolDetail = detailData || null;
+              const detailId = state.discoverySchoolDetail && (state.discoverySchoolDetail.school?.id || state.discoverySchoolDetail.id);
+              if (!detailId) {
+                state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+                state.discoveryDetailReviews = [];
+                state.discoveryMyReviewForTarget = null;
+              } else {
+                const [summaryRes, reviewsRes] = await Promise.all([
+                  supabaseClient.rpc("get_reviews_summary", { p_target_type: "school", p_target_id: detailId }),
+                  supabaseClient.rpc("get_reviews_public", { p_target_type: "school", p_target_id: detailId, p_limit: 5, p_offset: 0 })
+                ]);
+                const sumRow = summaryRes.data && summaryRes.data[0];
+                state.discoveryDetailReviewSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : { review_count: 0, avg_rating: null };
+                state.discoveryDetailReviews = reviewsRes.data || [];
+                const { data: sess } = await supabaseClient.auth.getSession();
+                if (sess?.session && detailId) {
+                  const { data: myReview } = await supabaseClient.rpc("get_my_review_for_target", { p_target_type: "school", p_target_id: detailId });
+                  state.discoveryMyReviewForTarget = myReview?.[0] ?? null;
+                } else {
+                  state.discoveryMyReviewForTarget = null;
+                }
+              }
+              state.discoveryDetailFetched = true;
             }
           } catch (err) {
             console.error("Discovery detail error:", err);
             state.discoverySchoolDetail = null;
+            state.discoveryDetailReviewSummary = { review_count: 0, avg_rating: null };
+            state.discoveryDetailReviews = [];
+            state.discoveryMyReviewForTarget = null;
+            state.discoveryDetailFetched = true;
           }
         }
       }
@@ -1397,6 +1587,13 @@
       discovery_filter_city: "City",
       discovery_filter_all: "All",
       discovery_not_found: "This studio doesn't have a detail page yet.",
+      discovery_no_reviews: "No reviews yet",
+      discovery_review_singular: "review",
+      discovery_reviews_plural: "{count} reviews",
+      discovery_reviews_section: "Reviews",
+      discovery_review_show_categories: "Show categories",
+      discovery_go_to_reviews: "Go to reviews",
+      discovery_see_all_reviews: "See all reviews",
       discovery_sign_in_btn: "Sign in",
       discovery_not_on_app: "This school is not using Bailadmin. Please contact the school directly.",
       discovery_sign_in_edit_profile: "Sign in to edit your studio profile",
@@ -1456,6 +1653,24 @@
       resend_error: "Could not send. Try again.",
       linked_schools: "Linked schools",
       no_schools_linked: "No schools linked yet.",
+      profile_your_reviews: "Your reviews",
+      profile_no_reviews: "No reviews yet.",
+      profile_review_school: "Review a school",
+      profile_suggest_school: "Ask to add a new school",
+      reviews_admin_flag_label: "Pending review",
+      published: "Published",
+      activate_title: "Link your account",
+      activate_requires_login: "Create an account or sign in to link with",
+      activate_success: "Account linked!",
+      activate_success_school: "You are now linked with this school.",
+      activate_go_dashboard: "Go to dashboard",
+      activate_invalid_link: "Invalid or expired link.",
+      activate_linking: "Linking...",
+      invite_activation: "Invite to activate",
+      activation_status_linked: "Linked",
+      activation_status_invited: "Invited",
+      invite_activation_sent: "Invite sent. The student will receive an email to link their account.",
+      invite_activation_error: "Failed to send invite.",
       verified: "Verified",
       not_verified: "Not verified",
       first_name: "First name",
@@ -1467,6 +1682,48 @@
       instagram: "Instagram",
       instagram_placeholder: "@handle",
       coming_soon: "Coming soon",
+      review_rating_overall: "Overall rating",
+      review_teaching: "Teaching",
+      review_vibe: "Vibe",
+      review_organization: "Organization",
+      review_value: "Quality\u2013price ratio",
+      review_star_1: "Poor",
+      review_star_2: "Fair",
+      review_star_3: "OK",
+      review_star_4: "Good",
+      review_star_5: "Excellent",
+      review_comment: "Comment (optional, max 500)",
+      review_comment_placeholder: "Your experience...",
+      submit_review_btn: "Submit review",
+      review_submitted: "Review submitted",
+      review_thanks: "Thanks for your review.",
+      review_submitted_flagged: "Your review was submitted. Reviews with lower ratings may be reviewed before they appear publicly.",
+      review_already_submitted: "You have already reviewed this.",
+      review_rate_limit: "Rate limit: try again later.",
+      listing_suggest_title: "Suggest a school or teacher",
+      listing_suggest_subtitle: "Submit a new listing for the discovery page.",
+      listing_suggest_type: "Type",
+      listing_type_school: "School",
+      listing_type_teacher: "Teacher",
+      name: "Name",
+      listing_suggest_styles: "Dance styles",
+      listing_suggest_website: "Website",
+      listing_suggest_notes_placeholder: "Optional details",
+      notes: "Notes",
+      listing_suggest_submit: "Submit suggestion",
+      listing_suggest_success: "Suggestion submitted. We'll review it soon.",
+      listing_suggest_duplicate: "This looks already listed.",
+      listing_suggestions_admin_title: "Listing suggestions",
+      listing_suggestions_admin_subtitle: "Approve or reject pending suggestions.",
+      listing_suggestions_empty: "No pending suggestions.",
+      reviews_admin_title: "Reviews",
+      reviews_admin_subtitle: "All discovery reviews. Delete if needed.",
+      reviews_admin_empty: "No reviews yet.",
+      reviews_admin_accept: "Accept",
+      reviews_admin_delete: "Delete",
+      reviews_admin_delete_confirm: "Delete this review?",
+      reviews_admin_needs_review: "Needs review",
+      reviews_admin_by_school: "By school",
       dev_login_btn: "Login",
       dev_dashboard_title: "Platform Developer",
       dev_school_inspector: "School Inspector",
@@ -2039,7 +2296,16 @@
       discovery_filter_city: "Ciudad",
       discovery_filter_all: "Todos",
       discovery_not_found: "Este estudio a\xFAn no tiene p\xE1gina de detalle.",
+      discovery_no_reviews: "A\xFAn no hay rese\xF1as",
+      discovery_review_singular: "rese\xF1a",
+      discovery_reviews_plural: "{count} rese\xF1as",
+      discovery_reviews_section: "Rese\xF1as",
+      discovery_review_show_categories: "Ver categor\xEDas",
+      discovery_go_to_reviews: "Ir a rese\xF1as",
+      discovery_see_all_reviews: "Ver todas las rese\xF1as",
       discovery_sign_in_btn: "Iniciar sesi\xF3n",
+      discovery_leave_review: "Dejar una rese\xF1a",
+      discovery_suggest_school: "Sugerir una escuela",
       discovery_not_on_app: "Esta escuela no utiliza Bailadmin. Por favor contacta a la escuela directamente.",
       discovery_sign_in_edit_profile: "Iniciar sesi\xF3n para editar el perfil de tu estudio",
       discovery_back_to_page: "Volver a la p\xE1gina de descubrimiento",
@@ -2429,6 +2695,24 @@
       profile_settings: "Perfil",
       linked_schools: "Escuelas vinculadas",
       no_schools_linked: "A\xFAn no hay escuelas vinculadas.",
+      profile_your_reviews: "Tus rese\xF1as",
+      profile_no_reviews: "A\xFAn no hay rese\xF1as.",
+      profile_review_school: "Rese\xF1ar una escuela",
+      profile_suggest_school: "Pedir a\xF1adir una escuela",
+      reviews_admin_flag_label: "Pendiente de revisi\xF3n",
+      published: "Publicado",
+      activate_title: "Vincular tu cuenta",
+      activate_requires_login: "Crea una cuenta o inicia sesi\xF3n para vincular con",
+      activate_success: "\xA1Cuenta vinculada!",
+      activate_success_school: "Ya est\xE1s vinculado con esta escuela.",
+      activate_go_dashboard: "Ir al panel",
+      activate_invalid_link: "Enlace inv\xE1lido o caducado.",
+      activate_linking: "Vinculando...",
+      invite_activation: "Invitar a activar",
+      activation_status_linked: "Vinculado",
+      activation_status_invited: "Invitado",
+      invite_activation_sent: "Invitaci\xF3n enviada. El alumno recibir\xE1 un correo para vincular su cuenta.",
+      invite_activation_error: "No se pudo enviar la invitaci\xF3n.",
       verified: "Verificado",
       not_verified: "No verificado",
       first_name: "Nombre",
@@ -2438,7 +2722,49 @@
       country: "Pa\xEDs",
       save: "Guardar",
       instagram: "Instagram",
-      instagram_placeholder: "@usuario"
+      instagram_placeholder: "@usuario",
+      review_rating_overall: "Valoraci\xF3n general",
+      review_teaching: "Ense\xF1anza",
+      review_vibe: "Ambiente",
+      review_organization: "Organizaci\xF3n",
+      review_value: "Relaci\xF3n calidad-precio",
+      review_star_1: "Pobre",
+      review_star_2: "Regular",
+      review_star_3: "Bien",
+      review_star_4: "Bueno",
+      review_star_5: "Excelente",
+      review_comment: "Comentario (opcional, m\xE1x. 500)",
+      review_comment_placeholder: "Tu experiencia...",
+      submit_review_btn: "Enviar rese\xF1a",
+      review_submitted: "Rese\xF1a enviada",
+      review_thanks: "Gracias por tu rese\xF1a.",
+      review_submitted_flagged: "Tu rese\xF1a se ha enviado. Las valoraciones m\xE1s bajas pueden revisarse antes de mostrarse.",
+      review_already_submitted: "Ya has dejado una rese\xF1a aqu\xED.",
+      review_rate_limit: "L\xEDmite de env\xEDos. Intenta m\xE1s tarde.",
+      listing_suggest_title: "Sugerir una escuela o profesor",
+      listing_suggest_subtitle: "Env\xEDa una nueva ficha para la p\xE1gina de descubrimiento.",
+      listing_suggest_type: "Tipo",
+      listing_type_school: "Escuela",
+      listing_type_teacher: "Profesor",
+      name: "Nombre",
+      listing_suggest_styles: "Estilos de baile",
+      listing_suggest_website: "Sitio web",
+      listing_suggest_notes_placeholder: "Detalles opcionales",
+      notes: "Notas",
+      listing_suggest_submit: "Enviar sugerencia",
+      listing_suggest_success: "Sugerencia enviada. La revisaremos pronto.",
+      listing_suggest_duplicate: "Parece que ya est\xE1 en la lista.",
+      listing_suggestions_admin_title: "Sugerencias de fichas",
+      listing_suggestions_admin_subtitle: "Aprobar o rechazar sugerencias pendientes.",
+      listing_suggestions_empty: "No hay sugerencias pendientes.",
+      reviews_admin_title: "Rese\xF1as",
+      reviews_admin_subtitle: "Todas las rese\xF1as de discovery. Eliminar si hace falta.",
+      reviews_admin_empty: "A\xFAn no hay rese\xF1as.",
+      reviews_admin_accept: "Aceptar",
+      reviews_admin_delete: "Eliminar",
+      reviews_admin_delete_confirm: "\xBFEliminar esta rese\xF1a?",
+      reviews_admin_needs_review: "Requieren revisi\xF3n",
+      reviews_admin_by_school: "Por escuela"
     },
     de: {
       nav_schedule: "Stundenplan",
@@ -2633,7 +2959,16 @@
       discovery_filter_city: "Stadt",
       discovery_filter_all: "Alle",
       discovery_not_found: "Dieses Studio hat noch keine Detailseite.",
+      discovery_no_reviews: "Noch keine Bewertungen",
+      discovery_review_singular: "Bewertung",
+      discovery_reviews_plural: "{count} Bewertungen",
+      discovery_reviews_section: "Bewertungen",
+      discovery_review_show_categories: "Kategorien anzeigen",
+      discovery_go_to_reviews: "Zu Bewertungen",
+      discovery_see_all_reviews: "Alle Bewertungen anzeigen",
       discovery_sign_in_btn: "Anmelden",
+      discovery_leave_review: "Bewertung schreiben",
+      discovery_suggest_school: "Schule vorschlagen",
       discovery_not_on_app: "Diese Schule nutzt Bailadmin nicht. Bitte kontaktiere die Schule direkt.",
       discovery_sign_in_edit_profile: "Anmelden, um dein Studio-Profil zu bearbeiten",
       discovery_back_to_page: "Zur\xFCck zur Discovery-Seite",
@@ -2999,6 +3334,24 @@
       profile_settings: "Profil",
       linked_schools: "Verkn\xFCpfte Schulen",
       no_schools_linked: "Noch keine Schulen verkn\xFCpft.",
+      profile_your_reviews: "Deine Bewertungen",
+      profile_no_reviews: "Noch keine Bewertungen.",
+      profile_review_school: "Schule bewerten",
+      profile_suggest_school: "Schule vorschlagen",
+      reviews_admin_flag_label: "Wartet auf Pr\xFCfung",
+      published: "Ver\xF6ffentlicht",
+      activate_title: "Konto verkn\xFCpfen",
+      activate_requires_login: "Konto erstellen oder anmelden, um zu verkn\xFCpfen mit",
+      activate_success: "Konto verkn\xFCpft!",
+      activate_success_school: "Du bist jetzt mit dieser Schule verkn\xFCpft.",
+      activate_go_dashboard: "Zum Dashboard",
+      activate_invalid_link: "Ung\xFCltiger oder abgelaufener Link.",
+      activate_linking: "Verkn\xFCpfen...",
+      invite_activation: "Zum Aktivieren einladen",
+      activation_status_linked: "Verkn\xFCpft",
+      activation_status_invited: "Eingeladen",
+      invite_activation_sent: "Einladung gesendet. Der Sch\xFCler erh\xE4lt eine E-Mail zur Verkn\xFCpfung.",
+      invite_activation_error: "Einladung konnte nicht gesendet werden.",
       verified: "Best\xE4tigt",
       not_verified: "Nicht best\xE4tigt",
       first_name: "Vorname",
@@ -3008,7 +3361,49 @@
       country: "Land",
       save: "Speichern",
       instagram: "Instagram",
-      instagram_placeholder: "@handle"
+      instagram_placeholder: "@handle",
+      review_rating_overall: "Gesamtbewertung",
+      review_teaching: "Unterricht",
+      review_vibe: "Atmosph\xE4re",
+      review_organization: "Organisation",
+      review_value: "Preis-Leistung",
+      review_star_1: "Schlecht",
+      review_star_2: "Ausreichend",
+      review_star_3: "OK",
+      review_star_4: "Gut",
+      review_star_5: "Ausgezeichnet",
+      review_comment: "Kommentar (optional, max. 500)",
+      review_comment_placeholder: "Deine Erfahrung...",
+      submit_review_btn: "Bewertung absenden",
+      review_submitted: "Bewertung abgeschickt",
+      review_thanks: "Danke f\xFCr deine Bewertung.",
+      review_submitted_flagged: "Deine Bewertung wurde gesendet. Niedrigere Bewertungen werden ggf. vor der Ver\xF6ffentlichung gepr\xFCft.",
+      review_already_submitted: "Du hast hier bereits bewertet.",
+      review_rate_limit: "Limit erreicht. Bitte sp\xE4ter erneut versuchen.",
+      listing_suggest_title: "Schule oder Lehrer vorschlagen",
+      listing_suggest_subtitle: "Neuen Eintrag f\xFCr die Discovery-Seite einreichen.",
+      listing_suggest_type: "Typ",
+      listing_type_school: "Schule",
+      listing_type_teacher: "Lehrer",
+      name: "Name",
+      listing_suggest_styles: "Tanzstile",
+      listing_suggest_website: "Webseite",
+      listing_suggest_notes_placeholder: "Optionale Angaben",
+      notes: "Notizen",
+      listing_suggest_submit: "Vorschlag absenden",
+      listing_suggest_success: "Vorschlag eingereicht. Wir pr\xFCfen ihn bald.",
+      listing_suggest_duplicate: "Scheint bereits gelistet zu sein.",
+      listing_suggestions_admin_title: "Eintragsvorschl\xE4ge",
+      listing_suggestions_admin_subtitle: "Ausstehende Vorschl\xE4ge genehmigen oder ablehnen.",
+      listing_suggestions_empty: "Keine ausstehenden Vorschl\xE4ge.",
+      reviews_admin_title: "Bewertungen",
+      reviews_admin_subtitle: "Alle Discovery-Bewertungen. Bei Bedarf l\xF6schen.",
+      reviews_admin_empty: "Noch keine Bewertungen.",
+      reviews_admin_accept: "Akzeptieren",
+      reviews_admin_delete: "L\xF6schen",
+      reviews_admin_delete_confirm: "Diese Bewertung l\xF6schen?",
+      reviews_admin_needs_review: "Pr\xFCfung n\xF6tig",
+      reviews_admin_by_school: "Nach Schule"
     }
   };
   setLocalesDict(DANCE_LOCALES);
@@ -3028,8 +3423,65 @@
     const s = String(name).trim().toLowerCase().replace(/[^a-z0-9\s\-]/g, "").replace(/\s+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
     return s || "";
   };
+  window.renderRatingStars = (rating) => {
+    const r = Math.min(5, Math.max(0, Number(rating) || 0));
+    const full = Math.round(r);
+    const starSvg = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+    let html = `<span class="rating-stars rating-stars-whole" aria-label="${r.toFixed(1)} out of 5">`;
+    for (let i = 0; i < 5; i++) html += `<span class="rating-star ${i < full ? "rating-star-filled" : "rating-star-empty"}">${starSvg}</span>`;
+    html += "</span>";
+    return html;
+  };
+  var REVIEW_STAR_LABELS = { 1: "Poor", 2: "Fair", 3: "OK", 4: "Good", 5: "Excellent" };
+  var getReviewStarLabel = (v) => (typeof window.t === "function" ? window.t("review_star_" + v) : null) || REVIEW_STAR_LABELS[v] || String(v);
+  window.initReviewStarWidget = (widgetId) => {
+    const wid = widgetId || "review-rating-overall-widget";
+    const widget = document.getElementById(wid);
+    if (!widget) return;
+    const inputId = wid.replace(/-widget$/, "");
+    const input = document.getElementById(inputId);
+    const container = widget.querySelector(".review-stars-container");
+    const labelEl = widget.querySelector(".review-star-label");
+    const stars = widget.querySelectorAll(".review-star-half");
+    if (!container || !labelEl || !stars.length || !input) return;
+    const updateDisplay = (value2, hoverValue2) => {
+      const v = hoverValue2 != null ? hoverValue2 : value2;
+      const idx = Math.floor(Number(v) || 0) - 1;
+      stars.forEach((el, i) => {
+        el.style.color = i <= idx ? "var(--system-yellow, #ffc107)" : "var(--system-gray4, #999)";
+      });
+      const label = v ? getReviewStarLabel(Number(v)) : "";
+      labelEl.textContent = label;
+      if (container.getAttribute("aria-valuenow") !== String(value2)) {
+        container.setAttribute("aria-valuenow", value2);
+        container.setAttribute("aria-valuetext", label || String(value2));
+      }
+    };
+    let value = parseInt(input.value, 10) || 3;
+    let hoverValue = null;
+    if (!input.value && input.hasAttribute("value")) value = parseInt(input.getAttribute("value"), 10) || 3;
+    updateDisplay(value);
+    stars.forEach((el) => {
+      const val = parseInt(el.getAttribute("data-value"), 10);
+      el.addEventListener("click", () => {
+        value = val;
+        input.value = String(value);
+        hoverValue = null;
+        updateDisplay(value);
+      });
+      el.addEventListener("mouseenter", () => {
+        hoverValue = val;
+        updateDisplay(value, hoverValue);
+      });
+    });
+    container.addEventListener("mouseleave", () => {
+      hoverValue = null;
+      updateDisplay(value);
+    });
+  };
   window.navigateDiscovery = (path) => {
     state.discoveryPath = path;
+    if (path !== "/discovery" && path.startsWith("/discovery/")) state.discoveryDetailFetched = false;
     history.pushState({ discoveryPath: path }, "", path || "/discovery");
     if (path === "/discovery/register" || path === "/discovery/login") {
       renderView();
@@ -3047,15 +3499,22 @@
     const { data: sess } = await supabaseClient.auth.getSession();
     if (!sess?.session?.user?.id) {
       state.userProfile = null;
+      if (state.auth) state.auth.profile = null;
       return null;
     }
     const uid = sess.session.user.id;
     const { data: profile, error } = await supabaseClient.from("profiles").select("*").eq("id", uid).maybeSingle();
     if (error) {
       state.userProfile = null;
+      if (state.auth) state.auth.profile = null;
       return null;
     }
     state.userProfile = profile || null;
+    if (state.auth) {
+      state.auth.profile = state.userProfile;
+      state.auth.session = sess.session;
+      state.auth.user = sess.session.user;
+    }
     return state.userProfile;
   };
   var _resendVerificationCooldownUntil = 0;
@@ -3149,6 +3608,15 @@
       state.isAdmin = false;
       setSessionIdentity();
       saveState();
+      if (state.activateToken) {
+        state.currentView = "activate";
+        state.discoveryPath = null;
+        window.history.replaceState({}, "", (window.location.pathname || "/") + "?view=activate&token=" + encodeURIComponent(state.activateToken));
+        await window.fetchUserProfile();
+        renderView();
+        window.scrollTo(0, 0);
+        return;
+      }
       state.discoveryPath = "/discovery";
       history.pushState({ discoveryPath: "/discovery" }, "", "/discovery");
       await window.fetchUserProfile();
@@ -3197,6 +3665,35 @@
       setSessionIdentity();
       saveState();
       state.userProfile = profile || null;
+      if (state.auth) {
+        state.auth.profile = profile;
+        state.auth.user = user;
+        state.auth.session = signInData.session;
+      }
+      if (state.activateToken) {
+        state.currentView = "activate";
+        state.discoveryPath = null;
+        window.history.replaceState({}, "", (window.location.pathname || "/") + "?view=activate&token=" + encodeURIComponent(state.activateToken));
+        renderView();
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (state.afterLogin) {
+        const next = state.afterLogin;
+        state.afterLogin = null;
+        if (next.view === "review-create") {
+          state.reviewDraft = next.reviewDraft || state.reviewDraft;
+          state.currentView = "review-create";
+          state.discoveryPath = null;
+        } else if (next.view === "listing-suggest") {
+          state.currentView = "listing-suggest";
+          state.discoveryPath = null;
+        }
+        saveState();
+        renderView();
+        window.scrollTo(0, 0);
+        return;
+      }
       state.discoveryPath = "/discovery";
       history.pushState({ discoveryPath: "/discovery" }, "", "/discovery");
       renderView();
@@ -3218,19 +3715,72 @@
       if (data && data.error) throw new Error(data.error);
       state.verifyEmailToken = null;
       if (supabaseClient) await window.fetchUserProfile();
-      state.currentView = "dashboard-profile";
+      if (state.auth) state.auth.profile = state.userProfile;
+      if (state.afterLogin) {
+        const next = state.afterLogin;
+        state.afterLogin = null;
+        if (next.view === "review-create") {
+          state.reviewDraft = next.reviewDraft || state.reviewDraft;
+          state.currentView = "review-create";
+        } else if (next.view === "listing-suggest") {
+          state.currentView = "listing-suggest";
+        } else {
+          state.currentView = "dashboard-profile";
+        }
+      } else {
+        state.currentView = "dashboard-profile";
+      }
       if (window.location.hash) window.location.hash = "";
-      window.history.replaceState({}, "", window.location.pathname || "/?view=dashboard-profile");
+      window.history.replaceState({}, "", window.location.pathname || "/");
       renderView();
       if (window.lucide) window.lucide.createIcons();
       root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p style="color: var(--system-green);">${t2("verify_email_success") || "Email confirmed!"}</p><a href="#/dashboard/profile" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("profile_settings") || "Go to profile"}</a></div></div>`;
       setTimeout(() => {
-        state.currentView = "dashboard-profile";
-        if (typeof window.parseHashRoute === "function") window.location.hash = "#/dashboard/profile";
+        if (typeof window.parseHashRoute === "function" && state.currentView === "dashboard-profile") window.location.hash = "#/dashboard/profile";
         renderView();
       }, 1500);
     } catch (e) {
       root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${t2("verify_email_invalid_link") || "Invalid or expired link."}</p><a href="/discovery" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back to discovery"}</a></div></div>`;
+    }
+  };
+  window.runActivateFlow = async (token) => {
+    const t2 = (k) => window.t ? window.t(k) : k;
+    const root = document.getElementById("app-root");
+    if (!root || !token) return;
+    const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/accept_student_activation";
+    const headers = { "Content-Type": "application/json" };
+    const sess = supabaseClient ? (await supabaseClient.auth.getSession()).data?.session : null;
+    if (sess?.access_token) headers["Authorization"] = "Bearer " + sess.access_token;
+    try {
+      const res = await fetch(fnUrl, { method: "POST", headers, body: JSON.stringify({ token }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.requires_login) {
+        const schoolName2 = (data.school_name || "").replace(/</g, "&lt;");
+        const masked = (data.masked_email || "").replace(/</g, "&lt;");
+        const goLogin = "event.preventDefault(); state.activateToken='" + String(token).replace(/'/g, "\\'") + "'; state.discoveryPath='/discovery/login'; history.pushState({},'','/discovery/login'); renderView();";
+        const goRegister = "event.preventDefault(); state.activateToken='" + String(token).replace(/'/g, "\\'") + "'; state.discoveryPath='/discovery/register'; history.pushState({},'','/discovery/register'); renderView();";
+        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem; max-width: 400px;"><h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${t2("activate_title") || "Link your account"}</h2><p class="text-muted" style="margin-bottom: 1.25rem;">${t2("activate_requires_login") || "Create an account or sign in to link with"}: <strong>${schoolName2 || "your school"}</strong>${masked ? ` (${masked})` : ""}.</p><button type="button" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 0.5rem; border-radius: 12px; font-weight: 600;" onclick="${goLogin}">${t2("sign_in") || "Sign in"}</button><button type="button" class="btn-secondary" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600;" onclick="${goRegister}">${t2("sign_up") || "Sign up"}</button></div></div>`;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+      }
+      if (!res.ok) {
+        const err = (data.error || "HTTP " + res.status).replace(/</g, "&lt;");
+        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${err}</p><a href="/" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back"}</a></div></div>`;
+        return;
+      }
+      state.activateToken = null;
+      const schoolName = (data.school?.name || "").replace(/</g, "&lt;");
+      root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p style="color: var(--system-green); font-weight: 600;">${t2("activate_success") || "Account linked!"}</p><p class="text-muted" style="margin-top: 0.5rem;">${schoolName ? t2("activate_success_school") || "You are now linked with " + schoolName : ""}</p><a href="/" style="display: inline-block; margin-top: 1rem; color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("activate_go_dashboard") || "Go to dashboard"}</a></div></div>`;
+      if (window.lucide) window.lucide.createIcons();
+      window.history.replaceState({}, "", window.location.pathname || "/");
+      setTimeout(() => {
+        state.currentView = "school-selection";
+        state.currentSchool = data.school ? { id: data.school.id, name: data.school.name } : null;
+        saveState();
+        renderView();
+      }, 2e3);
+    } catch (e) {
+      root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${e && e.message ? String(e.message).replace(/</g, "&lt;") : t2("activate_invalid_link") || "Invalid or expired link."}</p><a href="/" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back"}</a></div></div>`;
     }
   };
   window.renderDashboardProfileView = () => {
@@ -3256,8 +3806,378 @@
     html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t2("save") || "Save"}</button>`;
     html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t2("linked_schools") || "Linked schools"}</h3>`;
     html += linkedSchools.length ? `<ul style="margin: 0; padding-left: 1.2rem; color: var(--text-primary);">${linkedSchools.map((s) => `<li>${(s.name || s.id || "").replace(/</g, "&lt;")}</li>`).join("")}</ul>` : `<p class="text-muted" style="font-size: 0.9rem;">${t2("no_schools_linked") || "No schools linked yet."}</p>`;
+    const isVerified = !p.origin || p.origin !== "discovery" || p.email_confirmed;
+    const goDiscovery = "event.preventDefault(); state.currentView=null; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ renderView(); window.scrollTo(0,0); }); if(window.lucide) window.lucide.createIcons();";
+    html += `<div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">`;
+    html += `<button type="button" class="btn-secondary" style="width: 100%; padding: 12px 16px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent;" ${isVerified ? `onclick="${goDiscovery}"` : "disabled"}><i data-lucide="star" size="18"></i>${t2("profile_review_school") || "Review a school"}</button>`;
+    html += `<button type="button" class="btn-secondary" style="width: 100%; padding: 12px 16px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent;" ${isVerified ? `onclick="event.preventDefault(); window.navigateToListingSuggest();"` : "disabled"}><i data-lucide="plus-circle" size="18"></i>${t2("profile_suggest_school") || "Ask to add a new school"}</button>`;
+    html += `</div>`;
+    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin: 1.5rem 0 0.5rem;">${t2("profile_your_reviews") || "Your reviews"}</h3>`;
+    html += `<div id="profile-my-reviews" class="profile-my-reviews" style="min-height: 24px;">${t2("loading") || "Loading\u2026"}</div>`;
     html += `</div>`;
     return html;
+  };
+  window.fetchProfileMyReviews = async () => {
+    const el = document.getElementById("profile-my-reviews");
+    if (!el || !supabaseClient) return;
+    try {
+      const { data: list, error } = await supabaseClient.rpc("get_my_reviews");
+      const t2 = (k) => window.t ? window.t(k) : k;
+      if (error) {
+        el.innerHTML = `<p class="text-muted" style="font-size: 0.9rem;">${(t2("not_found_msg") || "Could not load reviews.").replace(/</g, "&lt;")}</p>`;
+        return;
+      }
+      const reviews = list || [];
+      if (reviews.length === 0) {
+        el.innerHTML = `<p class="text-muted" style="font-size: 0.9rem;">${(t2("profile_no_reviews") || "No reviews yet.").replace(/</g, "&lt;")}</p>`;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+      }
+      const openDiscoverySchool = (schoolId) => {
+        if (!schoolId) return;
+        state.currentView = null;
+        const path = "/discovery/id/" + schoolId;
+        state.discoveryPath = path;
+        history.pushState({}, "", path);
+        window.fetchDiscoveryData().then(() => {
+          renderView();
+          window.scrollTo(0, 0);
+        });
+        if (window.lucide) window.lucide.createIcons();
+      };
+      el.innerHTML = `<ul class="profile-my-reviews-list" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">${reviews.map((r) => {
+        const name = (r.target_name || r.target_id || "").toString().replace(/</g, "&lt;");
+        const date = r.created_at ? new Date(r.created_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "";
+        const stars = typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall + "/5";
+        const statusLabel = r.status === "flagged" ? t2("reviews_admin_flag_label") || "Pending review" : r.status === "published" ? t2("published") || "Published" : r.status || "";
+        const goJs = r.target_id ? `window.openDiscoverySchoolProfile('${r.target_id.toString().replace(/'/g, "\\'")}')` : "";
+        return `<li style="padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);"><div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;"><strong style="font-size: 0.95rem;">${name}</strong><span style="font-size: 0.85rem;">${stars}</span></div><div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${date}${statusLabel ? " \xB7 " + statusLabel : ""}</div>${r.target_id ? `<button type="button" class="btn-secondary" style="margin-top: 8px; padding: 6px 12px; font-size: 12px; border-radius: 10px; cursor: pointer;" onclick="${goJs}">${t2("discovery_go_to_reviews") || "View school"}</button>` : ""}</li>`;
+      }).join("")}</ul>`;
+      if (window.lucide) window.lucide.createIcons();
+      window.openDiscoverySchoolProfile = openDiscoverySchool;
+    } catch (e) {
+      const t2 = (k) => window.t ? window.t(k) : k;
+      el.innerHTML = `<p class="text-muted" style="font-size: 0.9rem;">${(t2("not_found_msg") || "Error loading reviews.").replace(/</g, "&lt;")}</p>`;
+    }
+  };
+  window.navigateToReviewCreate = async (draft) => {
+    const cap = typeof window.getCapabilities === "function" ? window.getCapabilities("review") : { reason: "not_logged_in", cta: { action: "login" } };
+    if (cap.reason !== "ok") {
+      state.afterLogin = { view: "review-create", reviewDraft: draft || state.reviewDraft };
+      if (cap.reason === "not_logged_in") {
+        state.discoveryPath = "/discovery/login";
+        history.pushState({}, "", "/discovery/login");
+      } else {
+        state.currentView = "dashboard-profile";
+        if (typeof window.location !== "undefined") window.location.hash = "#/dashboard/profile";
+      }
+      saveState();
+      renderView();
+      return;
+    }
+    const d = draft || state.reviewDraft;
+    if (d?.target_type && d?.target_id && supabaseClient) {
+      const { data: sess } = await supabaseClient.auth.getSession();
+      if (sess?.session) {
+        const { data: myReview } = await supabaseClient.rpc("get_my_review_for_target", { p_target_type: d.target_type, p_target_id: d.target_id });
+        if (myReview && myReview.length > 0) {
+          state.reviewDraft = d;
+          state.reviewCreateBlockedReason = "already_reviewed";
+          state.currentView = "review-create";
+          state.discoveryPath = null;
+          saveState();
+          renderView();
+          return;
+        }
+      }
+    }
+    state.reviewCreateBlockedReason = null;
+    state.reviewDraft = d || state.reviewDraft;
+    state.currentView = "review-create";
+    state.discoveryPath = null;
+    saveState();
+    renderView();
+  };
+  window.navigateToListingSuggest = () => {
+    const cap = typeof window.getCapabilities === "function" ? window.getCapabilities("suggest") : { reason: "not_logged_in" };
+    if (cap.reason !== "ok") {
+      state.afterLogin = { view: "listing-suggest" };
+      if (cap.reason === "not_logged_in") {
+        state.discoveryPath = "/discovery/login";
+        history.pushState({}, "", "/discovery/login");
+      } else {
+        state.currentView = "dashboard-profile";
+        if (typeof window.location !== "undefined") window.location.hash = "#/dashboard/profile";
+      }
+      saveState();
+      renderView();
+      return;
+    }
+    state.currentView = "listing-suggest";
+    state.discoveryPath = null;
+    saveState();
+    renderView();
+  };
+  window.submitListingSuggestion = async () => {
+    if (!supabaseClient) return;
+    const t2 = (k) => window.t ? window.t(k) : k;
+    const name = (document.getElementById("listing-suggest-name") || {}).value?.trim() || "";
+    const suggestedType = (document.getElementById("listing-suggest-type") || {}).value === "teacher" ? "teacher" : "school";
+    const city = (document.getElementById("listing-suggest-city") || {}).value?.trim() || null;
+    const country = (document.getElementById("listing-suggest-country") || {}).value?.trim() || null;
+    const stylesRaw = (document.getElementById("listing-suggest-styles") || {}).value?.trim() || "";
+    const dance_styles = stylesRaw ? stylesRaw.split(/[,;]/).map((s) => s.trim()).filter(Boolean) : null;
+    const instagram = (document.getElementById("listing-suggest-instagram") || {}).value?.trim() || null;
+    const website = (document.getElementById("listing-suggest-website") || {}).value?.trim() || null;
+    const notes = (document.getElementById("listing-suggest-notes") || {}).value?.trim() || null;
+    const errEl = document.getElementById("listing-suggest-error");
+    const dupEl = document.getElementById("listing-suggest-duplicate");
+    if (errEl) {
+      errEl.style.display = "none";
+      errEl.textContent = "";
+    }
+    if (dupEl) {
+      dupEl.style.display = "none";
+      dupEl.textContent = "";
+    }
+    if (!name) {
+      if (errEl) {
+        errEl.textContent = t2("enter_school_name") || "Name required";
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    const { data: sess } = await supabaseClient.auth.getSession();
+    if (!sess?.session?.access_token) {
+      if (errEl) {
+        errEl.textContent = t2("profile_sign_in_required") || "Sign in required";
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/submit_listing_suggestion";
+    const res = await fetch(fnUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sess.session.access_token },
+      body: JSON.stringify({ suggested_type: suggestedType, name, city, country, dance_styles, instagram: instagram || void 0, website: website || void 0, notes: notes || void 0 })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 403) {
+      if (errEl) {
+        errEl.textContent = data.error || (t2("discovery_confirm_email_banner") || "Confirm your email.");
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    if (res.status === 200 && data.duplicate === true) {
+      if (dupEl) {
+        dupEl.textContent = (t2("listing_suggest_duplicate") || "This looks already listed.") + (data.matches?.length ? " " + data.matches.length + " match(es)." : "");
+        dupEl.style.display = "block";
+      }
+      return;
+    }
+    if (!res.ok) {
+      if (errEl) {
+        errEl.textContent = data.error || "Error " + res.status;
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    state.currentView = "review-success";
+    state.reviewSuccessMessage = t2("listing_suggest_success") || "Suggestion submitted. We'll review it soon.";
+    saveState();
+    renderView();
+  };
+  window.adminApproveListingSuggestion = async (suggestionId) => {
+    if (!supabaseClient || !state.isPlatformDev) return;
+    const t2 = (k) => window.t ? window.t(k) : k;
+    const { data: sess } = await supabaseClient.auth.getSession();
+    if (!sess?.session?.access_token) return;
+    const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/admin_review_listing_suggestion";
+    const res = await fetch(fnUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sess.session.access_token },
+      body: JSON.stringify({ suggestion_id: suggestionId, action: "approve" })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.error || "Failed");
+      return;
+    }
+    state.listingSuggestionsPending = (state.listingSuggestionsPending || []).filter((s) => s.id !== suggestionId);
+    saveState();
+    renderView();
+  };
+  window.adminRejectListingSuggestion = async (suggestionId) => {
+    if (!supabaseClient || !state.isPlatformDev) return;
+    const { data: sess } = await supabaseClient.auth.getSession();
+    if (!sess?.session?.access_token) return;
+    const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/admin_review_listing_suggestion";
+    const res = await fetch(fnUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sess.session.access_token },
+      body: JSON.stringify({ suggestion_id: suggestionId, action: "reject" })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.error || "Failed");
+      return;
+    }
+    state.listingSuggestionsPending = (state.listingSuggestionsPending || []).filter((s) => s.id !== suggestionId);
+    saveState();
+    renderView();
+  };
+  window.deleteReviewPlatformAdmin = async (reviewId) => {
+    if (!supabaseClient || !state.isPlatformDev) return;
+    const { error } = await supabaseClient.rpc("delete_review_platform_admin", { p_review_id: reviewId });
+    if (error) {
+      alert(error.message || "Delete failed");
+      return;
+    }
+    state.currentView = "reviews-admin";
+    saveState();
+    renderView();
+  };
+  window.publishReviewPlatformAdmin = async (reviewId) => {
+    if (!supabaseClient || !state.isPlatformDev) return;
+    const { error } = await supabaseClient.rpc("publish_review_platform_admin", { p_review_id: reviewId });
+    if (error) {
+      alert(error.message || "Publish failed");
+      return;
+    }
+    state.currentView = "reviews-admin";
+    saveState();
+    renderView();
+  };
+  window.openDiscoveryAllReviewsModal = async (schoolId) => {
+    if (!supabaseClient || !schoolId) return;
+    state.discoveryAllReviewsModalOpen = true;
+    state.discoveryAllReviewsList = [];
+    saveState();
+    if (typeof window.renderView === "function") window.renderView();
+    const { data, error } = await supabaseClient.rpc("get_reviews_public", { p_target_type: "school", p_target_id: schoolId, p_limit: 100, p_offset: 0 });
+    state.discoveryAllReviewsList = error ? [] : data || [];
+    state.discoveryAllReviewsModalOpen = true;
+    saveState();
+    if (typeof window.renderView === "function") window.renderView();
+    if (window.lucide) window.lucide.createIcons();
+  };
+  window.submitReview = async () => {
+    const t2 = (k) => window.t ? window.t(k) : k;
+    const errEl = document.getElementById("review-form-error");
+    if (errEl) {
+      errEl.style.display = "none";
+      errEl.textContent = "";
+    }
+    if (!supabaseClient) {
+      if (errEl) {
+        errEl.textContent = t2("not_found_msg") || "Connection error. Try again.";
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    const draft = state.reviewDraft || {};
+    if (!draft.target_type || !draft.target_id) {
+      if (errEl) {
+        errEl.textContent = t2("discovery_review_gate_login") || 'Please go back and open "Leave a review" from a school page.';
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    const btn = document.getElementById("review-submit-btn");
+    const originalLabel = btn ? btn.textContent : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = t2("resend_sending") || "Sending\u2026";
+    }
+    const getRatingVal = (id) => {
+      const el = document.getElementById(id);
+      return el && el.value ? parseInt(el.value, 10) : null;
+    };
+    const commentEl = document.getElementById("review-comment");
+    const comment = commentEl ? commentEl.value.trim().slice(0, 500) : null;
+    const ratings = {};
+    ["teaching", "vibe", "organization", "value"].forEach((key) => {
+      const v = getRatingVal("review-rating-" + key);
+      if (v != null) ratings[key] = v;
+    });
+    const overallVal = getRatingVal("review-rating-overall");
+    const allVals = [overallVal, ratings.teaching, ratings.vibe, ratings.organization, ratings.value].filter((v) => v != null);
+    const ratingOverall = allVals.length ? Math.round(allVals.reduce((a, b) => a + b, 0) / allVals.length) : overallVal != null ? overallVal : 3;
+    const { data: sess } = await supabaseClient.auth.getSession();
+    if (!sess?.session?.access_token) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      }
+      if (errEl) {
+        errEl.textContent = t2("profile_sign_in_required") || "Sign in required";
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/submit_review";
+    let res;
+    try {
+      res = await fetch(fnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sess.session.access_token },
+        body: JSON.stringify({
+          target_type: draft.target_type,
+          target_id: draft.target_id,
+          rating_overall: ratingOverall,
+          ratings: Object.keys(ratings).length ? ratings : void 0,
+          comment: comment || void 0
+        })
+      });
+    } catch (e) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      }
+      if (errEl) {
+        errEl.textContent = e && e.message || (t2("not_found_msg") || "Network error. Try again.");
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+    }
+    if (res.status === 403) {
+      if (errEl) {
+        errEl.textContent = data.error || (t2("discovery_confirm_email_banner") || "Confirm your email to leave reviews");
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    if (res.status === 409) {
+      if (errEl) {
+        errEl.textContent = data.error || (t2("review_already_submitted") || "You have already reviewed this.");
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    if (res.status === 429) {
+      if (errEl) {
+        errEl.textContent = data.error || (t2("review_rate_limit") || "Rate limit: try again later.");
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    if (!res.ok) {
+      if (errEl) {
+        errEl.textContent = data.error || "Error " + res.status;
+        errEl.style.display = "block";
+      }
+      return;
+    }
+    state.currentView = "review-success";
+    state.reviewSuccessMessage = data.status === "flagged" ? t2("review_submitted_flagged") || "Your review was submitted. Reviews with lower ratings may be reviewed before they appear publicly." : null;
+    saveState();
+    renderView();
   };
   window.saveProfile = async () => {
     if (!supabaseClient) return;
@@ -3309,6 +4229,13 @@
     if (path !== "/discovery" && path.startsWith("/discovery/")) {
       const detail = state.discoverySchoolDetail;
       if (!detail) {
+        const notFetchedYet = state.discoveryDetailFetched !== true;
+        if (notFetchedYet) {
+          return `<div class="container discovery-page" style="padding: 2rem 1rem; text-align: center;">
+                    <a href="#" class="discovery-back-link" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i>${t2("discovery_back")}</a>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 1rem;"><span class="spin" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><i data-lucide="loader-2" size="20"></i></span>${t2("discovery_loading") || "Loading\u2026"}</p>
+                </div>`;
+        }
         return `<div class="container discovery-page" style="padding: 2rem 1rem; text-align: center;">
                 <a href="#" class="discovery-back-link" onclick="event.preventDefault(); window.navigateDiscovery('/discovery');" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i>${t2("discovery_back")}</a>
                 <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 1rem;">${t2("discovery_not_found")}</p>
@@ -3341,6 +4268,13 @@
                 <div class="discovery-detail-logo-wrap">${logoUrl ? `<img src="${String(logoUrl).replace(/"/g, "&quot;")}" alt="">` : `<div class="discovery-detail-logo-placeholder"><i data-lucide="image" size="40"></i></div>`}</div>
                 <div class="discovery-detail-info">
                     <h1 class="discovery-detail-title">${displayName}</h1>
+                    ${(() => {
+        const sum = state.discoveryDetailReviewSummary || {};
+        const avg = sum.avg_rating != null ? Number(sum.avg_rating) : null;
+        const count = sum.review_count || 0;
+        if (avg != null && count > 0) return `<div class="discovery-detail-rating" style="margin-bottom: 0.35rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><span style="display: inline-flex; align-items: center; gap: 6px;">${typeof window.renderRatingStars === "function" ? window.renderRatingStars(avg) : ""}<span style="font-size: 0.95rem; font-weight: 600;">${Number(avg).toFixed(1)}</span></span><button type="button" onclick="document.getElementById('discovery-detail-reviews')&&document.getElementById('discovery-detail-reviews').scrollIntoView({behavior:'smooth'})" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); cursor: pointer;">${t2("discovery_go_to_reviews") || "Go to reviews"}</button></div>`;
+        return "";
+      })()}
                     <p class="discovery-detail-loc"><i data-lucide="map-pin" size="14"></i> ${displayLoc}</p>
                     ${genres.length || levels.length ? `<p class="discovery-detail-tags">${[...genres, ...levels].filter(Boolean).join(" \xB7 ")}</p>` : `<p class="discovery-detail-tags" style="font-style: italic;">${placeholder}</p>`}
                 </div>
@@ -3379,6 +4313,51 @@
         const imgs = Array.isArray(loc.image_urls) ? loc.image_urls : [];
         return `<div class="discovery-detail-location-card" style="margin-bottom: 1.25rem; padding: 1rem; border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; margin-bottom: 4px;">${locName || "\u2014"}</div><div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 6px;"><i data-lucide="map-pin" size="14"></i> ${locAddr || placeholder}</div>${locDesc ? `<div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${locDesc}</div>` : ""}${imgs.length ? `<div class="discovery-detail-gallery-grid" style="margin-top: 8px;">${imgs.slice(0, 6).map((url) => `<img src="${String(url).replace(/"/g, "&quot;")}" alt="">`).join("")}</div>` : ""}</div>`;
       }).join("") : `<div class="discovery-detail-placeholder-block"><i data-lucide="map-pin" size="32"></i><span>${placeholder}</span></div>`}
+            <div id="discovery-detail-reviews" style="scroll-margin-top: 1rem;">
+            ${(() => {
+        const sum = state.discoveryDetailReviewSummary || { review_count: 0, avg_rating: null };
+        const reviews = state.discoveryDetailReviews || [];
+        const total = sum.review_count || 0;
+        const avg = sum.avg_rating != null ? Number(sum.avg_rating).toFixed(1) : null;
+        const detailId = (detail.school?.id ?? detail.id) || "";
+        const openAllJs = detailId ? `window.openDiscoveryAllReviewsModal('${String(detailId).replace(/'/g, "\\'")}');` : "";
+        let section = `<h2 class="discovery-detail-section-title">${t2("discovery_reviews_section") || "Reviews"}</h2>`;
+        if (total === 0) {
+          section += `<p class="text-muted" style="font-size: 0.9rem;">${t2("discovery_no_reviews") || "No reviews yet"}</p>`;
+        } else {
+          const reviewLabel = total === 1 ? "1 " + (t2("discovery_review_singular") || "review") : (t2("discovery_reviews_plural") || "{count} reviews").replace("{count}", total);
+          section += `<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap;">
+                        <span style="display: inline-flex; align-items: center; gap: 8px;">${typeof window.renderRatingStars === "function" ? window.renderRatingStars(avg) : ""}${avg != null ? `<span style="font-size: 0.95rem; font-weight: 600;">${avg}</span>` : ""}<span class="text-muted" style="font-size: 0.9rem;">${reviewLabel}</span></span>
+                        ${total > reviews.length ? `<button type="button" class="btn-secondary" onclick="${openAllJs}" style="padding: 8px 14px; font-size: 13px;">${t2("discovery_see_all_reviews") || "See all reviews"}</button>` : ""}
+                    </div>`;
+          if (reviews.length) {
+            const catKeys = [{ key: "overall", val: (r) => r.rating_overall, label: "review_rating_overall" }, { key: "teaching", val: (r) => r.ratings && r.ratings.teaching, label: "review_teaching" }, { key: "vibe", val: (r) => r.ratings && r.ratings.vibe, label: "review_vibe" }, { key: "organization", val: (r) => r.ratings && r.ratings.organization, label: "review_organization" }, { key: "value", val: (r) => r.ratings && r.ratings.value, label: "review_value" }];
+            section += `<div style="display: flex; flex-direction: column; gap: 1rem;">${reviews.map((r) => {
+              const author = (r.author_display_name || "Dancer").replace(/</g, "&lt;");
+              const comment = (r.comment || "").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+              const date = r.created_at ? new Date(r.created_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "";
+              const categoriesHtml = `<details class="review-categories-details" style="margin-top: 8px; font-size: 0.85rem;"><summary style="cursor: pointer; color: var(--text-secondary);">${t2("discovery_review_show_categories") || "Show categories"}</summary><div style="margin-top: 8px; display: flex; flex-direction: column; gap: 4px;">${catKeys.map(({ key, val, label }) => {
+                const v = key === "overall" ? r.rating_overall : val(r);
+                const num = v != null ? Number(v) : null;
+                const stars = num != null && typeof window.renderRatingStars === "function" ? window.renderRatingStars(num) : num != null ? num : "\u2013";
+                return `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="color: var(--text-secondary);">${t2(label) || key}</span><span>${stars}</span></div>`;
+              }).join("")}</div></details>`;
+              return `<div style="padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-weight: 600;">${author}</span>
+                                    <span>${typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall}</span>
+                                </div>
+                                ${date ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px;">${date}</div>` : ""}
+                                ${categoriesHtml}
+                                ${comment ? `<div style="font-size: 0.9rem; line-height: 1.4; margin-top: 6px;">${comment}</div>` : ""}
+                            </div>`;
+            }).join("")}</div>`;
+            if (total > reviews.length) section += `<button type="button" class="btn-secondary" onclick="${openAllJs}" style="margin-top: 1rem; padding: 10px 16px;">${t2("discovery_see_all_reviews") || "See all reviews"}</button>`;
+          }
+        }
+        return section;
+      })()}
+            </div>
             <div class="discovery-detail-cta" style="margin-top: 2rem; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); background: var(--surface);">
             ${detail.active !== false ? `
                 <button type="button" class="btn-primary" onclick="event.preventDefault(); const d=state.discoverySchoolDetail; if(d){ state.currentSchool={id:d.id,name:d.name,currency:d.currency||'MXN'}; state.currentView='auth'; state.discoveryPath=null; history.pushState({},'','/'); saveState(); renderView(); fetchAllData(); }" style="width: 100%; padding: 14px 24px; border-radius: 14px; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -3387,11 +4366,11 @@
                 ${(() => {
         const needLogin = !state.currentUser && !state.userProfile;
         const needConfirm = state.userProfile && state.userProfile.origin === "discovery" && !state.userProfile.email_confirmed;
-        const canReview = state.currentUser || state.userProfile;
-        const allowed = canReview && !needConfirm;
         if (needLogin) return `<p style="margin-top: 1rem; font-size: 13px; color: var(--text-secondary);">${t2("discovery_review_gate_login") || "Sign in to leave a review or suggest a school."}</p>`;
         if (needConfirm) return `<p style="margin-top: 1rem; font-size: 13px;">${t2("discovery_confirm_email_banner") || "Confirm your email to unlock reviews and adding schools."} <button type="button" class="resend-verification-btn btn-secondary" onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="margin-top: 6px; padding: 8px 14px; font-size: 12px; min-height: 36px; cursor: pointer; -webkit-tap-highlight-color: transparent;">${t2("resend_verification") || "Resend email"}</button></p>`;
-        return `<button type="button" class="btn-secondary" style="width: 100%; margin-top: 0.75rem; padding: 10px;" disabled title="${t2("coming_soon") || "Coming soon"}">${t2("discovery_leave_review") || "Leave a review"}</button><button type="button" class="btn-secondary" style="width: 100%; margin-top: 0.5rem; padding: 10px;" disabled title="${t2("coming_soon") || "Coming soon"}">${t2("discovery_suggest_school") || "Suggest a school"}</button>`;
+        if (state.discoveryMyReviewForTarget?.id) return `<p style="margin-top: 1rem; font-size: 13px; color: var(--text-secondary);">${t2("review_already_submitted") || "You have already reviewed this."}</p><button type="button" class="btn-secondary" style="width: 100%; margin-top: 0.5rem; padding: 10px; cursor: pointer;" onclick="event.preventDefault(); window.navigateToListingSuggest();">${t2("discovery_suggest_school") || "Suggest a school"}</button>`;
+        const targetIdEsc = (detail.school?.id ?? detail.id ?? "").toString().replace(/'/g, "\\'");
+        return `<button type="button" class="btn-secondary" style="width: 100%; margin-top: 0.75rem; padding: 10px; cursor: pointer;" onclick="event.preventDefault(); state.reviewDraftTargetName='${(detail.name || detail.school?.name || "").toString().replace(/</g, "&lt;").replace(/'/g, "\\'")}'; window.navigateToReviewCreate({ target_type: 'school', target_id: '${targetIdEsc}' });">${t2("discovery_leave_review") || "Leave a review"}</button><button type="button" class="btn-secondary" style="width: 100%; margin-top: 0.5rem; padding: 10px; cursor: pointer;" onclick="event.preventDefault(); window.navigateToListingSuggest();">${t2("discovery_suggest_school") || "Suggest a school"}</button>`;
       })()}
             ` : `
                 <div style="display: flex; align-items: flex-start; gap: 12px; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
@@ -3403,6 +4382,32 @@
                 </button>
             `}
             </div>
+            ${state.discoveryAllReviewsModalOpen ? (() => {
+        const allList = state.discoveryAllReviewsList || [];
+        const closeJs = "state.discoveryAllReviewsModalOpen=false; state.discoveryAllReviewsList=[]; saveState(); renderView(); if(window.lucide) window.lucide.createIcons();";
+        const listHtml = allList.length ? allList.map((r) => {
+          const author = (r.author_display_name || "Dancer").replace(/</g, "&lt;");
+          const comment = (r.comment || "").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+          const date = r.created_at ? new Date(r.created_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "";
+          return `<div style="padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="font-weight: 600;">${author}</span>
+                            <span>${typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall}</span>
+                        </div>
+                        ${date ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px;">${date}</div>` : ""}
+                        ${comment ? `<div style="font-size: 0.9rem; line-height: 1.4;">${comment}</div>` : ""}
+                    </div>`;
+        }).join("") : `<p class="text-muted">${t2("discovery_no_reviews") || "No reviews yet"}</p>`;
+        return `<div id="discovery-all-reviews-modal" style="position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box;" onclick="if(event.target === this) { ${closeJs} }">
+                    <div style="background: var(--bg-body); border-radius: 20px; border: 1px solid var(--border); max-width: 480px; width: 100%; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3);" onclick="event.stopPropagation();">
+                        <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800;">${(t2("discovery_reviews_section") || "Reviews").replace(/</g, "&lt;")}</h2>
+                            <button type="button" onclick="${closeJs}" style="background: none; border: none; padding: 8px; cursor: pointer; color: var(--text-secondary); border-radius: 8px;"><i data-lucide="x" size="24"></i></button>
+                        </div>
+                        <div style="padding: 1rem 1.5rem; overflow-y: auto; flex: 1;">${listHtml}</div>
+                    </div>
+                </div>`;
+      })() : ""}
             </div>`;
       return html;
     }
@@ -3492,11 +4497,18 @@
       const loc = [city, country].filter(Boolean).join(", ");
       const logo = s.logo_url || "";
       const placeholder = t2("discovery_placeholder_upload_soon");
+      const summary = (state.discoveryReviewSummary || {})[String(s.id)];
+      const reviewCount = summary ? summary.review_count || 0 : 0;
+      const avgRating = summary && summary.avg_rating != null ? summary.avg_rating : null;
+      const reviewLabel = reviewCount === 1 ? "1 " + (t2("discovery_review_singular") || "review") : (t2("discovery_reviews_plural") || "{count} reviews").replace("{count}", reviewCount);
+      const starHtml = typeof window.renderRatingStars === "function" ? window.renderRatingStars(avgRating) : "";
+      const reviewsLine = reviewCount > 0 && avgRating != null ? `<span class="discovery-card-reviews" style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin-top: 4px;">${starHtml ? starHtml.replace('class="rating-stars rating-stars-whole"', 'class="rating-stars rating-stars-whole rating-stars-sm"') : ""} <span>${reviewLabel}</span></span>` : `<span class="discovery-card-reviews" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${t2("discovery_no_reviews") || "No reviews yet"}</span>`;
       return `<a href="#" class="discovery-card" onclick="event.preventDefault(); window.navigateDiscovery('${path2.replace(/'/g, "\\'")}');">
                         <div class="discovery-card-media">${logo ? `<img src="${String(logo).replace(/"/g, "&quot;")}" alt="" class="discovery-card-logo" />` : `<div class="discovery-card-no-logo"><i data-lucide="image" size="32"></i></div>`}</div>
                         <div class="discovery-card-body">
                             <span class="discovery-card-name">${name ? String(name).replace(/</g, "&lt;") : placeholder}</span>
                             <span class="discovery-card-loc">${loc ? String(loc).replace(/</g, "&lt;") : placeholder}</span>
+                            ${reviewsLine}
                         </div>
                     </a>`;
     }).join("")}
@@ -4098,6 +5110,18 @@
       }
       return;
     }
+    if (view === "activate" && root) {
+      const t2 = (k) => window.t ? window.t(k) : k;
+      const token = state.activateToken || new URLSearchParams(window.location.search).get("token");
+      if (!token) {
+        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${t2("activate_invalid_link") || "Invalid or expired link."}</p><a href="/" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back"}</a></div></div>`;
+        return;
+      }
+      root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p>${t2("activate_linking") || "Linking..."}</p><div class="spin" style="margin: 1rem auto;"><i data-lucide="loader-2" size="32"></i></div></div></div>`;
+      if (window.lucide) window.lucide.createIcons();
+      if (typeof window.runActivateFlow === "function") window.runActivateFlow(token);
+      return;
+    }
     if (view === "dashboard-profile" && root) {
       const t2 = (k) => window.t ? window.t(k) : k;
       (async () => {
@@ -4125,22 +5149,227 @@
         }
         const uid = sess.session.user.id;
         const { data: links } = await supabaseClient.from("profile_school_links").select("school_id").eq("profile_id", uid);
-        const schoolIds = (links || []).map((l) => l.school_id).filter(Boolean);
+        let schoolIds = (links || []).map((l) => l.school_id).filter(Boolean);
+        const { data: studentLinks } = await supabaseClient.from("profile_student_links").select("school_id").eq("profile_id", uid);
+        const studentLinkSchoolIds = (studentLinks || []).map((l) => l.school_id).filter(Boolean);
+        schoolIds = [.../* @__PURE__ */ new Set([...schoolIds, ...studentLinkSchoolIds])];
         state.profileLinkedSchools = schoolIds.length && state.schools ? state.schools.filter((s) => schoolIds.includes(s.id)) : [];
-        if (schoolIds.length && (!state.schools || state.schools.length === 0)) {
+        if (schoolIds.length && state.profileLinkedSchools.length < schoolIds.length) {
+          const { data: schools } = await supabaseClient.from("schools").select("id, name").in("id", schoolIds);
+          const merged = schoolIds.map((id) => state.profileLinkedSchools.find((s) => s.id === id) || (schools || []).find((s) => s.id === id)).filter(Boolean);
+          state.profileLinkedSchools = merged.length ? merged : schools || [];
+        } else if (schoolIds.length && (!state.schools || state.schools.length === 0)) {
           const { data: schools } = await supabaseClient.from("schools").select("id, name").in("id", schoolIds);
           state.profileLinkedSchools = schools || [];
         }
         if (typeof window.renderDashboardProfileView === "function") {
           root.innerHTML = window.renderDashboardProfileView();
           if (window.lucide) window.lucide.createIcons();
+          if (typeof window.fetchProfileMyReviews === "function") window.fetchProfileMyReviews();
         }
       })();
       root.innerHTML = '<div class="container" style="padding: 2rem;"><p class="text-muted">Loading...</p></div>';
       return;
     }
+    if (view === "review-create" && root) {
+      const t2 = (k) => window.t ? window.t(k) : k;
+      if (state.reviewCreateBlockedReason === "already_reviewed") {
+        const backDiscovery = "event.preventDefault(); state.reviewCreateBlockedReason=null; state.currentView=null; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ renderView(); });";
+        root.innerHTML = `<div class="container discovery-page"><div class="auth-page-container" style="max-width: 480px; margin: 0 auto; padding: 2rem 1.25rem;">
+            <a href="#" class="discovery-back-link" onclick="${backDiscovery}" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i> ${t2("discovery_back") || "Back"}</a>
+            <h1 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem;">${t2("discovery_leave_review") || "Leave a review"}</h1>
+            <p class="text-muted" style="font-size: 0.95rem; margin-top: 1rem;">${t2("review_already_submitted") || "You have already reviewed this."}</p>
+            <button type="button" class="btn-primary" onclick="${backDiscovery}" style="width: 100%; margin-top: 1.25rem; padding: 14px;">${t2("discovery_back") || "Back to discovery"}</button>
+        </div></div>`;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+      }
+      const draft = state.reviewDraft || {};
+      const targetName = (draft.target_name || state.reviewDraftTargetName || "").replace(/</g, "&lt;") || (t2("discovery_leave_review") || "Leave a review");
+      const backLabel = state.discoveryPath ? t2("discovery_back") || "Back" : t2("nav_profile") || "Profile";
+      const backAction = state.discoveryPath ? "event.preventDefault(); state.discoveryPath='" + (state.discoveryPath || "/discovery").replace(/'/g, "\\'") + "'; history.pushState({},'','" + (state.discoveryPath || "/discovery").replace(/'/g, "\\'") + "'); window.fetchDiscoveryData().then(function(){ state.currentView=null; renderView(); });" : "event.preventDefault(); state.currentView='dashboard-profile'; window.location.hash='#/dashboard/profile'; saveState(); renderView();";
+      root.innerHTML = `<div class="container discovery-page"><div class="auth-page-container" style="max-width: 480px; margin: 0 auto; padding: 2rem 1.25rem;">
+            <a href="#" class="discovery-back-link" onclick="${backAction}" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i> ${backLabel}</a>
+            <h1 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem;">${t2("discovery_leave_review") || "Leave a review"}</h1>
+            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1.25rem;">${targetName}</p>
+            <div class="ios-list" style="margin-bottom: 1rem;">
+                <div class="ios-list-item" style="padding: 10px 16px; flex-wrap: wrap;">
+                <span style="opacity: 0.8; width: 100%; margin-bottom: 8px;">${t2("review_rating_overall") || "Overall rating"}</span>
+                <div id="review-rating-overall-widget" class="review-star-widget" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <input type="hidden" id="review-rating-overall" value="3" />
+                    <div class="review-stars-container" style="display: flex; gap: 2px;" role="slider" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3" aria-valuetext="">${[1, 2, 3, 4, 5].map((v) => `<span class="review-star-half" data-value="${v}" style="cursor:pointer; color: var(--system-gray4); font-size: 1.25rem; line-height: 1;" title="${v}">\u2605</span>`).join("")}</div>
+                    <span class="review-star-label" style="font-size: 14px; color: var(--text-secondary); min-width: 80px;"></span>
+                </div></div>
+                <div class="ios-list-item" style="padding: 10px 16px; flex-wrap: wrap;"><span style="opacity: 0.8; width: 100%; margin-bottom: 8px;">${t2("review_teaching") || "Teaching"}</span><div id="review-rating-teaching-widget" class="review-star-widget" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><input type="hidden" id="review-rating-teaching" value="3" /><div class="review-stars-container" style="display: flex; gap: 2px;" role="slider" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3">${[1, 2, 3, 4, 5].map((v) => `<span class="review-star-half" data-value="${v}" style="cursor:pointer; color: var(--system-gray4); font-size: 1.25rem; line-height: 1;" title="${v}">\u2605</span>`).join("")}</div><span class="review-star-label" style="font-size: 14px; color: var(--text-secondary); min-width: 80px;"></span></div></div>
+                <div class="ios-list-item" style="padding: 10px 16px; flex-wrap: wrap;"><span style="opacity: 0.8; width: 100%; margin-bottom: 8px;">${t2("review_vibe") || "Vibe"}</span><div id="review-rating-vibe-widget" class="review-star-widget" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><input type="hidden" id="review-rating-vibe" value="3" /><div class="review-stars-container" style="display: flex; gap: 2px;" role="slider" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3">${[1, 2, 3, 4, 5].map((v) => `<span class="review-star-half" data-value="${v}" style="cursor:pointer; color: var(--system-gray4); font-size: 1.25rem; line-height: 1;" title="${v}">\u2605</span>`).join("")}</div><span class="review-star-label" style="font-size: 14px; color: var(--text-secondary); min-width: 80px;"></span></div></div>
+                <div class="ios-list-item" style="padding: 10px 16px; flex-wrap: wrap;"><span style="opacity: 0.8; width: 100%; margin-bottom: 8px;">${t2("review_organization") || "Organization"}</span><div id="review-rating-organization-widget" class="review-star-widget" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><input type="hidden" id="review-rating-organization" value="3" /><div class="review-stars-container" style="display: flex; gap: 2px;" role="slider" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3">${[1, 2, 3, 4, 5].map((v) => `<span class="review-star-half" data-value="${v}" style="cursor:pointer; color: var(--system-gray4); font-size: 1.25rem; line-height: 1;" title="${v}">\u2605</span>`).join("")}</div><span class="review-star-label" style="font-size: 14px; color: var(--text-secondary); min-width: 80px;"></span></div></div>
+                <div class="ios-list-item" style="padding: 10px 16px; flex-wrap: wrap;"><span style="opacity: 0.8; width: 100%; margin-bottom: 8px;">${t2("review_value") || "Quality\u2013price ratio"}</span><div id="review-rating-value-widget" class="review-star-widget" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><input type="hidden" id="review-rating-value" value="3" /><div class="review-stars-container" style="display: flex; gap: 2px;" role="slider" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3">${[1, 2, 3, 4, 5].map((v) => `<span class="review-star-half" data-value="${v}" style="cursor:pointer; color: var(--system-gray4); font-size: 1.25rem; line-height: 1;" title="${v}">\u2605</span>`).join("")}</div><span class="review-star-label" style="font-size: 14px; color: var(--text-secondary); min-width: 80px;"></span></div></div>
+            </div>
+            <div style="margin-bottom: 1rem;"><label style="display:block; font-size: 14px; opacity: 0.8; margin-bottom: 6px;">${t2("review_comment") || "Comment (optional, max 500)"}</label><textarea id="review-comment" maxlength="500" rows="3" placeholder="${(t2("review_comment_placeholder") || "Your experience...").replace(/"/g, "&quot;")}" style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; box-sizing: border-box;"></textarea></div>
+            <button type="button" id="review-submit-btn" class="btn-primary" onclick="window.submitReview()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px;">${t2("submit_review_btn") || "Submit review"}</button>
+            <p id="review-form-error" style="display: none; margin-top: 0.75rem; font-size: 13px; color: var(--system-red);"></p>
+        </div></div>`;
+      if (window.lucide) window.lucide.createIcons();
+      ["overall", "teaching", "vibe", "organization", "value"].forEach((cat) => {
+        if (typeof window.initReviewStarWidget === "function") window.initReviewStarWidget("review-rating-" + cat + "-widget");
+      });
+      return;
+    }
+    if (view === "review-success" && root) {
+      const t2 = (k) => window.t ? window.t(k) : k;
+      const message = state.reviewSuccessMessage || (t2("review_thanks") || "Thanks for your review.");
+      const backDiscovery = "event.preventDefault(); state.reviewSuccessMessage=null; state.currentView=null; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ renderView(); });";
+      root.innerHTML = `<div class="container discovery-page"><div class="auth-page-container" style="max-width: 400px; margin: 0 auto; padding: 2rem 1.25rem; text-align: center;">
+            <div style="margin-bottom: 1rem;"><i data-lucide="check-circle" size="48" style="color: var(--system-green);"></i></div>
+            <h1 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${(state.reviewSuccessMessage ? t2("listing_suggest_success") || "Submitted" : t2("review_submitted") || "Review submitted").replace(/</g, "&lt;")}</h1>
+            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1.5rem;">${message.replace(/</g, "&lt;")}</p>
+            <button type="button" class="btn-primary" onclick="${backDiscovery}" style="width: 100%; padding: 14px;">${t2("discovery_back") || "Back to discovery"}</button>
+        </div></div>`;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+    if (view === "listing-suggest" && root) {
+      const t2 = (k) => window.t ? window.t(k) : k;
+      const backAction = "event.preventDefault(); state.currentView=state.afterLogin ? 'dashboard-profile' : null; state.discoveryPath=state.afterLogin ? null : '/discovery'; if(state.discoveryPath){ history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ state.currentView=null; renderView(); }); } else { window.location.hash='#/dashboard/profile'; saveState(); renderView(); }";
+      root.innerHTML = `<div class="container discovery-page"><div class="auth-page-container" style="max-width: 480px; margin: 0 auto; padding: 2rem 1.25rem;">
+            <a href="#" class="discovery-back-link" onclick="${backAction}" style="margin-bottom: 1rem; display: inline-flex;"><i data-lucide="arrow-left" size="16"></i> ${t2("discovery_back") || "Back"}</a>
+            <h1 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem;">${t2("listing_suggest_title") || "Suggest a school or teacher"}</h1>
+            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1.25rem;">${t2("listing_suggest_subtitle") || "Submit a new listing for the discovery page."}</p>
+            <div class="ios-list" style="margin-bottom: 1rem;">
+                <div class="ios-list-item" style="padding: 10px 16px;"><span style="opacity: 0.8;">${t2("listing_suggest_type") || "Type"}</span>
+                <select id="listing-suggest-type" style="margin-left: auto; background: var(--system-gray6); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text-primary); font-size: 14px;"><option value="school">${t2("listing_type_school") || "School"}</option><option value="teacher">${t2("listing_type_teacher") || "Teacher"}</option></select></div>
+                <div class="ios-list-item" style="padding: 10px 16px;"><span style="opacity: 0.8;">${t2("name") || "Name"}</span><input type="text" id="listing-suggest-name" placeholder="${(t2("enter_school_name") || "Name").replace(/"/g, "&quot;")}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 10px 16px;"><span style="opacity: 0.8;">${t2("city") || "City"}</span><input type="text" id="listing-suggest-city" placeholder="${(t2("city") || "City").replace(/"/g, "&quot;")}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 10px 16px;"><span style="opacity: 0.8;">${t2("country") || "Country"}</span><input type="text" id="listing-suggest-country" placeholder="${(t2("country") || "Country").replace(/"/g, "&quot;")}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 10px 16px;"><span style="opacity: 0.8;">${t2("listing_suggest_styles") || "Dance styles"}</span><input type="text" id="listing-suggest-styles" placeholder="Salsa, Bachata" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 10px 16px;"><span style="opacity: 0.8;">${t2("instagram") || "Instagram"}</span><input type="text" id="listing-suggest-instagram" placeholder="@handle" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>
+                <div class="ios-list-item" style="padding: 10px 16px;"><span style="opacity: 0.8;">${t2("listing_suggest_website") || "Website"}</span><input type="text" id="listing-suggest-website" placeholder="https://" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>
+            </div>
+            <div style="margin-bottom: 1rem;"><label style="display:block; font-size: 14px; opacity: 0.8; margin-bottom: 6px;">${t2("notes") || "Notes"}</label><textarea id="listing-suggest-notes" rows="2" placeholder="${(t2("listing_suggest_notes_placeholder") || "Optional details").replace(/"/g, "&quot;")}" style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; box-sizing: border-box;"></textarea></div>
+            <button type="button" class="btn-primary" onclick="window.submitListingSuggestion()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px;">${t2("listing_suggest_submit") || "Submit suggestion"}</button>
+            <p id="listing-suggest-error" style="display: none; margin-top: 0.75rem; font-size: 13px; color: var(--system-red);"></p>
+            <p id="listing-suggest-duplicate" style="display: none; margin-top: 0.75rem; font-size: 13px; color: var(--text-secondary);"></p>
+        </div></div>`;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+    if (view === "reviews-admin" && root) {
+      const t2 = (k) => window.t ? window.t(k) : k;
+      if (!state.isPlatformDev) {
+        root.innerHTML = `<div class="container" style="padding: 2rem;"><p class="text-muted">${t2("not_found_msg") || "Not found."}</p><button type="button" class="btn-primary" onclick="state.currentView='school-selection'; saveState(); renderView();">${t2("discovery_back") || "Back"}</button></div>`;
+        return;
+      }
+      (async () => {
+        root.innerHTML = '<div class="container container-dev reviews-admin-loading" style="padding: 1.5rem; min-height: 120px; display: flex; align-items: center; justify-content: center;"><p class="text-muted" style="margin: 0;">Loading...</p></div>';
+        const { data: reviews, error } = supabaseClient ? await supabaseClient.rpc("get_reviews_platform_admin") : { data: [], error: new Error("No client") };
+        const list = error ? [] : reviews || [];
+        const backBtn = "state.currentView='platform-dev-dashboard'; saveState(); renderView();";
+        const needsReviewLabel = t2("reviews_admin_needs_review") || "Needs review";
+        const bySchoolLabel = t2("reviews_admin_by_school") || "By school";
+        const renderReviewCard = (r) => {
+          const idEsc = (r.id || "").toString().replace(/'/g, "\\'");
+          const author = (r.author_email || "").replace(/</g, "&lt;");
+          const comment = (r.comment || "").slice(0, 200).replace(/</g, "&lt;") + (r.comment && r.comment.length > 200 ? "\u2026" : "");
+          const created = r.created_at ? new Date(r.created_at).toLocaleString(void 0, { dateStyle: "short", timeStyle: "short" }) : "";
+          const isFlaggedOrHidden = r.status === "flagged" || r.status === "hidden";
+          const acceptBtn = isFlaggedOrHidden ? `<button type="button" class="btn-primary" onclick="window.publishReviewPlatformAdmin('${idEsc}');" style="padding: 8px 14px; font-size: 13px; min-height: 40px; border-radius: 10px;">${t2("reviews_admin_accept") || "Accept"}</button>` : "";
+          const deleteBtn = `<button type="button" class="btn-secondary" onclick="if(confirm(window.t && window.t('reviews_admin_delete_confirm') || 'Delete this review?')) window.deleteReviewPlatformAdmin('${idEsc}');" style="padding: 8px 14px; font-size: 13px; min-height: 40px; border-radius: 10px; color: var(--system-red);">${t2("reviews_admin_delete") || "Delete"}</button>`;
+          const stars = typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall + "/5";
+          return `<div class="reviews-admin-card" style="padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); margin-bottom: 0.75rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); word-break: break-all;">${author}</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;">${stars}<span style="font-size: 0.8rem; color: var(--text-secondary);">\xB7 ${r.status || "published"}</span></span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${created}</div>
+                    ${comment ? `<div style="font-size: 0.9rem; margin-top: 8px; line-height: 1.4;">${comment}</div>` : ""}
+                    <div style="margin-top: 0.75rem; display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${acceptBtn}
+                        ${deleteBtn}
+                    </div>
+                </div>`;
+        };
+        const bySchool = {};
+        const needsReview = [];
+        list.forEach((r) => {
+          const key = (r.target_id || "").toString();
+          const name = (r.target_name || r.target_id || key || "\u2014").toString().replace(/</g, "&lt;");
+          if (!bySchool[key]) bySchool[key] = { name, reviews: [] };
+          bySchool[key].reviews.push(r);
+          if (r.status === "flagged" || r.status === "hidden") needsReview.push(r);
+        });
+        const needsReviewBySchool = {};
+        needsReview.forEach((r) => {
+          const key = (r.target_id || "").toString();
+          const name = (r.target_name || r.target_id || key || "\u2014").toString().replace(/</g, "&lt;");
+          if (!needsReviewBySchool[key]) needsReviewBySchool[key] = { name, reviews: [] };
+          needsReviewBySchool[key].reviews.push(r);
+        });
+        const sectionCss = "margin-bottom: 1.25rem;";
+        const detailsCss = "border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 0.75rem; background: var(--surface);";
+        const summaryCss = "padding: 12px 16px; cursor: pointer; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; -webkit-tap-highlight-color: transparent;";
+        let body = "";
+        if (needsReview.length > 0) {
+          body += `<section class="reviews-admin-section reviews-admin-needs-review" style="${sectionCss}"><h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--system-orange); margin-bottom: 0.75rem;">${needsReviewLabel} (${needsReview.length})</h2>`;
+          Object.keys(needsReviewBySchool).forEach((key) => {
+            const { name: schoolName, reviews: schoolReviews } = needsReviewBySchool[key];
+            body += `<details class="reviews-admin-school-details" open style="${detailsCss}"><summary style="${summaryCss}">${schoolName}<span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">${schoolReviews.length}</span></summary><div style="padding: 0 12px 12px;">${schoolReviews.map(renderReviewCard).join("")}</div></details>`;
+          });
+          body += "</section>";
+        }
+        body += `<section class="reviews-admin-section reviews-admin-by-school" style="${sectionCss}"><h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.75rem;">${bySchoolLabel}</h2>`;
+        const schoolKeys = Object.keys(bySchool).sort((a, b) => (bySchool[b].name || "").localeCompare(bySchool[a].name || ""));
+        if (schoolKeys.length === 0) body += `<p class="text-muted" style="font-size: 0.9rem;">${t2("reviews_admin_empty") || "No reviews yet."}</p>`;
+        else schoolKeys.forEach((key) => {
+          const { name: schoolName, reviews: schoolReviews } = bySchool[key];
+          const openAttr = needsReview.length === 0 && schoolKeys[0] === key ? " open" : "";
+          body += `<details class="reviews-admin-school-details"${openAttr} style="${detailsCss}"><summary style="${summaryCss}">${schoolName}<span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">${schoolReviews.length}</span></summary><div style="padding: 0 12px 12px;">${schoolReviews.map(renderReviewCard).join("")}</div></details>`;
+        });
+        body += "</section>";
+        root.innerHTML = `<div class="container container-dev reviews-admin-page" style="padding: 1rem 1.25rem; max-width: 640px; margin: 0 auto; box-sizing: border-box;">
+                <button type="button" class="btn-back" onclick="${backBtn}" style="margin-bottom: 1rem; padding: 10px 0; min-height: 44px; -webkit-tap-highlight-color: transparent;"><i data-lucide="arrow-left" size="20"></i></button>
+                <h1 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.35rem;">${t2("reviews_admin_title") || "Reviews"}</h1>
+                <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1.25rem;">${t2("reviews_admin_subtitle") || "All discovery reviews. Delete if needed."}</p>
+                ${body}
+            </div>`;
+        if (window.lucide) window.lucide.createIcons();
+      })();
+      return;
+    }
+    if (view === "listing-suggestions-admin" && root) {
+      const t2 = (k) => window.t ? window.t(k) : k;
+      if (!state.isPlatformDev) {
+        root.innerHTML = `<div class="container" style="padding: 2rem;"><p class="text-muted">${t2("not_found_msg") || "Not found."}</p><button type="button" class="btn-primary" onclick="state.currentView='school-selection'; saveState(); renderView();">${t2("discovery_back") || "Back"}</button></div>`;
+        return;
+      }
+      (async () => {
+        root.innerHTML = '<div class="container" style="padding: 2rem;"><p class="text-muted">Loading...</p></div>';
+        const { data: pending, error } = supabaseClient ? await supabaseClient.rpc("get_listing_suggestions_pending") : { data: [], error: new Error("No client") };
+        state.listingSuggestionsPending = error ? [] : pending || [];
+        const backBtn = "state.currentView='platform-dev-dashboard'; saveState(); renderView();";
+        root.innerHTML = `<div class="container container-dev" style="padding: 1.2rem;">
+                <button type="button" class="btn-back" onclick="${backBtn}" style="margin-bottom: 1rem;"><i data-lucide="arrow-left" size="20"></i></button>
+                <h1 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t2("listing_suggestions_admin_title") || "Listing suggestions"}</h1>
+                <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1rem;">${t2("listing_suggestions_admin_subtitle") || "Approve or reject pending suggestions."}</p>
+                ${(state.listingSuggestionsPending || []).length ? `<div style="display: flex; flex-direction: column; gap: 1rem;">${(state.listingSuggestionsPending || []).map((s) => {
+          const idEsc = (s.id || "").toString().replace(/'/g, "\\'");
+          return `<div style="padding: 1rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface);">
+                        <div style="font-weight: 700;">${(s.name || "").replace(/</g, "&lt;")}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">${(s.suggested_type || "school").replace(/</g, "&lt;")} \xB7 ${(s.city || "").replace(/</g, "&lt;")} ${(s.country || "").replace(/</g, "&lt;")} ${s.instagram ? "\xB7 @" + String(s.instagram).replace(/</g, "&lt;") : ""}</div>
+                        <div style="margin-top: 0.75rem; display: flex; gap: 8px;">
+                            <button type="button" class="btn-primary" onclick="window.adminApproveListingSuggestion('${idEsc}')" style="padding: 8px 16px; font-size: 13px;">${t2("approve") || "Approve"}</button>
+                            <button type="button" class="btn-secondary" onclick="window.adminRejectListingSuggestion('${idEsc}')" style="padding: 8px 16px; font-size: 13px;">${t2("reject") || "Reject"}</button>
+                        </div>
+                    </div>`;
+        }).join("")}</div>` : `<p class="text-muted">${t2("listing_suggestions_empty") || "No pending suggestions."}</p>`}
+            </div>`;
+        if (window.lucide) window.lucide.createIcons();
+      })();
+      return;
+    }
     if (state.discoveryPath) {
       if (!root) return;
+      document.getElementById("student-nav")?.classList.add("hidden");
+      document.getElementById("admin-nav")?.classList.add("hidden");
       try {
         const html = typeof window.renderDiscoveryView === "function" ? window.renderDiscoveryView(state.discoveryPath) : "";
         root.innerHTML = html || '<div class="container" style="padding:2rem;text-align:center;"><p>Loading...</p></div>';
@@ -4229,7 +5458,7 @@
       const t2 = new Proxy(tFn, {
         get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
       });
-      const isDevDashboardView = ["platform-dev-dashboard", "platform-school-details", "platform-dev-edit-discovery", "platform-dev-edit-school", "super-admin-dashboard"].includes(view);
+      const isDevDashboardView = ["platform-dev-dashboard", "platform-school-details", "platform-dev-edit-discovery", "platform-dev-edit-school", "super-admin-dashboard", "reviews-admin", "listing-suggestions-admin"].includes(view);
       let html = `<div class="container ${view === "auth" ? "auth-view" : ""} ${isDevDashboardView ? "container-dev" : ""} ${viewChanged ? "slide-in" : ""}">`;
       if (view === "school-selection") {
         html += renderSchoolSelection();
@@ -4257,6 +5486,8 @@
             <div style="display: flex; gap: 8px; padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);">
                 <button type="button" onclick="state.devDashboardTab='schools'; renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: ${devTab === "schools" ? "var(--system-blue)" : "var(--system-gray6)"}; color: ${devTab === "schools" ? "white" : "var(--text-secondary)"}; transition: all 0.2s;">${t2.dev_tab_schools || "Schools"}</button>
                 <button type="button" onclick="state.devDashboardTab='audit'; renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: ${devTab === "audit" ? "var(--system-blue)" : "var(--system-gray6)"}; color: ${devTab === "audit" ? "white" : "var(--text-secondary)"}; transition: all 0.2s;">${t2.dev_tab_account_audit || "Account Audit"}</button>
+                <button type="button" onclick="state.currentView='reviews-admin'; saveState(); renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: var(--system-gray6); color: var(--text-secondary); transition: all 0.2s;">${t2.reviews_admin_title || "Reviews"}</button>
+                <button type="button" onclick="state.currentView='listing-suggestions-admin'; saveState(); renderView();" style="padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; background: var(--system-gray6); color: var(--text-secondary); transition: all 0.2s;">${t2.listing_suggestions_admin_title || "Listing suggestions"}</button>
             </div>
             ` : ""}
             <div class="dev-dashboard-content" style="padding: 1.2rem;">
@@ -6060,9 +7291,6 @@
                 <div class="students-header">
                     <h1 class="students-title">${t2.nav_students}</h1>
                     <div class="students-actions">
-                        <button type="button" class="students-btn-add" onclick="createNewStudent()">
-                            <i data-lucide="plus" size="18"></i> ${t2.add_student}
-                        </button>
                         ${comps.length > 0 && state.currentSchool?.jack_and_jill_enabled === true ? `
                         <details class="students-jackblock" ${typeof window !== "undefined" && window.innerWidth >= 600 ? "open" : ""}>
                             <summary class="students-jack-summary">
@@ -7492,7 +8720,7 @@
       root.innerHTML = html;
       if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       if (view === "platform-school-details") window.scrollTo(0, 0);
-      const isDevView = ["platform-dev-dashboard", "platform-school-details", "platform-dev-edit-discovery", "platform-dev-edit-school"].includes(view);
+      const isDevView = ["platform-dev-dashboard", "platform-school-details", "platform-dev-edit-discovery", "platform-dev-edit-school", "listing-suggestions-admin", "reviews-admin"].includes(view);
       const isAdminView = view && view.startsWith("admin-");
       const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
       const isLanding = view === "school-selection" || view === "auth";
@@ -8592,6 +9820,16 @@
         password: pass
       });
       if (!authError && authData?.user) {
+        const { data: platformData } = await supabaseClient.rpc("get_platform_all_data");
+        const isPlatformAdmin = platformData && typeof platformData === "object" && Object.keys(platformData).length > 0;
+        if (!isPlatformAdmin) {
+          await supabaseClient.auth.signOut();
+          state.currentView = "school-selection";
+          state.loading = false;
+          renderView();
+          alert("That account is not a Developer (platform admin) account. Only Dev admin accounts can use the Developer login.");
+          return;
+        }
         state.isPlatformDev = true;
         state.currentUser = { name: authData.user.email + " (Dev)", role: "platform-dev" };
         state.currentView = "platform-dev-dashboard";
@@ -8958,50 +10196,6 @@ School: ${schoolName}`)) return;
     }
     state.platformData.discoveryEnabled = !!enabled;
     renderView();
-  };
-  window.createNewStudent = async () => {
-    const t2 = new Proxy(window.t, {
-      get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
-    });
-    const name = prompt(t2("enter_student_name"));
-    const phone = prompt(t2("enter_student_phone"));
-    const email = prompt(t2("enter_student_email") || "Student email (optional):");
-    const pass = prompt(t2("enter_student_pass"));
-    if (!name || !pass) return;
-    if (supabaseClient) {
-      const { data: rpcRow, error: rpcError } = await supabaseClient.rpc("create_student_legacy", {
-        p_name: name,
-        p_email: email && email.trim() || null,
-        p_phone: phone && phone.trim() || null,
-        p_password: pass,
-        p_school_id: state.currentSchool.id
-      });
-      if (rpcError) {
-        alert("Error: " + (rpcError.message || "Could not create student."));
-        return;
-      }
-      const created = typeof rpcRow === "object" ? rpcRow : typeof rpcRow === "string" ? JSON.parse(rpcRow) : null;
-      if (created) {
-        state.students.push(created);
-        renderView();
-        alert(t2("student_created"));
-        return;
-      }
-    }
-    const newStudent = {
-      id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
-      name,
-      email: email && email.trim() || null,
-      phone: phone && phone.trim() || null,
-      password: pass,
-      paid: false,
-      package: null,
-      balance: 0,
-      school_id: state.currentSchool.id
-    };
-    state.students.push(newStudent);
-    renderView();
-    alert(t2("student_created"));
   };
   function clearSchoolData() {
     state.classes = [];
@@ -11017,19 +12211,53 @@ School: ${schoolName}`)) return;
     const hasUnlimited = s.balance === null || activePacks.some((p) => p.count == null || p.count === "null");
     const balanceStr = hasUnlimited ? "\u221E" : s.balance ?? 0;
     const packsHtml = Array.isArray(s.active_packs) && s.active_packs.length > 0 ? `<span class="packs">${s.active_packs.length} ${s.active_packs.length === 1 ? "Pack" : "Packs"}</span>` : "";
+    const act = state.studentActivationStatus && state.studentActivationStatus[s.id];
+    const isLinked = act && act.linked;
+    const isInvited = act && act.invited_at;
+    const hasEmail = (s.email || "").trim().length > 0;
+    const canInvite = hasEmail && !isLinked && !isInvited;
+    const activationBadge = isLinked ? `<span class="student-card-activation-badge linked" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--system-green); margin-left: 6px;">${t2("activation_status_linked") || "Linked"}</span>` : isInvited ? `<span class="student-card-activation-badge invited" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-left: 6px;">${t2("activation_status_invited") || "Invited"}</span>` : "";
+    const inviteBtn = canInvite ? `<button type="button" class="student-card-invite-btn" onclick="event.stopPropagation(); event.preventDefault(); window.inviteStudentActivation('${String(s.id).replace(/'/g, "\\'")}');" style="margin-top: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); cursor: pointer; flex-shrink: 0;">${t2("invite_activation") || "Invite to activate"}</button>` : "";
     return `
         <div class="student-card" onclick="updateStudentPrompt('${escapeHtml(s.id)}')">
             <div class="student-card-avatar">${escapeHtml((s.name || "").charAt(0).toUpperCase())}</div>
-            <div class="student-card-body">
-                <div class="student-card-name">${escapeHtml(s.name)}</div>
+            <div class="student-card-body" style="flex: 1; min-width: 0;">
+                <div class="student-card-name">${escapeHtml(s.name)}${activationBadge}</div>
                 <div class="student-card-meta">
                     ${t2("remaining_classes")}: <span class="balance">${balanceStr}</span>${packsHtml}
                 </div>
+                ${inviteBtn}
             </div>
             <span class="student-card-status ${statusClass}">${statusLabel}</span>
             <i data-lucide="chevron-right" size="18" class="student-card-chevron"></i>
         </div>
     `;
+  };
+  window.inviteStudentActivation = async (studentId) => {
+    const t2 = (k) => window.t ? window.t(k) : k;
+    if (!state.currentSchool?.id || !studentId) return;
+    const sess = supabaseClient ? (await supabaseClient.auth.getSession()).data?.session : null;
+    if (!sess?.access_token) {
+      alert(t2("sign_in") || "Sign in required");
+      return;
+    }
+    const fnUrl = (typeof SUPABASE_URL !== "undefined" ? SUPABASE_URL : "").replace(/\/$/, "") + "/functions/v1/invite_student_activation";
+    try {
+      const res = await fetch(fnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sess.access_token },
+        body: JSON.stringify({ school_id: state.currentSchool.id, school_student_id: studentId })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "HTTP " + res.status);
+      if (!state.studentActivationStatus) state.studentActivationStatus = {};
+      state.studentActivationStatus[studentId] = { linked: false, invited_at: (/* @__PURE__ */ new Date()).toISOString() };
+      if (typeof window.filterStudents === "function") window.filterStudents(state.adminStudentsSearch);
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      alert(t2("invite_activation_sent") || "Invite sent. The student will receive an email to link their account.");
+    } catch (e) {
+      alert(e && e.message ? e.message : t2("invite_activation_error") || "Failed to send invite");
+    }
   };
   function getFilteredStudents(query) {
     const q = (query || "").toLowerCase().trim();
@@ -11312,6 +12540,7 @@ School: ${schoolName}`)) return;
 
   // src/main.js
   if (typeof window !== "undefined") {
+    window.getCapabilities = getCapabilities;
     window.parseHashRoute = parseHashRoute;
     window.parseQueryAndHashForView = parseQueryAndHashForView;
     window.navigateToAdminJackAndJill = navigateToAdminJackAndJill;
@@ -11440,12 +12669,14 @@ School: ${schoolName}`)) return;
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.isAdmin !== void 0) state.isAdmin = saved.isAdmin;
         if (saved.isPlatformDev !== void 0) state.isPlatformDev = saved.isPlatformDev;
-        if (saved.currentView && state.currentView !== "verify-email") state.currentView = saved.currentView;
+        if (saved.currentView && state.currentView !== "verify-email" && state.currentView !== "activate") state.currentView = saved.currentView;
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved.currentSchool) state.currentSchool = saved.currentSchool;
         if (saved._discoveryOnlyEdit !== void 0) state._discoveryOnlyEdit = !!saved._discoveryOnlyEdit;
         if (state.currentView === "discovery-profile-only") state._discoveryOnlyEdit = true;
+        if (saved.afterLogin !== void 0) state.afterLogin = saved.afterLogin;
+        if (saved.reviewDraft !== void 0) state.reviewDraft = saved.reviewDraft;
         if (saved.currentUser?.school_id && !saved.isAdmin) {
           const match = saved.currentSchool && saved.currentSchool.id === saved.currentUser.school_id;
           state.currentSchool = match ? saved.currentSchool : { id: saved.currentUser.school_id, name: saved.currentSchool?.name || "School" };
@@ -11472,6 +12703,8 @@ School: ${schoolName}`)) return;
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved._discoveryOnlyEdit !== void 0) state._discoveryOnlyEdit = !!saved._discoveryOnlyEdit;
+        if (saved.afterLogin !== void 0) state.afterLogin = saved.afterLogin;
+        if (saved.reviewDraft !== void 0) state.reviewDraft = saved.reviewDraft;
       }
       updateI18n();
       document.body.setAttribute("data-theme", state.theme);
@@ -11481,6 +12714,7 @@ School: ${schoolName}`)) return;
       const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
       const sessRes = supabaseClient ? await supabaseClient.auth.getSession() : { data: { session: null } };
       const hasSupabaseSession = !!sessRes?.data?.session?.user;
+      if (hasSupabaseSession && supabaseClient) await bootstrapAuth(supabaseClient);
       if (hasAuthState && !hasSupabaseSession) {
         state.currentUser = null;
         state.isAdmin = false;
@@ -11546,6 +12780,7 @@ School: ${schoolName}`)) return;
         const path2 = (window.location.pathname || "").replace(/\/$/, "") || "/";
         if (path2 === "/discovery" || path2.startsWith("/discovery/")) {
           state.discoveryPath = path2;
+          if (path2 !== "/discovery") state.discoveryDetailFetched = false;
           window.fetchDiscoveryData().then(() => window.renderView());
         } else {
           state.discoveryPath = null;
