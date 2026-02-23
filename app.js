@@ -660,10 +660,35 @@
           } catch (_) {
             state.privateClassRequests = [];
           }
+          try {
+            const fromUtc = (/* @__PURE__ */ new Date()).toISOString();
+            const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
+            const { data: lessonsData } = await supabaseClient.rpc("get_private_lessons_for_school", { p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
+            state.privateLessons = Array.isArray(lessonsData) ? lessonsData : [];
+          } catch (_) {
+            state.privateLessons = [];
+          }
+          try {
+            const { data: settingsData } = await supabaseClient.rpc("get_teacher_availability_settings", { p_school_id: sid });
+            state.teacherAvailabilitySettings = settingsData && typeof settingsData === "object" ? settingsData : null;
+          } catch (_) {
+            state.teacherAvailabilitySettings = null;
+          }
+          try {
+            const fromUtc = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3).toISOString();
+            const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
+            const { data: blockedData } = await supabaseClient.rpc("get_teacher_blocked_times", { p_school_id: sid, p_start_utc: fromUtc, p_end_utc: toUtc });
+            state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
+          } catch (_) {
+            state.teacherBlockedTimes = [];
+          }
         }
       } else {
         state.teacherAvailability = [];
         state.privateClassRequests = [];
+        state.privateLessons = [];
+        state.teacherAvailabilitySettings = null;
+        state.teacherBlockedTimes = [];
       }
       if (isStudent && state.currentSchool?.profile_type === "private_teacher" && state.currentUser?.id && supabaseClient && sid) {
         try {
@@ -672,8 +697,17 @@
         } catch (_) {
           state.studentPrivateClassRequests = [];
         }
+        try {
+          const fromUtc = (/* @__PURE__ */ new Date()).toISOString();
+          const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
+          const { data: studentLessons } = await supabaseClient.rpc("get_student_private_lessons", { p_student_id: String(state.currentUser.id), p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
+          state.studentPrivateLessons = Array.isArray(studentLessons) ? studentLessons : [];
+        } catch (_) {
+          state.studentPrivateLessons = [];
+        }
       } else {
         state.studentPrivateClassRequests = [];
+        state.studentPrivateLessons = [];
       }
       if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
         state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };
@@ -1075,6 +1109,13 @@
         console.warn("Error checking registrations:", e);
       }
     }
+    const todayStart = /* @__PURE__ */ new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+    const todaysPrivateLessons = (state.privateLessons || []).filter(
+      (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd && (l.status === "confirmed" || l.status === "attended")
+    );
     const packs = student.active_packs || [];
     const now = /* @__PURE__ */ new Date();
     const activePacks = packs.filter((p) => new Date(p.expires_at) > now);
@@ -1108,6 +1149,12 @@
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("confirm_attendance_registered")} \u2013 ${escapeHtml2(r.class_name)}
             </button>
         `).join("");
+      const privateLessonSection = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
+        const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
+        const checkedIn = l.status === "attended";
+        const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml2(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
+        return checkInBtn;
+      }).join("") : "";
       const regBalanceLabel = hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${student.balance === null ? t2("unlimited") : student.balance} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${student.balance === null ? t2("unlimited") : student.balance}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
@@ -1116,6 +1163,7 @@
                     ${regBalanceLabel}
                 </div>
                 ${regsHtml}
+                ${privateLessonSection ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${t2("private_lesson") || "Private lesson"}</div>${privateLessonSection}` : ""}
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
                     <i data-lucide="info" size="12" style="vertical-align: middle; margin-right: 4px;"></i>${t2("class_will_deduct")}
                 </div>
@@ -1181,6 +1229,11 @@
                         <button class="btn-primary w-full" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("deduct_one_event") || "Deduct 1 event"}</button>
                     </div>
                 </details>` : "";
+      const privateLessonBlock = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
+        const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
+        const checkedIn = l.status === "attended";
+        return !checkedIn && l.status === "confirmed" ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t2("private_lesson") || "Private lesson"} ${timeStr}</div><button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml2(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"}</button></div>` : checkedIn ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
+      }).join("") : "";
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -1191,6 +1244,7 @@
                         </div>
                     </div>
                 </div>
+                ${privateLessonBlock}
                 ${groupRow}
                 ${privateRow}
                 ${eventRow}
@@ -1402,8 +1456,10 @@
     const el = document.querySelector(".sticky-footer-inner");
     if (!el) return;
     const threshold = 80;
-    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - threshold;
-    el.classList.toggle("sticky-footer-visible", atBottom);
+    const scrollHeight = document.documentElement.scrollHeight;
+    const atBottom = window.scrollY + window.innerHeight >= scrollHeight - threshold;
+    const noScroll = scrollHeight <= window.innerHeight + threshold;
+    el.classList.toggle("sticky-footer-visible", atBottom || noScroll);
   }
 
   // src/legacy.js
@@ -2092,6 +2148,15 @@
       no_accepted_private_classes: "No accepted private classes yet",
       today: "Today",
       no_classes_this_day: "No classes this day",
+      export_calendar_ics: "Export .ics",
+      export_calendar_ics_hint: "Add to Google Calendar, Apple Calendar, or any .ics app.",
+      check_in_btn: "Check in",
+      mark_no_show_btn: "Mark no-show",
+      todays_private_lessons: "Today's private lessons",
+      checked_in: "Checked in",
+      private_lesson_cancellation_policy: "If you cancel less than 4 hours before the class, one private credit will be deducted. If you don't attend and the teacher doesn't check you in, you will also lose one credit.",
+      cancel_late_warning: "Cancelling within 4 hours will use one private credit.",
+      cancel_btn: "Cancel",
       month_jan: "Jan",
       month_feb: "Feb",
       month_mar: "Mar",
@@ -2693,6 +2758,15 @@
       no_accepted_private_classes: "A\xFAn no hay clases privadas aceptadas",
       today: "Hoy",
       no_classes_this_day: "No hay clases este d\xEDa",
+      export_calendar_ics: "Exportar .ics",
+      export_calendar_ics_hint: "A\xF1adir a Google Calendar, Apple Calendar o cualquier app .ics.",
+      check_in_btn: "Registrar",
+      mark_no_show_btn: "Marcar ausencia",
+      todays_private_lessons: "Clases privadas de hoy",
+      checked_in: "Registrado",
+      private_lesson_cancellation_policy: "Si cancelas con menos de 4 horas de antelaci\xF3n, se descontar\xE1 un cr\xE9dito. Si no asistes y el profesor no te registra, tambi\xE9n perder\xE1s un cr\xE9dito.",
+      cancel_late_warning: "Cancelar ahora usar\xE1 un cr\xE9dito de clase privada.",
+      cancel_btn: "Cancelar",
       profile_settings: "Perfil",
       linked_schools: "Escuelas vinculadas",
       no_schools_linked: "A\xFAn no hay escuelas vinculadas.",
@@ -3333,6 +3407,15 @@
       no_accepted_private_classes: "Noch keine akzeptierten Privatstunden",
       today: "Heute",
       no_classes_this_day: "Keine Stunden an diesem Tag",
+      export_calendar_ics: "Export .ics",
+      export_calendar_ics_hint: "Zu Google Kalender, Apple Kalender oder einer .ics-App hinzuf\xFCgen.",
+      check_in_btn: "Einchecken",
+      mark_no_show_btn: "Absage markieren",
+      todays_private_lessons: "Heutige Privatstunden",
+      checked_in: "Eingecheckt",
+      private_lesson_cancellation_policy: "Bei Absage weniger als 4 Stunden vor der Stunde wird ein Privatguthaben abgezogen. Wenn du nicht erscheinst und der Lehrer dich nicht eincheckt, verf\xE4llt ebenfalls ein Guthaben.",
+      cancel_late_warning: "Absage jetzt zieht ein Privatguthaben ab.",
+      cancel_btn: "Absagen",
       profile_settings: "Profil",
       linked_schools: "Verkn\xFCpfte Schulen",
       no_schools_linked: "Noch keine Schulen verkn\xFCpft.",
@@ -3789,6 +3872,10 @@
   window.renderDashboardProfileView = () => {
     const t2 = (k) => window.t ? window.t(k) : k;
     const p = state.userProfile || {};
+    const nameFromEnrollment = (state.currentUser?.name || "").trim();
+    const nameParts = nameFromEnrollment ? nameFromEnrollment.split(/\s+/) : [];
+    const firstName = (p.first_name || "").trim() || (nameParts[0] || "");
+    const lastName = (p.last_name || "").trim() || (nameParts.slice(1).join(" ") || "");
     const linkedSchools = state.profileLinkedSchools || [];
     const canResend = p.origin === "discovery" && !p.email_confirmed && Date.now() >= (_resendVerificationCooldownUntil || 0) && !_resendVerificationSending;
     const resendLabel = _resendVerificationSending ? t2("resend_sending") || "Sending\u2026" : canResend ? t2("resend_verification") || "Resend verification email" : t2("resend_cooldown") || "Sent. Wait 60s";
@@ -3800,8 +3887,8 @@
       html += `<div class="ios-list-item" style="padding: 12px 16px;"><button type="button" class="resend-verification-btn btn-secondary" ${canResend && !_resendVerificationSending ? "" : "disabled"} onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="width: 100%; min-height: 44px; cursor: ${canResend && !_resendVerificationSending ? "pointer" : "default"}; -webkit-tap-highlight-color: transparent;">${resendLabel}</button>${_resendVerificationFeedback === "sent" ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-green);">${t2("resend_success") || "Check your inbox"}</p>` : ""}${_resendVerificationFeedback === "error" ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-red);">${(_resendVerificationErrorMsg || t2("resend_error")).replace(/</g, "&lt;")}</p>` : ""}</div>`;
     }
     html += `</div>`;
-    html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("first_name") || "First name"}</span><input type="text" id="profile-first-name" value="${(p.first_name || "").replace(/"/g, "&quot;")}" placeholder="${t2("first_name") || "First name"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("last_name") || "Last name"}</span><input type="text" id="profile-last-name" value="${(p.last_name || "").replace(/"/g, "&quot;")}" placeholder="${t2("last_name") || "Last name"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("first_name") || "First name"}</span><input type="text" id="profile-first-name" value="${(firstName || "").replace(/"/g, "&quot;")}" placeholder="${t2("first_name") || "First name"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("last_name") || "Last name"}</span><input type="text" id="profile-last-name" value="${(lastName || "").replace(/"/g, "&quot;")}" placeholder="${t2("last_name") || "Last name"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("phone") || "Phone"}</span><input type="text" id="profile-phone" value="${(p.phone || "").replace(/"/g, "&quot;")}" placeholder="${t2("phone") || "Phone"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("city") || "City"}</span><input type="text" id="profile-city" value="${(p.city || "").replace(/"/g, "&quot;")}" placeholder="${t2("city") || "City"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("country") || "Country"}</span><input type="text" id="profile-country" value="${(p.country || "").replace(/"/g, "&quot;")}" placeholder="${t2("country") || "Country"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
@@ -5124,6 +5211,69 @@
     const isSignup = state.authMode === "signup";
     const viewChanged = view !== _lastRenderedView;
     _lastRenderedView = view;
+    (function syncNavAndGlobalUI() {
+      const isDevView = ["platform-dev-dashboard", "platform-school-details", "platform-dev-edit-discovery", "platform-dev-edit-school", "listing-suggestions-admin", "reviews-admin"].includes(view);
+      const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
+      const isLanding = view === "school-selection" || view === "auth";
+      const isDiscoveryOnlyView = state._discoveryOnlyEdit || view === "discovery-profile-only" || view === "discovery-admin-pick-school" || view === "discovery-admin-auth";
+      const showLogout = hasSession && (!isLanding || state.isPlatformDev);
+      const showNav = hasSession && !isLanding && !isDevView && !isDiscoveryOnlyView;
+      const isStudentTabView = ["schedule", "shop", "qr", "dashboard-profile", "teacher-booking"].includes(view);
+      const showStudentNav = !state.isAdmin && (showNav || isStudentTabView);
+      const logoutEl = document.getElementById("logout-btn");
+      const devTriggerEl = document.getElementById("dev-login-trigger");
+      const studentNavEl = document.getElementById("student-nav");
+      const adminNavEl = document.getElementById("admin-nav");
+      if (logoutEl) logoutEl.classList.toggle("hidden", !showLogout);
+      if (devTriggerEl) devTriggerEl.classList.toggle("hidden", state.currentUser !== null);
+      if (studentNavEl) studentNavEl.classList.toggle("hidden", !showStudentNav);
+      if (adminNavEl) adminNavEl.classList.toggle("hidden", !showNav || !state.isAdmin);
+      if (studentNavEl && studentNavEl.children) {
+        const isPrivateTeacher = state.currentSchool?.profile_type === "private_teacher";
+        const navItems = [
+          { view: isPrivateTeacher ? "teacher-booking" : "schedule", icon: isPrivateTeacher ? "calendar-clock" : "calendar", labelKey: isPrivateTeacher ? "nav_book_class" : "nav_schedule", labelFallback: isPrivateTeacher ? "Book Class" : "Schedule" },
+          { view: "shop", icon: "shopping-bag", labelKey: "nav_shop", labelFallback: "Shop" },
+          { view: "qr", icon: "qr-code", labelKey: "nav_qr", labelFallback: "My QR" },
+          { view: "dashboard-profile", icon: "user", labelKey: "nav_profile", labelFallback: "Profile" }
+        ];
+        const t2 = DANCE_LOCALES[state.language || "en"];
+        navItems.forEach(({ view: v, icon, labelKey, labelFallback }, idx) => {
+          const btn = studentNavEl.children[idx];
+          if (!btn || !btn.classList.contains("nav-item")) return;
+          btn.setAttribute("data-view", v);
+          const oldIcon = btn.querySelector("[data-lucide], i, svg");
+          if (oldIcon) {
+            const newIcon = document.createElement("i");
+            newIcon.setAttribute("data-lucide", icon);
+            oldIcon.replaceWith(newIcon);
+          }
+          const label = btn.querySelector("span");
+          if (label) label.textContent = t2[labelKey] || labelFallback;
+        });
+      }
+      document.body.classList.toggle("landing-page", view === "school-selection");
+      if (typeof window.updateStickyFooterVisibility === "function") {
+        window.updateStickyFooterVisibility();
+        requestAnimationFrame(() => {
+          window.updateStickyFooterVisibility();
+        });
+      }
+      const navSelector = state.isAdmin ? "#admin-nav .nav-item" : "#student-nav .nav-item";
+      document.querySelectorAll(navSelector).forEach((btn) => {
+        const dataView = btn.getAttribute("data-view");
+        btn.classList.toggle("active", dataView === view);
+      });
+      if (state.isAdmin) {
+        const pendingCount = (state.paymentRequests || []).filter((r) => r.status === "pending").length;
+        const badge = document.getElementById("memberships-badge");
+        if (badge) {
+          badge.textContent = "";
+          badge.classList.toggle("hidden", pendingCount === 0);
+        }
+      }
+      const lucideLib = window.lucide || typeof globalThis !== "undefined" && globalThis.lucide;
+      if (lucideLib && typeof lucideLib.createIcons === "function") lucideLib.createIcons();
+    })();
     if (view === "verify-email" && root) {
       const t2 = (k) => window.t ? window.t(k) : k;
       const token = state.verifyEmailToken || new URLSearchParams(window.location.search).get("token") || (() => {
@@ -6536,8 +6686,11 @@
           const daySchedules = state._teacherBookingSlots || [];
           const t22 = DANCE_LOCALES[state.language || "en"];
           const hasPackage = typeof window.studentHasPackageWithSchool === "function" ? window.studentHasPackageWithSchool(school.id) : true;
-          const myClasses = (state.studentPrivateClassRequests || []).filter((r) => r.status === "accepted");
+          const myLessons = (state.studentPrivateLessons || []).filter((l) => l.status === "confirmed" || l.status === "attended").sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
+          const myClassesFallback = (state.studentPrivateClassRequests || []).filter((r) => r.status === "accepted");
+          const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
           const myClassesExpanded = state.studentPrivateClassesExpanded !== false;
+          const policyText = t22.private_lesson_cancellation_policy || "If you cancel less than 4 hours before the class, one private credit will be deducted. If you don't attend and the teacher doesn't check you in, you will also lose one credit.";
           html += `
             <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
                 <div class="student-private-classes-expandable ${myClassesExpanded ? "expanded" : ""}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
@@ -6547,23 +6700,36 @@
                             <span style="font-weight: 700; font-size: 15px;">${t22.my_private_classes || "My private classes"}</span>
                             ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ""}
                         </div>
-                        <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation();">
+                            <button type="button" class="btn-secondary" onclick="window.downloadCalendarIcs('student')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;"><i data-lucide="download" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t22.export_calendar_ics || "Export .ics"}</button>
+                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        </div>
                     </div>
                     <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? "" : "none"}; background: var(--bg);">
+                        ${myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, "&lt;")}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>`}
                         ${myClasses.length === 0 ? `
                         <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 14px;">
                             <i data-lucide="inbox" size="24" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
                             <div>${t22.no_private_classes_yet || "No accepted private classes yet"}</div>
                         </div>
-                        ` : myClasses.map((r) => {
-            const dateLabel = window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(r.requested_date + "T00:00:00"), state.language) : r.requested_date;
+                        ` : myClasses.map((item) => {
+            const isLesson = item.start_at_utc != null;
+            const dateLabel = isLesson ? window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(item.requested_date + "T00:00:00"), state.language) : item.requested_date;
+            const timeStr = isLesson ? new Date(item.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : item.requested_time || "";
+            const canCancel = isLesson && item.status === "confirmed";
+            const hoursUntil = isLesson ? (new Date(item.start_at_utc).getTime() - Date.now()) / (60 * 60 * 1e3) : 999;
+            const lateCancelWarning = canCancel && hoursUntil < 4 ? t22.cancel_late_warning || "Cancelling within 4 hours will use one private credit." : "";
+            const cancelBtn = canCancel ? (function() {
+              const cw = lateCancelWarning ? "if(confirm('" + lateCancelWarning.replace(/'/g, "\\'") + "')) " : "";
+              return '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="' + cw + "window.studentCancelPrivateLesson('" + item.id + `')">` + (t22.cancel_btn || "Cancel") + "</button>";
+            })() : "";
             return `
                             <div class="student-private-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
                                 <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
                                 <div style="flex: 1;">
-                                    <div style="font-weight: 600; font-size: 14px;">${dateLabel} &middot; ${(r.requested_time || "").replace(/</g, "&lt;")}</div>
-                                    ${r.location ? `<div style="font-size: 12px; color: var(--text-secondary);"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i>${(r.location || "").replace(/</g, "&lt;")}</div>` : ""}
+                                    <div style="font-weight: 600; font-size: 14px;">${dateLabel} &middot; ${(timeStr || "").replace(/</g, "&lt;")}${item.status === "attended" ? ' &middot; <span style="color: var(--system-green); font-size: 12px;">' + (t22.checked_in || "Checked in") + "</span>" : ""}</div>
                                 </div>
+                                ${cancelBtn}
                             </div>`;
           }).join("")}
                     </div>
@@ -7460,27 +7626,45 @@
                     </div>`;
         })() : ""}
                 ${state.currentSchool?.profile_type === "private_teacher" ? (() => {
+          const lessons = (state.privateLessons || []).filter((l) => l.status === "confirmed" || l.status === "attended");
           const acceptedReqs = (state.privateClassRequests || []).filter((r) => r.status === "accepted");
-          const sortedAccepted = [...acceptedReqs].sort((a, b) => (a.requested_date + a.requested_time).localeCompare(b.requested_date + b.requested_time));
+          const forCalendar = lessons.length > 0 ? lessons.map((l) => ({ ...l, requested_date: new Date(l.start_at_utc).toISOString().slice(0, 10), requested_time: new Date(l.start_at_utc).toTimeString().slice(0, 5) })) : acceptedReqs;
+          const sortedAccepted = lessons.length > 0 ? [...lessons].sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime()) : [...acceptedReqs].sort((a, b) => (a.requested_date + a.requested_time).localeCompare(b.requested_date + b.requested_time));
           const viewMode = state.teacherAcceptedClassesView || "list";
           const expanded = state.teacherAcceptedClassesExpanded !== false;
+          const todayStart = /* @__PURE__ */ new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          const todayEnd = new Date(todayStart);
+          todayEnd.setDate(todayEnd.getDate() + 1);
+          const todaysLessons = (state.privateLessons || []).filter((l) => (l.status === "confirmed" || l.status === "attended") && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd);
           return `
                     <div class="teacher-accepted-classes-expandable ${expanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                        <div class="admin-reg-header" onclick="toggleExpandableNoRender('teacherAcceptedClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
-                            <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="admin-reg-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1;" onclick="toggleExpandableNoRender('teacherAcceptedClasses')">
                                 <i data-lucide="calendar-check" size="16" style="opacity: 0.6;"></i>
                                 <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.accepted_private_classes || "Accepted private classes"}</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                ${acceptedReqs.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${acceptedReqs.length}</span>` : ""}
+                                ${(lessons.length || acceptedReqs.length) > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${lessons.length || acceptedReqs.length}</span>` : ""}
                                 <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
+                            <button type="button" class="btn-secondary" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; flex-shrink: 0;"><i data-lucide="download" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_calendar_ics || "Export .ics"}</button>
                         </div>
                         <div id="teacher-accepted-classes-content" style="padding: 0.8rem 0; display: ${expanded ? "" : "none"};">
-                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
                                 <button type="button" class="btn-tab ${viewMode === "list" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "list" ? "var(--secondary)" : "transparent"}; color: ${viewMode === "list" ? "white" : "var(--text-primary)"};">${t2.list_view || "List"}</button>
                                 <button type="button" class="btn-tab ${viewMode === "calendar" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "calendar" ? "var(--secondary)" : "transparent"}; color: ${viewMode === "calendar" ? "white" : "var(--text-primary)"};">${t2.calendar_view || "Calendar"}</button>
                             </div>
+                            ${todaysLessons.length > 0 ? `
+                            <div style="margin-bottom: 12px; padding: 10px; background: var(--system-gray6); border-radius: 12px;">
+                                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px;">${t2.todays_private_lessons || "Today's private lessons"}</div>
+                                ${todaysLessons.map((l) => {
+            const studentName = (state.students || []).find((s) => String(s.id) === String(l.student_id))?.name || l.student_id;
+            const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
+            const canCheckIn = l.status === "confirmed";
+            const isPast = new Date(l.end_at_utc) < /* @__PURE__ */ new Date();
+            return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === "attended" ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t2.checked_in || "Checked in") + "</span>" : "<div><strong>" + (studentName || "").replace(/</g, "&lt;") + "</strong> &middot; " + timeStr + '</div><div style="display: flex; gap: 6px;">' + (canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + l.id + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (isPast && l.status === "confirmed" ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + l.id + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>") + "</div>";
+          }).join("")}
+                            </div>
+                            ` : ""}
                             ${viewMode === "list" ? `
                             ${sortedAccepted.length === 0 ? `
                             <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">
@@ -7488,15 +7672,23 @@
                                 <div>${t2.no_accepted_private_classes || "No accepted private classes yet"}</div>
                             </div>
                             ` : sortedAccepted.map((r) => {
+            const lesson = r.start_at_utc ? r : (state.privateLessons || []).find((l) => l.request_id === r.id);
+            const lessonId = lesson?.id;
             const studentName = (state.students || []).find((s) => String(s.id) === String(r.student_id))?.name || r.student_id;
-            const dateLabel = window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(r.requested_date + "T00:00:00"), state.language) : r.requested_date;
+            const dateLabel = r.start_at_utc ? window.formatShortDate ? window.formatShortDate(new Date(r.start_at_utc), state.language) : new Date(r.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(r.requested_date + "T00:00:00"), state.language) : r.requested_date;
+            const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : r.requested_time || "";
+            const canCheckIn = lesson && lesson.status === "confirmed" && !lesson.credit_deducted;
+            const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < /* @__PURE__ */ new Date();
+            const attended = lesson && lesson.status === "attended";
             return `
                                 <div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
                                     <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
                                     <div style="flex: 1;">
                                         <div style="font-weight: 600; font-size: 14px;">${(studentName || "").replace(/</g, "&lt;")}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(r.requested_time || "").replace(/</g, "&lt;")}${r.location ? " &middot; " + (r.location || "").replace(/</g, "&lt;") : ""}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(timeStr || "").replace(/</g, "&lt;")} ${attended ? ' &middot; <span style="color: var(--system-green);">' + (t2.checked_in || "Checked in") + "</span>" : ""}</div>
                                     </div>
+                                    ${lessonId && canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : ""}
+                                    ${lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : ""}
                                 </div>`;
           }).join("")}
                             ` : (() => {
@@ -7513,9 +7705,9 @@
               return x.toISOString().slice(0, 7) + "-01";
             })();
             const monthLabel = calDate.toLocaleDateString(state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US", { month: "long", year: "numeric" });
-            const grid = window.getMonthCalendarGrid ? window.getMonthCalendarGrid(calDateStr, acceptedReqs) : [];
+            const grid = window.getMonthCalendarGrid ? window.getMonthCalendarGrid(calDateStr, forCalendar) : [];
             const selectedDate = state.teacherAcceptedCalendarSelectedDate;
-            const selectedEvents = selectedDate ? acceptedReqs.filter((r) => r.requested_date === selectedDate) || [] : [];
+            const selectedEvents = selectedDate ? forCalendar.filter((r) => r.requested_date === selectedDate) || [] : [];
             const weekdays = state.language === "es" ? ["Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b", "Dom"] : state.language === "de" ? ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
             return `
                                 <div class="private-classes-calendar">
@@ -7542,15 +7734,14 @@
                                     ${selectedDate ? `
                                     <div class="private-classes-calendar-detail">
                                         <div class="private-classes-calendar-detail-title">${window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(selectedDate + "T00:00:00"), state.language) : selectedDate}</div>
-                                        ${selectedEvents.length === 0 ? `<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 13px;">${t2.no_classes_this_day || "No classes this day"}</div>` : selectedEvents.map((r) => {
+                                        ${selectedEvents.length === 0 ? '<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 13px;">' + (t2.no_classes_this_day || "No classes this day") + "</div>" : selectedEvents.map((r) => {
+              const lesson = r.start_at_utc ? r : (state.privateLessons || []).find((l) => l.request_id === r.id);
+              const lessonId = lesson?.id;
               const studentName = (state.students || []).find((s) => String(s.id) === String(r.student_id))?.name || r.student_id;
-              return `<div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
-                                                <i data-lucide="clock" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
-                                                <div style="flex: 1;">
-                                                    <div style="font-weight: 600; font-size: 14px;">${(studentName || "").replace(/</g, "&lt;")}</div>
-                                                    <div style="font-size: 12px; color: var(--text-secondary);">${(r.requested_time || "").replace(/</g, "&lt;")}${r.location ? " &middot; " + (r.location || "").replace(/</g, "&lt;") : ""}</div>
-                                                </div>
-                                            </div>`;
+              const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : r.requested_time || "";
+              const canCheckIn = lesson && lesson.status === "confirmed" && !lesson.credit_deducted;
+              const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < /* @__PURE__ */ new Date();
+              return '<div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;"><i data-lucide="clock" size="16" style="opacity: 0.5; flex-shrink: 0;"></i><div style="flex: 1;"><div style="font-weight: 600; font-size: 14px;">' + (studentName || "").replace(/</g, "&lt;") + '</div><div style="font-size: 12px; color: var(--text-secondary);">' + (timeStr || "").replace(/</g, "&lt;") + (lesson && lesson.status === "attended" ? " &middot; " + (t2.checked_in || "Checked in") : "") + "</div></div>" + (lessonId && canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>";
             }).join("")}
                                     </div>
                                     ` : ""}
@@ -8773,58 +8964,6 @@
       root.innerHTML = html;
       if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       if (view === "platform-school-details") window.scrollTo(0, 0);
-      const isDevView = ["platform-dev-dashboard", "platform-school-details", "platform-dev-edit-discovery", "platform-dev-edit-school", "listing-suggestions-admin", "reviews-admin"].includes(view);
-      const isAdminView = view && view.startsWith("admin-");
-      const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
-      const isLanding = view === "school-selection" || view === "auth";
-      const isDiscoveryOnlyView = state._discoveryOnlyEdit || view === "discovery-profile-only" || view === "discovery-admin-pick-school" || view === "discovery-admin-auth";
-      const showLogout = hasSession && (!isLanding || state.isPlatformDev);
-      const showNav = hasSession && !isLanding && !isDevView && !isDiscoveryOnlyView;
-      document.getElementById("logout-btn").classList.toggle("hidden", !showLogout);
-      document.getElementById("dev-login-trigger").classList.toggle("hidden", state.currentUser !== null);
-      document.getElementById("student-nav").classList.toggle("hidden", !showNav || state.isAdmin);
-      document.getElementById("admin-nav").classList.toggle("hidden", !showNav || !state.isAdmin);
-      const studentNav = document.getElementById("student-nav");
-      if (studentNav) {
-        const isPrivateTeacher = state.currentSchool?.profile_type === "private_teacher";
-        const navItems = [
-          { view: isPrivateTeacher ? "teacher-booking" : "schedule", icon: isPrivateTeacher ? "calendar-clock" : "calendar", labelKey: isPrivateTeacher ? "nav_book_class" : "nav_schedule", labelFallback: isPrivateTeacher ? "Book Class" : "Schedule" },
-          { view: "shop", icon: "shopping-bag", labelKey: "nav_shop", labelFallback: "Shop" },
-          { view: "qr", icon: "qr-code", labelKey: "nav_qr", labelFallback: "My QR" },
-          { view: "dashboard-profile", icon: "user", labelKey: "nav_profile", labelFallback: "Profile" }
-        ];
-        const t3 = DANCE_LOCALES[state.language || "en"];
-        navItems.forEach(({ view: view2, icon, labelKey, labelFallback }, idx) => {
-          const btn = studentNav.children[idx];
-          if (!btn || !btn.classList.contains("nav-item")) return;
-          btn.setAttribute("data-view", view2);
-          const oldIcon = btn.querySelector("[data-lucide], i, svg");
-          if (oldIcon) {
-            const newIcon = document.createElement("i");
-            newIcon.setAttribute("data-lucide", icon);
-            oldIcon.replaceWith(newIcon);
-          }
-          const label = btn.querySelector("span");
-          if (label) label.textContent = t3[labelKey] || labelFallback;
-        });
-      }
-      document.body.classList.toggle("landing-page", view === "school-selection");
-      if (typeof window.updateStickyFooterVisibility === "function") {
-        window.updateStickyFooterVisibility();
-      }
-      document.querySelectorAll(".nav-item").forEach((btn) => {
-        btn.classList.toggle("active", btn.getAttribute("data-view") === view);
-      });
-      if (state.isAdmin) {
-        const pendingCount = (state.paymentRequests || []).filter((r) => r.status === "pending").length;
-        const badge = document.getElementById("memberships-badge");
-        if (badge) {
-          badge.textContent = "";
-          badge.classList.toggle("hidden", pendingCount === 0);
-        }
-      }
-      const lucideLib = window.lucide || typeof globalThis !== "undefined" && globalThis.lucide;
-      if (lucideLib && typeof lucideLib.createIcons === "function") lucideLib.createIcons();
     } catch (e) {
       console.error("Render error:", e);
       if (root) root.innerHTML = '<div class="container" style="padding:2rem;text-align:center;"><p style="color:var(--text-muted);">Something went wrong. <a href="#" onclick="location.reload()" style="color:var(--text-primary); text-decoration:none; font-weight:600;">Reload</a>.</p></div>';
@@ -10667,6 +10806,91 @@ School: ${schoolName}`)) return;
       });
       if (error) throw error;
       await fetchAllData();
+    } catch (e) {
+      alert("Error: " + (e.message || e));
+    }
+  };
+  window.markPrivateLessonAttended = async (lessonId) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+      const { error } = await supabaseClient.rpc("mark_private_lesson_attended", {
+        p_lesson_id: lessonId,
+        p_school_id: state.currentSchool.id
+      });
+      if (error) throw error;
+      await fetchAllData();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      alert("Error: " + (e.message || e));
+    }
+  };
+  window.markPrivateLessonNoShow = async (lessonId) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+      const { error } = await supabaseClient.rpc("mark_private_lesson_no_show", {
+        p_lesson_id: lessonId,
+        p_school_id: state.currentSchool.id
+      });
+      if (error) throw error;
+      await fetchAllData();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      alert("Error: " + (e.message || e));
+    }
+  };
+  window.downloadCalendarIcs = async (type) => {
+    const sess = state.auth?.session || supabaseClient && (await supabaseClient.auth.getSession()).data?.session;
+    if (!sess?.access_token) {
+      alert("Please sign in to export calendar.");
+      return;
+    }
+    const url = (typeof SUPABASE_URL === "string" ? SUPABASE_URL : window.SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/export_calendar_ics?type=" + (type || "student") + "&include_group_classes=true&range_days=60";
+    try {
+      const res = await fetch(url, { headers: { Authorization: "Bearer " + sess.access_token } });
+      if (!res.ok) {
+        const t2 = await res.text();
+        throw new Error(t2 || res.status);
+      }
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "schedule.ics";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      alert("Export failed: " + (e.message || e));
+    }
+  };
+  window.studentCancelPrivateLesson = async (lessonId) => {
+    if (!supabaseClient) return;
+    try {
+      const { error } = await supabaseClient.rpc("student_cancel_private_lesson", { p_lesson_id: lessonId });
+      if (error) throw error;
+      await fetchAllData();
+      if (typeof renderView === "function") renderView();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      alert("Error: " + (e.message || e));
+    }
+  };
+  window.markPrivateLessonAttended = async (lessonId) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+      const { error } = await supabaseClient.rpc("mark_private_lesson_attended", { p_lesson_id: lessonId, p_school_id: state.currentSchool.id });
+      if (error) throw error;
+      await fetchAllData();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      alert("Error: " + (e.message || e));
+    }
+  };
+  window.markPrivateLessonNoShow = async (lessonId) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+      const { error } = await supabaseClient.rpc("mark_private_lesson_no_show", { p_lesson_id: lessonId, p_school_id: state.currentSchool.id });
+      if (error) throw error;
+      await fetchAllData();
+      if (window.lucide) window.lucide.createIcons();
     } catch (e) {
       alert("Error: " + (e.message || e));
     }
@@ -12622,6 +12846,9 @@ School: ${schoolName}`)) return;
     window.addEventListener("scroll", () => {
       window.updateStickyFooterVisibility();
     }, { passive: true });
+    window.addEventListener("resize", () => {
+      window.updateStickyFooterVisibility();
+    });
     document.getElementById("lang-toggle").addEventListener("click", () => {
       state.language = state.language === "en" ? "es" : "en";
       saveState();

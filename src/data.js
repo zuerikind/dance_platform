@@ -247,18 +247,44 @@ export async function fetchAllData() {
                     const { data: pcrData } = await supabaseClient.rpc('get_private_class_requests_for_school', { p_school_id: sid });
                     state.privateClassRequests = Array.isArray(pcrData) ? pcrData : [];
                 } catch (_) { state.privateClassRequests = []; }
+                try {
+                    const fromUtc = new Date().toISOString();
+                    const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+                    const { data: lessonsData } = await supabaseClient.rpc('get_private_lessons_for_school', { p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
+                    state.privateLessons = Array.isArray(lessonsData) ? lessonsData : [];
+                } catch (_) { state.privateLessons = []; }
+                try {
+                    const { data: settingsData } = await supabaseClient.rpc('get_teacher_availability_settings', { p_school_id: sid });
+                    state.teacherAvailabilitySettings = settingsData && typeof settingsData === 'object' ? settingsData : null;
+                } catch (_) { state.teacherAvailabilitySettings = null; }
+                try {
+                    const fromUtc = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                    const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+                    const { data: blockedData } = await supabaseClient.rpc('get_teacher_blocked_times', { p_school_id: sid, p_start_utc: fromUtc, p_end_utc: toUtc });
+                    state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
+                } catch (_) { state.teacherBlockedTimes = []; }
             }
         } else {
             state.teacherAvailability = [];
             state.privateClassRequests = [];
+            state.privateLessons = [];
+            state.teacherAvailabilitySettings = null;
+            state.teacherBlockedTimes = [];
         }
         if (isStudent && state.currentSchool?.profile_type === 'private_teacher' && state.currentUser?.id && supabaseClient && sid) {
             try {
                 const { data: pcrStudent } = await supabaseClient.from('private_class_requests').select('*').eq('school_id', sid).eq('student_id', String(state.currentUser.id)).eq('status', 'accepted').order('requested_date', { ascending: true });
                 state.studentPrivateClassRequests = Array.isArray(pcrStudent) ? pcrStudent : [];
             } catch (_) { state.studentPrivateClassRequests = []; }
+            try {
+                const fromUtc = new Date().toISOString();
+                const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+                const { data: studentLessons } = await supabaseClient.rpc('get_student_private_lessons', { p_student_id: String(state.currentUser.id), p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
+                state.studentPrivateLessons = Array.isArray(studentLessons) ? studentLessons : [];
+            } catch (_) { state.studentPrivateLessons = []; }
         } else {
             state.studentPrivateClassRequests = [];
+            state.studentPrivateLessons = [];
         }
         if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
             state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };

@@ -37,6 +37,7 @@ import './legacy.js';
 // --- Event listeners and init (run after legacy has attached handlers to window) ---
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('scroll', () => { window.updateStickyFooterVisibility(); }, { passive: true });
+    window.addEventListener('resize', () => { window.updateStickyFooterVisibility(); });
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
         state.language = state.language === 'en' ? 'es' : 'en';

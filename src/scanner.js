@@ -124,6 +124,14 @@ export async function handleScan(scannedId) {
         } catch (e) { console.warn('Error checking registrations:', e); }
     }
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+    const todaysPrivateLessons = (state.privateLessons || []).filter(
+        (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd && (l.status === 'confirmed' || l.status === 'attended')
+    );
+
     const packs = student.active_packs || [];
     const now = new Date();
     const activePacks = packs.filter(p => new Date(p.expires_at) > now);
@@ -160,6 +168,19 @@ export async function handleScan(scannedId) {
             </button>
         `).join('');
 
+        const privateLessonSection = todaysPrivateLessons.length > 0
+            ? todaysPrivateLessons.map((l) => {
+                const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                const checkedIn = l.status === 'attended';
+                const checkInBtn = !checkedIn && l.status === 'confirmed'
+                    ? `<button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'} – Private lesson ${timeStr}</button>`
+                    : checkedIn
+                        ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t('checked_in') || 'Checked in'} – Private lesson ${timeStr}</div>`
+                        : '';
+                return checkInBtn;
+            }).join('')
+            : '';
+
         const regBalanceLabel = hasDualScanMode
             ? `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
             : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
@@ -170,6 +191,7 @@ export async function handleScan(scannedId) {
                     ${regBalanceLabel}
                 </div>
                 ${regsHtml}
+                ${privateLessonSection ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${t('private_lesson') || 'Private lesson'}</div>${privateLessonSection}` : ''}
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
                     <i data-lucide="info" size="12" style="vertical-align: middle; margin-right: 4px;"></i>${t('class_will_deduct')}
                 </div>
@@ -239,6 +261,18 @@ export async function handleScan(scannedId) {
                     </div>
                 </details>` : '';
 
+        const privateLessonBlock = todaysPrivateLessons.length > 0
+            ? todaysPrivateLessons.map((l) => {
+                const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                const checkedIn = l.status === 'attended';
+                return !checkedIn && l.status === 'confirmed'
+                    ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t('private_lesson') || 'Private lesson'} ${timeStr}</div><button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'}</button></div>`
+                    : checkedIn
+                        ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t('checked_in') || 'Checked in'} – Private lesson ${timeStr}</div>`
+                        : '';
+            }).join('')
+            : '';
+
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -249,6 +283,7 @@ export async function handleScan(scannedId) {
                         </div>
                     </div>
                 </div>
+                ${privateLessonBlock}
                 ${groupRow}
                 ${privateRow}
                 ${eventRow}
@@ -484,6 +519,8 @@ export function updateStickyFooterVisibility() {
     const el = document.querySelector('.sticky-footer-inner');
     if (!el) return;
     const threshold = 80;
-    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - threshold;
-    el.classList.toggle('sticky-footer-visible', atBottom);
+    const scrollHeight = document.documentElement.scrollHeight;
+    const atBottom = window.scrollY + window.innerHeight >= scrollHeight - threshold;
+    const noScroll = scrollHeight <= window.innerHeight + threshold;
+    el.classList.toggle('sticky-footer-visible', atBottom || noScroll);
 }
