@@ -184,18 +184,24 @@ Deno.serve(async (req) => {
         const schoolName = schoolRow?.name || targetUuid;
         const { data: adminRows } = await adminClient
           .from('platform_admins')
-          .select('email');
-        const to = (adminRows || [])
-          .map((r: { email?: string | null }) => r?.email)
-          .filter((e): e is string => typeof e === 'string' && e.trim() !== '');
+          .select('email, user_id');
+        type AdminRow = { email?: string | null; user_id?: string | null };
+        let to: string[] = (adminRows || []).map((r: AdminRow) => (r?.email && String(r.email).trim()) || '').filter((e): e is string => e !== '');
+        if (to.length === 0 && adminRows?.length) {
+          const userIds = (adminRows as AdminRow[]).map((r) => r?.user_id).filter((id): id is string => typeof id === 'string' && id.length > 0);
+          if (userIds.length > 0) {
+            const { data: profileRows } = await adminClient.from('profiles').select('email').in('id', userIds);
+            to = (profileRows || []).map((r: { email?: string | null }) => r?.email).filter((e): e is string => typeof e === 'string' && e.trim() !== '');
+          }
+        }
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
         const emailFrom = Deno.env.get('EMAIL_FROM') || 'Bailadmin <noreply@bailadmin.lat>';
         const publicSiteUrl = Deno.env.get('PUBLIC_SITE_URL') || 'https://bailadmin.lat';
         if (to.length === 0) {
-          console.warn('Flagged review: no platform admin emails in platform_admins table – notification not sent. Add email column and set at least one admin email.');
+          console.warn('Flagged review: no platform admin emails (platform_admins.email or profiles.email for linked user_id). Add email in platform_admins or link platform_admins.user_id to a profile with email.');
         }
         if (resendApiKey && to.length === 0) {
-          console.warn('Flagged review: RESEND_API_KEY is set but no admin emails – configure platform_admins.email in DB.');
+          console.warn('Flagged review: RESEND_API_KEY is set but no admin emails – configure platform_admins.email or ensure platform_admins.user_id links to profiles with email.');
         }
         if (!resendApiKey) {
           console.warn('Flagged review: RESEND_API_KEY not set in Edge Function secrets – notification not sent. Set in Supabase Dashboard → Edge Functions → submit_review → Secrets.');
@@ -216,9 +222,9 @@ Deno.serve(async (req) => {
               html: `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:560px;"><p>A review was submitted with a low rating and has been <strong>flagged</strong> for moderation.</p><p><strong>School:</strong> ${escapeHtml(schoolName)}</p><p><strong>Rating:</strong> ${rating}/5</p><p><strong>Comment:</strong> ${escapeHtml(commentSnippet)}</p><p>Open the <a href="${reviewUrl}">Bailadmin platform</a> and go to Dev dashboard → Reviews to review or delete it.</p><p>— Bailadmin</p></body></html>`,
             }),
           });
+          const resBody = await res.text();
           if (!res.ok) {
-            const errText = await res.text();
-            console.error('Resend flagged-review email error:', res.status, errText);
+            console.error('Resend flagged-review email error:', res.status, resBody);
           } else {
             console.log('Flagged review notification sent to', to.length, 'admin(s)');
           }

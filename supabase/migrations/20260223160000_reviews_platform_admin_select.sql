@@ -1,6 +1,7 @@
 -- Let platform admins see all reviews (including flagged/hidden) in the dev dashboard.
 -- Without this, RLS "reviews_select_published" hides non-published rows from everyone, including admins.
 
+DROP POLICY IF EXISTS "reviews_select_platform_admin" ON public.reviews;
 CREATE POLICY "reviews_select_platform_admin" ON public.reviews
   FOR SELECT
   USING (public.is_platform_admin());

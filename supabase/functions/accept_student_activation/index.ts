@@ -134,6 +134,31 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Sync profile (name/email/phone) to student_profiles and set students.user_id so admin dashboard shows correct data
+    const { data: profile } = await serviceClient.from('profiles').select('first_name, last_name, email, phone').eq('id', profileId).single();
+    const profileName = profile
+      ? [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() || null
+      : null;
+    const profileEmail = profile?.email ?? user.email ?? null;
+    const profilePhone = profile?.phone ?? null;
+
+    await serviceClient.from('student_profiles').upsert(
+      {
+        user_id: profileId,
+        name: profileName ?? '',
+        email: profileEmail ?? '',
+        phone: profilePhone ?? '',
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    );
+
+    await serviceClient
+      .from('students')
+      .update({ user_id: profileId })
+      .eq('id', invite.school_student_id)
+      .eq('school_id', invite.school_id);
+
     await serviceClient
       .from('student_activation_invites')
       .update({ consumed_at: new Date().toISOString() })

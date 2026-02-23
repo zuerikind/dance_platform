@@ -1655,6 +1655,7 @@
       no_schools_linked: "No schools linked yet.",
       profile_your_reviews: "Your reviews",
       profile_no_reviews: "No reviews yet.",
+      profile_your_avg_rating: "Your average rating",
       profile_review_school: "Review a school",
       profile_suggest_school: "Ask to add a new school",
       reviews_admin_flag_label: "Pending review",
@@ -2697,6 +2698,7 @@
       no_schools_linked: "A\xFAn no hay escuelas vinculadas.",
       profile_your_reviews: "Tus rese\xF1as",
       profile_no_reviews: "A\xFAn no hay rese\xF1as.",
+      profile_your_avg_rating: "Tu valoraci\xF3n media",
       profile_review_school: "Rese\xF1ar una escuela",
       profile_suggest_school: "Pedir a\xF1adir una escuela",
       reviews_admin_flag_label: "Pendiente de revisi\xF3n",
@@ -3336,6 +3338,7 @@
       no_schools_linked: "Noch keine Schulen verkn\xFCpft.",
       profile_your_reviews: "Deine Bewertungen",
       profile_no_reviews: "Noch keine Bewertungen.",
+      profile_your_avg_rating: "Deine Durchschnittsbewertung",
       profile_review_school: "Schule bewerten",
       profile_suggest_school: "Schule vorschlagen",
       reviews_admin_flag_label: "Wartet auf Pr\xFCfung",
@@ -3845,13 +3848,40 @@
         });
         if (window.lucide) window.lucide.createIcons();
       };
-      el.innerHTML = `<ul class="profile-my-reviews-list" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">${reviews.map((r) => {
+      const myAvg = reviews.length ? (reviews.reduce((a, r) => a + (r.rating_overall != null ? Number(r.rating_overall) : 0), 0) / reviews.length).toFixed(1) : null;
+      const avgLine = myAvg != null ? `<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">${(t2("profile_your_avg_rating") || "Your average rating").replace(/</g, "&lt;")}: <strong style="color: var(--text-primary);">${myAvg} \u2605</strong></p>` : "";
+      const profileCategoryStarsHtml = (r) => {
+        const catKeys = [{ key: "overall", val: r.rating_overall, label: "review_rating_overall" }, { key: "teaching", val: r.ratings && r.ratings.teaching, label: "review_teaching" }, { key: "vibe", val: r.ratings && r.ratings.vibe, label: "review_vibe" }, { key: "organization", val: r.ratings && r.ratings.organization, label: "review_organization" }, { key: "value", val: r.ratings && r.ratings.value, label: "review_value" }];
+        const rows = catKeys.map(({ key, val, label }) => {
+          const num = key === "overall" ? r.rating_overall : val;
+          if (num == null) return "";
+          const v = Number(num);
+          const starHtml = typeof window.renderRatingStars === "function" ? window.renderRatingStars(v) : v + "/5";
+          return `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;"><span style="font-size: 0.85rem; color: var(--text-secondary);">${t2(label) || key}</span><span>${starHtml}</span></div>`;
+        }).filter(Boolean);
+        if (!rows.length) return "";
+        return `<div class="review-categories-inline" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);"><div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 6px;">${(t2("discovery_review_show_categories") || "Categories").replace(/</g, "&lt;")}</div>${rows.join("")}</div>`;
+      };
+      el.innerHTML = avgLine + `<ul class="profile-my-reviews-list" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">${reviews.map((r) => {
         const name = (r.target_name || r.target_id || "").toString().replace(/</g, "&lt;");
         const date = r.created_at ? new Date(r.created_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "";
         const stars = typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall + "/5";
         const statusLabel = r.status === "flagged" ? t2("reviews_admin_flag_label") || "Pending review" : r.status === "published" ? t2("published") || "Published" : r.status || "";
         const goJs = r.target_id ? `window.openDiscoverySchoolProfile('${r.target_id.toString().replace(/'/g, "\\'")}')` : "";
-        return `<li style="padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);"><div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;"><strong style="font-size: 0.95rem;">${name}</strong><span style="font-size: 0.85rem;">${stars}</span></div><div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${date}${statusLabel ? " \xB7 " + statusLabel : ""}</div>${r.target_id ? `<button type="button" class="btn-secondary" style="margin-top: 8px; padding: 6px 12px; font-size: 12px; border-radius: 10px; cursor: pointer;" onclick="${goJs}">${t2("discovery_go_to_reviews") || "View school"}</button>` : ""}</li>`;
+        const commentFull = (r.comment || "").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+        const categoriesBlock = profileCategoryStarsHtml(r);
+        return `<li><details class="profile-review-details" style="border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden;">
+                <summary style="padding: 12px 14px; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; -webkit-tap-highlight-color: transparent;">
+                    <strong style="font-size: 0.95rem;">${name}</strong>
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">${stars}<span style="font-size: 0.8rem; color: var(--text-secondary);">\xB7 ${statusLabel}</span></span>
+                </summary>
+                <div style="padding: 0 14px 12px; border-top: 1px solid var(--border);">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px;">${date}</div>
+                    ${categoriesBlock}
+                    ${commentFull ? `<div style="font-size: 0.9rem; margin-top: 8px; line-height: 1.4;">${commentFull}</div>` : ""}
+                    ${r.target_id ? `<button type="button" class="btn-secondary" style="margin-top: 10px; padding: 8px 12px; font-size: 12px; border-radius: 10px; cursor: pointer;" onclick="${goJs}">${t2("discovery_go_to_reviews") || "View school"}</button>` : ""}
+                </div>
+            </details></li>`;
       }).join("")}</ul>`;
       if (window.lucide) window.lucide.createIcons();
       window.openDiscoverySchoolProfile = openDiscoverySchool;
@@ -5266,27 +5296,46 @@
         const backBtn = "state.currentView='platform-dev-dashboard'; saveState(); renderView();";
         const needsReviewLabel = t2("reviews_admin_needs_review") || "Needs review";
         const bySchoolLabel = t2("reviews_admin_by_school") || "By school";
+        const categoryStarsHtml = (r) => {
+          const catKeys = [{ key: "overall", val: r.rating_overall, label: "review_rating_overall" }, { key: "teaching", val: r.ratings && r.ratings.teaching, label: "review_teaching" }, { key: "vibe", val: r.ratings && r.ratings.vibe, label: "review_vibe" }, { key: "organization", val: r.ratings && r.ratings.organization, label: "review_organization" }, { key: "value", val: r.ratings && r.ratings.value, label: "review_value" }];
+          const rows = catKeys.map(({ key, val, label }) => {
+            const num = key === "overall" ? r.rating_overall : val;
+            if (num == null) return "";
+            const v = Number(num);
+            const stars = typeof window.renderRatingStars === "function" ? window.renderRatingStars(v) : v + "/5";
+            return `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;"><span style="font-size: 0.85rem; color: var(--text-secondary);">${t2(label) || key}</span><span>${stars}</span></div>`;
+          }).filter(Boolean);
+          if (!rows.length) return "";
+          return `<div class="review-categories-inline" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);"><div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 6px;">${(t2("discovery_review_show_categories") || "Categories").replace(/</g, "&lt;")}</div>${rows.join("")}</div>`;
+        };
         const renderReviewCard = (r) => {
           const idEsc = (r.id || "").toString().replace(/'/g, "\\'");
           const author = (r.author_email || "").replace(/</g, "&lt;");
-          const comment = (r.comment || "").slice(0, 200).replace(/</g, "&lt;") + (r.comment && r.comment.length > 200 ? "\u2026" : "");
+          const commentFull = (r.comment || "").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+          const commentPreview = (r.comment || "").slice(0, 80).replace(/</g, "&lt;") + (r.comment && r.comment.length > 80 ? "\u2026" : "");
           const created = r.created_at ? new Date(r.created_at).toLocaleString(void 0, { dateStyle: "short", timeStyle: "short" }) : "";
           const isFlaggedOrHidden = r.status === "flagged" || r.status === "hidden";
           const acceptBtn = isFlaggedOrHidden ? `<button type="button" class="btn-primary" onclick="window.publishReviewPlatformAdmin('${idEsc}');" style="padding: 8px 14px; font-size: 13px; min-height: 40px; border-radius: 10px;">${t2("reviews_admin_accept") || "Accept"}</button>` : "";
           const deleteBtn = `<button type="button" class="btn-secondary" onclick="if(confirm(window.t && window.t('reviews_admin_delete_confirm') || 'Delete this review?')) window.deleteReviewPlatformAdmin('${idEsc}');" style="padding: 8px 14px; font-size: 13px; min-height: 40px; border-radius: 10px; color: var(--system-red);">${t2("reviews_admin_delete") || "Delete"}</button>`;
           const stars = typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall + "/5";
-          return `<div class="reviews-admin-card" style="padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); margin-bottom: 0.75rem;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+          const categoriesBlock = categoryStarsHtml(r);
+          return `<details class="reviews-admin-card-details" style="margin-bottom: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden;">
+                    <summary style="padding: 1rem; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; -webkit-tap-highlight-color: transparent;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary); word-break: break-all;">${author}</span>
                         <span style="display: inline-flex; align-items: center; gap: 4px;">${stars}<span style="font-size: 0.8rem; color: var(--text-secondary);">\xB7 ${r.status || "published"}</span></span>
+                    </summary>
+                    <div style="padding: 0 1rem 1rem; border-top: 1px solid var(--border);">
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px;">${created}</div>
+                        ${categoriesBlock}
+                        ${commentFull ? `<div style="font-size: 0.9rem; margin-top: 8px; line-height: 1.4;">${commentFull}</div>` : commentPreview ? `<div style="font-size: 0.9rem; margin-top: 8px; line-height: 1.4; color: var(--text-secondary);">${commentPreview}</div>` : ""}
+                        <div style="margin-top: 0.75rem; display: flex; gap: 8px; flex-wrap: wrap;">${acceptBtn}${deleteBtn}</div>
                     </div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${created}</div>
-                    ${comment ? `<div style="font-size: 0.9rem; margin-top: 8px; line-height: 1.4;">${comment}</div>` : ""}
-                    <div style="margin-top: 0.75rem; display: flex; gap: 8px; flex-wrap: wrap;">
-                        ${acceptBtn}
-                        ${deleteBtn}
-                    </div>
-                </div>`;
+                </details>`;
+        };
+        const schoolAvg = (reviews2) => {
+          if (!reviews2.length) return null;
+          const sum = reviews2.reduce((a, r) => a + (r.rating_overall != null ? Number(r.rating_overall) : 0), 0);
+          return (sum / reviews2.length).toFixed(1);
         };
         const bySchool = {};
         const needsReview = [];
@@ -5312,7 +5361,9 @@
           body += `<section class="reviews-admin-section reviews-admin-needs-review" style="${sectionCss}"><h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--system-orange); margin-bottom: 0.75rem;">${needsReviewLabel} (${needsReview.length})</h2>`;
           Object.keys(needsReviewBySchool).forEach((key) => {
             const { name: schoolName, reviews: schoolReviews } = needsReviewBySchool[key];
-            body += `<details class="reviews-admin-school-details" open style="${detailsCss}"><summary style="${summaryCss}">${schoolName}<span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">${schoolReviews.length}</span></summary><div style="padding: 0 12px 12px;">${schoolReviews.map(renderReviewCard).join("")}</div></details>`;
+            const avg = schoolAvg(schoolReviews);
+            const avgHtml = avg != null ? `<span style="font-size: 0.85rem; font-weight: 600;">${avg} \u2605</span><span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"> \xB7 ${schoolReviews.length}</span>` : `<span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">${schoolReviews.length}</span>`;
+            body += `<details class="reviews-admin-school-details" open style="${detailsCss}"><summary style="${summaryCss}">${schoolName}${avgHtml}</summary><div style="padding: 0 12px 12px;">${schoolReviews.map(renderReviewCard).join("")}</div></details>`;
           });
           body += "</section>";
         }
@@ -5322,7 +5373,9 @@
         else schoolKeys.forEach((key) => {
           const { name: schoolName, reviews: schoolReviews } = bySchool[key];
           const openAttr = needsReview.length === 0 && schoolKeys[0] === key ? " open" : "";
-          body += `<details class="reviews-admin-school-details"${openAttr} style="${detailsCss}"><summary style="${summaryCss}">${schoolName}<span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">${schoolReviews.length}</span></summary><div style="padding: 0 12px 12px;">${schoolReviews.map(renderReviewCard).join("")}</div></details>`;
+          const avg = schoolAvg(schoolReviews);
+          const avgHtml = avg != null ? `<span style="font-size: 0.85rem; font-weight: 600;">${avg} \u2605</span><span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"> \xB7 ${schoolReviews.length}</span>` : `<span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">${schoolReviews.length}</span>`;
+          body += `<details class="reviews-admin-school-details"${openAttr} style="${detailsCss}"><summary style="${summaryCss}">${schoolName}${avgHtml}</summary><div style="padding: 0 12px 12px;">${schoolReviews.map(renderReviewCard).join("")}</div></details>`;
         });
         body += "</section>";
         root.innerHTML = `<div class="container container-dev reviews-admin-page" style="padding: 1rem 1.25rem; max-width: 640px; margin: 0 auto; box-sizing: border-box;">
@@ -9568,6 +9621,8 @@
       }
       state.students = state.students.filter((s) => s.id !== id);
       saveState();
+      const studentModal = document.getElementById("student-modal");
+      if (studentModal) studentModal.classList.add("hidden");
       renderView();
     }
   };
@@ -12530,11 +12585,13 @@ School: ${schoolName}`)) return;
           btn.textContent = originalText;
           if (window.lucide) window.lucide.createIcons();
         }
-        renderView();
+        if (typeof fetchAllData === "function") fetchAllData().then(() => renderView());
+        else renderView();
       }, 1500);
     } else {
       document.getElementById("student-modal").classList.add("hidden");
-      renderView();
+      if (typeof fetchAllData === "function") fetchAllData().then(() => renderView());
+      else renderView();
     }
   };
 

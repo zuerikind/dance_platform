@@ -1,6 +1,7 @@
 -- Platform admin: publish a flagged review (set status to 'published') and order admin list with flagged first.
 
 -- Allow platform admins to UPDATE reviews (for publish action)
+DROP POLICY IF EXISTS "reviews_update_platform_admin" ON public.reviews;
 CREATE POLICY "reviews_update_platform_admin" ON public.reviews
   FOR UPDATE
   USING (public.is_platform_admin());
