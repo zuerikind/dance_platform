@@ -143,7 +143,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (saved.currentUser) state.currentUser = saved.currentUser;
             if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
             if (saved.isPlatformDev !== undefined) state.isPlatformDev = saved.isPlatformDev;
-            if (saved.currentView) state.currentView = saved.currentView;
+            if (saved.currentView && state.currentView !== 'verify-email') state.currentView = saved.currentView;
             if (saved.scheduleView) state.scheduleView = saved.scheduleView;
             if (saved.lastActivity) state.lastActivity = saved.lastActivity;
             if (saved.currentSchool) state.currentSchool = saved.currentSchool;

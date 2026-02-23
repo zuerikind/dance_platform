@@ -66,10 +66,12 @@ If you only added secrets, no redeploy is needed. If you changed the function (e
    npx supabase link --project-ref fziyybqhecfxhkagknvg
    ```
    Replace `fziyybqhecfxhkagknvg` with your own project ref if different.
-3. **Deploy the function** (use `--no-verify-jwt` so the gateway forwards the request; the function validates the user JWT itself):
+3. **Deploy both Edge Functions** (use `--no-verify-jwt` so the gateway forwards requests; the functions validate input themselves):
    ```bash
    npx supabase functions deploy send_verification_email --no-verify-jwt
+   npx supabase functions deploy verify_email_token --no-verify-jwt
    ```
+   The verify link in the email will only work after `verify_email_token` is deployed with `--no-verify-jwt`.
 
 **Alternative (global CLI on Windows):** [Scoop](https://scoop.sh): `scoop bucket add supabase https://github.com/supabase/scoop-bucket.git` then `scoop install supabase`. Then you can run `supabase` instead of `npx supabase`.
 

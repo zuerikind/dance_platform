@@ -1961,13 +1961,15 @@ window.discoveryLogin = async () => {
 window.verifyEmailWithToken = async (token) => {
     const t = (k) => (window.t ? window.t(k) : k);
     const root = document.getElementById('app-root');
-    if (!supabaseClient || !root) return;
+    if (!root || !token) return;
     try {
-        const { data, error } = await supabaseClient.functions.invoke('verify_email_token', { body: { token } });
-        if (error) throw error;
+        const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/verify_email_token';
+        const res = await fetch(fnUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || ('HTTP ' + res.status));
         if (data && data.error) throw new Error(data.error);
         state.verifyEmailToken = null;
-        await window.fetchUserProfile();
+        if (supabaseClient) await window.fetchUserProfile();
         state.currentView = 'dashboard-profile';
         if (window.location.hash) window.location.hash = '';
         window.history.replaceState({}, '', window.location.pathname || '/' + '?view=dashboard-profile');
@@ -1991,9 +1993,9 @@ window.renderDashboardProfileView = () => {
     const canResend = p.origin === 'discovery' && !p.email_confirmed && (Date.now() >= (_resendVerificationCooldownUntil || 0)) && !_resendVerificationSending;
     const resendLabel = _resendVerificationSending ? (t('resend_sending') || 'Sending…') : (canResend ? (t('resend_verification') || 'Resend verification email') : (t('resend_cooldown') || 'Sent. Wait 60s'));
     const backToDiscovery = "event.preventDefault(); state.currentView=null; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ renderView(); window.scrollTo(0,0); }); if(window.lucide) window.lucide.createIcons();";
-    let html = `<div class="container" style="padding: 1rem 1.2rem;"><div style="margin-bottom: 1rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-primary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back') || 'Back to all studios'}</a></div><div class="ios-header"><div class="ios-large-title">${t('profile_settings') || 'Profile'}</div></div>`;
-    html += `<div class="ios-list" style="margin-bottom: 1rem;">`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('email') || 'Email'}</span><span style="flex: 1; text-align: right;">${(p.email || '').replace(/</g, '&lt;')}</span><span style="font-size: 11px; margin-left: 8px;">${p.email_confirmed ? (t('verified') || 'Verified') : (t('not_verified') || 'Not verified')}</span></div>`;
+    let html = `<div class="container profile-container" style="padding: 1rem 1.2rem; max-width: 560px; margin: 0 auto;"><div style="margin-bottom: 1.25rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back') || 'Back to all studios'}</a></div><div class="ios-header" style="margin-bottom: 1.25rem;"><div class="ios-large-title">${t('profile_settings') || 'Profile'}</div></div>`;
+    html += `<div class="ios-list profile-email-card" style="margin-bottom: 1.25rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
+    html += `<div class="ios-list-item profile-email-row" style="padding: 14px 16px; flex-wrap: wrap; gap: 6px 0; align-items: flex-start;"><span style="opacity: 0.85; width: 100%; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em;">${t('email') || 'Email'}</span><span style="width: 100%; font-size: 0.95rem; word-break: break-all;">${(p.email || '').replace(/</g, '&lt;')}</span><span style="font-size: 11px; color: var(--text-secondary);">${p.email_confirmed ? (t('verified') || 'Verified') : (t('not_verified') || 'Not verified')}</span></div>`;
     if (p.origin === 'discovery' && !p.email_confirmed) {
         html += `<div class="ios-list-item" style="padding: 12px 16px;"><button type="button" class="resend-verification-btn btn-secondary" ${canResend && !_resendVerificationSending ? '' : 'disabled'} onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="width: 100%; min-height: 44px; cursor: ${canResend && !_resendVerificationSending ? 'pointer' : 'default'}; -webkit-tap-highlight-color: transparent;">${resendLabel}</button>${_resendVerificationFeedback === 'sent' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-green);">${t('resend_success') || 'Check your inbox'}</p>` : ''}${_resendVerificationFeedback === 'error' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-red);">${(_resendVerificationErrorMsg || t('resend_error')).replace(/</g, '&lt;')}</p>` : ''}</div>`;
     }
@@ -2004,8 +2006,8 @@ window.renderDashboardProfileView = () => {
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('city') || 'City'}</span><input type="text" id="profile-city" value="${(p.city || '').replace(/"/g, '&quot;')}" placeholder="${t('city') || 'City'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('country') || 'Country'}</span><input type="text" id="profile-country" value="${(p.country || '').replace(/"/g, '&quot;')}" placeholder="${t('country') || 'Country'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('instagram') || 'Instagram'}</span><input type="text" id="profile-instagram" value="${(p.instagram || '').replace(/"/g, '&quot;')}" placeholder="${t('instagram_placeholder') || '@handle'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
-    html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.5rem;">${t('save') || 'Save'}</button>`;
-    html += `<h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('linked_schools') || 'Linked schools'}</h3>`;
+    html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t('save') || 'Save'}</button>`;
+    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('linked_schools') || 'Linked schools'}</h3>`;
     html += linkedSchools.length ? `<ul style="margin: 0; padding-left: 1.2rem; color: var(--text-primary);">${linkedSchools.map(s => `<li>${(s.name || s.id || '').replace(/</g, '&lt;')}</li>`).join('')}</ul>` : `<p class="text-muted" style="font-size: 0.9rem;">${t('no_schools_linked') || 'No schools linked yet.'}</p>`;
     html += `</div>`;
     return html;

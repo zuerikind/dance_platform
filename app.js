@@ -3066,21 +3066,7 @@
     if (Date.now() < _resendVerificationCooldownUntil) return;
     if (!supabaseClient) return;
     const { data: sess } = await supabaseClient.auth.getSession();
-    (function(l) {
-      const b = JSON.stringify(l);
-      fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: b }).catch(() => {
-      });
-      if (typeof console !== "undefined" && console.log) console.log("[DEBUG_RESEND]", b);
-    })({ location: "legacy.js:resendVerificationEmail", message: "after getSession", data: { hasSession: !!sess?.session, accessTokenLen: sess?.session?.access_token?.length ?? 0 }, timestamp: Date.now(), hypothesisId: "H1" });
-    if (!sess?.session?.access_token) {
-      (function(l) {
-        const b = JSON.stringify(l);
-        fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: b }).catch(() => {
-        });
-        if (typeof console !== "undefined" && console.log) console.log("[DEBUG_RESEND]", b);
-      })({ location: "legacy.js:resendVerificationEmail", message: "early return no token", data: {}, timestamp: Date.now(), hypothesisId: "H1" });
-      return;
-    }
+    if (!sess?.session?.access_token) return;
     const t2 = (k) => window.t ? window.t(k) : k;
     _resendVerificationSending = true;
     _resendVerificationFeedback = null;
@@ -3089,19 +3075,7 @@
       const { data: refreshed } = await supabaseClient.auth.refreshSession();
       const session = refreshed?.session || sess?.session;
       const token = session?.access_token;
-      (function(l) {
-        const b = JSON.stringify(l);
-        fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: b }).catch(() => {
-        });
-        if (typeof console !== "undefined" && console.log) console.log("[DEBUG_RESEND]", b);
-      })({ location: "legacy.js:resendVerificationEmail", message: "after refresh", data: { hasToken: !!token, tokenLen: token?.length ?? 0, isJwtLike: !!(token && String(token).startsWith("eyJ")) }, timestamp: Date.now(), hypothesisId: "H2" });
       if (!token) throw new Error("Session expired");
-      (function(l) {
-        const b = JSON.stringify(l);
-        fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: b }).catch(() => {
-        });
-        if (typeof console !== "undefined" && console.log) console.log("[DEBUG_RESEND]", b);
-      })({ location: "legacy.js:resendVerificationEmail", message: "before invoke", data: { tokenLen: token.length }, timestamp: Date.now(), hypothesisId: "H3" });
       const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/send_verification_email";
       const res = await fetch(fnUrl, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: "{}" });
       const data = await res.json().catch(() => ({}));
@@ -3115,13 +3089,6 @@
         if (typeof window.renderView === "function") window.renderView();
       }, 4e3);
     } catch (e) {
-      const errStatus = e && (e.context && e.context.status !== void 0 ? e.context.status : e.status);
-      (function(l) {
-        const b = JSON.stringify(l);
-        fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: b }).catch(() => {
-        });
-        if (typeof console !== "undefined" && console.log) console.log("[DEBUG_RESEND]", b);
-      })({ location: "legacy.js:resendVerificationEmail", message: "catch", data: { errMsg: e?.message || e?.error || String(e), status: errStatus, name: e?.name }, timestamp: Date.now(), hypothesisId: "H4" });
       _resendVerificationCooldownUntil = 0;
       _resendVerificationFeedback = "error";
       _resendVerificationErrorMsg = e && (e.message || e.error) ? String(e.message || e.error) : t2("resend_error") || "Could not send. Try again.";
@@ -3242,13 +3209,15 @@
   window.verifyEmailWithToken = async (token) => {
     const t2 = (k) => window.t ? window.t(k) : k;
     const root = document.getElementById("app-root");
-    if (!supabaseClient || !root) return;
+    if (!root || !token) return;
     try {
-      const { data, error } = await supabaseClient.functions.invoke("verify_email_token", { body: { token } });
-      if (error) throw error;
+      const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/verify_email_token";
+      const res = await fetch(fnUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "HTTP " + res.status);
       if (data && data.error) throw new Error(data.error);
       state.verifyEmailToken = null;
-      await window.fetchUserProfile();
+      if (supabaseClient) await window.fetchUserProfile();
       state.currentView = "dashboard-profile";
       if (window.location.hash) window.location.hash = "";
       window.history.replaceState({}, "", window.location.pathname || "/?view=dashboard-profile");
@@ -3271,9 +3240,9 @@
     const canResend = p.origin === "discovery" && !p.email_confirmed && Date.now() >= (_resendVerificationCooldownUntil || 0) && !_resendVerificationSending;
     const resendLabel = _resendVerificationSending ? t2("resend_sending") || "Sending\u2026" : canResend ? t2("resend_verification") || "Resend verification email" : t2("resend_cooldown") || "Sent. Wait 60s";
     const backToDiscovery = "event.preventDefault(); state.currentView=null; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ renderView(); window.scrollTo(0,0); }); if(window.lucide) window.lucide.createIcons();";
-    let html = `<div class="container" style="padding: 1rem 1.2rem;"><div style="margin-bottom: 1rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-primary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t2("discovery_back") || "Back to all studios"}</a></div><div class="ios-header"><div class="ios-large-title">${t2("profile_settings") || "Profile"}</div></div>`;
-    html += `<div class="ios-list" style="margin-bottom: 1rem;">`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("email") || "Email"}</span><span style="flex: 1; text-align: right;">${(p.email || "").replace(/</g, "&lt;")}</span><span style="font-size: 11px; margin-left: 8px;">${p.email_confirmed ? t2("verified") || "Verified" : t2("not_verified") || "Not verified"}</span></div>`;
+    let html = `<div class="container profile-container" style="padding: 1rem 1.2rem; max-width: 560px; margin: 0 auto;"><div style="margin-bottom: 1.25rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t2("discovery_back") || "Back to all studios"}</a></div><div class="ios-header" style="margin-bottom: 1.25rem;"><div class="ios-large-title">${t2("profile_settings") || "Profile"}</div></div>`;
+    html += `<div class="ios-list profile-email-card" style="margin-bottom: 1.25rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
+    html += `<div class="ios-list-item profile-email-row" style="padding: 14px 16px; flex-wrap: wrap; gap: 6px 0; align-items: flex-start;"><span style="opacity: 0.85; width: 100%; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em;">${t2("email") || "Email"}</span><span style="width: 100%; font-size: 0.95rem; word-break: break-all;">${(p.email || "").replace(/</g, "&lt;")}</span><span style="font-size: 11px; color: var(--text-secondary);">${p.email_confirmed ? t2("verified") || "Verified" : t2("not_verified") || "Not verified"}</span></div>`;
     if (p.origin === "discovery" && !p.email_confirmed) {
       html += `<div class="ios-list-item" style="padding: 12px 16px;"><button type="button" class="resend-verification-btn btn-secondary" ${canResend && !_resendVerificationSending ? "" : "disabled"} onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="width: 100%; min-height: 44px; cursor: ${canResend && !_resendVerificationSending ? "pointer" : "default"}; -webkit-tap-highlight-color: transparent;">${resendLabel}</button>${_resendVerificationFeedback === "sent" ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-green);">${t2("resend_success") || "Check your inbox"}</p>` : ""}${_resendVerificationFeedback === "error" ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-red);">${(_resendVerificationErrorMsg || t2("resend_error")).replace(/</g, "&lt;")}</p>` : ""}</div>`;
     }
@@ -3284,8 +3253,8 @@
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("city") || "City"}</span><input type="text" id="profile-city" value="${(p.city || "").replace(/"/g, "&quot;")}" placeholder="${t2("city") || "City"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("country") || "Country"}</span><input type="text" id="profile-country" value="${(p.country || "").replace(/"/g, "&quot;")}" placeholder="${t2("country") || "Country"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("instagram") || "Instagram"}</span><input type="text" id="profile-instagram" value="${(p.instagram || "").replace(/"/g, "&quot;")}" placeholder="${t2("instagram_placeholder") || "@handle"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
-    html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.5rem;">${t2("save") || "Save"}</button>`;
-    html += `<h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t2("linked_schools") || "Linked schools"}</h3>`;
+    html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t2("save") || "Save"}</button>`;
+    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t2("linked_schools") || "Linked schools"}</h3>`;
     html += linkedSchools.length ? `<ul style="margin: 0; padding-left: 1.2rem; color: var(--text-primary);">${linkedSchools.map((s) => `<li>${(s.name || s.id || "").replace(/</g, "&lt;")}</li>`).join("")}</ul>` : `<p class="text-muted" style="font-size: 0.9rem;">${t2("no_schools_linked") || "No schools linked yet."}</p>`;
     html += `</div>`;
     return html;
@@ -11471,7 +11440,7 @@ School: ${schoolName}`)) return;
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.isAdmin !== void 0) state.isAdmin = saved.isAdmin;
         if (saved.isPlatformDev !== void 0) state.isPlatformDev = saved.isPlatformDev;
-        if (saved.currentView) state.currentView = saved.currentView;
+        if (saved.currentView && state.currentView !== "verify-email") state.currentView = saved.currentView;
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved.currentSchool) state.currentSchool = saved.currentSchool;
