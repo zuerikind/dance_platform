@@ -331,6 +331,9 @@ const DANCE_LOCALES = {
         calendly_connect_desc: "Connect your Calendly account so students can book private classes from your live availability.",
         calendly_connect_btn: "Connect Calendly",
         calendly_disconnect_confirm: "Disconnect Calendly? Webhooks will be removed and students will no longer see your Calendly booking.",
+        calendly_student_booking_mode: "What students see when booking",
+        calendly_mode_calendly: "Calendly",
+        calendly_mode_weekly: "Weekly calendar",
         calendly_need_credits: "You need credits to complete a booking.",
         calendly_book: "Book a session",
         dev_login_btn: "Login",
@@ -1404,6 +1407,9 @@ const DANCE_LOCALES = {
         calendly_connect_desc: "Conecta tu cuenta de Calendly para que los alumnos puedan reservar clases privadas según tu disponibilidad.",
         calendly_connect_btn: "Conectar Calendly",
         calendly_disconnect_confirm: "¿Desconectar Calendly? Se eliminarán los webhooks y los alumnos ya no verán tu reserva de Calendly.",
+        calendly_student_booking_mode: "Qué ven los alumnos al reservar",
+        calendly_mode_calendly: "Calendly",
+        calendly_mode_weekly: "Calendario semanal",
         calendly_need_credits: "Necesitas créditos para completar una reserva.",
         calendly_book: "Reservar sesión",
     },
@@ -2068,6 +2074,9 @@ const DANCE_LOCALES = {
         calendly_connect_desc: "Verbinde dein Calendly-Konto, damit Schüler private Stunden nach deiner Verfügbarkeit buchen können.",
         calendly_connect_btn: "Calendly verbinden",
         calendly_disconnect_confirm: "Calendly trennen? Webhooks werden entfernt und Schüler sehen deine Calendly-Buchung nicht mehr.",
+        calendly_student_booking_mode: "Was Schüler bei der Buchung sehen",
+        calendly_mode_calendly: "Calendly",
+        calendly_mode_weekly: "Wochenkalender",
         calendly_need_credits: "Du brauchst Credits, um eine Buchung abzuschließen.",
         calendly_book: "Sitzung buchen",
     }
@@ -5079,6 +5088,7 @@ function _renderViewImpl() {
             const daySchedules = state._teacherBookingSlots || [];
             const t2 = DANCE_LOCALES[state.language || 'en'];
             const hasPackage = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(school.id) : true;
+            const useCalendlyForBooking = state.adminSettings?.use_calendly_for_booking === 'true' || (state.adminSettings?.use_calendly_for_booking !== 'false' && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url));
             const myLessons = (state.studentPrivateLessons || []).filter(l => l.status === 'confirmed' || l.status === 'attended').sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
             const myClassesFallback = (state.studentPrivateClassRequests || []).filter(r => r.status === 'accepted');
             const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
@@ -5165,7 +5175,7 @@ function _renderViewImpl() {
                         <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${t2.visit_shop_to_buy || 'Visit the Shop to buy one.'}</div>
                         <button type="button" class="btn-primary" onclick="state.currentView='shop'; renderView();" style="padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 700;">${t2.nav_shop || 'Shop'}</button>
                     </div>
-                    ` : (state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url) ? `
+                    ` : (useCalendlyForBooking && state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url) ? `
                     ${!hasPackage ? `
                     <div class="teacher-booking-no-package" style="padding: 1rem 1.5rem; text-align: center; background: rgba(255,149,0,0.08); border-radius: 16px; margin: 0 18px 18px; border: 1px solid rgba(255,149,0,0.2);">
                         <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t2.calendly_need_credits || 'You need credits to complete a booking.'}</div>
@@ -5228,7 +5238,7 @@ function _renderViewImpl() {
             `;
         }
         // Trigger async load of slots only when needed and not using Calendly embed
-        const useCalendlyEmbed = !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
+        const useCalendlyEmbed = useCalendlyForBooking && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
         const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || '');
         const hasPkg = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
         if (state.currentSchool?.id && state.currentSchool?.profile_type === 'private_teacher' && supabaseClient && needsLoad && hasPkg && !useCalendlyEmbed) {
@@ -6594,6 +6604,13 @@ function _renderViewImpl() {
                     </button>
                 </div>
                 `}
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; margin-top: 8px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">${t.calendly_student_booking_mode || 'What students see when booking'}</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn-secondary ${(state.adminSettings?.use_calendly_for_booking !== 'false') ? 'btn-primary' : ''}" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px;" onclick="window.setCalendlyBookingMode('true')">${t.calendly_mode_calendly || 'Calendly'}</button>
+                        <button type="button" class="btn-secondary ${state.adminSettings?.use_calendly_for_booking === 'false' ? 'btn-primary' : ''}" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px;" onclick="window.setCalendlyBookingMode('false')">${t.calendly_mode_weekly || 'Weekly calendar'}</button>
+                    </div>
+                </div>
             </div>
             ` : `
             <div class="settings-section-header" onclick="state.settingsClassesExpanded = !state.settingsClassesExpanded; saveState(); renderView();" style="padding: 0 1.2rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
@@ -9225,6 +9242,13 @@ window.loadCalendlyEventTypes = async () => {
         state.calendlyEventTypesList = [];
         if (state.currentView === 'admin-settings') renderView();
     }
+};
+
+window.setCalendlyBookingMode = async (value) => {
+    if (!state.currentSchool?.id) return;
+    await window.updateAdminSetting('use_calendly_for_booking', value === 'true' ? 'true' : 'false');
+    renderView();
+    if (window.lucide) window.lucide.createIcons();
 };
 
 window.saveCalendlyEventTypeSelection = async () => {
