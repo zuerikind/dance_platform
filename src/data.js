@@ -42,6 +42,10 @@ export async function fetchAllData() {
         state.schoolsLoadError = schoolsError || null;
         state.schools = schoolsData ?? [];
 
+        if (state._calendlyReturnSchoolId && !state.currentSchool) {
+            const calSchool = (state.schools || []).find(s => s.id === state._calendlyReturnSchoolId);
+            state.currentSchool = calSchool ? { ...calSchool } : { id: state._calendlyReturnSchoolId, name: 'School' };
+        }
         if (state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
             const { data: detail } = await supabaseClient.rpc('discovery_school_detail_by_id', { p_school_id: state.currentSchool.id });
             if (detail && typeof detail === 'object' && detail.id) {
