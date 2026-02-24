@@ -5236,8 +5236,8 @@ function _renderViewImpl() {
                 </div>
             </div>
             `;
-            // Trigger async load of slots only when needed and not using Calendly embed
-            const useCalendlyEmbed = useCalendlyForBooking && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
+            // Trigger async load of slots only when needed and not using Calendly embed (derive from state to avoid second reference to useCalendlyForBooking after bundler rename)
+            const useCalendlyEmbed = (state.adminSettings?.use_calendly_for_booking === 'true' || (state.adminSettings?.use_calendly_for_booking !== 'false' && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url))) && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
             const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || '');
             const hasPkg = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
             if (state.currentSchool?.id && state.currentSchool?.profile_type === 'private_teacher' && supabaseClient && needsLoad && hasPkg && !useCalendlyEmbed) {

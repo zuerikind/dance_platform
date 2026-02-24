@@ -6819,7 +6819,7 @@
           const daySchedules = state._teacherBookingSlots || [];
           const t22 = DANCE_LOCALES[state.language || "en"];
           const hasPackage = typeof window.studentHasPackageWithSchool === "function" ? window.studentHasPackageWithSchool(school.id) : true;
-          const useCalendlyForBooking2 = state.adminSettings?.use_calendly_for_booking === "true" || state.adminSettings?.use_calendly_for_booking !== "false" && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
+          const useCalendlyForBooking = state.adminSettings?.use_calendly_for_booking === "true" || state.adminSettings?.use_calendly_for_booking !== "false" && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
           const myLessons = (state.studentPrivateLessons || []).filter((l) => l.status === "confirmed" || l.status === "attended").sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
           const myClassesFallback = (state.studentPrivateClassRequests || []).filter((r) => r.status === "accepted");
           const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
@@ -6909,7 +6909,7 @@
                         <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${t22.visit_shop_to_buy || "Visit the Shop to buy one."}</div>
                         <button type="button" class="btn-primary" onclick="state.currentView='shop'; renderView();" style="padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 700;">${t22.nav_shop || "Shop"}</button>
                     </div>
-                    ` : useCalendlyForBooking2 && state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url ? `
+                    ` : useCalendlyForBooking && state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url ? `
                     ${!hasPackage ? `
                     <div class="teacher-booking-no-package" style="padding: 1rem 1.5rem; text-align: center; background: rgba(255,149,0,0.08); border-radius: 16px; margin: 0 18px 18px; border: 1px solid rgba(255,149,0,0.2);">
                         <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t22.calendly_need_credits || "You need credits to complete a booking."}</div>
@@ -6982,12 +6982,12 @@
                 </div>
             </div>
             `;
-        }
-        const useCalendlyEmbed = useCalendlyForBooking && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
-        const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || "");
-        const hasPkg = typeof window.studentHasPackageWithSchool === "function" ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
-        if (state.currentSchool?.id && state.currentSchool?.profile_type === "private_teacher" && supabaseClient && needsLoad && hasPkg && !useCalendlyEmbed) {
-          window.fetchTeacherBookingSlots();
+          const useCalendlyEmbed = (state.adminSettings?.use_calendly_for_booking === "true" || state.adminSettings?.use_calendly_for_booking !== "false" && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url)) && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
+          const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || "");
+          const hasPkg = typeof window.studentHasPackageWithSchool === "function" ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
+          if (state.currentSchool?.id && state.currentSchool?.profile_type === "private_teacher" && supabaseClient && needsLoad && hasPkg && !useCalendlyEmbed) {
+            window.fetchTeacherBookingSlots();
+          }
         }
       } else if (view === "schedule") {
         const scheduleSchool = state.schools && state.currentSchool?.id && state.schools.find((s) => s.id === state.currentSchool.id) || state.currentSchool;
@@ -8310,8 +8310,8 @@
                 <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; margin-top: 8px;">
                     <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">${t2.calendly_student_booking_mode || "What students see when booking"}</label>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button type="button" class="btn-secondary ${state.adminSettings?.use_calendly_for_booking !== "false" ? "btn-primary" : ""}" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px;" onclick="window.setCalendlyBookingMode('true')">${t2.calendly_mode_calendly || "Calendly"}</button>
-                        <button type="button" class="btn-secondary ${state.adminSettings?.use_calendly_for_booking === "false" ? "btn-primary" : ""}" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px;" onclick="window.setCalendlyBookingMode('false')">${t2.calendly_mode_weekly || "Weekly calendar"}</button>
+                        <button type="button" class="btn-secondary" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px; ${(state.adminSettings || {}).use_calendly_for_booking !== "false" ? "background: var(--primary, #007AFF); color: white; border-color: var(--primary, #007AFF); font-weight: 600;" : ""}" onclick="window.setCalendlyBookingMode('true')">${t2.calendly_mode_calendly || "Calendly"}</button>
+                        <button type="button" class="btn-secondary" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px; ${(state.adminSettings || {}).use_calendly_for_booking === "false" ? "background: var(--primary, #007AFF); color: white; border-color: var(--primary, #007AFF); font-weight: 600;" : ""}" onclick="window.setCalendlyBookingMode('false')">${t2.calendly_mode_weekly || "Weekly calendar"}</button>
                     </div>
                 </div>
             </div>
@@ -12390,6 +12390,7 @@ School: ${schoolName}`)) return;
         }
       }
     }
+    if (!state.adminSettings || typeof state.adminSettings !== "object") state.adminSettings = {};
     state.adminSettings[key] = value;
     saveState();
   };
