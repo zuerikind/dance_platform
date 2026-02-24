@@ -7175,31 +7175,6 @@ function _renderViewImpl() {
             </div>
             ` : ''}
 
-            ${state.currentSchool?.profile_type === 'private_teacher' ? `
-            <!-- PRIVATE CLASS REQUESTS -->
-            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t.private_class_requests_title || 'Private class requests'}
-            </div>
-            <div style="padding: 0 1.2rem; margin-top: 0.5rem;">
-                ${(state.privateClassRequests || []).length === 0 ? `
-                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t.no_private_requests || 'No requests yet'}</div>
-                ` : (state.privateClassRequests || []).map(r => {
-                    const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
-                    return `
-                    <div class="pcr-card">
-                        <div class="pcr-card-header">
-                            <span class="pcr-card-name">${(studentName || '').replace(/</g, '&lt;')}</span>
-                            <span class="pcr-card-status ${r.status}">${r.status}</span>
-                        </div>
-                        <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
-                        ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + r.location + '</div>' : ''}
-                        ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || '').replace(/</g, '&lt;') + '"</div>' : ''}
-                        ${r.status === 'pending' ? '<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.accept_btn || 'Accept') + '</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.decline_btn || 'Decline') + '</button></div>' : ''}
-                    </div>`;
-                }).join('')}
-            </div>
-            ` : ''}
-
             <div class="settings-section-header" onclick="state.settingsTransferExpanded = !state.settingsTransferExpanded; saveState(); renderView();" style="padding: 0 1.2rem; margin-top: 2.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 <span>${t.transfer_details_label}</span>
                 <i data-lucide="chevron-${state.settingsTransferExpanded ? 'up' : 'down'}" size="18" style="opacity: 0.6;"></i>
