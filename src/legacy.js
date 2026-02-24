@@ -2092,6 +2092,28 @@ const DANCE_LOCALES = {
 };
 setLocalesDict(DANCE_LOCALES);
 
+// Common timezones for teacher availability (IANA ids + readable labels)
+const TEACHER_TIMEZONE_OPTIONS = [
+    { value: 'UTC', label: 'UTC' },
+    { value: 'Europe/London', label: 'Europe/London (GMT/BST)' },
+    { value: 'Europe/Paris', label: 'Europe/Paris (CET)' },
+    { value: 'Europe/Madrid', label: 'Europe/Madrid' },
+    { value: 'Europe/Berlin', label: 'Europe/Berlin' },
+    { value: 'Europe/Zurich', label: 'Europe/Zurich' },
+    { value: 'America/New_York', label: 'America/New York (ET)' },
+    { value: 'America/Chicago', label: 'America/Chicago (CT)' },
+    { value: 'America/Denver', label: 'America/Denver (MT)' },
+    { value: 'America/Los_Angeles', label: 'America/Los Angeles (PT)' },
+    { value: 'America/Mexico_City', label: 'America/Mexico City' },
+    { value: 'America/Bogota', label: 'America/Bogotá' },
+    { value: 'America/Sao_Paulo', label: 'America/São Paulo' },
+    { value: 'America/Buenos_Aires', label: 'America/Buenos Aires' },
+    { value: 'Asia/Tokyo', label: 'Asia/Tokyo' },
+    { value: 'Asia/Shanghai', label: 'Asia/Shanghai' },
+    { value: 'Asia/Dubai', label: 'Asia/Dubai' },
+    { value: 'Australia/Sydney', label: 'Australia/Sydney' },
+];
+
 // Data fetching lives in data.js; attach to window for HTML and main
 window.fetchAllData = fetchAllData;
 window.fetchPlatformData = fetchPlatformData;
@@ -6699,7 +6721,9 @@ function _renderViewImpl() {
             <div class="ios-list" style="overflow: visible;">
                 <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 6px; padding: 14px 16px;">
                     <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.8;">${t.teacher_timezone_label || 'Your timezone'}</label>
-                    <input type="text" id="teacher-availability-timezone" value="${(state.teacherAvailabilitySettings?.timezone || 'UTC').replace(/"/g, '&quot;')}" placeholder="e.g. America/Bogota, Europe/Madrid" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--text-primary); outline: none;">
+                    <select id="teacher-availability-timezone" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--text-primary); outline: none; width: 100%; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23666%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; padding-right: 36px;">
+                        ${(() => { const currentTz = state.teacherAvailabilitySettings?.timezone || 'UTC'; const opts = TEACHER_TIMEZONE_OPTIONS.some(o => o.value === currentTz) ? TEACHER_TIMEZONE_OPTIONS : [{ value: currentTz, label: currentTz }, ...TEACHER_TIMEZONE_OPTIONS]; return opts.map(o => `<option value="${o.value.replace(/"/g, '&quot;')}" ${currentTz === o.value ? 'selected' : ''}>${(o.label || o.value).replace(/</g, '&lt;')}</option>`).join(''); })()}
+                    </select>
                     <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t.teacher_timezone_hint || 'Students will see times in this timezone when booking.'}</p>
                     <button type="button" class="btn-secondary" onclick="window.saveTeacherTimezone()" style="align-self: flex-start; margin-top: 4px; padding: 8px 14px; font-size: 13px;">${t.save || 'Save'}</button>
                 </div>

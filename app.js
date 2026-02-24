@@ -89,6 +89,9 @@
     privateClassRequests: [],
     studentPrivateClassRequests: [],
     studentPrivateClassesExpanded: false,
+    studentPrivateClassesView: "list",
+    studentPrivateCalendarDate: null,
+    studentPrivateCalendarSelectedDate: null,
     classAvailability: {},
     studentRegistrations: [],
     studentPastRegistrations: [],
@@ -102,6 +105,7 @@
     teacherAcceptedCalendarDate: null,
     teacherAcceptedCalendarSelectedDate: null,
     studentsFilterExpanded: false,
+    adminStudentsListExpandedForPrivateTeacher: false,
     adminRevenueFiltersExpanded: false,
     scanDeductionType: "group",
     settingsClassesExpanded: false,
@@ -757,12 +761,19 @@
         } catch (_) {
           state.teacherCalendlySelectionForBooking = null;
         }
+        try {
+          const { data: settingsData } = await supabaseClient.rpc("get_teacher_availability_settings", { p_school_id: sid });
+          state.teacherAvailabilitySettings = settingsData && typeof settingsData === "object" ? settingsData : null;
+        } catch (_) {
+          state.teacherAvailabilitySettings = null;
+        }
       } else {
         state.studentPrivateClassRequests = [];
         state.studentPrivateLessons = [];
         state.teacherBookingReviewsSummary = null;
         state.teacherBookingReviews = [];
         state.teacherCalendlySelectionForBooking = null;
+        if (!state.isAdmin) state.teacherAvailabilitySettings = null;
       }
       if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
         state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };
@@ -2192,6 +2203,9 @@
       profile_type_school: "School",
       profile_type_private_teacher: "Private Teacher",
       teacher_availability_title: "Availability",
+      teacher_timezone_label: "Your timezone",
+      teacher_timezone_hint: "Students will see times in this timezone when booking.",
+      times_in_timezone: "Times in {timezone}",
       add_availability: "Add availability",
       private_class_requests_title: "Private class requests",
       no_private_requests: "No requests yet",
@@ -2825,6 +2839,9 @@
       profile_type_school: "Escuela",
       profile_type_private_teacher: "Profesor privado",
       teacher_availability_title: "Disponibilidad",
+      teacher_timezone_label: "Tu zona horaria",
+      teacher_timezone_hint: "Los alumnos ver\xE1n las horas en esta zona horaria al reservar.",
+      times_in_timezone: "Horario en {timezone}",
       add_availability: "A\xF1adir disponibilidad",
       private_class_requests_title: "Solicitudes de clases privadas",
       no_private_requests: "A\xFAn no hay solicitudes",
@@ -3498,6 +3515,9 @@
       profile_type_school: "Schule",
       profile_type_private_teacher: "Privatlehrer",
       teacher_availability_title: "Verf\xFCgbarkeit",
+      teacher_timezone_label: "Deine Zeitzone",
+      teacher_timezone_hint: "Sch\xFCler sehen die Zeiten in dieser Zeitzone bei der Buchung.",
+      times_in_timezone: "Zeiten in {timezone}",
       add_availability: "Verf\xFCgbarkeit hinzuf\xFCgen",
       private_class_requests_title: "Anfragen f\xFCr Privatstunden",
       no_private_requests: "Noch keine Anfragen",
@@ -6824,29 +6844,16 @@
           const myClassesFallback = (state.studentPrivateClassRequests || []).filter((r) => r.status === "accepted");
           const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
           const myClassesExpanded = state.studentPrivateClassesExpanded !== false;
+          const studentClassesView = state.studentPrivateClassesView || "list";
+          const forCalendarStudent = myClasses.map((item) => ({ ...item, requested_date: item.start_at_utc ? new Date(item.start_at_utc).toISOString().slice(0, 10) : item.requested_date, requested_time: item.start_at_utc ? new Date(item.start_at_utc).toTimeString().slice(0, 5) : item.requested_time || "" }));
           const policyText = t22.private_lesson_cancellation_policy || "If you cancel less than 4 hours before the class, one private credit will be deducted. If you don't attend and the teacher doesn't check you in, you will also lose one credit.";
-          html += `
-            <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
-                <div class="student-private-classes-expandable ${myClassesExpanded ? "expanded" : ""}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
-                    <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
-                            <span style="font-weight: 700; font-size: 15px;">${t22.my_private_classes || "My private classes"}</span>
-                            ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ""}
-                        </div>
-                        <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
-                            <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t22.export_all_to_calendar || "Export all to your calendar"}</button>
-                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
-                        </div>
-                    </div>
-                    <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? "" : "none"}; background: var(--bg);">
-                        ${state.loading ? `
+          const studentListPart = state.loading ? `
                         <div class="teacher-booking-loading" style="text-align: center; padding: 1.5rem 0; color: var(--text-secondary);">
                             <div class="spin" style="margin: 0 auto 0.75rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="28"></i></div>
                             <div style="font-size: 14px;">${t22.loading_dashboard || "Loading..."}</div>
                         </div>
-                        ` : myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, "&lt;")}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>`}
-                        ${state.loading ? "" : myClasses.length === 0 ? `
+                        ` : myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, "&lt;")}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>`;
+          const studentListRest = state.loading ? "" : myClasses.length === 0 ? `
                         <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 14px;">
                             <i data-lucide="inbox" size="24" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
                             <div>${t22.no_private_classes_yet || "No accepted private classes yet"}</div>
@@ -6872,7 +6879,84 @@
                                 </div>
                                 <div class="student-private-class-actions">${exportOneBtn} ${cancelBtn}</div>
                             </div>`;
-          }).join("")}
+          }).join("");
+          const studentListHtml = studentListPart + studentListRest;
+          html += `
+            <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
+                <div class="student-private-classes-expandable ${myClassesExpanded ? "expanded" : ""}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
+                    <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
+                            <span style="font-weight: 700; font-size: 15px;">${t22.my_private_classes || "My private classes"}</span>
+                            ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ""}
+                        </div>
+                        <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
+                            <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t22.export_all_to_calendar || "Export all to your calendar"}</button>
+                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? "" : "none"}; background: var(--bg);">
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                            <button type="button" class="calendly-mode-btn ${studentClassesView === "list" ? "calendly-mode-btn-selected" : ""}" onclick="state.studentPrivateClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t22.list_view || "List"}</button>
+                            <button type="button" class="calendly-mode-btn ${studentClassesView === "calendar" ? "calendly-mode-btn-selected" : ""}" onclick="state.studentPrivateClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t22.calendar_view || "Calendar"}</button>
+                        </div>
+                        ${studentClassesView === "list" ? studentListHtml : (() => {
+            const calDateStr = state.studentPrivateCalendarDate || (/* @__PURE__ */ new Date()).toISOString().slice(0, 7) + "-01";
+            const calDate = /* @__PURE__ */ new Date(calDateStr + "T12:00:00");
+            const prevMonth = (() => {
+              const x = new Date(calDate);
+              x.setMonth(x.getMonth() - 1);
+              return x.toISOString().slice(0, 7) + "-01";
+            })();
+            const nextMonth = (() => {
+              const x = new Date(calDate);
+              x.setMonth(x.getMonth() + 1);
+              return x.toISOString().slice(0, 7) + "-01";
+            })();
+            const monthLabel = calDate.toLocaleDateString(state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US", { month: "long", year: "numeric" });
+            const grid = window.getMonthCalendarGrid ? window.getMonthCalendarGrid(calDateStr, forCalendarStudent) : [];
+            const selectedDate = state.studentPrivateCalendarSelectedDate;
+            const selectedEvents = selectedDate ? forCalendarStudent.filter((r) => r.requested_date === selectedDate) || [] : [];
+            const weekdays = state.language === "es" ? ["Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b", "Dom"] : state.language === "de" ? ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            return `
+                            <div class="private-classes-calendar">
+                                <div class="private-classes-calendar-nav">
+                                    <button type="button" class="private-classes-calendar-btn" onclick="state.studentPrivateCalendarDate='${prevMonth}'; renderView();"><i data-lucide="chevron-left" size="20"></i></button>
+                                    <span class="private-classes-calendar-month">${monthLabel}</span>
+                                    <button type="button" class="private-classes-calendar-btn" onclick="state.studentPrivateCalendarDate='${nextMonth}'; renderView();"><i data-lucide="chevron-right" size="20"></i></button>
+                                </div>
+                                <button type="button" class="private-classes-calendar-today" onclick="state.studentPrivateCalendarDate=null; state.studentPrivateCalendarSelectedDate=null; renderView();">${t22.today || "Today"}</button>
+                                <div class="private-classes-calendar-weekdays">
+                                    ${weekdays.map((w) => `<span class="private-classes-calendar-wd">${w}</span>`).join("")}
+                                </div>
+                                <div class="private-classes-calendar-grid">
+                                    ${grid.map((cell) => {
+              const isSelected = cell.dateStr === selectedDate;
+              const hasEvents = cell.events.length > 0;
+              return `
+                                        <button type="button" class="private-classes-calendar-day ${!cell.isCurrentMonth ? "other-month" : ""} ${isSelected ? "selected" : ""}" onclick="state.studentPrivateCalendarSelectedDate='${cell.dateStr}'; renderView();">
+                                            <span class="private-classes-calendar-day-num">${cell.dayNum}</span>
+                                            ${hasEvents ? `<span class="private-classes-calendar-dots">${cell.events.slice(0, 3).map(() => '<span class="dot"></span>').join("")}</span>` : ""}
+                                        </button>`;
+            }).join("")}
+                                </div>
+                                ${selectedDate ? `
+                                <div class="private-classes-calendar-detail">
+                                    <div class="private-classes-calendar-detail-title">${window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(selectedDate + "T00:00:00"), state.language) : selectedDate}</div>
+                                    ${selectedEvents.length === 0 ? '<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 13px;">' + (t22.no_classes_this_day || "No classes this day") + "</div>" : selectedEvents.map((item) => {
+              const isLesson = item.start_at_utc != null;
+              const timeStr = isLesson ? new Date(item.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : item.requested_time || "";
+              const canCancel = isLesson && item.status === "confirmed";
+              const hoursUntil = isLesson ? (new Date(item.start_at_utc).getTime() - Date.now()) / (60 * 60 * 1e3) : 999;
+              const lateCancelWarning = canCancel && hoursUntil < 4 ? (t22.cancel_late_warning || "").replace(/'/g, "\\'") : "";
+              const cancelBtn = canCancel ? '<button type="button" class="btn-ghost" onclick="' + (lateCancelWarning ? "if(confirm('" + lateCancelWarning + "')) " : "") + "window.studentCancelPrivateLesson('" + item.id + `'); renderView();">` + (t22.cancel_btn || "Cancel") + "</button>" : "";
+              const exportOneBtn = item.start_at_utc && item.end_at_utc ? `<button type="button" class="btn-ghost" onclick="window.downloadCalendarIcsOne('` + item.id + `', 'student')"><i data-lucide="calendar-plus" size="12"></i> ` + (t22.export_to_calendar || "Export") + "</button>" : "";
+              return '<div class="student-private-class-row" style="margin-bottom: 8px;"><i data-lucide="clock" size="16" style="opacity: 0.5;"></i><div style="flex: 1;">' + (timeStr || "").replace(/</g, "&lt;") + (item.status === "attended" ? " &middot; " + (t22.checked_in || "Checked in") : "") + "</div>" + exportOneBtn + " " + cancelBtn + "</div>";
+            }).join("")}
+                                </div>
+                                ` : ""}
+                            </div>`;
+          })()}
                     </div>
                 </div>
                 <div class="teacher-booking-card">
@@ -7235,6 +7319,9 @@
                         <span class="teacher-booking-week-label">${weekLabel}</span>
                         <button class="teacher-booking-week-btn" onclick="window.shiftBookingWeek(1)"><i data-lucide="chevron-right" size="18"></i></button>
                     </div>
+                    ${state.teacherAvailabilitySettings?.timezone && state.teacherAvailabilitySettings.timezone !== "UTC" ? `
+                    <p class="teacher-booking-timezone-caption" style="font-size: 12px; color: var(--text-secondary); margin: 0.5rem 0 0 0; text-align: center;">${(t2.times_in_timezone || "Times in {timezone}").replace("{timezone}", state.teacherAvailabilitySettings.timezone)}</p>
+                    ` : ""}
                     <!-- Day Slots -->
                     <div class="teacher-booking-days">
                         ${state._bookingSlotsLoading ? '<div style="text-align:center;padding:2rem;"><div class="spin"><i data-lucide="loader-2" size="24"></i></div></div>' : weekSlots.length === 0 ? '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-style:italic;">' + (t2.no_availability_this_week || "No availability this week") + "</div>" : weekSlots.map((day) => {
@@ -7684,6 +7771,78 @@
         const pickedId = state.adminStudentsCompetitionId && comps.some((c) => c.id === state.adminStudentsCompetitionId) ? state.adminStudentsCompetitionId : null;
         const currentComp = pickedId ? comps.find((c) => c.id === pickedId) : defaultComp;
         const hasActiveEvent = comps.some((c) => c.is_active);
+        const isPrivateTeacher = state.currentSchool?.profile_type === "private_teacher";
+        let adminStudentsFilterBlock;
+        if (isPrivateTeacher) {
+          adminStudentsFilterBlock = `
+                    </div>
+                </div>
+                `;
+        } else {
+          adminStudentsFilterBlock = `
+                <div class="students-filter-expandable ${state.studentsFilterExpanded ? "expanded" : ""}" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
+                    <div class="students-filter-header" onclick="toggleExpandableNoRender('studentsFilter')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
+                        <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.filters_label || "Filters"}</span>
+                        <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                    </div>
+                    <div id="students-filter-content" style="display: ${state.studentsFilterExpanded ? "" : "none"}; margin-bottom: 12px;">
+                    <div class="filter-bar students-filter-bar">
+                        <div class="filter-group">
+                            <span class="filter-label">${t2.filter_label_pack || "Pack"}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
+                                    <option value="all" ${(state.adminStudentsFilterHasPack || "all") === "all" ? "selected" : ""}>${t2.filter_all || "All"}</option>
+                                    <option value="yes" ${state.adminStudentsFilterHasPack === "yes" ? "selected" : ""}>${t2.filter_with_pack || "With pack"}</option>
+                                    <option value="no" ${state.adminStudentsFilterHasPack === "no" ? "selected" : ""}>${t2.filter_no_pack || "No pack"}</option>
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">${t2.filter_label_package || "Package"}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
+                                    <option value="">${t2.filter_all || "All"}</option>
+                                    ${(state.subscriptions || []).map((sub) => `<option value="${(sub.name || "").replace(/"/g, "&quot;")}" ${state.adminStudentsFilterPackage === sub.name ? "selected" : ""}>${(sub.name || "").replace(/</g, "&lt;")}</option>`).join("")}
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">${t2.filter_label_payment || "Payment"}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
+                                    <option value="all" ${(state.adminStudentsFilterPaid || "all") === "all" ? "selected" : ""}>${t2.filter_all || "All"}</option>
+                                    <option value="paid" ${state.adminStudentsFilterPaid === "paid" ? "selected" : ""}>${t2.filter_paid || "Paid"}</option>
+                                    <option value="unpaid" ${state.adminStudentsFilterPaid === "unpaid" ? "selected" : ""}>${t2.filter_unpaid || "Unpaid"}</option>
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <span class="filter-count" id="students-filter-count"></span>
+                    </div>
+                    </div>
+                </div>
+                <div class="students-search-wrap">
+                    <input type="text" class="students-search" placeholder="${t2.search_students}" value="${(state.adminStudentsSearch || "").replace(/"/g, "&quot;")}" oninput="state.adminStudentsSearch=this.value; filterStudents(this.value)">
+                </div>
+                <div class="students-list" id="admin-student-list">
+                    ${state.loading && state.students.length === 0 ? `
+                    <div class="students-loading">
+                        <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
+                        <p>${t2.loading_students_msg}</p>
+                    </div>
+                    ` : (() => {
+            const _f = getFilteredStudents(state.adminStudentsSearch || "");
+            setTimeout(() => {
+              const _c = document.getElementById("students-filter-count");
+              if (_c) _c.textContent = (t2.filter_result_students || "{count} students").replace("{count}", _f.length);
+            }, 0);
+            return _f.map((s) => renderAdminStudentCard(s)).join("");
+          })()}
+                </div>
+                `;
+        }
         html += `
             <div class="ios-header" style="background: transparent;"></div>
             <div class="students-page">
@@ -7734,6 +7893,29 @@
                         ` : ""}
                     </div>
                 </div>
+                ${state.currentSchool?.profile_type === "private_teacher" && state.adminSettings?.use_calendly_for_booking === "false" ? `
+                <div style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
+                    <div style="padding: 0 0 0.5rem 0; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                        ${t2.private_class_requests_title || "Private class requests"}
+                    </div>
+                    ${(state.privateClassRequests || []).length === 0 ? `
+                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t2.no_private_requests || "No requests yet"}</div>
+                    ` : (state.privateClassRequests || []).map((r) => {
+          const studentName = (state.students || []).find((s) => String(s.id) === String(r.student_id))?.name || r.student_id;
+          return `
+                        <div class="pcr-card">
+                            <div class="pcr-card-header">
+                                <span class="pcr-card-name">${(studentName || "").replace(/</g, "&lt;")}</span>
+                                <span class="pcr-card-status ${r.status}">${r.status}</span>
+                            </div>
+                            <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
+                            ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + (r.location || "").replace(/</g, "&lt;") + "</div>" : ""}
+                            ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || "").replace(/</g, "&lt;") + '"</div>' : ""}
+                            ${r.status === "pending" ? `<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest('` + r.id + `', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.accept_btn || "Accept") + `</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest('` + r.id + `', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.decline_btn || "Decline") + "</button></div>" : ""}
+                        </div>`;
+        }).join("")}
+                </div>
+                ` : ""}
                 ${state.currentSchool?.class_registration_enabled ? (() => {
           const weekRegs = state.adminWeekRegistrations || [];
           const activeRegs = weekRegs;
@@ -7933,12 +8115,22 @@
                         </div>
                     </div>`;
         })() : ""}
-                <div class="students-filter-expandable ${state.studentsFilterExpanded ? "expanded" : ""}" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
-                    <div class="students-filter-header" onclick="toggleExpandableNoRender('studentsFilter')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
+                ${state.currentSchool?.profile_type === "private_teacher" ? `
+                <div class="admin-students-list-expandable ${state.adminStudentsListExpandedForPrivateTeacher ? "expanded" : ""}" style="margin: 0 1.2rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
+                    <div class="expandable-section-header" onclick="state.adminStudentsListExpandedForPrivateTeacher=!state.adminStudentsListExpandedForPrivateTeacher; saveState(); renderView();" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="users" size="18" style="opacity: 0.6;"></i>
+                            <span style="font-weight: 700; font-size: 15px;">${t2.nav_students || "Alumnos"}</span>
+                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <div id="admin-students-list-content" style="padding: 0 1.2rem 1rem; display: ${state.adminStudentsListExpandedForPrivateTeacher ? "" : "none"}; background: var(--bg);">
+                <div class="students-filter-expandable ${state.studentsFilterExpanded ? "expanded" : ""}" style="margin: 0 -1.2rem; margin-bottom: 0; border-bottom: 1px solid var(--border);">
+                    <div class="students-filter-header" onclick="toggleExpandableNoRender('studentsFilter')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 1.2rem; cursor: pointer;">
                         <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.filters_label || "Filters"}</span>
                         <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
                     </div>
-                    <div id="students-filter-content" style="display: ${state.studentsFilterExpanded ? "" : "none"}; margin-bottom: 12px;">
+                    <div id="students-filter-content" style="display: ${state.studentsFilterExpanded ? "" : "none"}; margin-bottom: 12px; padding: 0 1.2rem;">
                     <div class="filter-bar students-filter-bar">
                         <div class="filter-group">
                             <span class="filter-label">${t2.filter_label_pack || "Pack"}</span>
@@ -7994,6 +8186,7 @@
           return _f.map((s) => renderAdminStudentCard(s)).join("");
         })()}
                 </div>
+                ` : adminStudentsFilterBlock}
             </div>
         `;
       } else if (view === "admin-memberships") {
@@ -8233,6 +8426,12 @@
                 ${t2.teacher_availability_title || "Availability"}
             </div>
             <div class="ios-list" style="overflow: visible;">
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 6px; padding: 14px 16px;">
+                    <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.8;">${t2.teacher_timezone_label || "Your timezone"}</label>
+                    <input type="text" id="teacher-availability-timezone" value="${(state.teacherAvailabilitySettings?.timezone || "UTC").replace(/"/g, "&quot;")}" placeholder="e.g. America/Bogota, Europe/Madrid" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--text-primary); outline: none;">
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t2.teacher_timezone_hint || "Students will see times in this timezone when booking."}</p>
+                    <button type="button" class="btn-secondary" onclick="window.saveTeacherTimezone()" style="align-self: flex-start; margin-top: 4px; padding: 8px 14px; font-size: 13px;">${t2.save || "Save"}</button>
+                </div>
                 ${(state.teacherAvailability || []).map((a) => `
                     <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; overflow: visible;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -8710,31 +8909,6 @@
                 <div class="card ios-list-item" onclick="addSubscription()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t2.add_label} Plan
                 </div>
-            </div>
-            ` : ""}
-
-            ${state.currentSchool?.profile_type === "private_teacher" ? `
-            <!-- PRIVATE CLASS REQUESTS -->
-            <div style="padding: 0 1.2rem; margin-top: 2.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t2.private_class_requests_title || "Private class requests"}
-            </div>
-            <div style="padding: 0 1.2rem; margin-top: 0.5rem;">
-                ${(state.privateClassRequests || []).length === 0 ? `
-                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t2.no_private_requests || "No requests yet"}</div>
-                ` : (state.privateClassRequests || []).map((r) => {
-          const studentName = (state.students || []).find((s) => String(s.id) === String(r.student_id))?.name || r.student_id;
-          return `
-                    <div class="pcr-card">
-                        <div class="pcr-card-header">
-                            <span class="pcr-card-name">${(studentName || "").replace(/</g, "&lt;")}</span>
-                            <span class="pcr-card-status ${r.status}">${r.status}</span>
-                        </div>
-                        <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
-                        ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + r.location + "</div>" : ""}
-                        ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || "").replace(/</g, "&lt;") + '"</div>' : ""}
-                        ${r.status === "pending" ? `<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest('` + r.id + `', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.accept_btn || "Accept") + `</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest('` + r.id + `', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.decline_btn || "Decline") + "</button></div>" : ""}
-                    </div>`;
-        }).join("")}
             </div>
             ` : ""}
 
@@ -10826,6 +11000,22 @@ School: ${schoolName}`)) return;
       alert("Error deleting availability: " + (e.message || e));
     }
   };
+  window.saveTeacherTimezone = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const input = document.getElementById("teacher-availability-timezone");
+    const tz = input?.value?.trim() || "UTC";
+    try {
+      const { data, error } = await supabaseClient.rpc("upsert_teacher_availability_settings", {
+        p_school_id: state.currentSchool.id,
+        p_timezone: tz
+      });
+      if (error) throw error;
+      state.teacherAvailabilitySettings = data && typeof data === "object" ? data : { ...state.teacherAvailabilitySettings || {}, timezone: tz };
+      if (window.lucide) lucide.createIcons();
+    } catch (e) {
+      alert("Error saving timezone: " + (e.message || e));
+    }
+  };
   async function getCalendlySession() {
     try {
       const { data, error } = await supabaseClient?.auth.refreshSession();
@@ -11060,7 +11250,7 @@ School: ${schoolName}`)) return;
     btn.textContent = "...";
     const message = (document.getElementById("booking-message")?.value || "").trim();
     try {
-      const { error } = await supabaseClient.rpc("create_private_class_request", {
+      const { data: requestData, error } = await supabaseClient.rpc("create_private_class_request", {
         p_school_id: state.currentSchool.id,
         p_student_id: String(state.currentUser.id),
         p_requested_date: slot.date,
@@ -11070,6 +11260,12 @@ School: ${schoolName}`)) return;
       });
       if (error) throw error;
       state._bookingSelectedSlot = null;
+      if (requestData?.id) {
+        try {
+          await supabaseClient.functions.invoke("notify_private_class_request", { body: { request_id: requestData.id } });
+        } catch (_) {
+        }
+      }
       const overlay = btn.closest(".teacher-booking-confirm-overlay");
       if (overlay) overlay.remove();
       const t2 = DANCE_LOCALES[state.language || "en"];
@@ -11737,7 +11933,7 @@ School: ${schoolName}`)) return;
     const actions = document.querySelector("#payment-modal-content .payment-modal-actions");
     const transferBtn = actions?.querySelectorAll("button.payment-modal-btn")[0];
     const cashBtn = actions?.querySelectorAll("button.payment-modal-btn")[1];
-    const loadingLabel = t2("resend_sending") || t2("loading") || "Sending…";
+    const loadingLabel = t2("resend_sending") || t2("loading") || "Sending\u2026";
     if (transferBtn && cashBtn) {
       transferBtn.disabled = true;
       cashBtn.disabled = true;
