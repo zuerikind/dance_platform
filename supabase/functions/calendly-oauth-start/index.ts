@@ -6,7 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -50,10 +50,18 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const schoolIdParam = url.searchParams.get('school_id');
+    let schoolId: string | null = url.searchParams.get('school_id');
+    if (!schoolId && (req.method === 'POST' || req.method === 'PUT')) {
+      try {
+        const body = await req.json().catch(() => ({}));
+        schoolId = (body && typeof body === 'object' && body.school_id) ? body.school_id : null;
+      } catch {
+        // no body
+      }
+    }
 
-    let schoolId: string | null = schoolIdParam;
-    if (!schoolId) {
+    let schoolIdFinal: string | null = schoolId;
+    if (!schoolIdFinal) {
       const { data: admins } = await adminClient.from('admins').select('school_id').eq('user_id', user.id);
       const adminSchoolIds = (admins ?? []).map((a: { school_id: string }) => a.school_id).filter(Boolean);
       const { data: schools } = await adminClient
@@ -74,12 +82,12 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      schoolId = teacherSchoolIds[0];
+      schoolIdFinal = teacherSchoolIds[0];
     } else {
       const { data: school } = await adminClient
         .from('schools')
         .select('id')
-        .eq('id', schoolId)
+        .eq('id', schoolIdFinal)
         .eq('profile_type', 'private_teacher')
         .single();
       if (!school) {
@@ -88,7 +96,7 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const { data: adminRow } = await adminClient.from('admins').select('id').eq('school_id', schoolId).eq('user_id', user.id).single();
+      const { data: adminRow } = await adminClient.from('admins').select('id').eq('school_id', schoolIdFinal).eq('user_id', user.id).single();
       if (!adminRow) {
         return new Response(JSON.stringify({ error: 'Not admin for this school' }), {
           status: 403,
@@ -101,7 +109,7 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(Date.now() + STATE_TTL_MINUTES * 60 * 1000).toISOString();
     const { error: insertError } = await adminClient.from('calendly_oauth_state').insert({
       state,
-      school_id: schoolId,
+      school_id: schoolIdFinal,
       expires_at: expiresAt,
     });
     if (insertError) {

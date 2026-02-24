@@ -215,14 +215,23 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
         const hasSupabaseSession = !!sessRes?.data?.session?.user;
         if (hasSupabaseSession && supabaseClient) await bootstrapAuth(supabaseClient);
+        const hash = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash : '';
+        const isCalendlyReturn = hash.includes('calendly=connected');
+        const calendlySchoolId = isCalendlyReturn && hash.includes('school_id=') ? (hash.match(/school_id=([^&]+)/) || [])[1] : null;
         if (hasAuthState && !hasSupabaseSession) {
-            state.currentUser = null;
-            state.isAdmin = false;
-            state.isPlatformDev = false;
-            state._discoveryOnlyEdit = false;
-            state.currentView = 'school-selection';
-            state.currentSchool = null;
-            if (local) saveState();
+            if (isCalendlyReturn && calendlySchoolId) {
+                state.currentView = 'admin-settings';
+                state.currentSchool = { id: decodeURIComponent(calendlySchoolId), name: 'School' };
+                if (local) saveState();
+            } else {
+                state.currentUser = null;
+                state.isAdmin = false;
+                state.isPlatformDev = false;
+                state._discoveryOnlyEdit = false;
+                state.currentView = 'school-selection';
+                state.currentSchool = null;
+                if (local) saveState();
+            }
         } else if (!hasAuthState && hasSupabaseSession && supabaseClient && sessRes?.data?.session?.user) {
             const user = sessRes.data.session.user;
             state.currentUser = { id: user.id, email: user.email ?? user.user_metadata?.email ?? '', role: 'student', school_id: null };
@@ -240,6 +249,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         window.checkInactivity();
 
         if (window.location.hash) parseHashRoute();
+        if (state.currentView === 'admin-settings' && hash.includes('calendly=connected') && typeof window.fetchAllData === 'function') {
+            window.fetchAllData();
+        }
         if (saved.currentView && saved.currentView.startsWith('admin-competition') && !window.location.hash) {
             state.competitionId = saved.competitionId || null;
             state.competitionSchoolId = saved.competitionSchoolId || null;

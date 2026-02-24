@@ -7,7 +7,7 @@ import { ensureValidToken, type ConnectionRow } from '../_shared/calendly.ts';
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -42,6 +42,14 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     let schoolId: string | null = url.searchParams.get('school_id');
+    if (!schoolId && (req.method === 'POST' || req.method === 'PUT')) {
+      try {
+        const body = await req.json().catch(() => ({}));
+        schoolId = (body && typeof body === 'object' && body.school_id) ? body.school_id : null;
+      } catch {
+        // no body
+      }
+    }
     if (!schoolId) {
       const { data: admins } = await adminClient.from('admins').select('school_id').eq('user_id', user.id);
       const adminSchoolIds = (admins ?? []).map((a: { school_id: string }) => a.school_id).filter(Boolean);

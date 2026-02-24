@@ -91,6 +91,15 @@ export function parseHashRoute() {
         return true;
     }
 
+    if (segments[0] === 'settings') {
+        state.currentView = 'admin-settings';
+        const schoolId = params.get('school_id');
+        if (schoolId && params.get('calendly') === 'connected') {
+            state._calendlyReturnSchoolId = schoolId;
+        }
+        return true;
+    }
+
     return false;
 }
 

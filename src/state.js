@@ -92,6 +92,8 @@ export let state = {
     calendlyConnected: false,
     calendlyEventTypeSelection: null,
     calendlyEventTypesList: [],
+    calendlyEventTypesLoaded: false,
+    calendlyEventTypesError: null,
     teacherCalendlySelectionForBooking: null
 };
 

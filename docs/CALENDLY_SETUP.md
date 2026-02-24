@@ -79,7 +79,11 @@ npx supabase functions deploy calendly-webhook
 npx supabase functions deploy calendly-disconnect
 ```
 
-**Important:** The project uses `supabase/config.toml` to set `verify_jwt = false` for `calendly-oauth-start` and `calendly-oauth-callback`. If you add or edit that config, you must **redeploy those two functions** for it to take effect; otherwise the callback will return 401 "Missing authorization header" when Calendly redirects the user back.
+**Important:**  
+- The app calls these functions via **`supabaseClient.functions.invoke()`**, so the Supabase client sends the anon key and the signed-in user’s JWT automatically.  
+- The project uses `supabase/config.toml` with `verify_jwt = false` for these four functions. After changing config or function code, **redeploy** so the gateway applies it:  
+  `npx supabase functions deploy calendly-oauth-start` `npx supabase functions deploy calendly-oauth-callback` `npx supabase functions deploy calendly-list-event-types` `npx supabase functions deploy calendly-disconnect`  
+- `calendly-oauth-start` and `calendly-list-event-types` accept **POST** with body `{ school_id }` (GET with query still works). Redeploy after pulling the latest code.
 
 ### 6. Run the migration
 
@@ -103,12 +107,18 @@ Or apply the migration file `supabase/migrations/20260227100000_calendly_private
 
 ## Troubleshooting
 
+- **Settings or event-type dropdown stuck on "Cargando..." / "Error: Failed to fetch" / CORS blocking `calendly-disconnect` or `calendly-list-event-types`:**  
+  The browser sends an OPTIONS preflight before the real request. If the Supabase gateway still requires a JWT (`verify_jwt` true), it returns 401 for OPTIONS (no token is sent on preflight), so CORS fails and the UI never gets a response. Fix: ensure `supabase/config.toml` has `verify_jwt = false` for `calendly-disconnect` and `calendly-list-event-types`, then **redeploy both functions** so the gateway applies the config:  
+  `npx supabase functions deploy calendly-disconnect` and `npx supabase functions deploy calendly-list-event-types`. Restart or refresh the app after deploy.
 - **"Failed to start Calendly connection" (or HTTP 404/500 when clicking Connect Calendly):**  
   1. **Deploy the Edge Function:** `npx supabase functions deploy calendly-oauth-start`. If you get 404, the function is not deployed or the app’s `SUPABASE_URL` points to another project.  
   2. **HTTP 401 (Unauthorized):** The project uses `supabase/config.toml` with `verify_jwt = false` for `calendly-oauth-start` and `calendly-oauth-callback` (start validates the user JWT itself; callback has no JWT because Calendly redirects the browser). After adding or changing `config.toml`, redeploy both: `npx supabase functions deploy calendly-oauth-start` and `npx supabase functions deploy calendly-oauth-callback`.
   3. **Set Edge Function secrets:** In Supabase → Project Settings → Edge Functions → Secrets, set `CALENDLY_CLIENT_ID` and `CALENDLY_REDIRECT_URI`. If either is missing, the function returns 500 “Calendly OAuth not configured”.  
   4. **Private teacher + admin:** You must be signed in as an **admin** of a school whose **profile type** is “private_teacher”. If the school is a regular studio (not private teacher) or you’re not an admin, the function returns 403 “Not a private teacher admin”.  
   5. **Migrations applied:** The `calendly_oauth_state` table must exist (from migration `20260227100000_calendly_private_bookings.sql`). If it’s missing, the function returns 500 “Failed to create state”. Run `npx supabase db push` to apply migrations.
+- **Calendly section or button not visible on deployed site:** The app needs the updated Content-Security-Policy (with `https://cdn.jsdelivr.net` in `style-src`, `font-src`, `connect-src`). Ensure the latest code is deployed: run `npm run build` (which copies `_headers` into `dist/`), then deploy. If your host uses headers from the repo root (e.g. Vercel with `vercel.json`), redeploy so the new headers are applied. Hard-refresh or clear cache after deploy.
+- **Console CSP errors on production (e.g. bailadmin.lat) blocking cdn.jsdelivr.net or fonts:** The live site must send a CSP that allows `https://cdn.jsdelivr.net` for `style-src`, `font-src`, and `connect-src`, and `data:` for `font-src` (for inline fonts). If the console shows a CSP *without* these, the deployment is using an old config or the host is not applying `vercel.json` / `_headers`. Fix: redeploy after pulling the latest code (so `vercel.json` and `dist/_headers` include the full CSP), or configure your host to use the CSP from this repo. The app also sets a CSP meta tag in `index.html` as a fallback when the server does not send CSP headers.
+- **Event type dropdown shows an error message (e.g. "Failed to load event types") instead of list:** The app now shows the real error and a "Retry" button. Common causes: (1) Supabase Edge Functions not redeployed with `verify_jwt = false` (redeploy `calendly-list-event-types`), (2) invalid or expired session (sign out and sign in again), (3) Calendly not connected for this school (reconnect Calendly). Check the error text and retry after fixing.
 - **Redirect after OAuth goes to wrong URL:** Set `APP_ORIGIN` to your SPA’s origin (e.g. `https://yourapp.com`) with no trailing slash. Callback redirects to `{APP_ORIGIN}/#/settings?calendly=connected`.
 - **“Event type not linked to a teacher”:** The webhook looks up `calendly_event_type_selection` by the event type URI in the payload. Ensure the teacher has selected an event type in Settings and that the webhook event is for that same event type.
 - **Webhook 401:** If `CALENDLY_WEBHOOK_SHARED_SECRET` (or `CALENDLY_WEBHOOK_SECRET`) is set, requests must include that value in the `x-bailadmin-secret` or `calendly-webhook-secret` header.

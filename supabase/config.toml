@@ -8,3 +8,9 @@ verify_jwt = false
 # is sent. The function validates the OAuth state from the DB and exchanges the code.
 [functions.calendly-oauth-callback]
 verify_jwt = false
+
+# These validate the user JWT inside the function (getUser(token)).
+[functions.calendly-disconnect]
+verify_jwt = false
+[functions.calendly-list-event-types]
+verify_jwt = false

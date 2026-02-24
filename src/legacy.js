@@ -1,4 +1,4 @@
-import { supabaseClient, SUPABASE_URL, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES } from './config.js';
+import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate } from './utils.js';
@@ -55,6 +55,7 @@ const DANCE_LOCALES = {
         login_btn: "Login",
         invalid_login: "Invalid credentials",
         admin_email_changed_use_new: "This account's email was updated. Please sign in with your current email.",
+        session_expired: "Session expired. Please sign in again.",
         remaining_classes: "Classes Remaining",
         unlimited: "Unlimited",
         already_account: "Already have an account?",
@@ -325,6 +326,8 @@ const DANCE_LOCALES = {
         calendly_disconnect_btn: "Disconnect Calendly",
         calendly_select_event_type: "Select event type for private booking",
         calendly_loading: "Loading...",
+        calendly_no_event_types: "No event types",
+        calendly_retry: "Retry",
         calendly_connect_desc: "Connect your Calendly account so students can book private classes from your live availability.",
         calendly_connect_btn: "Connect Calendly",
         calendly_disconnect_confirm: "Disconnect Calendly? Webhooks will be removed and students will no longer see your Calendly booking.",
@@ -763,6 +766,7 @@ const DANCE_LOCALES = {
         login_btn: "Entrar",
         invalid_login: "Credenciales inválidas",
         admin_email_changed_use_new: "El correo de esta cuenta fue actualizado. Inicia sesión con tu correo actual.",
+        session_expired: "Sesión expirada. Inicia sesión de nuevo.",
         remaining_classes: "Clases Restantes",
         unlimited: "Ilimitado",
         already_account: "¿Ya tienes cuenta?",
@@ -1395,6 +1399,8 @@ const DANCE_LOCALES = {
         calendly_disconnect_btn: "Desconectar Calendly",
         calendly_select_event_type: "Seleccionar tipo de evento para reserva privada",
         calendly_loading: "Cargando...",
+        calendly_no_event_types: "Ningún tipo de evento",
+        calendly_retry: "Reintentar",
         calendly_connect_desc: "Conecta tu cuenta de Calendly para que los alumnos puedan reservar clases privadas según tu disponibilidad.",
         calendly_connect_btn: "Conectar Calendly",
         calendly_disconnect_confirm: "¿Desconectar Calendly? Se eliminarán los webhooks y los alumnos ya no verán tu reserva de Calendly.",
@@ -1448,6 +1454,7 @@ const DANCE_LOCALES = {
         login_btn: "Login",
         invalid_login: "Ungültige Anmeldedaten",
         admin_email_changed_use_new: "Die E-Mail dieses Kontos wurde geändert. Bitte melde dich mit deiner aktuellen E-Mail an.",
+        session_expired: "Sitzung abgelaufen. Bitte melde dich erneut an.",
         remaining_classes: "Verbleibende Stunden",
         unlimited: "Unbegrenzt",
         already_account: "Hast du bereits ein Konto?",
@@ -2056,6 +2063,8 @@ const DANCE_LOCALES = {
         calendly_disconnect_btn: "Calendly trennen",
         calendly_select_event_type: "Eventtyp für private Buchung wählen",
         calendly_loading: "Laden...",
+        calendly_no_event_types: "Keine Event-Typen",
+        calendly_retry: "Erneut versuchen",
         calendly_connect_desc: "Verbinde dein Calendly-Konto, damit Schüler private Stunden nach deiner Verfügbarkeit buchen können.",
         calendly_connect_btn: "Calendly verbinden",
         calendly_disconnect_confirm: "Calendly trennen? Webhooks werden entfernt und Schüler sehen deine Calendly-Buchung nicht mehr.",
@@ -5048,10 +5057,11 @@ function _renderViewImpl() {
     }
     else if (view === 'teacher-booking') {
         // Private teacher scheduling card - students request private classes
-        if (!state.currentSchool?.id || state.currentSchool?.profile_type !== 'private_teacher') {
+        const teacherBookingSchool = (state.schools && state.currentSchool?.id && state.schools.find(s => s.id === state.currentSchool.id)) || state.currentSchool;
+        if (!state.currentSchool?.id || teacherBookingSchool?.profile_type !== 'private_teacher') {
             html += '<div style="padding: 2rem;">' + (t.not_found_msg || 'Not available') + '</div>';
         } else {
-            const school = state.currentSchool;
+            const school = teacherBookingSchool;
             const teacherName = school.name || '';
             const teacherImg = school.logo_url || school.teacher_photo_url || '';
             const locations = (school.discovery_locations || []);
@@ -5227,7 +5237,8 @@ function _renderViewImpl() {
     }
     else if (view === 'schedule') {
         // Redirect private teacher students to teacher-booking
-        if (!state.isAdmin && state.currentSchool?.profile_type === 'private_teacher') {
+        const scheduleSchool = (state.schools && state.currentSchool?.id && state.schools.find(s => s.id === state.currentSchool.id)) || state.currentSchool;
+        if (!state.isAdmin && scheduleSchool?.profile_type === 'private_teacher') {
             state.currentView = 'teacher-booking';
             renderView();
             return;
@@ -6567,8 +6578,9 @@ function _renderViewImpl() {
                     </div>
                     <div>
                         <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.calendly_select_event_type || 'Select event type for private booking'}</label>
+                        ${state.calendlyEventTypesError ? `<p style="font-size: 12px; color: var(--error, #c53030); margin-bottom: 8px;">${(state.calendlyEventTypesError || '').replace(/</g, '&lt;')}</p><button type="button" class="btn-ghost" onclick="window.loadCalendlyEventTypes()" style="font-size: 12px; margin-bottom: 8px;">${t.calendly_retry || 'Retry'}</button>` : ''}
                         <select id="calendly-event-type-select" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px;">
-                            <option value="">${state.calendlyEventTypeSelection ? '' : (t.calendly_loading || 'Loading...')}</option>
+                            <option value="">${!state.calendlyEventTypesLoaded ? (t.calendly_loading || 'Loading...') : (state.calendlyEventTypesList && state.calendlyEventTypesList.length) ? '' : (t.calendly_no_event_types || 'No event types')}</option>
                             ${(state.calendlyEventTypesList || []).map(et => `<option value="${(et.uri || '').replace(/"/g, '&quot;')}" data-name="${(et.name || '').replace(/"/g, '&quot;')}" data-url="${(et.scheduling_url || '').replace(/"/g, '&quot;')}" ${state.calendlyEventTypeSelection && state.calendlyEventTypeSelection.calendly_event_type_uri === et.uri ? 'selected' : ''}>${(et.name || et.uri || 'Event').replace(/</g, '&lt;')}</option>`).join('')}
                         </select>
                         <button type="button" class="btn-secondary" onclick="window.saveCalendlyEventTypeSelection()" style="margin-top: 10px; padding: 8px 14px; font-size: 13px;">${t.save || 'Save'}</button>
@@ -9123,65 +9135,93 @@ window.deleteTeacherAvail = async (id) => {
     } catch (e) { alert('Error deleting availability: ' + (e.message || e)); }
 };
 
-// Calendly: OAuth start, list event types, save selection
+// Calendly: get session after refresh; on invalid refresh token, sign out and return null
+async function getCalendlySession() {
+    try {
+        const { data, error } = await supabaseClient?.auth.refreshSession();
+        if (error && /invalid refresh|refresh token not found/i.test(String(error?.message || ''))) {
+            await supabaseClient?.auth.signOut().catch(() => {});
+            state.currentUser = null; state.isAdmin = false; state.currentSchool = null; state.currentView = 'school-selection';
+            if (typeof saveState === 'function') saveState();
+            if (typeof renderView === 'function') renderView();
+            alert(DANCE_LOCALES[state.language || 'en'].session_expired || 'Session expired. Please sign in again.');
+            return null;
+        }
+        const session = (await supabaseClient?.auth.getSession())?.data?.session;
+        return session?.access_token && state.currentSchool?.id ? session : null;
+    } catch (e) {
+        if (/invalid refresh|refresh token not found/i.test(String(e?.message || e))) {
+            await supabaseClient?.auth.signOut().catch(() => {});
+            state.currentUser = null; state.isAdmin = false; state.currentSchool = null; state.currentView = 'school-selection';
+            if (typeof saveState === 'function') saveState();
+            if (typeof renderView === 'function') renderView();
+            alert(DANCE_LOCALES[state.language || 'en'].session_expired || 'Session expired. Please sign in again.');
+            return null;
+        }
+        throw e;
+    }
+}
+
+// Calendly: OAuth start, list event types, save selection (use Supabase client so anon key + Auth are sent)
 window.startCalendlyOAuth = async () => {
-    const baseUrl = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '');
-    await supabaseClient?.auth.refreshSession();
-    const session = (await supabaseClient?.auth.getSession())?.data?.session;
-    if (!session?.access_token || !state.currentSchool?.id) {
+    const session = await getCalendlySession();
+    if (!session) {
+        if (state.currentView !== 'school-selection') alert('Please sign in and select your school.');
+        return;
+    }
+    if (!supabaseClient || !state.currentSchool?.id) {
         alert('Please sign in and select your school.');
         return;
     }
     try {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:startCalendlyOAuth',message:'before fetch',data:{hasToken:!!session?.access_token,tokenLen:session?.access_token?.length??0,schoolId:state.currentSchool?.id},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
-        const res = await fetch(baseUrl + '/functions/v1/calendly-oauth-start?school_id=' + encodeURIComponent(state.currentSchool.id), {
-            headers: { Authorization: 'Bearer ' + session.access_token }
+        const { data, error } = await supabaseClient.functions.invoke('calendly-oauth-start', {
+            body: { school_id: state.currentSchool.id }
         });
-        const responseText = await res.text();
-        let data;
-        try {
-            data = responseText ? JSON.parse(responseText) : {};
-        } catch (_) {
-            data = {};
+        if (error) {
+            alert(error.message || 'Failed to start Calendly connection');
+            return;
         }
-        // #region agent log
-        if (!res.ok) fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:startCalendlyOAuth',message:'response not ok',data:{status:res.status,dataError:data?.error,bodyPreview:(responseText||'').slice(0,300)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
-        if (!res.ok) {
-            const msg = data.error || (responseText && responseText.length < 200 ? responseText : 'HTTP ' + res.status + (res.status === 404 ? ' – Is calendly-oauth-start deployed?' : ''));
+        const msg = data?.error;
+        if (msg) {
             alert(msg);
             return;
         }
-        if (data.auth_url) {
+        if (data?.auth_url) {
             window.location.href = data.auth_url;
         } else {
-            alert('No auth URL returned');
+            alert('No auth URL returned. Is calendly-oauth-start deployed and secrets set?');
         }
     } catch (e) {
-        alert('Error: ' + (e.message || e));
+        alert('Error: ' + (e?.message || e));
     }
 };
 
 window.loadCalendlyEventTypes = async () => {
-    const baseUrl = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '');
-    const session = (await supabaseClient?.auth.getSession())?.data?.session;
-    if (!session?.access_token || !state.currentSchool?.id) return;
+    const session = await getCalendlySession();
+    if (!session || !supabaseClient || !state.currentSchool?.id) return;
+    state.calendlyEventTypesLoaded = false;
+    state.calendlyEventTypesError = null;
+    if (state.currentView === 'admin-settings') renderView();
     try {
-        const res = await fetch(baseUrl + '/functions/v1/calendly-list-event-types?school_id=' + encodeURIComponent(state.currentSchool.id), {
-            headers: { Authorization: 'Bearer ' + session.access_token }
+        const { data, error } = await supabaseClient.functions.invoke('calendly-list-event-types', {
+            body: { school_id: state.currentSchool.id }
         });
-        const data = await res.json();
-        if (!res.ok) {
+        state.calendlyEventTypesLoaded = true;
+        if (error) {
+            state.calendlyEventTypesError = (error && typeof error === 'object' && error.message) ? error.message : (data && data.error) ? data.error : 'Failed to load event types';
             state.calendlyEventTypesList = [];
-            if (state.currentView === 'admin-settings') renderView();
-            return;
+        } else if (data?.error) {
+            state.calendlyEventTypesError = typeof data.error === 'string' ? data.error : 'Failed to load event types';
+            state.calendlyEventTypesList = [];
+        } else {
+            state.calendlyEventTypesError = null;
+            state.calendlyEventTypesList = data?.event_types || [];
         }
-        state.calendlyEventTypesList = data.event_types || [];
         if (state.currentView === 'admin-settings') renderView();
         if (window.lucide) window.lucide.createIcons();
     } catch (e) {
+        state.calendlyEventTypesLoaded = true;
+        state.calendlyEventTypesError = (e?.message != null ? e.message : (e != null ? String(e) : '')) || 'Failed to load event types';
         state.calendlyEventTypesList = [];
         if (state.currentView === 'admin-settings') renderView();
     }
@@ -9214,23 +9254,24 @@ window.saveCalendlyEventTypeSelection = async () => {
 };
 
 window.disconnectCalendly = async () => {
-    const baseUrl = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '');
-    const session = (await supabaseClient?.auth.getSession())?.data?.session;
-    if (!session?.access_token || !state.currentSchool?.id) {
-        alert('Please sign in and select your school.');
+    const session = await getCalendlySession();
+    if (!session) {
+        if (state.currentView !== 'school-selection') alert('Please sign in and select your school.');
         return;
     }
+    if (!supabaseClient || !state.currentSchool?.id) return;
     const t = DANCE_LOCALES[state.language || 'en'];
     if (!confirm(t.calendly_disconnect_confirm || 'Disconnect Calendly? Webhooks will be removed and students will no longer see your Calendly booking.')) return;
     try {
-        const res = await fetch(baseUrl + '/functions/v1/calendly-disconnect', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-            body: JSON.stringify({ school_id: state.currentSchool.id })
+        const { data, error } = await supabaseClient.functions.invoke('calendly-disconnect', {
+            body: { school_id: state.currentSchool.id }
         });
-        const data = await res.json();
-        if (!res.ok) {
-            alert(data.error || 'Failed to disconnect');
+        if (error) {
+            alert(error.message || 'Failed to disconnect');
+            return;
+        }
+        if (data?.error) {
+            alert(data.error);
             return;
         }
         state.calendlyConnected = false;
@@ -9240,7 +9281,7 @@ window.disconnectCalendly = async () => {
         renderView();
         if (window.lucide) window.lucide.createIcons();
     } catch (e) {
-        alert('Error: ' + (e.message || e));
+        alert('Error: ' + (e?.message || e));
     }
 };
 

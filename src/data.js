@@ -266,6 +266,8 @@ export async function fetchAllData() {
                 try {
                     const { data: connData } = await supabaseClient.from('calendly_connections').select('id').eq('school_id', sid).maybeSingle();
                     state.calendlyConnected = !!(connData && connData.id);
+                    state.calendlyEventTypesLoaded = false;
+                    state.calendlyEventTypesError = null;
                 } catch (_) { state.calendlyConnected = false; }
                 try {
                     const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
@@ -317,6 +319,11 @@ export async function fetchAllData() {
         }
         if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
             state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };
+        }
+        if (state._calendlyReturnSchoolId && state.schools && state.schools.length) {
+            const calSchool = state.schools.find(s => s.id === state._calendlyReturnSchoolId);
+            if (calSchool) state.currentSchool = { ...state.currentSchool, ...calSchool };
+            delete state._calendlyReturnSchoolId;
         }
         if (isStudent && allEnrollmentsRes?.data != null) {
             const allEnroll = allEnrollmentsRes.data;

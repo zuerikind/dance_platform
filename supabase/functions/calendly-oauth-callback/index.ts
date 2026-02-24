@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
     }
 
     const appOrigin = Deno.env.get('APP_ORIGIN') || supabaseUrl.replace(/\.supabase\.co.*/, '');
-    const redirectUrl = `${appOrigin}/#/settings?calendly=connected`;
+    const redirectUrl = `${appOrigin}/#/settings?calendly=connected&school_id=${encodeURIComponent(schoolId)}`;
     return new Response(null, {
       status: 302,
       headers: {

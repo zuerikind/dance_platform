@@ -13,6 +13,7 @@ const FILES = [
   'style.css',
   'favicon.png',
   'logo.png',
+  '_headers',
 ];
 
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
