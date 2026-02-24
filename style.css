@@ -5358,6 +5358,41 @@ body:not(.landing-page) .sticky-footer-inner {
 .dark-mode .btn-ghost:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* Calendly vs Weekly calendar segment (Settings): selected state visible in light and dark */
+.calendly-booking-mode-segment {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.calendly-mode-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-m, 12px);
+  border: 1.5px solid var(--border);
+  background: var(--surface-solid, var(--system-gray6));
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.calendly-mode-btn:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.calendly-mode-btn-selected {
+  background: var(--system-blue, #007AFF) !important;
+  color: #fff !important;
+  border-color: var(--system-blue, #007AFF) !important;
+  font-weight: 600;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.35);
+}
+.dark-mode .calendly-mode-btn-selected {
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.5);
+}
+
 @media (max-width: 480px) {
   .student-private-class-row {
     gap: 10px;

@@ -6917,7 +6917,7 @@
                     </div>
                     ` : ""}
                     <div class="calendly-embed-wrap" style="margin: 0 18px 18px; min-height: 630px; border-radius: 16px; overflow: hidden; background: var(--system-gray6,#f2f2f7);">
-                        <iframe id="calendly-inline-iframe" src="${(() => {
+                        <iframe id="calendly-inline-iframe" data-src="${(() => {
             const u = (state.teacherCalendlySelectionForBooking || {}).scheduling_url || "";
             if (!u) return "";
             const name = state.currentUser && state.currentUser.name || "";
@@ -8309,9 +8309,9 @@
                 `}
                 <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; margin-top: 8px;">
                     <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">${t2.calendly_student_booking_mode || "What students see when booking"}</label>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button type="button" class="btn-secondary" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px; ${(state.adminSettings || {}).use_calendly_for_booking !== "false" ? "background: var(--primary, #007AFF); color: white; border-color: var(--primary, #007AFF); font-weight: 600;" : ""}" onclick="window.setCalendlyBookingMode('true')">${t2.calendly_mode_calendly || "Calendly"}</button>
-                        <button type="button" class="btn-secondary" style="flex: 1; min-width: 120px; padding: 10px 14px; font-size: 13px; ${(state.adminSettings || {}).use_calendly_for_booking === "false" ? "background: var(--primary, #007AFF); color: white; border-color: var(--primary, #007AFF); font-weight: 600;" : ""}" onclick="window.setCalendlyBookingMode('false')">${t2.calendly_mode_weekly || "Weekly calendar"}</button>
+                    <div class="calendly-booking-mode-segment" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="calendly-mode-btn ${(state.adminSettings || {}).use_calendly_for_booking !== "false" ? "calendly-mode-btn-selected" : ""}" onclick="window.setCalendlyBookingMode('true')">${t2.calendly_mode_calendly || "Calendly"}</button>
+                        <button type="button" class="calendly-mode-btn ${(state.adminSettings || {}).use_calendly_for_booking === "false" ? "calendly-mode-btn-selected" : ""}" onclick="window.setCalendlyBookingMode('false')">${t2.calendly_mode_weekly || "Weekly calendar"}</button>
                     </div>
                 </div>
             </div>
@@ -9187,6 +9187,16 @@
       root.innerHTML = html;
       if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       if (view === "platform-school-details") window.scrollTo(0, 0);
+      if (view === "teacher-booking") {
+        var calIframe = document.getElementById("calendly-inline-iframe");
+        if (calIframe && calIframe.dataset.src) {
+          requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+              calIframe.src = calIframe.dataset.src;
+            });
+          });
+        }
+      }
     } catch (e) {
       console.error("Render error:", e);
       if (root) root.innerHTML = '<div class="container" style="padding:2rem;text-align:center;"><p style="color:var(--text-muted);">Something went wrong. <a href="#" onclick="location.reload()" style="color:var(--text-primary); text-decoration:none; font-weight:600;">Reload</a>.</p></div>';
@@ -11894,8 +11904,6 @@ School: ${schoolName}`)) return;
       overlay.remove();
     };
     const setApplyEnabled = (enabled) => {
-      fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "legacy.js:setApplyEnabled", message: "setApplyEnabled", data: { enabled, applyBtnExists: !!applyBtn, applyBtnDisabled: applyBtn?.disabled }, timestamp: Date.now(), hypothesisId: "H2,H5" }) }).catch(() => {
-      });
       if (!applyBtn) return;
       applyBtn.disabled = !enabled;
       applyBtn.style.opacity = enabled ? "1" : "0.6";
@@ -11922,8 +11930,6 @@ School: ${schoolName}`)) return;
       setApplyEnabled(false);
     };
     imgEl.onload = () => {
-      fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "legacy.js:cropModal img.onload", message: "image onload", data: { cropperDefined: typeof Cropper !== "undefined", naturalWidth: imgEl.naturalWidth, naturalHeight: imgEl.naturalHeight }, timestamp: Date.now(), hypothesisId: "H4" }) }).catch(() => {
-      });
       if (statusEl) statusEl.textContent = "";
       setPreviewFromBlob();
       if (typeof Cropper === "undefined") {
@@ -11944,8 +11950,6 @@ School: ${schoolName}`)) return;
         cropBoxResizable: true,
         toggleDragModeOnDblclick: false,
         ready: function() {
-          fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "legacy.js:cropper ready", message: "cropper ready (options)", data: { applyBtnExists: !!applyBtn }, timestamp: Date.now(), hypothesisId: "H2" }) }).catch(() => {
-          });
           setTimeout(updatePreview, 50);
           setApplyEnabled(true);
         },
@@ -11955,8 +11959,6 @@ School: ${schoolName}`)) return;
       });
       setTimeout(() => {
         const fallbackApply = cropper && applyBtn && applyBtn.disabled;
-        fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "legacy.js:cropModal 600ms fallback", message: "600ms fallback", data: { fallbackApply, cropperExists: !!cropper, applyBtnExists: !!applyBtn, applyBtnDisabled: applyBtn?.disabled }, timestamp: Date.now(), hypothesisId: "H2,H5" }) }).catch(() => {
-        });
         if (fallbackApply) setApplyEnabled(true);
       }, 600);
     };
@@ -12057,8 +12059,6 @@ School: ${schoolName}`)) return;
   window.clearDiscoveryImage = (kind) => {
     const urlId = kind === "logo" ? "discovery-logo-url" : "discovery-teacher-url";
     const urlEl = document.getElementById(urlId);
-    fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "legacy.js:clearDiscoveryImage", message: "clearDiscoveryImage", data: { kind, urlElExists: !!urlEl, urlValueBefore: urlEl?.value?.substring(0, 50), stateLogoBefore: (state.currentSchool?.logo_url || "").substring(0, 50) }, timestamp: Date.now(), hypothesisId: "H1" }) }).catch(() => {
-    });
     if (urlEl) urlEl.value = "";
     if (state.currentSchool) {
       if (kind === "logo") state.currentSchool.logo_url = "";
@@ -12277,8 +12277,6 @@ School: ${schoolName}`)) return;
       if (existingDetail && typeof existingDetail === "object" && existingDetail.id) {
         existing = { ...existing, ...existingDetail };
       }
-      fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "legacy.js:saveDiscoveryProfile", message: "save logo values", data: { logoUrlFromInput: logoUrl?.substring(0, 50), existingLogoUrl: (existing.logo_url || "").substring(0, 50) }, timestamp: Date.now(), hypothesisId: "H1" }) }).catch(() => {
-      });
       const slugToSave = slug || existing.discovery_slug || null;
       const countryToSave = country || existing.country || null;
       const cityToSave = city || existing.city || null;
