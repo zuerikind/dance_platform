@@ -6050,6 +6050,71 @@ function _renderViewImpl() {
         const pickedId = state.adminStudentsCompetitionId && comps.some(c => c.id === state.adminStudentsCompetitionId) ? state.adminStudentsCompetitionId : null;
         const currentComp = pickedId ? comps.find(c => c.id === pickedId) : defaultComp;
         const hasActiveEvent = comps.some(c => c.is_active);
+        const isPrivateTeacher = state.currentSchool?.profile_type === 'private_teacher';
+        let adminStudentsFilterBlock;
+        if (isPrivateTeacher) {
+            adminStudentsFilterBlock = `
+                    </div>
+                </div>
+                `;
+        } else {
+            adminStudentsFilterBlock = `
+                <div class="students-filter-expandable ${state.studentsFilterExpanded ? 'expanded' : ''}" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
+                    <div class="students-filter-header" onclick="toggleExpandableNoRender('studentsFilter')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
+                        <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.filters_label || 'Filters'}</span>
+                        <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                    </div>
+                    <div id="students-filter-content" style="display: ${state.studentsFilterExpanded ? '' : 'none'}; margin-bottom: 12px;">
+                    <div class="filter-bar students-filter-bar">
+                        <div class="filter-group">
+                            <span class="filter-label">${t.filter_label_pack || 'Pack'}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
+                                    <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                                    <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With pack'}</option>
+                                    <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No pack'}</option>
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">${t.filter_label_package || 'Package'}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
+                                    <option value="">${t.filter_all || 'All'}</option>
+                                    ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">${t.filter_label_payment || 'Payment'}</span>
+                            <span class="filter-select-wrap">
+                                <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
+                                    <option value="all" ${(state.adminStudentsFilterPaid || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
+                                    <option value="paid" ${state.adminStudentsFilterPaid === 'paid' ? 'selected' : ''}>${t.filter_paid || 'Paid'}</option>
+                                    <option value="unpaid" ${state.adminStudentsFilterPaid === 'unpaid' ? 'selected' : ''}>${t.filter_unpaid || 'Unpaid'}</option>
+                                </select>
+                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
+                            </span>
+                        </div>
+                        <span class="filter-count" id="students-filter-count"></span>
+                    </div>
+                    </div>
+                </div>
+                <div class="students-search-wrap">
+                    <input type="text" class="students-search" placeholder="${t.search_students}" value="${(state.adminStudentsSearch || '').replace(/"/g, '&quot;')}" oninput="state.adminStudentsSearch=this.value; filterStudents(this.value)">
+                </div>
+                <div class="students-list" id="admin-student-list">
+                    ${state.loading && state.students.length === 0 ? `
+                    <div class="students-loading">
+                        <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
+                        <p>${t.loading_students_msg}</p>
+                    </div>
+                    ` : (() => { const _f = getFilteredStudents(state.adminStudentsSearch || ''); setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0); return _f.map(s => renderAdminStudentCard(s)).join(''); })()}
+                </div>
+                `;
+        }
         html += `
             <div class="ios-header" style="background: transparent;"></div>
             <div class="students-page">
@@ -6385,65 +6450,7 @@ function _renderViewImpl() {
                     </div>
                     ` : (() => { const _f = getFilteredStudents(state.adminStudentsSearch || ''); setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0); return _f.map(s => renderAdminStudentCard(s)).join(''); })()}
                 </div>
-                ${state.currentSchool?.profile_type === 'private_teacher' ? `
-                    </div>
-                </div>
-                ` : `
-                <div class="students-filter-expandable ${state.studentsFilterExpanded ? 'expanded' : ''}" style="margin: 0 1.2rem 0; border-bottom: 1px solid var(--border);">
-                    <div class="students-filter-header" onclick="toggleExpandableNoRender('studentsFilter')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
-                        <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.filters_label || 'Filters'}</span>
-                        <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
-                    </div>
-                    <div id="students-filter-content" style="display: ${state.studentsFilterExpanded ? '' : 'none'}; margin-bottom: 12px;">
-                    <div class="filter-bar students-filter-bar">
-                        <div class="filter-group">
-                            <span class="filter-label">${t.filter_label_pack || 'Pack'}</span>
-                            <span class="filter-select-wrap">
-                                <select class="filter-control" onchange="state.adminStudentsFilterHasPack=this.value; filterStudents();">
-                                    <option value="all" ${(state.adminStudentsFilterHasPack || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
-                                    <option value="yes" ${state.adminStudentsFilterHasPack === 'yes' ? 'selected' : ''}>${t.filter_with_pack || 'With pack'}</option>
-                                    <option value="no" ${state.adminStudentsFilterHasPack === 'no' ? 'selected' : ''}>${t.filter_no_pack || 'No pack'}</option>
-                                </select>
-                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
-                            </span>
-                        </div>
-                        <div class="filter-group">
-                            <span class="filter-label">${t.filter_label_package || 'Package'}</span>
-                            <span class="filter-select-wrap">
-                                <select class="filter-control" onchange="state.adminStudentsFilterPackage=this.value||null; filterStudents();">
-                                    <option value="">${t.filter_all || 'All'}</option>
-                                    ${(state.subscriptions || []).map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${state.adminStudentsFilterPackage === sub.name ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
-                                </select>
-                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
-                            </span>
-                        </div>
-                        <div class="filter-group">
-                            <span class="filter-label">${t.filter_label_payment || 'Payment'}</span>
-                            <span class="filter-select-wrap">
-                                <select class="filter-control" onchange="state.adminStudentsFilterPaid=this.value; filterStudents();">
-                                    <option value="all" ${(state.adminStudentsFilterPaid || 'all') === 'all' ? 'selected' : ''}>${t.filter_all || 'All'}</option>
-                                    <option value="paid" ${state.adminStudentsFilterPaid === 'paid' ? 'selected' : ''}>${t.filter_paid || 'Paid'}</option>
-                                    <option value="unpaid" ${state.adminStudentsFilterPaid === 'unpaid' ? 'selected' : ''}>${t.filter_unpaid || 'Unpaid'}</option>
-                                </select>
-                                <i data-lucide="chevron-down" size="16" class="filter-select-chevron"></i>
-                            </span>
-                        </div>
-                        <span class="filter-count" id="students-filter-count"></span>
-                    </div>
-                    </div>
-                </div>
-                <div class="students-search-wrap">
-                    <input type="text" class="students-search" placeholder="${t.search_students}" value="${(state.adminStudentsSearch || '').replace(/"/g, '&quot;')}" oninput="state.adminStudentsSearch=this.value; filterStudents(this.value)">
-                </div>
-                <div class="students-list" id="admin-student-list">
-                    ${state.loading && state.students.length === 0 ? `
-                    <div class="students-loading">
-                        <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
-                        <p>${t.loading_students_msg}</p>
-                    </div>
-                    ` : (() => { const _f = getFilteredStudents(state.adminStudentsSearch || ''); setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0); return _f.map(s => renderAdminStudentCard(s)).join(''); })()}
-                </div>
-                `}
+                ` : adminStudentsFilterBlock}
             </div>
         `;
     } else if (view === 'admin-memberships') {
