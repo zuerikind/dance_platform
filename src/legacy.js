@@ -54,6 +54,7 @@ const DANCE_LOCALES = {
         password: "Password",
         login_btn: "Login",
         invalid_login: "Invalid credentials",
+        admin_email_changed_use_new: "This account's email was updated. Please sign in with your current email.",
         remaining_classes: "Classes Remaining",
         unlimited: "Unlimited",
         already_account: "Already have an account?",
@@ -319,6 +320,16 @@ const DANCE_LOCALES = {
         reviews_admin_delete_confirm: "Delete this review?",
         reviews_admin_needs_review: "Needs review",
         reviews_admin_by_school: "By school",
+        calendly_title: "Calendly",
+        calendly_connected: "Connected",
+        calendly_disconnect_btn: "Disconnect Calendly",
+        calendly_select_event_type: "Select event type for private booking",
+        calendly_loading: "Loading...",
+        calendly_connect_desc: "Connect your Calendly account so students can book private classes from your live availability.",
+        calendly_connect_btn: "Connect Calendly",
+        calendly_disconnect_confirm: "Disconnect Calendly? Webhooks will be removed and students will no longer see your Calendly booking.",
+        calendly_need_credits: "You need credits to complete a booking.",
+        calendly_book: "Book a session",
         dev_login_btn: "Login",
         dev_dashboard_title: "Platform Developer",
         dev_school_inspector: "School Inspector",
@@ -404,6 +415,7 @@ const DANCE_LOCALES = {
         admin_name_label: "Admin name",
         admin_email_label: "Email",
         admin_email_not_set: "Not set",
+        email_used_to_sign_in: "used to sign in",
         enter_admin_email: "Please enter an email address.",
         dev_discovery_optional: "Discovery profile (optional)",
         create_school_btn: "Execute Initialization",
@@ -605,6 +617,7 @@ const DANCE_LOCALES = {
         admin_email_later: "Later",
         admin_email_saved: "Email saved!",
         admin_email_invalid: "Please enter a valid email address.",
+        admin_enter_school_confirm: "Do you want to enter {school} to take classes with them and buy packages?",
         profile_saved_success: "Profile saved.",
         password_mismatch: "New passwords do not match.",
         password_too_short: "Password must be at least 4 characters.",
@@ -621,6 +634,8 @@ const DANCE_LOCALES = {
         discovery_logo_crop_hint: "Position and zoom so your logo looks good in the square preview. This is how it will appear on the discovery page.",
         discovery_logo_crop_preview_label: "Preview on discovery page:",
         discovery_logo_crop_apply: "Apply",
+        discovery_logo_crop_error: "Could not load image. Try another file.",
+        discovery_logo_crop_canvas_error: "Could not create image. Try again.",
         discovery_remove_image: "Remove",
         country_label: "Country",
         city_label: "City",
@@ -747,6 +762,7 @@ const DANCE_LOCALES = {
         password: "Contraseña",
         login_btn: "Entrar",
         invalid_login: "Credenciales inválidas",
+        admin_email_changed_use_new: "El correo de esta cuenta fue actualizado. Inicia sesión con tu correo actual.",
         remaining_classes: "Clases Restantes",
         unlimited: "Ilimitado",
         already_account: "¿Ya tienes cuenta?",
@@ -1017,6 +1033,7 @@ const DANCE_LOCALES = {
         admin_name_label: "Nombre del admin",
         admin_email_label: "Email",
         admin_email_not_set: "No configurado",
+        email_used_to_sign_in: "se usa para iniciar sesión",
         enter_admin_email: "Por favor ingresa un email.",
         dev_discovery_optional: "Perfil Discovery (opcional)",
         create_school_btn: "Ejecutar Inicialización",
@@ -1218,6 +1235,7 @@ const DANCE_LOCALES = {
         admin_email_later: "Después",
         admin_email_saved: "¡Correo guardado!",
         admin_email_invalid: "Ingresa un correo electrónico válido.",
+        admin_enter_school_confirm: "¿Quieres entrar a {school} para tomar clases con ellos y comprar paquetes?",
         profile_saved_success: "Perfil guardado.",
         password_mismatch: "Las contraseñas no coinciden.",
         password_too_short: "La contraseña debe tener al menos 4 caracteres.",
@@ -1234,6 +1252,8 @@ const DANCE_LOCALES = {
         discovery_logo_crop_hint: "Posiciona y haz zoom para que tu logo se vea bien en el recuadro. Así se mostrará en la página de discovery.",
         discovery_logo_crop_preview_label: "Vista previa en discovery:",
         discovery_logo_crop_apply: "Aplicar",
+        discovery_logo_crop_error: "No se pudo cargar la imagen. Prueba con otro archivo.",
+        discovery_logo_crop_canvas_error: "No se pudo crear la imagen. Inténtalo de nuevo.",
         discovery_remove_image: "Quitar",
         country_label: "País",
         city_label: "Ciudad",
@@ -1370,6 +1390,16 @@ const DANCE_LOCALES = {
         reviews_admin_delete_confirm: "¿Eliminar esta reseña?",
         reviews_admin_needs_review: "Requieren revisión",
         reviews_admin_by_school: "Por escuela",
+        calendly_title: "Calendly",
+        calendly_connected: "Conectado",
+        calendly_disconnect_btn: "Desconectar Calendly",
+        calendly_select_event_type: "Seleccionar tipo de evento para reserva privada",
+        calendly_loading: "Cargando...",
+        calendly_connect_desc: "Conecta tu cuenta de Calendly para que los alumnos puedan reservar clases privadas según tu disponibilidad.",
+        calendly_connect_btn: "Conectar Calendly",
+        calendly_disconnect_confirm: "¿Desconectar Calendly? Se eliminarán los webhooks y los alumnos ya no verán tu reserva de Calendly.",
+        calendly_need_credits: "Necesitas créditos para completar una reserva.",
+        calendly_book: "Reservar sesión",
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -1417,6 +1447,7 @@ const DANCE_LOCALES = {
         password: "Passwort",
         login_btn: "Login",
         invalid_login: "Ungültige Anmeldedaten",
+        admin_email_changed_use_new: "Die E-Mail dieses Kontos wurde geändert. Bitte melde dich mit deiner aktuellen E-Mail an.",
         remaining_classes: "Verbleibende Stunden",
         unlimited: "Unbegrenzt",
         already_account: "Hast du bereits ein Konto?",
@@ -1687,6 +1718,7 @@ const DANCE_LOCALES = {
         admin_name_label: "Admin-Name",
         admin_email_label: "E-Mail",
         admin_email_not_set: "Nicht festgelegt",
+        email_used_to_sign_in: "wird zum Anmelden verwendet",
         enter_admin_email: "Bitte gib eine E-Mail-Adresse ein.",
         dev_discovery_optional: "Discovery-Profil (optional)",
         create_school_btn: "Initialisierung ausführen",
@@ -1864,6 +1896,7 @@ const DANCE_LOCALES = {
         admin_email_later: "Später",
         admin_email_saved: "E-Mail gespeichert!",
         admin_email_invalid: "Bitte gib eine gültige E-Mail-Adresse ein.",
+        admin_enter_school_confirm: "Möchtest du {school} beitreten, um dort Kurse zu nehmen und Pakete zu kaufen?",
         profile_saved_success: "Profil gespeichert.",
         password_mismatch: "Passwörter stimmen nicht überein.",
         password_too_short: "Passwort muss mindestens 4 Zeichen haben.",
@@ -1880,6 +1913,8 @@ const DANCE_LOCALES = {
         discovery_logo_crop_hint: "Positioniere und zoome, damit dein Logo im Quadrat gut aussieht. So wird es auf der Discovery-Seite angezeigt.",
         discovery_logo_crop_preview_label: "Vorschau auf Discovery:",
         discovery_logo_crop_apply: "Anwenden",
+        discovery_logo_crop_error: "Bild konnte nicht geladen werden. Bitte andere Datei wählen.",
+        discovery_logo_crop_canvas_error: "Bild konnte nicht erstellt werden. Bitte erneut versuchen.",
         discovery_remove_image: "Entfernen",
         country_label: "Land",
         city_label: "Stadt",
@@ -2016,6 +2051,16 @@ const DANCE_LOCALES = {
         reviews_admin_delete_confirm: "Diese Bewertung löschen?",
         reviews_admin_needs_review: "Prüfung nötig",
         reviews_admin_by_school: "Nach Schule",
+        calendly_title: "Calendly",
+        calendly_connected: "Verbunden",
+        calendly_disconnect_btn: "Calendly trennen",
+        calendly_select_event_type: "Eventtyp für private Buchung wählen",
+        calendly_loading: "Laden...",
+        calendly_connect_desc: "Verbinde dein Calendly-Konto, damit Schüler private Stunden nach deiner Verfügbarkeit buchen können.",
+        calendly_connect_btn: "Calendly verbinden",
+        calendly_disconnect_confirm: "Calendly trennen? Webhooks werden entfernt und Schüler sehen deine Calendly-Buchung nicht mehr.",
+        calendly_need_credits: "Du brauchst Credits, um eine Buchung abzuschließen.",
+        calendly_book: "Sitzung buchen",
     }
 };
 setLocalesDict(DANCE_LOCALES);
@@ -5038,14 +5083,19 @@ function _renderViewImpl() {
                             <span style="font-weight: 700; font-size: 15px;">${t2.my_private_classes || 'My private classes'}</span>
                             ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ''}
                         </div>
-                        <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation();">
-                            <button type="button" class="btn-secondary" onclick="window.downloadCalendarIcs('student')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || 'Export all to your calendar'}</button>
+                        <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
+                            <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || 'Export all to your calendar'}</button>
                             <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
                         </div>
                     </div>
                     <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? '' : 'none'}; background: var(--bg);">
-                        ${myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, '&lt;')}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>`}
-                        ${myClasses.length === 0 ? `
+                        ${state.loading ? `
+                        <div class="teacher-booking-loading" style="text-align: center; padding: 1.5rem 0; color: var(--text-secondary);">
+                            <div class="spin" style="margin: 0 auto 0.75rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="28"></i></div>
+                            <div style="font-size: 14px;">${t2.loading_dashboard || 'Loading...'}</div>
+                        </div>
+                        ` : myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, '&lt;')}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>`}
+                        ${state.loading ? '' : myClasses.length === 0 ? `
                         <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 14px;">
                             <i data-lucide="inbox" size="24" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
                             <div>${t2.no_private_classes_yet || 'No accepted private classes yet'}</div>
@@ -5057,16 +5107,16 @@ function _renderViewImpl() {
                             const canCancel = isLesson && item.status === 'confirmed';
                             const hoursUntil = isLesson ? (new Date(item.start_at_utc).getTime() - Date.now()) / (60 * 60 * 1000) : 999;
                             const lateCancelWarning = canCancel && hoursUntil < 4 ? (t2.cancel_late_warning || 'Cancelling within 4 hours will use one private credit.') : '';
-                            const cancelBtn = canCancel ? (function() { const cw = lateCancelWarning ? ("if(confirm('" + lateCancelWarning.replace(/'/g, "\\'") + "')) ") : ""; return "<button type=\"button\" class=\"btn-secondary\" style=\"padding: 6px 10px; font-size: 12px; flex-shrink: 0;\" onclick=\"" + cw + "window.studentCancelPrivateLesson('" + item.id + "')\">" + (t2.cancel_btn || "Cancel") + "</button>"; })() : "";
+                            const cancelBtn = canCancel ? (function() { const cw = lateCancelWarning ? ("if(confirm('" + lateCancelWarning.replace(/'/g, "\\'") + "')) ") : ""; return "<button type=\"button\" class=\"btn-ghost\" onclick=\"" + cw + "window.studentCancelPrivateLesson('" + item.id + "')\">" + (t2.cancel_btn || "Cancel") + "</button>"; })() : "";
                             const exportOneLabel = (t2.export_to_calendar || "Export to your calendar").replace(/"/g, "&quot;");
-                            const exportOneBtn = (item.start_at_utc && item.end_at_utc) ? "<button type=\"button\" class=\"btn-secondary\" style=\"padding: 6px 10px; font-size: 12px; flex-shrink: 0;\" onclick=\"window.downloadCalendarIcsOne('" + item.id + "', 'student')\"><i data-lucide=\"calendar-plus\" size=\"12\" style=\"vertical-align: middle; margin-right: 4px;\"></i>" + exportOneLabel + "</button>" : "";
+                            const exportOneBtn = (item.start_at_utc && item.end_at_utc) ? "<button type=\"button\" class=\"btn-ghost\" onclick=\"window.downloadCalendarIcsOne('" + item.id + "', 'student')\"><i data-lucide=\"calendar-plus\" size=\"14\" style=\"vertical-align: middle; margin-right: 4px;\"></i>" + exportOneLabel + "</button>" : "";
                             return `
-                            <div class="student-private-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
-                                <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; font-size: 14px;">${dateLabel} &middot; ${(timeStr || '').replace(/</g, '&lt;')}${item.status === 'attended' ? ' &middot; <span style="color: var(--system-green); font-size: 12px;">' + (t2.checked_in || 'Checked in') + '</span>' : ''}</div>
+                            <div class="student-private-class-row">
+                                <i data-lucide="calendar" size="16" class="student-private-class-icon"></i>
+                                <div class="student-private-class-main">
+                                    <div class="student-private-class-label">${dateLabel} &middot; ${(timeStr || '').replace(/</g, '&lt;')}${item.status === 'attended' ? ' &middot; <span class="student-private-class-checked">' + (t2.checked_in || 'Checked in') + '</span>' : ''}</div>
                                 </div>
-                                <div style="display: flex; gap: 6px; flex-shrink: 0;">${exportOneBtn} ${cancelBtn}</div>
+                                <div class="student-private-class-actions">${exportOneBtn} ${cancelBtn}</div>
                             </div>`;
                         }).join('')}
                     </div>
@@ -5077,17 +5127,43 @@ function _renderViewImpl() {
                         <div class="teacher-booking-info">
                             <div class="teacher-booking-name">${(teacherName || '').replace(/</g, '&lt;')}</div>
                             <div class="teacher-booking-title">${(t2.private_teacher_title || 'Private Teacher').replace(/</g, '&lt;')}</div>
-                            <div class="teacher-booking-meta">
-                                <span class="teacher-booking-price">${priceStr} / ${t2.session_label || 'session'}</span>
-                            </div>
+                            ${(() => {
+                                const sum = state.teacherBookingReviewsSummary || {};
+                                const avg = sum.avg_rating != null ? Number(sum.avg_rating) : null;
+                                const count = sum.review_count || 0;
+                                if (avg == null && count === 0) return '';
+                                const starsHtml = typeof window.renderRatingStars === 'function' ? window.renderRatingStars(avg) : '';
+                                const reviewLabel = count === 1 ? (t2.discovery_review_singular || '1 review') : ((t2.discovery_reviews_plural || '{count} reviews').replace('{count}', count));
+                                const reviewsList = (state.teacherBookingReviews || []).slice(0, 2).filter(r => r && (r.comment || r.rating_overall));
+                                const snippetsHtml = reviewsList.length ? '<div class="teacher-booking-reviews-snippets">' + reviewsList.map(r => {
+                                    const text = r.comment ? String(r.comment).replace(/</g, '&lt;').slice(0, 120) + (r.comment.length > 120 ? '…' : '') : (typeof window.renderRatingStars === 'function' ? window.renderRatingStars(r.rating_overall || 0) : '★'.repeat(r.rating_overall || 0));
+                                    return '<p class="teacher-booking-review-snippet">' + text + '</p>';
+                                }).join('') + '</div>' : '';
+                                return '<div class="teacher-booking-reviews"><span class="teacher-booking-reviews-stars">' + starsHtml + '<span class="teacher-booking-reviews-avg">' + (avg != null ? avg.toFixed(1) : '') + '</span></span><span class="teacher-booking-reviews-count">' + reviewLabel + '</span></div>' + snippetsHtml;
+                            })()}
                         </div>
                     </div>
-                    ${!hasPackage ? `
+                    ${state.loading ? `
+                    <div class="teacher-booking-loading" style="padding: 2rem; text-align: center; color: var(--text-secondary); margin: 0 18px 18px; background: var(--system-gray6,#f2f2f7); border-radius: 16px;">
+                        <div class="spin" style="margin: 0 auto 1rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="36"></i></div>
+                        <div style="font-size: 15px; font-weight: 600;">${t2.loading_dashboard || 'Loading...'}</div>
+                    </div>
+                    ` : !hasPackage ? `
                     <div class="teacher-booking-no-package" style="padding: 1.5rem; text-align: center; background: rgba(255,149,0,0.08); border-radius: 16px; margin: 0 18px 18px; border: 1px solid rgba(255,149,0,0.2);">
                         <i data-lucide="package" size="32" style="color: var(--system-orange, #ff9500); opacity: 0.8; margin-bottom: 8px;"></i>
                         <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">${t2.need_package_to_book || 'You need a package to request private classes'}</div>
                         <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${t2.visit_shop_to_buy || 'Visit the Shop to buy one.'}</div>
                         <button type="button" class="btn-primary" onclick="state.currentView='shop'; renderView();" style="padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 700;">${t2.nav_shop || 'Shop'}</button>
+                    </div>
+                    ` : (state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url) ? `
+                    ${!hasPackage ? `
+                    <div class="teacher-booking-no-package" style="padding: 1rem 1.5rem; text-align: center; background: rgba(255,149,0,0.08); border-radius: 16px; margin: 0 18px 18px; border: 1px solid rgba(255,149,0,0.2);">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t2.calendly_need_credits || 'You need credits to complete a booking.'}</div>
+                        <button type="button" class="btn-primary" onclick="state.currentView='shop'; renderView();" style="margin-top: 8px; padding: 8px 16px; border-radius: 12px; font-size: 13px;">${t2.nav_shop || 'Shop'}</button>
+                    </div>
+                    ` : ''}
+                    <div class="calendly-embed-wrap" style="margin: 0 18px 18px; min-height: 630px; border-radius: 16px; overflow: hidden; background: var(--system-gray6,#f2f2f7);">
+                        <iframe id="calendly-inline-iframe" src="${(() => { const u = (state.teacherCalendlySelectionForBooking || {}).scheduling_url || ''; if (!u) return ''; const name = (state.currentUser && state.currentUser.name) || ''; const email = (state.currentUser && state.currentUser.email) || ''; const sep = u.indexOf('?') >= 0 ? '&' : '?'; const q = [name && ('name=' + encodeURIComponent(name)), email && ('email=' + encodeURIComponent(email))].filter(Boolean).join('&'); return q ? u + sep + q : u; })()}" style="width: 100%; height: 630px; border: none;" title="${(t2.calendly_book || 'Book a session').replace(/"/g, '&quot;')}"></iframe>
                     </div>
                     ` : `
                     ${locations.length ? `
@@ -5105,7 +5181,10 @@ function _renderViewImpl() {
                     </div>
                     <div class="teacher-booking-days" id="teacher-booking-days">
                         ${daySchedules.length === 0 ? `
-                        <div style="padding: 2rem; text-align: center; color: var(--text-muted);">${t2.loading_dashboard || 'Loading...'}</div>
+                        <div class="teacher-booking-loading" style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                            <div class="spin" style="margin: 0 auto 0.75rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="28"></i></div>
+                            <div style="font-size: 14px;">${t2.loading_dashboard || 'Loading...'}</div>
+                        </div>
                         ` : daySchedules.map(day => `
                         <div class="teacher-booking-day">
                             <div class="teacher-booking-day-label">${t2[day.dayName?.toLowerCase()] || day.dayName} ${day.date}</div>
@@ -5138,10 +5217,11 @@ function _renderViewImpl() {
             </div>
             `;
         }
-        // Trigger async load of slots only when needed (prevents infinite render/fetch loop)
+        // Trigger async load of slots only when needed and not using Calendly embed
+        const useCalendlyEmbed = !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
         const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || '');
         const hasPkg = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
-        if (state.currentSchool?.id && state.currentSchool?.profile_type === 'private_teacher' && supabaseClient && needsLoad && hasPkg) {
+        if (state.currentSchool?.id && state.currentSchool?.profile_type === 'private_teacher' && supabaseClient && needsLoad && hasPkg && !useCalendlyEmbed) {
             window.fetchTeacherBookingSlots();
         }
     }
@@ -5993,9 +6073,10 @@ function _renderViewImpl() {
                                             const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
                                             const statusLabel = s.status === 'attended' ? t.attended : s.status === 'no_show' ? (t.auto_deducted || 'No show') : s.status === 'cancelled' ? (t.cancelled || 'Cancelled') : t.registered;
                                             const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t.monthly_badge || 'Monthly') + '</span>' : '';
+                                            const displayName = (state.students || []).find(st => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || '—';
                                             return `<div class="admin-reg-student-row">
                                                 ${statusIcon}
-                                                <span style="font-size: 0.8rem; font-weight: 500;">${s.student_name}${monthlyTag}</span>
+                                                <span style="font-size: 0.8rem; font-weight: 500;">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span>
                                                 <span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>
                                             </div>`;
                                         }).join('')}
@@ -6024,7 +6105,7 @@ function _renderViewImpl() {
                                 ${(lessons.length || acceptedReqs.length) > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${lessons.length || acceptedReqs.length}</span>` : ''}
                                 <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
-                            <button type="button" class="btn-secondary" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; flex-shrink: 0;"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t.export_all_to_calendar || 'Export all to your calendar'}</button>
+                            <button type="button" class="btn-ghost" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t.export_all_to_calendar || 'Export all to your calendar'}</button>
                         </div>
                         <div id="teacher-accepted-classes-content" style="padding: 0.8rem 0; display: ${expanded ? '' : 'none'};">
                             <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
@@ -6394,7 +6475,8 @@ function _renderViewImpl() {
         const hasPrivateInPlanSub = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
         const hasEventsInPlanSub = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
         const lastAddedId = state.lastAddedSubscriptionId || '';
-        const isPT = state.currentSchool?.profile_type === 'private_teacher';
+        const settingsSchool = (state.schools && state.currentSchool?.id && state.schools.find(s => s.id === state.currentSchool.id)) || state.currentSchool;
+        const isPT = settingsSchool?.profile_type === 'private_teacher';
         const hasDualAdmin = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
         const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
         const visibleSubsAdmin = (Array.isArray(state.subscriptions) ? state.subscriptions : []).filter(s => {
@@ -6421,7 +6503,7 @@ function _renderViewImpl() {
                 <div class="ios-large-title">${t.nav_settings}</div>
             </div>
 
-            ${state.currentSchool?.profile_type === 'private_teacher' ? `
+            ${isPT ? `
             <!-- TEACHER AVAILABILITY -->
             <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.teacher_availability_title || 'Availability'}
@@ -6469,6 +6551,37 @@ function _renderViewImpl() {
                 <div class="ios-list-item" onclick="window.addTeacherAvail()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_availability || 'Add availability'}
                 </div>
+            </div>
+            <!-- CALENDLY -->
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.calendly_title || 'Calendly'}
+            </div>
+            <div class="ios-list" style="padding: 0 1.2rem 1rem;">
+                ${state.calendlyConnected ? `
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 600;">
+                            <i data-lucide="check-circle" size="18"></i> ${t.calendly_connected || 'Connected'}
+                        </div>
+                        <button type="button" class="btn-ghost" onclick="window.disconnectCalendly()" style="font-size: 13px; color: var(--text-secondary); padding: 6px 12px;">${t.calendly_disconnect_btn || 'Disconnect Calendly'}</button>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.calendly_select_event_type || 'Select event type for private booking'}</label>
+                        <select id="calendly-event-type-select" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px;">
+                            <option value="">${state.calendlyEventTypeSelection ? '' : (t.calendly_loading || 'Loading...')}</option>
+                            ${(state.calendlyEventTypesList || []).map(et => `<option value="${(et.uri || '').replace(/"/g, '&quot;')}" data-name="${(et.name || '').replace(/"/g, '&quot;')}" data-url="${(et.scheduling_url || '').replace(/"/g, '&quot;')}" ${state.calendlyEventTypeSelection && state.calendlyEventTypeSelection.calendly_event_type_uri === et.uri ? 'selected' : ''}>${(et.name || et.uri || 'Event').replace(/</g, '&lt;')}</option>`).join('')}
+                        </select>
+                        <button type="button" class="btn-secondary" onclick="window.saveCalendlyEventTypeSelection()" style="margin-top: 10px; padding: 8px 14px; font-size: 13px;">${t.save || 'Save'}</button>
+                    </div>
+                </div>
+                ` : `
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch;">
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">${t.calendly_connect_desc || 'Connect your Calendly account so students can book private classes from your live availability.'}</p>
+                    <button type="button" class="btn-primary" onclick="window.startCalendlyOAuth()" style="border-radius: 12px; padding: 12px 16px; font-weight: 600;">
+                        ${t.calendly_connect_btn || 'Connect Calendly'}
+                    </button>
+                </div>
+                `}
             </div>
             ` : `
             <div class="settings-section-header" onclick="state.settingsClassesExpanded = !state.settingsClassesExpanded; saveState(); renderView();" style="padding: 0 1.2rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
@@ -7062,7 +7175,7 @@ function _renderViewImpl() {
                             <input type="text" id="profile-display-name" value="${(state.currentAdmin.display_name || '').replace(/"/g, '&quot;')}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                         </div>
                         <div class="ios-list-item" style="padding: 12px 16px;">
-                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.admin_email_label || 'Email'}</span>
+                            <span style="font-size: 16px; font-weight: 500; opacity: 0.8;">${t.admin_email_label || 'Email'} <span style="font-weight: 400; opacity: 0.7;">(${(t('email_used_to_sign_in') || 'used to sign in').replace(/</g, '&lt;')})</span></span>
                             <input type="email" id="profile-email" value="${(state.currentAdmin.email || '').replace(/"/g, '&quot;')}" placeholder="${t.admin_email_not_set || 'Not set'}" style="text-align: right; border: none; background: transparent; width: 60%; color: var(--text-secondary); font-size: 16px; outline: none;">
                         </div>
                         <div class="ios-list-item" style="padding: 12px 16px;">
@@ -8125,6 +8238,16 @@ window.loginStudent = async () => {
                 if (enrollRows && Array.isArray(enrollRows) && enrollRows.length > 0) {
                     student = enrollRows[0];
                 } else {
+                    const { data: adminRows } = await supabaseClient.from('admins').select('id').eq('user_id', uid).limit(1);
+                    const isAdminOfAnySchool = adminRows && adminRows.length > 0;
+                    if (isAdminOfAnySchool) {
+                        const schoolName = (state.currentSchool?.name || t('this_school') || 'this school').replace(/</g, '&lt;');
+                        const msg = (t('admin_enter_school_confirm') || 'Do you want to enter {school} to take classes with them and buy packages?').replace('{school}', schoolName);
+                        if (!confirm(msg)) {
+                            await supabaseClient.auth.signOut();
+                            return;
+                        }
+                    }
                     const { data: enrolled, error: enrollErr } = await supabaseClient.rpc('auto_enroll_student', {
                         p_user_id: uid,
                         p_school_id: state.currentSchool.id
@@ -8204,7 +8327,7 @@ window.loginAdminWithCreds = async () => {
                     .select('*')
                     .eq('user_id', authData.user.id)
                     .eq('school_id', schoolId)
-                    .single();
+                    .maybeSingle();
                 if (!errUser && rowByUser) adminRow = rowByUser;
                 if (!adminRow) {
                     const { data: rowByEmail, error: errEmail } = await supabaseClient
@@ -8212,12 +8335,24 @@ window.loginAdminWithCreds = async () => {
                         .select('*')
                         .eq('school_id', schoolId)
                         .ilike('email', email)
-                        .single();
+                        .maybeSingle();
                     if (!errEmail && rowByEmail) adminRow = rowByEmail;
                 }
                 if (adminRow && !adminRow.user_id) {
                     await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
                     adminRow = { ...adminRow, user_id: authData.user.id };
+                }
+                // Require sign-in with current email: if admin changed email in profile, Auth may still have old email
+                if (adminRow && adminRow.email && !adminRow.email.endsWith('@temp.bailadmin.local') && !adminRow.email.endsWith('@admins.bailadmin.local')) {
+                    const sessionEmail = (authData.user.email || '').toLowerCase().trim();
+                    const dbEmail = (adminRow.email || '').toLowerCase().trim();
+                    if (sessionEmail !== dbEmail) {
+                        await supabaseClient.auth.signOut();
+                        const currentEmail = adminRow.email;
+                        adminRow = null;
+                        const msg = (typeof window.t === 'function' ? window.t('admin_email_changed_use_new') : null) || "This account's email was updated. Please sign in with your current email.";
+                        alert(currentEmail ? msg + " " + currentEmail : msg);
+                    }
                 }
             } else {
                 // 2) Auth failed: check if admin exists in DB with email+password (Auth user may not exist yet)
@@ -8265,7 +8400,21 @@ window.loginAdminWithCreds = async () => {
             role: "admin"
         };
         state.isAdmin = true;
-        state.currentView = state._discoveryOnlyEdit ? 'discovery-profile-only' : 'admin-students';
+        const cameFromDiscovery = !!state._discoveryOnlyEdit;
+        if (state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
+            const { data: schoolRow } = await supabaseClient.from('schools').select('active').eq('id', state.currentSchool.id).maybeSingle();
+            if (schoolRow && schoolRow.active !== false) {
+                state._discoveryOnlyEdit = false;
+            }
+        }
+        if (state._discoveryOnlyEdit) {
+            state.currentView = 'discovery-profile-only';
+        } else if (cameFromDiscovery) {
+            state.currentView = 'admin-settings';
+            state.settingsDiscoveryExpanded = true;
+        } else {
+            state.currentView = 'admin-students';
+        }
         setSessionIdentity();
         saveState();
         renderView();
@@ -8972,6 +9121,127 @@ window.deleteTeacherAvail = async (id) => {
         if (error) throw error;
         await fetchAllData();
     } catch (e) { alert('Error deleting availability: ' + (e.message || e)); }
+};
+
+// Calendly: OAuth start, list event types, save selection
+window.startCalendlyOAuth = async () => {
+    const baseUrl = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '');
+    await supabaseClient?.auth.refreshSession();
+    const session = (await supabaseClient?.auth.getSession())?.data?.session;
+    if (!session?.access_token || !state.currentSchool?.id) {
+        alert('Please sign in and select your school.');
+        return;
+    }
+    try {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:startCalendlyOAuth',message:'before fetch',data:{hasToken:!!session?.access_token,tokenLen:session?.access_token?.length??0,schoolId:state.currentSchool?.id},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        const res = await fetch(baseUrl + '/functions/v1/calendly-oauth-start?school_id=' + encodeURIComponent(state.currentSchool.id), {
+            headers: { Authorization: 'Bearer ' + session.access_token }
+        });
+        const responseText = await res.text();
+        let data;
+        try {
+            data = responseText ? JSON.parse(responseText) : {};
+        } catch (_) {
+            data = {};
+        }
+        // #region agent log
+        if (!res.ok) fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:startCalendlyOAuth',message:'response not ok',data:{status:res.status,dataError:data?.error,bodyPreview:(responseText||'').slice(0,300)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
+        if (!res.ok) {
+            const msg = data.error || (responseText && responseText.length < 200 ? responseText : 'HTTP ' + res.status + (res.status === 404 ? ' – Is calendly-oauth-start deployed?' : ''));
+            alert(msg);
+            return;
+        }
+        if (data.auth_url) {
+            window.location.href = data.auth_url;
+        } else {
+            alert('No auth URL returned');
+        }
+    } catch (e) {
+        alert('Error: ' + (e.message || e));
+    }
+};
+
+window.loadCalendlyEventTypes = async () => {
+    const baseUrl = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '');
+    const session = (await supabaseClient?.auth.getSession())?.data?.session;
+    if (!session?.access_token || !state.currentSchool?.id) return;
+    try {
+        const res = await fetch(baseUrl + '/functions/v1/calendly-list-event-types?school_id=' + encodeURIComponent(state.currentSchool.id), {
+            headers: { Authorization: 'Bearer ' + session.access_token }
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            state.calendlyEventTypesList = [];
+            if (state.currentView === 'admin-settings') renderView();
+            return;
+        }
+        state.calendlyEventTypesList = data.event_types || [];
+        if (state.currentView === 'admin-settings') renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        state.calendlyEventTypesList = [];
+        if (state.currentView === 'admin-settings') renderView();
+    }
+};
+
+window.saveCalendlyEventTypeSelection = async () => {
+    const sel = document.getElementById('calendly-event-type-select');
+    if (!sel || !supabaseClient || !state.currentSchool?.id) return;
+    const uri = sel.value;
+    const name = sel.options[sel.selectedIndex]?.getAttribute('data-name') || '';
+    const url = sel.options[sel.selectedIndex]?.getAttribute('data-url') || '';
+    if (!uri) {
+        alert('Please select an event type.');
+        return;
+    }
+    try {
+        const { error } = await supabaseClient.rpc('upsert_calendly_event_type_selection', {
+            p_school_id: state.currentSchool.id,
+            p_calendly_event_type_uri: uri,
+            p_calendly_event_type_name: name || null,
+            p_scheduling_url: url || null
+        });
+        if (error) throw error;
+        state.calendlyEventTypeSelection = { calendly_event_type_uri: uri, calendly_event_type_name: name, scheduling_url: url };
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        alert('Error saving: ' + (e.message || e));
+    }
+};
+
+window.disconnectCalendly = async () => {
+    const baseUrl = (typeof SUPABASE_URL === 'string' ? SUPABASE_URL : (window.SUPABASE_URL || '')).replace(/\/$/, '');
+    const session = (await supabaseClient?.auth.getSession())?.data?.session;
+    if (!session?.access_token || !state.currentSchool?.id) {
+        alert('Please sign in and select your school.');
+        return;
+    }
+    const t = DANCE_LOCALES[state.language || 'en'];
+    if (!confirm(t.calendly_disconnect_confirm || 'Disconnect Calendly? Webhooks will be removed and students will no longer see your Calendly booking.')) return;
+    try {
+        const res = await fetch(baseUrl + '/functions/v1/calendly-disconnect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+            body: JSON.stringify({ school_id: state.currentSchool.id })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || 'Failed to disconnect');
+            return;
+        }
+        state.calendlyConnected = false;
+        state.calendlyEventTypeSelection = null;
+        state.calendlyEventTypesList = [];
+        await fetchAllData();
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        alert('Error: ' + (e.message || e));
+    }
 };
 
 // Teacher Booking: load week slots, navigate, select, confirm
@@ -9845,13 +10115,8 @@ window.uploadDiscoveryImage = async (kind, fileOverride) => {
     const file = fileOverride != null ? fileOverride : fileInput?.files?.[0];
     if (!file || !supabaseClient || !state.currentSchool?.id) return;
     const urlEl = document.getElementById(urlId);
-    const hasExisting = (urlEl?.value || '').trim().length > 0;
     if (kind === 'logo') {
-        state._discoveryReplacePending = hasExisting ? { file, kind } : null;
-        if (hasExisting) {
-            window.showDiscoveryReplaceModal();
-            return;
-        }
+        // Always open crop; Apply will upload and replace any existing logo
         window.showDiscoveryLogoCropModal(file, async (croppedBlob) => {
             const f = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
             await window.doUploadDiscoveryImage(f, kind);
@@ -9859,11 +10124,7 @@ window.uploadDiscoveryImage = async (kind, fileOverride) => {
         });
         return;
     }
-    if (hasExisting) {
-        state._discoveryReplacePending = { file, kind };
-        window.showDiscoveryReplaceModal();
-        return;
-    }
+    // Teacher photo: upload directly (replaces any existing)
     await window.doUploadDiscoveryImage(file, kind);
     if (fileInput) fileInput.value = '';
 };
@@ -9889,6 +10150,7 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
             <h2 style="margin:0;font-size:18px;font-weight:700;color:var(--text-primary,#111);">${(title || 'Crop logo').replace(/</g, '&lt;')}</h2>
             <p style="margin:0;font-size:14px;color:var(--text-secondary,#666);line-height:1.45;">${(hint || '').replace(/</g, '&lt;')}</p>
             <div id="discovery-logo-crop-container" style="width:100%;height:260px;overflow:hidden;border-radius:12px;background:var(--system-gray6,#eee);position:relative;">
+                <span id="discovery-logo-crop-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-secondary,#666);font-size:14px;pointer-events:none;"></span>
                 <img id="discovery-logo-crop-img" src="" alt="Logo" style="display:block;max-width:100%;max-height:100%;">
             </div>
             <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
@@ -9899,13 +10161,18 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
             </div>
             <div style="display:flex;gap:12px;justify-content:flex-end;flex-shrink:0;">
                 <button type="button" class="discovery-crop-cancel" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:transparent;color:var(--text-secondary);border:1px solid var(--border);cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s;">${(cancelLabel || 'Cancel').replace(/</g, '&lt;')}</button>
-                <button type="button" class="discovery-crop-apply" style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--text-primary,#111);color:var(--bg-body,#fff);border:none;cursor:pointer;">${(applyLabel || 'Apply').replace(/</g, '&lt;')}</button>
+                <button type="button" class="discovery-crop-apply" disabled style="padding:10px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--text-primary,#111);color:var(--bg-body,#fff);border:none;cursor:pointer;opacity:0.6;cursor:not-allowed;">${(applyLabel || 'Apply').replace(/</g, '&lt;')}</button>
             </div>
         </div>`;
 
     const imgEl = overlay.querySelector('#discovery-logo-crop-img');
     const previewEl = overlay.querySelector('#discovery-logo-crop-preview');
+    const statusEl = overlay.querySelector('#discovery-logo-crop-status');
+    const applyBtn = overlay.querySelector('.discovery-crop-apply');
     const blobUrl = URL.createObjectURL(file);
+
+    const loadingText = (window.t && window.t('loading')) || 'Loading…';
+    const errorText = (window.t && window.t('discovery_logo_crop_error')) || 'Could not load image. Try another file.';
 
     let cropper = null;
     const destroy = () => {
@@ -9914,8 +10181,19 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
         overlay.remove();
     };
 
-    // Show full image in preview until cropper provides cropped data URL (avoids broken image)
-    if (previewEl) previewEl.src = blobUrl;
+    const setApplyEnabled = (enabled) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:setApplyEnabled',message:'setApplyEnabled',data:{enabled,applyBtnExists:!!applyBtn,applyBtnDisabled:applyBtn?.disabled},timestamp:Date.now(),hypothesisId:'H2,H5'})}).catch(()=>{});
+        // #endregion
+        if (!applyBtn) return;
+        applyBtn.disabled = !enabled;
+        applyBtn.style.opacity = enabled ? '1' : '0.6';
+        applyBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+    };
+
+    if (statusEl) statusEl.textContent = loadingText;
+    // Show full image in preview once loaded; until then preview stays empty to avoid broken icon
+    const setPreviewFromBlob = () => { if (previewEl) previewEl.src = blobUrl; };
 
     const updatePreview = () => {
         if (!cropper || !previewEl) return;
@@ -9928,8 +10206,23 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
         } catch (e) { /* keep current preview (blobUrl or previous crop) */ }
     };
 
+    imgEl.onerror = () => {
+        if (statusEl) statusEl.textContent = errorText;
+        if (previewEl) previewEl.removeAttribute('src');
+        setApplyEnabled(false);
+    };
+
     imgEl.onload = () => {
-        if (typeof Cropper === 'undefined') { alert('Cropper library not loaded'); destroy(); return; }
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:cropModal img.onload',message:'image onload',data:{cropperDefined:typeof Cropper!=='undefined',naturalWidth:imgEl.naturalWidth,naturalHeight:imgEl.naturalHeight},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
+        if (statusEl) statusEl.textContent = '';
+        setPreviewFromBlob();
+        if (typeof Cropper === 'undefined') {
+            alert('Cropper library not loaded');
+            destroy();
+            return;
+        }
         cropper = new Cropper(imgEl, {
             aspectRatio: 1,
             viewMode: 2,
@@ -9942,21 +10235,37 @@ window.showDiscoveryLogoCropModal = (file, onApply) => {
             cropBoxMovable: true,
             cropBoxResizable: true,
             toggleDragModeOnDblclick: false,
+            ready: function() {
+                fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:cropper ready',message:'cropper ready (options)',data:{applyBtnExists:!!applyBtn},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+                setTimeout(updatePreview, 50);
+                setApplyEnabled(true);
+            },
+            crop: updatePreview,
+            cropmove: updatePreview,
+            cropend: updatePreview,
         });
-        cropper.on('crop', updatePreview);
-        cropper.on('cropmove', updatePreview);
-        cropper.on('cropend', updatePreview);
-        cropper.on('ready', () => { setTimeout(updatePreview, 50); });
+        setTimeout(() => {
+            const fallbackApply = cropper && applyBtn && applyBtn.disabled;
+            fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:cropModal 600ms fallback',message:'600ms fallback',data:{fallbackApply,cropperExists:!!cropper,applyBtnExists:!!applyBtn,applyBtnDisabled:applyBtn?.disabled},timestamp:Date.now(),hypothesisId:'H2,H5'})}).catch(()=>{});
+            if (fallbackApply) setApplyEnabled(true);
+        }, 600);
     };
 
     overlay.querySelector('.discovery-crop-cancel').addEventListener('click', () => { destroy(); });
-    overlay.querySelector('.discovery-crop-apply').addEventListener('click', async () => {
-        if (!cropper) { destroy(); return; }
+    overlay.querySelector('.discovery-crop-apply').addEventListener('click', () => {
+        if (!cropper) return;
         const canvas = cropper.getCroppedCanvas({ width: 600, height: 600 });
-        if (!canvas) { destroy(); return; }
+        if (!canvas) {
+            alert((window.t && window.t('discovery_logo_crop_canvas_error')) || 'Could not create crop. Try again.');
+            return;
+        }
         canvas.toBlob((blob) => {
+            if (!blob) {
+                alert((window.t && window.t('discovery_logo_crop_canvas_error')) || 'Could not create image. Try again.');
+                return;
+            }
+            if (onApply) onApply(blob);
             destroy();
-            if (blob && onApply) onApply(blob);
         }, 'image/jpeg', 0.92);
     });
     overlay.addEventListener('click', (e) => { if (e.target === overlay) destroy(); });
@@ -10024,14 +10333,17 @@ window.doUploadDiscoveryImage = async (file, kind) => {
     const path = `${state.currentSchool.id}/${kind}.${ext}`;
     const { error } = await supabaseClient.storage.from('school-discovery').upload(path, file, { upsert: true });
     if (error) { alert(error.message || 'Upload failed'); return; }
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/school-discovery/${path}`;
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/school-discovery/${path}?t=${Date.now()}`;
     const urlEl = document.getElementById(urlId);
     if (urlEl) { urlEl.value = publicUrl; window.updateDiscoveryPreview(); }
 };
 
 window.clearDiscoveryImage = (kind) => {
+    // #region agent log
     const urlId = kind === 'logo' ? 'discovery-logo-url' : 'discovery-teacher-url';
     const urlEl = document.getElementById(urlId);
+    fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:clearDiscoveryImage',message:'clearDiscoveryImage',data:{kind,urlElExists:!!urlEl,urlValueBefore:urlEl?.value?.substring(0,50),stateLogoBefore:(state.currentSchool?.logo_url||'').substring(0,50)},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     if (urlEl) urlEl.value = '';
     if (state.currentSchool) {
         if (kind === 'logo') state.currentSchool.logo_url = '';
@@ -10237,14 +10549,17 @@ window.saveDiscoveryProfile = async (ev) => {
         if (existingDetail && typeof existingDetail === 'object' && existingDetail.id) {
             existing = { ...existing, ...existingDetail };
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:saveDiscoveryProfile',message:'save logo values',data:{logoUrlFromInput:logoUrl?.substring(0,50),existingLogoUrl:(existing.logo_url||'').substring(0,50)},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
         const slugToSave = slug || existing.discovery_slug || null;
         const countryToSave = country || existing.country || null;
         const cityToSave = city || existing.city || null;
         const descriptionToSave = description || existing.discovery_description || null;
         const genresToSave = genres.length ? genres : (Array.isArray(existing.discovery_genres) ? existing.discovery_genres : []);
         const levelsToSave = levels.length ? levels : (Array.isArray(existing.discovery_levels) ? existing.discovery_levels : []);
-        const logoUrlToSave = logoUrl || existing.logo_url || null;
-        const teacherPhotoUrlToSave = teacherPhotoUrl || existing.teacher_photo_url || null;
+        const logoUrlToSave = (logoUrl && logoUrl.trim()) ? logoUrl.trim() : null;
+        const teacherPhotoUrlToSave = (teacherPhotoUrl && teacherPhotoUrl.trim()) ? teacherPhotoUrl.trim() : null;
         const locationsFinal = locationsToSave.length ? locationsToSave : (Array.isArray(existing.discovery_locations) ? existing.discovery_locations : []);
 
         const { error } = await supabaseClient.rpc('school_update_discovery', {
@@ -10263,6 +10578,12 @@ window.saveDiscoveryProfile = async (ev) => {
         });
         if (error) { alert(error.message || 'Failed to save discovery profile'); return; }
         state.currentSchool = { ...state.currentSchool, discovery_slug: slugToSave, country: countryToSave, city: cityToSave, address: existing.address || null, discovery_description: descriptionToSave, discovery_genres: genresToSave, discovery_levels: levelsToSave, logo_url: logoUrlToSave, teacher_photo_url: teacherPhotoUrlToSave, discovery_locations: locationsFinal };
+        const { data: savedDetail } = await supabaseClient.rpc('discovery_school_detail_by_id', { p_school_id: schoolId });
+        if (savedDetail && typeof savedDetail === 'object' && savedDetail.id) {
+            state.currentSchool = { ...state.currentSchool, ...savedDetail };
+            state._discoveryLocationsSchoolId = null;
+            state.discoveryLocations = Array.isArray(savedDetail.discovery_locations) ? savedDetail.discovery_locations.map(l => ({ name: l.name || '', address: l.address || '', description: l.description || '', image_urls: Array.isArray(l.image_urls) ? [...l.image_urls] : [] })) : [];
+        }
         if (state.platformData && state.platformData.schools) {
             const idx = state.platformData.schools.findIndex(s => s.id === state.currentSchool.id);
             if (idx >= 0) state.platformData.schools[idx] = { ...state.platformData.schools[idx], ...state.currentSchool };
@@ -10430,8 +10751,13 @@ window.saveAdminProfile = async () => {
             if (emailError) throw emailError;
             adm.email = newEmail;
             try {
-                const res = await supabaseClient.functions.invoke('admin-update-email', { body: { email: newEmail } });
-                if (res.error) throw res.error;
+                const { error: authErr } = await supabaseClient.auth.updateUser({ email: newEmail });
+                if (authErr) {
+                    try {
+                        const res = await supabaseClient.functions.invoke('admin-update-email', { body: { email: newEmail } });
+                        if (!res.error) await supabaseClient.auth.refreshSession();
+                    } catch (_) {}
+                }
                 await supabaseClient.auth.refreshSession();
             } catch (authUpdateErr) {
                 console.warn('Auth email update failed (DB updated):', authUpdateErr?.message || authUpdateErr);

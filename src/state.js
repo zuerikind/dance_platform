@@ -88,7 +88,11 @@ export let state = {
     auth: { session: null, user: null, profile: null, loading: false, error: null },
     afterLogin: null,
     afterVerify: null,
-    reviewDraft: null
+    reviewDraft: null,
+    calendlyConnected: false,
+    calendlyEventTypeSelection: null,
+    calendlyEventTypesList: [],
+    teacherCalendlySelectionForBooking: null
 };
 
 const SESSION_IDENTITY_KEY = 'dance_session_identity';

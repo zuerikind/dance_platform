@@ -187,11 +187,32 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         updateI18n();
         document.body.setAttribute('data-theme', state.theme);
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
+        if (state.isAdmin && state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
+            try {
+                const { data } = await supabaseClient.from('schools').select('active').eq('id', state.currentSchool.id).maybeSingle();
+                if (data && data.active !== false) {
+                    state._discoveryOnlyEdit = false;
+                    state.currentView = 'admin-students';
+                    saveState();
+                }
+            } catch (_) {}
+        }
         window.renderView();
         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
         const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
-        const sessRes = supabaseClient ? await supabaseClient.auth.getSession() : { data: { session: null } };
+        let sessRes = { data: { session: null } };
+        try {
+            sessRes = supabaseClient ? await supabaseClient.auth.getSession() : sessRes;
+            if (sessRes?.error && supabaseClient && /refresh|invalid.*token|token.*not found/i.test(sessRes.error.message || '')) {
+                await supabaseClient.auth.signOut();
+                sessRes = { data: { session: null } };
+            }
+        } catch (e) {
+            if (supabaseClient && e?.message && /refresh|invalid.*token|token.*not found/i.test(String(e.message))) {
+                await supabaseClient.auth.signOut().catch(() => {});
+            }
+        }
         const hasSupabaseSession = !!sessRes?.data?.session?.user;
         if (hasSupabaseSession && supabaseClient) await bootstrapAuth(supabaseClient);
         if (hasAuthState && !hasSupabaseSession) {
@@ -207,7 +228,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             state.currentUser = { id: user.id, email: user.email ?? user.user_metadata?.email ?? '', role: 'student', school_id: null };
             state.isAdmin = false;
             state.isPlatformDev = false;
-            state._discoveryOnlyEdit = true;
+            const path = (typeof window !== 'undefined' && window.location?.pathname) ? window.location.pathname : '';
+            const hash = (typeof window !== 'undefined' && window.location?.hash) ? window.location.hash : '';
+            state._discoveryOnlyEdit = (path.includes('discovery') || hash.includes('discovery'));
             setSessionIdentity();
             if (typeof window.fetchUserProfile === 'function') await window.fetchUserProfile();
             saveState();
@@ -260,6 +283,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
         window.renderView();
         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
 
         window.addEventListener('popstate', () => {
             const path = (window.location.pathname || '').replace(/\/$/, '') || '/';
@@ -276,7 +300,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         window.addEventListener('hashchange', () => {
             if (parseHashRoute()) {
                 saveState();
+                if (state.currentView === 'admin-settings' && (window.location.hash || '').includes('calendly=connected') && typeof window.fetchAllData === 'function') window.fetchAllData();
                 window.renderView();
+                if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
                 if (state.currentView === 'admin-competition-jack-and-jill' && state.competitionTab === 'registrations' && state.competitionId && supabaseClient) {
                     state.currentCompetition = (state.competitions || []).find(c => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;
                     window.fetchCompetitionRegistrations(state.competitionId);

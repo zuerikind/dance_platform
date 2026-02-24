@@ -263,6 +263,14 @@ export async function fetchAllData() {
                     const { data: blockedData } = await supabaseClient.rpc('get_teacher_blocked_times', { p_school_id: sid, p_start_utc: fromUtc, p_end_utc: toUtc });
                     state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
                 } catch (_) { state.teacherBlockedTimes = []; }
+                try {
+                    const { data: connData } = await supabaseClient.from('calendly_connections').select('id').eq('school_id', sid).maybeSingle();
+                    state.calendlyConnected = !!(connData && connData.id);
+                } catch (_) { state.calendlyConnected = false; }
+                try {
+                    const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
+                    state.calendlyEventTypeSelection = selData && typeof selData === 'object' ? selData : null;
+                } catch (_) { state.calendlyEventTypeSelection = null; }
             }
         } else {
             state.teacherAvailability = [];
@@ -270,6 +278,8 @@ export async function fetchAllData() {
             state.privateLessons = [];
             state.teacherAvailabilitySettings = null;
             state.teacherBlockedTimes = [];
+            state.calendlyConnected = false;
+            state.calendlyEventTypeSelection = null;
         }
         if (isStudent && state.currentSchool?.profile_type === 'private_teacher' && state.currentUser?.id && supabaseClient && sid) {
             try {
@@ -282,9 +292,28 @@ export async function fetchAllData() {
                 const { data: studentLessons } = await supabaseClient.rpc('get_student_private_lessons', { p_student_id: String(state.currentUser.id), p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
                 state.studentPrivateLessons = Array.isArray(studentLessons) ? studentLessons : [];
             } catch (_) { state.studentPrivateLessons = []; }
+            try {
+                const [summaryRes, reviewsRes] = await Promise.all([
+                    supabaseClient.rpc('get_reviews_summary', { p_target_type: 'school', p_target_id: sid }),
+                    supabaseClient.rpc('get_reviews_public', { p_target_type: 'school', p_target_id: sid, p_limit: 3, p_offset: 0 })
+                ]);
+                const sumRow = summaryRes?.data && Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes?.data;
+                state.teacherBookingReviewsSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : null;
+                state.teacherBookingReviews = Array.isArray(reviewsRes?.data) ? reviewsRes.data : [];
+            } catch (_) {
+                state.teacherBookingReviewsSummary = null;
+                state.teacherBookingReviews = [];
+            }
+            try {
+                const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
+                state.teacherCalendlySelectionForBooking = selData && typeof selData === 'object' ? selData : null;
+            } catch (_) { state.teacherCalendlySelectionForBooking = null; }
         } else {
             state.studentPrivateClassRequests = [];
             state.studentPrivateLessons = [];
+            state.teacherBookingReviewsSummary = null;
+            state.teacherBookingReviews = [];
+            state.teacherCalendlySelectionForBooking = null;
         }
         if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
             state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };

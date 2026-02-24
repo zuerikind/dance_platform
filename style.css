@@ -5194,6 +5194,19 @@ body:not(.landing-page) .sticky-footer-inner {
 .pcr-btn-decline:hover { background: rgba(255,59,48,0.25); }
 
 /* Teacher Booking (Student View) - Scheduling Card */
+.teacher-booking-container {
+  max-width: 100%;
+  box-sizing: border-box;
+  padding-left: max(1.2rem, env(safe-area-inset-left));
+  padding-right: max(1.2rem, env(safe-area-inset-right));
+}
+@media (min-width: 600px) {
+  .teacher-booking-container {
+    max-width: min(560px, calc(100vw - 2rem));
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 .teacher-booking-card {
   background: var(--bg-card);
   border-radius: 20px;
@@ -5234,6 +5247,130 @@ body:not(.landing-page) .sticky-footer-inner {
   align-items: center;
   gap: 10px;
   margin-top: 6px;
+}
+.teacher-booking-reviews {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.teacher-booking-reviews-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.teacher-booking-reviews-avg {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.teacher-booking-reviews-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.teacher-booking-reviews-snippets {
+  margin-top: 10px;
+  width: 100%;
+}
+.teacher-booking-review-snippet {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0 0 6px 0;
+  padding: 0;
+}
+.teacher-booking-review-snippet:last-child {
+  margin-bottom: 0;
+}
+
+/* Student private classes – responsive row + Apple-style buttons */
+.student-private-classes-expandable .expandable-section-header {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.student-private-classes-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.student-private-class-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--system-gray6);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.student-private-class-icon {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.student-private-class-main {
+  flex: 1;
+  min-width: 0;
+}
+.student-private-class-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+.student-private-class-checked {
+  color: var(--system-green);
+  font-size: 12px;
+}
+.student-private-class-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.btn-ghost:hover {
+  background: var(--primary-soft);
+  border-color: var(--text-muted);
+}
+.btn-ghost:active {
+  transform: scale(0.98);
+}
+.dark-mode .btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.dark-mode .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+@media (max-width: 480px) {
+  .student-private-class-row {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .student-private-class-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .student-private-classes-header-actions .btn-ghost {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 .teacher-booking-price {
   font-size: 15px;
