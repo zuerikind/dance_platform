@@ -250,7 +250,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
         if (window.location.hash) parseHashRoute();
         if (state.currentView === 'admin-settings' && hash.includes('calendly=connected') && typeof window.fetchAllData === 'function') {
-            window.fetchAllData();
+            window.fetchAllData().then(() => {
+                window.renderView();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+            });
         }
         if (saved.currentView && saved.currentView.startsWith('admin-competition') && !window.location.hash) {
             state.competitionId = saved.competitionId || null;
@@ -312,9 +316,15 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         window.addEventListener('hashchange', () => {
             if (parseHashRoute()) {
                 saveState();
-                if (state.currentView === 'admin-settings' && (window.location.hash || '').includes('calendly=connected') && typeof window.fetchAllData === 'function') window.fetchAllData();
-                window.renderView();
-                if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+                if (state.currentView === 'admin-settings' && (window.location.hash || '').includes('calendly=connected') && typeof window.fetchAllData === 'function') {
+                    window.fetchAllData().then(() => {
+                        window.renderView();
+                        if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+                    });
+                } else {
+                    window.renderView();
+                    if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+                }
                 if (state.currentView === 'admin-competition-jack-and-jill' && state.competitionTab === 'registrations' && state.competitionId && supabaseClient) {
                     state.currentCompetition = (state.competitions || []).find(c => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;
                     window.fetchCompetitionRegistrations(state.competitionId);
