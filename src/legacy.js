@@ -5105,32 +5105,13 @@ function _renderViewImpl() {
             const studentClassesView = state.studentPrivateClassesView || 'list';
             const forCalendarStudent = myClasses.map(item => ({ ...item, requested_date: item.start_at_utc ? new Date(item.start_at_utc).toISOString().slice(0, 10) : item.requested_date, requested_time: item.start_at_utc ? new Date(item.start_at_utc).toTimeString().slice(0, 5) : (item.requested_time || '') }));
             const policyText = t2.private_lesson_cancellation_policy || 'If you cancel less than 4 hours before the class, one private credit will be deducted. If you don\'t attend and the teacher doesn\'t check you in, you will also lose one credit.';
-            html += `
-            <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
-                <div class="student-private-classes-expandable ${myClassesExpanded ? 'expanded' : ''}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
-                    <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
-                            <span style="font-weight: 700; font-size: 15px;">${t2.my_private_classes || 'My private classes'}</span>
-                            ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ''}
-                        </div>
-                        <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
-                            <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || 'Export all to your calendar'}</button>
-                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
-                        </div>
-                    </div>
-                    <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? '' : 'none'}; background: var(--bg);">
-                        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                            <button type="button" class="calendly-mode-btn ${studentClassesView === 'list' ? 'calendly-mode-btn-selected' : ''}" onclick="state.studentPrivateClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t2.list_view || 'List'}</button>
-                            <button type="button" class="calendly-mode-btn ${studentClassesView === 'calendar' ? 'calendly-mode-btn-selected' : ''}" onclick="state.studentPrivateClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t2.calendar_view || 'Calendar'}</button>
-                        </div>
-                        ${studentClassesView === 'list' ? (state.loading ? `
+            const studentListPart = (state.loading ? `
                         <div class="teacher-booking-loading" style="text-align: center; padding: 1.5rem 0; color: var(--text-secondary);">
                             <div class="spin" style="margin: 0 auto 0.75rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="28"></i></div>
                             <div style="font-size: 14px;">${t2.loading_dashboard || 'Loading...'}</div>
                         </div>
-                        ` : myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, '&lt;')}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>`}
-                        ${state.loading ? '' : myClasses.length === 0 ? `
+                        ` : myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, '&lt;')}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>`);
+            const studentListRest = (state.loading ? '' : myClasses.length === 0 ? `
                         <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 14px;">
                             <i data-lucide="inbox" size="24" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
                             <div>${t2.no_private_classes_yet || 'No accepted private classes yet'}</div>
@@ -5153,7 +5134,28 @@ function _renderViewImpl() {
                                 </div>
                                 <div class="student-private-class-actions">${exportOneBtn} ${cancelBtn}</div>
                             </div>`;
-                        }).join('')) : (() => {
+                        }).join(''));
+            const studentListHtml = studentListPart + studentListRest;
+            html += `
+            <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
+                <div class="student-private-classes-expandable ${myClassesExpanded ? 'expanded' : ''}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
+                    <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
+                            <span style="font-weight: 700; font-size: 15px;">${t2.my_private_classes || 'My private classes'}</span>
+                            ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ''}
+                        </div>
+                        <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
+                            <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || 'Export all to your calendar'}</button>
+                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? '' : 'none'}; background: var(--bg);">
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                            <button type="button" class="calendly-mode-btn ${studentClassesView === 'list' ? 'calendly-mode-btn-selected' : ''}" onclick="state.studentPrivateClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t2.list_view || 'List'}</button>
+                            <button type="button" class="calendly-mode-btn ${studentClassesView === 'calendar' ? 'calendly-mode-btn-selected' : ''}" onclick="state.studentPrivateClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t2.calendar_view || 'Calendar'}</button>
+                        </div>
+                        ${studentClassesView === 'list' ? studentListHtml : (() => {
                             const calDateStr = state.studentPrivateCalendarDate || (new Date().toISOString().slice(0, 7) + '-01');
                             const calDate = new Date(calDateStr + 'T12:00:00');
                             const prevMonth = (() => { const x = new Date(calDate); x.setMonth(x.getMonth() - 1); return x.toISOString().slice(0, 7) + '-01'; })();
