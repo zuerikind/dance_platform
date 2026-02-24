@@ -314,12 +314,17 @@ export async function fetchAllData() {
                 const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
                 state.teacherCalendlySelectionForBooking = selData && typeof selData === 'object' ? selData : null;
             } catch (_) { state.teacherCalendlySelectionForBooking = null; }
+            try {
+                const { data: settingsData } = await supabaseClient.rpc('get_teacher_availability_settings', { p_school_id: sid });
+                state.teacherAvailabilitySettings = settingsData && typeof settingsData === 'object' ? settingsData : null;
+            } catch (_) { state.teacherAvailabilitySettings = null; }
         } else {
             state.studentPrivateClassRequests = [];
             state.studentPrivateLessons = [];
             state.teacherBookingReviewsSummary = null;
             state.teacherBookingReviews = [];
             state.teacherCalendlySelectionForBooking = null;
+            if (!state.isAdmin) state.teacherAvailabilitySettings = null;
         }
         if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
             state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };

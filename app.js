@@ -11734,6 +11734,17 @@ School: ${schoolName}`)) return;
     const t2 = new Proxy(window.t, {
       get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
     });
+    const actions = document.querySelector("#payment-modal-content .payment-modal-actions");
+    const transferBtn = actions?.querySelectorAll("button.payment-modal-btn")[0];
+    const cashBtn = actions?.querySelectorAll("button.payment-modal-btn")[1];
+    const loadingLabel = t2("resend_sending") || t2("loading") || "Sending…";
+    if (transferBtn && cashBtn) {
+      transferBtn.disabled = true;
+      cashBtn.disabled = true;
+      const clickedBtn = method === "transfer" ? transferBtn : cashBtn;
+      clickedBtn.innerHTML = `<span class="payment-modal-btn-loading" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><i data-lucide="loader-2" size="20" class="spin"></i> ${loadingLabel}</span>`;
+      if (window.lucide) lucide.createIcons();
+    }
     if (supabaseClient) {
       const { error } = await supabaseClient.rpc("create_payment_request", {
         p_student_id: state.currentUser.id,
@@ -11745,6 +11756,13 @@ School: ${schoolName}`)) return;
       });
       if (error) {
         const msg = error.message || "";
+        if (transferBtn && cashBtn) {
+          transferBtn.disabled = false;
+          cashBtn.disabled = false;
+          transferBtn.innerHTML = `<i data-lucide="check-circle" size="20"></i> ${t2("i_have_paid")} (${t2("transfer")})`;
+          cashBtn.innerHTML = `<i data-lucide="banknote" size="20"></i> ${t2("pay_cash")}`;
+          if (window.lucide) lucide.createIcons();
+        }
         if (msg.includes("Could not find the function") || msg.includes("schema cache")) {
           alert("Payment requests are not set up. Please run the Supabase SQL migration:\n\nsupabase/migrations/20260210100000_login_credentials_rpc.sql\n\nin your project's SQL Editor (Dashboard \u2192 SQL Editor \u2192 New query, paste file contents, Run).");
         } else {
@@ -11753,7 +11771,6 @@ School: ${schoolName}`)) return;
         return;
       }
     }
-    await fetchAllData();
     const content = document.getElementById("payment-modal-content");
     content.innerHTML = `
         <div class="payment-modal-header">
@@ -11769,6 +11786,7 @@ School: ${schoolName}`)) return;
         </div>
     `;
     if (window.lucide) lucide.createIcons();
+    fetchAllData();
   };
   window.processPaymentRequest = async (id, status) => {
     const req = state.paymentRequests.find((r) => r.id === id);

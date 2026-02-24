@@ -670,6 +670,9 @@ const DANCE_LOCALES = {
         profile_type_school: "School",
         profile_type_private_teacher: "Private Teacher",
         teacher_availability_title: "Availability",
+        teacher_timezone_label: "Your timezone",
+        teacher_timezone_hint: "Students will see times in this timezone when booking.",
+        times_in_timezone: "Times in {timezone}",
         add_availability: "Add availability",
         private_class_requests_title: "Private class requests",
         no_private_requests: "No requests yet",
@@ -1288,6 +1291,9 @@ const DANCE_LOCALES = {
         profile_type_school: "Escuela",
         profile_type_private_teacher: "Profesor privado",
         teacher_availability_title: "Disponibilidad",
+        teacher_timezone_label: "Tu zona horaria",
+        teacher_timezone_hint: "Los alumnos verán las horas en esta zona horaria al reservar.",
+        times_in_timezone: "Horario en {timezone}",
         add_availability: "Añadir disponibilidad",
         private_class_requests_title: "Solicitudes de clases privadas",
         no_private_requests: "Aún no hay solicitudes",
@@ -1955,6 +1961,9 @@ const DANCE_LOCALES = {
         profile_type_school: "Schule",
         profile_type_private_teacher: "Privatlehrer",
         teacher_availability_title: "Verfügbarkeit",
+        teacher_timezone_label: "Deine Zeitzone",
+        teacher_timezone_hint: "Schüler sehen die Zeiten in dieser Zeitzone bei der Buchung.",
+        times_in_timezone: "Zeiten in {timezone}",
         add_availability: "Verfügbarkeit hinzufügen",
         private_class_requests_title: "Anfragen für Privatstunden",
         no_private_requests: "Noch keine Anfragen",
@@ -5563,6 +5572,9 @@ function _renderViewImpl() {
                         <span class="teacher-booking-week-label">${weekLabel}</span>
                         <button class="teacher-booking-week-btn" onclick="window.shiftBookingWeek(1)"><i data-lucide="chevron-right" size="18"></i></button>
                     </div>
+                    ${(state.teacherAvailabilitySettings?.timezone && state.teacherAvailabilitySettings.timezone !== 'UTC') ? `
+                    <p class="teacher-booking-timezone-caption" style="font-size: 12px; color: var(--text-secondary); margin: 0.5rem 0 0 0; text-align: center;">${(t.times_in_timezone || 'Times in {timezone}').replace('{timezone}', state.teacherAvailabilitySettings.timezone)}</p>
+                    ` : ''}
                     <!-- Day Slots -->
                     <div class="teacher-booking-days">
                         ${state._bookingSlotsLoading ? '<div style="text-align:center;padding:2rem;"><div class="spin"><i data-lucide="loader-2" size="24"></i></div></div>' : (weekSlots.length === 0 ? '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-style:italic;">' + (t.no_availability_this_week || 'No availability this week') + '</div>' : weekSlots.map(day => {
@@ -6086,6 +6098,29 @@ function _renderViewImpl() {
                         ` : ''}
                     </div>
                 </div>
+                ${state.currentSchool?.profile_type === 'private_teacher' && state.adminSettings?.use_calendly_for_booking === 'false' ? `
+                <div style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
+                    <div style="padding: 0 0 0.5rem 0; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                        ${t.private_class_requests_title || 'Private class requests'}
+                    </div>
+                    ${(state.privateClassRequests || []).length === 0 ? `
+                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t.no_private_requests || 'No requests yet'}</div>
+                    ` : (state.privateClassRequests || []).map(r => {
+                        const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                        return `
+                        <div class="pcr-card">
+                            <div class="pcr-card-header">
+                                <span class="pcr-card-name">${(studentName || '').replace(/</g, '&lt;')}</span>
+                                <span class="pcr-card-status ${r.status}">${r.status}</span>
+                            </div>
+                            <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
+                            ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + (r.location || '').replace(/</g, '&lt;') + '</div>' : ''}
+                            ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || '').replace(/</g, '&lt;') + '"</div>' : ''}
+                            ${r.status === 'pending' ? '<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.accept_btn || 'Accept') + '</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.decline_btn || 'Decline') + '</button></div>' : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+                ` : ''}
                 ${state.currentSchool?.class_registration_enabled ? (() => {
                     const weekRegs = state.adminWeekRegistrations || [];
                     const activeRegs = weekRegs;
@@ -6284,29 +6319,6 @@ function _renderViewImpl() {
                         </div>
                     </div>`;
                 })() : ''}
-                ${state.currentSchool?.profile_type === 'private_teacher' && state.adminSettings?.use_calendly_for_booking === 'false' ? `
-                <div style="padding: 0 1.2rem; margin-top: 1.5rem; margin-bottom: 1rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                    ${t.private_class_requests_title || 'Private class requests'}
-                </div>
-                <div style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                    ${(state.privateClassRequests || []).length === 0 ? `
-                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t.no_private_requests || 'No requests yet'}</div>
-                    ` : (state.privateClassRequests || []).map(r => {
-                        const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
-                        return `
-                        <div class="pcr-card">
-                            <div class="pcr-card-header">
-                                <span class="pcr-card-name">${(studentName || '').replace(/</g, '&lt;')}</span>
-                                <span class="pcr-card-status ${r.status}">${r.status}</span>
-                            </div>
-                            <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
-                            ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + (r.location || '').replace(/</g, '&lt;') + '</div>' : ''}
-                            ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || '').replace(/</g, '&lt;') + '"</div>' : ''}
-                            ${r.status === 'pending' ? '<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.accept_btn || 'Accept') + '</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.decline_btn || 'Decline') + '</button></div>' : ''}
-                        </div>`;
-                    }).join('')}
-                </div>
-                ` : ''}
                 ${state.currentSchool?.profile_type === 'private_teacher' ? `
                 <div class="admin-students-list-expandable ${state.adminStudentsListExpandedForPrivateTeacher ? 'expanded' : ''}" style="margin: 0 1.2rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
                     <div class="expandable-section-header" onclick="state.adminStudentsListExpandedForPrivateTeacher=!state.adminStudentsListExpandedForPrivateTeacher; saveState(); renderView();" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
@@ -6676,6 +6688,12 @@ function _renderViewImpl() {
                 ${t.teacher_availability_title || 'Availability'}
             </div>
             <div class="ios-list" style="overflow: visible;">
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 6px; padding: 14px 16px;">
+                    <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); opacity: 0.8;">${t.teacher_timezone_label || 'Your timezone'}</label>
+                    <input type="text" id="teacher-availability-timezone" value="${(state.teacherAvailabilitySettings?.timezone || 'UTC').replace(/"/g, '&quot;')}" placeholder="e.g. America/Bogota, Europe/Madrid" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--text-primary); outline: none;">
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t.teacher_timezone_hint || 'Students will see times in this timezone when booking.'}</p>
+                    <button type="button" class="btn-secondary" onclick="window.saveTeacherTimezone()" style="align-self: flex-start; margin-top: 4px; padding: 8px 14px; font-size: 13px;">${t.save || 'Save'}</button>
+                </div>
                 ${(state.teacherAvailability || []).map(a => `
                     <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; overflow: visible;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -9309,6 +9327,21 @@ window.deleteTeacherAvail = async (id) => {
     } catch (e) { alert('Error deleting availability: ' + (e.message || e)); }
 };
 
+window.saveTeacherTimezone = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const input = document.getElementById('teacher-availability-timezone');
+    const tz = input?.value?.trim() || 'UTC';
+    try {
+        const { data, error } = await supabaseClient.rpc('upsert_teacher_availability_settings', {
+            p_school_id: state.currentSchool.id,
+            p_timezone: tz
+        });
+        if (error) throw error;
+        state.teacherAvailabilitySettings = data && typeof data === 'object' ? data : { ...(state.teacherAvailabilitySettings || {}), timezone: tz };
+        if (window.lucide) lucide.createIcons();
+    } catch (e) { alert('Error saving timezone: ' + (e.message || e)); }
+};
+
 // Calendly: get session after refresh; on invalid refresh token, sign out and return null
 async function getCalendlySession() {
     try {
@@ -9547,7 +9580,7 @@ window.submitBookingRequest = async (btn) => {
     btn.textContent = '...';
     const message = (document.getElementById('booking-message')?.value || '').trim();
     try {
-        const { error } = await supabaseClient.rpc('create_private_class_request', {
+        const { data: requestData, error } = await supabaseClient.rpc('create_private_class_request', {
             p_school_id: state.currentSchool.id,
             p_student_id: String(state.currentUser.id),
             p_requested_date: slot.date,
@@ -9557,6 +9590,11 @@ window.submitBookingRequest = async (btn) => {
         });
         if (error) throw error;
         state._bookingSelectedSlot = null;
+        if (requestData?.id) {
+            try {
+                await supabaseClient.functions.invoke('notify_private_class_request', { body: { request_id: requestData.id } });
+            } catch (_) { /* best-effort email */ }
+        }
         const overlay = btn.closest('.teacher-booking-confirm-overlay');
         if (overlay) overlay.remove();
         const t = DANCE_LOCALES[state.language || 'en'];
@@ -10214,6 +10252,18 @@ window.submitPaymentRequest = async (subId, method) => {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
+    const actions = document.querySelector('#payment-modal-content .payment-modal-actions');
+    const transferBtn = actions?.querySelectorAll('button.payment-modal-btn')[0];
+    const cashBtn = actions?.querySelectorAll('button.payment-modal-btn')[1];
+    const loadingLabel = t('resend_sending') || t('loading') || 'Sending…';
+    if (transferBtn && cashBtn) {
+        transferBtn.disabled = true;
+        cashBtn.disabled = true;
+        const clickedBtn = method === 'transfer' ? transferBtn : cashBtn;
+        clickedBtn.innerHTML = `<span class="payment-modal-btn-loading" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><i data-lucide="loader-2" size="20" class="spin"></i> ${loadingLabel}</span>`;
+        if (window.lucide) lucide.createIcons();
+    }
+
     if (supabaseClient) {
         // Students cannot insert into payment_requests (RLS); use RPC so request is created.
         const { error } = await supabaseClient.rpc('create_payment_request', {
@@ -10226,6 +10276,13 @@ window.submitPaymentRequest = async (subId, method) => {
         });
         if (error) {
             const msg = error.message || '';
+            if (transferBtn && cashBtn) {
+                transferBtn.disabled = false;
+                cashBtn.disabled = false;
+                transferBtn.innerHTML = `<i data-lucide="check-circle" size="20"></i> ${t('i_have_paid')} (${t('transfer')})`;
+                cashBtn.innerHTML = `<i data-lucide="banknote" size="20"></i> ${t('pay_cash')}`;
+                if (window.lucide) lucide.createIcons();
+            }
             if (msg.includes('Could not find the function') || msg.includes('schema cache')) {
                 alert("Payment requests are not set up. Please run the Supabase SQL migration:\n\nsupabase/migrations/20260210100000_login_credentials_rpc.sql\n\nin your project's SQL Editor (Dashboard → SQL Editor → New query, paste file contents, Run).");
             } else {
@@ -10235,10 +10292,7 @@ window.submitPaymentRequest = async (subId, method) => {
         }
     }
 
-    // Refresh local list
-    await fetchAllData();
-
-    // Show success message
+    // Show success immediately; refresh data in background so confirmation feels instant
     const content = document.getElementById('payment-modal-content');
     content.innerHTML = `
         <div class="payment-modal-header">
@@ -10254,6 +10308,7 @@ window.submitPaymentRequest = async (subId, method) => {
         </div>
     `;
     if (window.lucide) lucide.createIcons();
+    fetchAllData();
 };
 
 window.processPaymentRequest = async (id, status) => {
