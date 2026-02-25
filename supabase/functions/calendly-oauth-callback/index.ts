@@ -120,7 +120,9 @@ Deno.serve(async (req) => {
     );
     if (upsertError) {
       console.error('calendly_connections upsert:', upsertError);
-      return redirectWithError('Failed to save connection');
+      const code = (upsertError as { code?: string })?.code;
+      const msg = code === '23505' ? 'This Calendly account is already connected to another school.' : 'Failed to save connection';
+      return redirectWithError(msg);
     }
 
     const { data: conn, error: connErr } = await adminClient

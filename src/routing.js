@@ -97,6 +97,12 @@ export function parseHashRoute() {
         if (schoolId && params.get('calendly') === 'connected') {
             state._calendlyReturnSchoolId = schoolId;
         }
+        if (params.get('calendly') === 'error') {
+            state.calendlyErrorFromRedirect = decodeURIComponent(params.get('message') || 'Connection failed');
+            if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', (window.location.pathname || '') + '#/settings');
+            }
+        }
         return true;
     }
 

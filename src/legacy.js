@@ -330,6 +330,8 @@ const DANCE_LOCALES = {
         calendly_retry: "Retry",
         calendly_connect_desc: "Connect your Calendly account so students can book private classes from your live availability.",
         calendly_connect_btn: "Connect Calendly",
+        calendly_connecting: "Connecting…",
+        calendly_sign_in_popup: "Sign in to Calendly in the separate window.",
         calendly_disconnect_confirm: "Disconnect Calendly? Webhooks will be removed and students will no longer see your Calendly booking.",
         calendly_student_booking_mode: "What students see when booking",
         calendly_mode_calendly: "Calendly",
@@ -1412,6 +1414,8 @@ const DANCE_LOCALES = {
         calendly_retry: "Reintentar",
         calendly_connect_desc: "Conecta tu cuenta de Calendly para que los alumnos puedan reservar clases privadas según tu disponibilidad.",
         calendly_connect_btn: "Conectar Calendly",
+        calendly_connecting: "Conectando…",
+        calendly_sign_in_popup: "Inicia sesión en Calendly en la ventana que se abrió.",
         calendly_disconnect_confirm: "¿Desconectar Calendly? Se eliminarán los webhooks y los alumnos ya no verán tu reserva de Calendly.",
         calendly_student_booking_mode: "Qué ven los alumnos al reservar",
         calendly_mode_calendly: "Calendly",
@@ -2104,8 +2108,8 @@ const TEACHER_TIMEZONE_OPTIONS = [
     { value: 'America/Chicago', label: 'America/Chicago (CT)' },
     { value: 'America/Denver', label: 'America/Denver (MT)' },
     { value: 'America/Los_Angeles', label: 'America/Los Angeles (PT)' },
-    { value: 'America/Mexico_City', label: 'America/Mexico City' },
-    { value: 'America/Bogota', label: 'America/Bogotá' },
+    { value: 'America/Mexico_City', label: 'America/Mexico City (Mexico City — Central Time)' },
+    { value: 'America/Bogota', label: 'America/Bogotá (Medellín, Bogotá — Colombia Time, UTC-5)' },
     { value: 'America/Sao_Paulo', label: 'America/São Paulo' },
     { value: 'America/Buenos_Aires', label: 'America/Buenos Aires' },
     { value: 'Asia/Tokyo', label: 'Asia/Tokyo' },
@@ -6725,7 +6729,10 @@ function _renderViewImpl() {
                         ${(() => { const currentTz = state.teacherAvailabilitySettings?.timezone || 'UTC'; const opts = TEACHER_TIMEZONE_OPTIONS.some(o => o.value === currentTz) ? TEACHER_TIMEZONE_OPTIONS : [{ value: currentTz, label: currentTz }, ...TEACHER_TIMEZONE_OPTIONS]; return opts.map(o => `<option value="${o.value.replace(/"/g, '&quot;')}" ${currentTz === o.value ? 'selected' : ''}>${(o.label || o.value).replace(/</g, '&lt;')}</option>`).join(''); })()}
                     </select>
                     <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t.teacher_timezone_hint || 'Students will see times in this timezone when booking.'}</p>
-                    <button type="button" class="btn-secondary" onclick="window.saveTeacherTimezone()" style="align-self: flex-start; margin-top: 4px; padding: 8px 14px; font-size: 13px;">${t.save || 'Save'}</button>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
+                        <button type="button" id="teacher-timezone-save-btn" class="btn-secondary" onclick="window.saveTeacherTimezone()" style="padding: 8px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">${t.save || 'Save'}</button>
+                        <span id="teacher-timezone-save-msg" style="font-size: 13px; color: var(--text-secondary); min-height: 1.5em;"></span>
+                    </div>
                 </div>
                 ${(state.teacherAvailability || []).map(a => `
                     <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; overflow: visible;">
@@ -6794,11 +6801,15 @@ function _renderViewImpl() {
                     </div>
                 </div>
                 ` : `
-                <div class="ios-list-item" style="flex-direction: column; align-items: stretch;">
-                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">${t.calendly_connect_desc || 'Connect your Calendly account so students can book private classes from your live availability.'}</p>
-                    <button type="button" class="btn-primary" onclick="window.startCalendlyOAuth()" style="border-radius: 12px; padding: 12px 16px; font-weight: 600;">
-                        ${t.calendly_connect_btn || 'Connect Calendly'}
-                    </button>
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                    ${state.calendlyErrorFromRedirect ? `<p id="calendly-error-banner" style="font-size: 13px; color: var(--error, #c53030); margin: 0; padding: 10px 12px; background: rgba(197,48,48,0.1); border-radius: 10px;">${(state.calendlyErrorFromRedirect || '').replace(/</g, '&lt;')}</p>` : ''}
+                    <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">${t.calendly_connect_desc || 'Connect your Calendly account so students can book private classes from your live availability.'}</p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button type="button" id="calendly-connect-btn" class="btn-primary" ${(state.adminSettings || {}).use_calendly_for_booking === 'false' || state._calendlyOAuthLoading ? 'disabled' : ''} onclick="(state.adminSettings || {}).use_calendly_for_booking !== 'false' && !state._calendlyOAuthLoading && window.startCalendlyOAuth()" style="border-radius: 12px; padding: 12px 16px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; ${(state.adminSettings || {}).use_calendly_for_booking === 'false' ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
+                            ${state._calendlyOAuthLoading ? `<i data-lucide="loader-2" class="spin" size="18"></i> ${t.calendly_connecting || 'Connecting…'}` : (t.calendly_connect_btn || 'Connect Calendly')}
+                        </button>
+                        ${state._calendlyOAuthPopupOpen ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 0;">${t.calendly_sign_in_popup || 'Sign in to Calendly in the separate window.'}</p>` : ''}
+                    </div>
                 </div>
                 `}
                 <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; margin-top: 8px;">
@@ -7301,7 +7312,7 @@ function _renderViewImpl() {
                     <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
                 </div>
                 <div id="settings-advanced-content" style="padding: 1rem 0; display: ${state.settingsAdvancedExpanded ? '' : 'none'};">
-                    ${state.currentSchool?.profile_type === 'school' ? `
+                    ${(state.currentSchool?.profile_type === 'school' || state.currentSchool?.profile_type === 'private_teacher') ? `
                     ${state.currentSchool?.private_packages_enabled !== false ? `
                     <div class="admin-private-classes-toggle-card">
                         <div class="admin-private-contact-title">${t.offer_private_classes || 'Offer private classes'}</div>
@@ -9303,9 +9314,17 @@ window.addTeacherAvail = async () => {
 
 window.updateTeacherAvail = async (id, field, value) => {
     if (!supabaseClient || !state.currentSchool?.id) return;
-    const row = (state.teacherAvailability || []).find(a => a.id === id);
+    const list = state.teacherAvailability || [];
+    const row = list.find(a => a.id === id);
     if (!row) return;
     const updated = { ...row, [field]: value };
+    const previous = { ...row };
+    // Optimistic update: apply change to state and re-render immediately
+    state.teacherAvailability = list.map(a => a.id === id ? updated : a);
+    const ddList = document.getElementById('dropdown-list-avail-' + id);
+    if (ddList) ddList.classList.remove('open');
+    if (typeof window.renderView === 'function') window.renderView();
+    if (window.lucide) window.lucide.createIcons();
     try {
         const { error } = await supabaseClient.rpc('upsert_teacher_availability', {
             p_school_id: state.currentSchool.id,
@@ -9316,11 +9335,13 @@ window.updateTeacherAvail = async (id, field, value) => {
             p_id: id
         });
         if (error) throw error;
-        // Close dropdown after day selection
-        const ddList = document.getElementById('dropdown-list-avail-' + id);
-        if (ddList) ddList.classList.remove('open');
-        await fetchAllData();
-    } catch (e) { alert('Error updating availability: ' + (e.message || e)); }
+    } catch (e) {
+        // Revert on failure
+        state.teacherAvailability = list.map(a => a.id === id ? previous : a);
+        if (typeof window.renderView === 'function') window.renderView();
+        if (window.lucide) window.lucide.createIcons();
+        alert('Error updating availability: ' + (e.message || e));
+    }
 };
 
 window.deleteTeacherAvail = async (id) => {
@@ -9338,7 +9359,18 @@ window.deleteTeacherAvail = async (id) => {
 window.saveTeacherTimezone = async () => {
     if (!supabaseClient || !state.currentSchool?.id) return;
     const input = document.getElementById('teacher-availability-timezone');
+    const btn = document.getElementById('teacher-timezone-save-btn');
+    const msgEl = document.getElementById('teacher-timezone-save-msg');
+    const t = DANCE_LOCALES[state.language || 'en'];
+    const saveLabel = t.save || 'Save';
+    const savingLabel = t.saving_label || 'Saving…';
+    const savedLabel = t.competition_saved_indicator || t.profile_saved_success || 'Saved';
     const tz = input?.value?.trim() || 'UTC';
+    if (!btn) return;
+    btn.disabled = true;
+    if (msgEl) msgEl.textContent = '';
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="16" style="flex-shrink: 0;"></i> ' + savingLabel;
+    if (window.lucide) window.lucide.createIcons();
     try {
         const { data, error } = await supabaseClient.rpc('upsert_teacher_availability_settings', {
             p_school_id: state.currentSchool.id,
@@ -9346,8 +9378,20 @@ window.saveTeacherTimezone = async () => {
         });
         if (error) throw error;
         state.teacherAvailabilitySettings = data && typeof data === 'object' ? data : { ...(state.teacherAvailabilitySettings || {}), timezone: tz };
-        if (window.lucide) lucide.createIcons();
-    } catch (e) { alert('Error saving timezone: ' + (e.message || e)); }
+        btn.innerHTML = saveLabel;
+        btn.disabled = false;
+        if (msgEl) {
+            msgEl.innerHTML = '<i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i>' + savedLabel;
+            msgEl.style.color = 'var(--system-green, #34C759)';
+            if (window.lucide) window.lucide.createIcons();
+            setTimeout(() => { msgEl.textContent = ''; msgEl.style.color = ''; }, 2500);
+        }
+    } catch (e) {
+        btn.innerHTML = saveLabel;
+        btn.disabled = false;
+        if (msgEl) msgEl.textContent = '';
+        alert('Error saving timezone: ' + (e.message || e));
+    }
 };
 
 // Calendly: get session after refresh; on invalid refresh token, sign out and return null
@@ -9388,25 +9432,56 @@ window.startCalendlyOAuth = async () => {
         alert('Please sign in and select your school.');
         return;
     }
+    state._calendlyOAuthLoading = true;
+    state.calendlyErrorFromRedirect = null;
+    if (typeof window.renderView === 'function') window.renderView();
+    if (window.lucide) window.lucide.createIcons();
     try {
         const { data, error } = await supabaseClient.functions.invoke('calendly-oauth-start', {
             body: { school_id: state.currentSchool.id }
         });
         if (error) {
+            state._calendlyOAuthLoading = false;
+            if (typeof window.renderView === 'function') window.renderView();
             alert(error.message || 'Failed to start Calendly connection');
             return;
         }
         const msg = data?.error;
         if (msg) {
+            state._calendlyOAuthLoading = false;
+            if (typeof window.renderView === 'function') window.renderView();
             alert(msg);
             return;
         }
-        if (data?.auth_url) {
-            window.location.href = data.auth_url;
-        } else {
+        if (!data?.auth_url) {
+            state._calendlyOAuthLoading = false;
+            if (typeof window.renderView === 'function') window.renderView();
             alert('No auth URL returned. Is calendly-oauth-start deployed and secrets set?');
+            return;
+        }
+        const popup = window.open(data.auth_url, 'calendly_oauth', 'width=600,height=700,scrollbars=yes,resizable=yes');
+        state._calendlyOAuthLoading = false;
+        state._calendlyOAuthPopupOpen = !!popup;
+        window._calendlyOAuthPopup = popup || null;
+        if (typeof window.renderView === 'function') window.renderView();
+        if (window.lucide) window.lucide.createIcons();
+        if (popup) {
+            const poll = setInterval(() => {
+                if (!window._calendlyOAuthPopup || window._calendlyOAuthPopup.closed) {
+                    clearInterval(poll);
+                    window._calendlyOAuthPopup = null;
+                    state._calendlyOAuthPopupOpen = false;
+                    if (typeof window.fetchAllData === 'function') window.fetchAllData().then(() => {
+                        if (typeof window.renderView === 'function') window.renderView();
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                }
+            }, 500);
         }
     } catch (e) {
+        state._calendlyOAuthLoading = false;
+        state._calendlyOAuthPopupOpen = false;
+        if (typeof window.renderView === 'function') window.renderView();
         alert('Error: ' + (e?.message || e));
     }
 };

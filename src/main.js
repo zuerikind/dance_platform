@@ -249,7 +249,29 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         window.checkInactivity();
 
         if (window.location.hash) parseHashRoute();
-        if (state.currentView === 'admin-settings' && hash.includes('calendly=connected') && typeof window.fetchAllData === 'function') {
+        if (typeof window !== 'undefined' && window.opener && window.location.hash && (window.location.hash.includes('calendly=connected') || window.location.hash.includes('calendly=error'))) {
+            if (window.location.hash.includes('calendly=error')) {
+                const hashQuery = (window.location.hash.split('?')[1] || '');
+                const params = new URLSearchParams(hashQuery);
+                const msg = params.get('message');
+                if (window.opener.state) {
+                    window.opener.state.calendlyErrorFromRedirect = msg ? decodeURIComponent(msg) : 'Connection failed';
+                    window.opener.state._calendlyOAuthPopupOpen = false;
+                }
+            } else {
+                if (window.opener.state) {
+                    window.opener.state._calendlyOAuthPopupOpen = false;
+                    window.opener.state.calendlyErrorFromRedirect = null;
+                }
+            }
+            if (typeof window.opener.fetchAllData === 'function') {
+                window.opener.fetchAllData().then(function () {
+                    if (typeof window.opener.renderView === 'function') window.opener.renderView();
+                    if (window.opener.lucide && typeof window.opener.lucide.createIcons === 'function') window.opener.lucide.createIcons();
+                });
+            }
+            window.close();
+        } else if (state.currentView === 'admin-settings' && hash.includes('calendly=connected') && typeof window.fetchAllData === 'function') {
             window.fetchAllData().then(() => {
                 window.renderView();
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
