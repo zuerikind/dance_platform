@@ -248,10 +248,19 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
         window.checkInactivity();
 
+        // Capture hash BEFORE parseHashRoute (which may replaceState and strip calendly=error)
+        const hashBeforeParse = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash : '';
+        const hasCalendlyInHash = hashBeforeParse.includes('calendly=connected') || hashBeforeParse.includes('calendly=error');
+        // #region agent log
+        if (typeof fetch === 'function') fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.js:init',message:'hash before parseHashRoute',data:{hashBeforeParse: hashBeforeParse ? hashBeforeParse.substring(0,80) : '', hasOpener: !!window.opener, hasCalendlyInHash },timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
         if (window.location.hash) parseHashRoute();
-        if (typeof window !== 'undefined' && window.opener && window.location.hash && (window.location.hash.includes('calendly=connected') || window.location.hash.includes('calendly=error'))) {
-            if (window.location.hash.includes('calendly=error')) {
-                const hashQuery = (window.location.hash.split('?')[1] || '');
+        if (typeof window !== 'undefined' && window.opener && hasCalendlyInHash) {
+            // #region agent log
+            if (typeof fetch === 'function') fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.js:popup-close',message:'entering popup close block',data:{hashAfterParse: (window.location.hash||'').substring(0,60) },timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+            // #endregion
+            if (hashBeforeParse.includes('calendly=error')) {
+                const hashQuery = (hashBeforeParse.split('?')[1] || '');
                 const params = new URLSearchParams(hashQuery);
                 const msg = params.get('message');
                 if (window.opener.state) {
