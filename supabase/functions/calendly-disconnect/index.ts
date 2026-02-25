@@ -87,7 +87,8 @@ Deno.serve(async (req) => {
         });
       }
       const { data: adminRow } = await adminClient.from('admins').select('id').eq('school_id', schoolId).eq('user_id', user.id).single();
-      if (!adminRow) {
+      const { data: platformAdminRow } = await adminClient.from('platform_admins').select('id').eq('user_id', user.id).maybeSingle();
+      if (!adminRow && !platformAdminRow) {
         return new Response(JSON.stringify({ error: 'Not admin for this school' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
