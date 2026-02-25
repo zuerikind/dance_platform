@@ -7031,15 +7031,15 @@
                     </div>
                     ` : ""}
                     <div class="calendly-embed-wrap" style="margin: 0 18px 18px; min-height: 630px; border-radius: 16px; overflow: hidden; background: var(--system-gray6,#f2f2f7);">
-                        <iframe id="calendly-inline-iframe" data-src="${(() => {
+                        ${(() => {
             const u = (state.teacherCalendlySelectionForBooking || {}).scheduling_url || "";
-            if (!u) return "";
             const name = state.currentUser && state.currentUser.name || "";
             const email = state.currentUser && state.currentUser.email || "";
             const sep = u.indexOf("?") >= 0 ? "&" : "?";
             const q = [name && "name=" + encodeURIComponent(name), email && "email=" + encodeURIComponent(email)].filter(Boolean).join("&");
-            return q ? u + sep + q : u;
-          })()}" style="width: 100%; height: 630px; border: none;" title="${(t22.calendly_book || "Book a session").replace(/"/g, "&quot;")}"></iframe>
+            const iframeUrl = u ? q ? u + sep + q : u : "";
+            return iframeUrl ? `<iframe id="calendly-inline-iframe" data-src="${iframeUrl.replace(/"/g, "&quot;")}" style="width: 100%; height: 630px; border: none;" title="${(t22.calendly_book || "Book a session").replace(/"/g, "&quot;")}"></iframe>` : `<div style="padding: 2rem; text-align: center; color: var(--text-secondary); font-size: 14px;">${t22.calendly_loading || "Loading..."}</div>`;
+          })()}
                     </div>
                     ` : `
                     ${locations.length ? `

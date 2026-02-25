@@ -39,6 +39,10 @@ Deno.serve(async (req) => {
     if (!clientId || !clientSecret || !redirectUri) {
       return redirectWithError('Calendly OAuth not configured');
     }
+    if (!supabaseServiceKey) {
+      console.error('calendly-oauth-callback: SUPABASE_SERVICE_ROLE_KEY is missing');
+      return redirectWithError('Server misconfiguration');
+    }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
 
@@ -49,6 +53,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (stateError || !stateRow) {
+      console.error('calendly_oauth_state lookup failed:', { statePresent: !!state, stateError: stateError?.message ?? null, hasRow: !!stateRow });
       return redirectWithError('Invalid or expired state');
     }
     const schoolId = stateRow.school_id as string;
@@ -59,6 +64,17 @@ Deno.serve(async (req) => {
     }
 
     await adminClient.from('calendly_oauth_state').delete().eq('state', state);
+
+    // Ensure school still exists before saving connection (avoids cryptic FK errors)
+    const { data: schoolRow, error: schoolErr } = await adminClient
+      .from('schools')
+      .select('id')
+      .eq('id', schoolId)
+      .single();
+    if (schoolErr || !schoolRow) {
+      console.error('calendly-oauth-callback: school not found', { schoolId, error: schoolErr });
+      return redirectWithError('School not found. Please try again from the app.');
+    }
 
     const tokenBody = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -119,9 +135,26 @@ Deno.serve(async (req) => {
       { onConflict: 'school_id' }
     );
     if (upsertError) {
-      console.error('calendly_connections upsert:', upsertError);
-      const code = (upsertError as { code?: string })?.code;
-      const msg = code === '23505' ? 'This Calendly account is already connected to another school.' : 'Failed to save connection';
+      const err = upsertError as { code?: string; message?: string; details?: string; hint?: string };
+      const code = err.code ?? (err.message?.match(/\b(23505|23503|23502|42703)\b/)?.[1]);
+      console.error('calendly_connections upsert error:', JSON.stringify({
+        code: err.code,
+        message: err.message,
+        details: err.details,
+        hint: err.hint,
+        schoolId,
+        calendlyUserUriPrefix: calendlyUserUri?.slice(0, 30) ?? null,
+      }));
+      const msg =
+        code === '23505'
+          ? 'This Calendly account is already connected to another school.'
+          : code === '23503'
+            ? 'Invalid school or reference. Please try again from the app.'
+            : code === '23502'
+              ? 'Missing required data. Please try again.'
+              : code === '42703'
+                ? 'Database schema mismatch; please contact support.'
+                : 'Failed to save connection. Please try again or contact support.';
       return redirectWithError(msg);
     }
 
@@ -131,6 +164,7 @@ Deno.serve(async (req) => {
       .eq('school_id', schoolId)
       .single();
     if (connErr || !conn) {
+      console.error('calendly_connections select after upsert:', { schoolId, error: connErr, hasData: !!conn });
       return redirectWithError('Failed to load connection');
     }
 
