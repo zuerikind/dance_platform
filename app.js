@@ -9406,9 +9406,6 @@
       if (view === "platform-school-details") window.scrollTo(0, 0);
       if (view === "teacher-booking") {
         var calIframe = document.getElementById("calendly-inline-iframe");
-        var dataSrc = calIframe ? calIframe.dataset.src || "" : "";
-        if (typeof fetch === "function") fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "legacy.js:teacher-booking-iframe", message: "Calendly iframe state", data: { view, hasIframe: !!calIframe, dataSrcLen: dataSrc.length, dataSrcPreview: dataSrc ? dataSrc.substring(0, 50) : "" }, timestamp: Date.now(), hypothesisId: "H3" }) }).catch(() => {
-        });
         if (calIframe && calIframe.dataset.src) {
           requestAnimationFrame(function() {
             requestAnimationFrame(function() {
@@ -13957,12 +13954,8 @@ School: ${schoolName}`)) return;
       window.checkInactivity();
       const hashBeforeParse = typeof window !== "undefined" && window.location.hash ? window.location.hash : "";
       const hasCalendlyInHash = hashBeforeParse.includes("calendly=connected") || hashBeforeParse.includes("calendly=error");
-      if (typeof fetch === "function") fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "main.js:init", message: "hash before parseHashRoute", data: { hashBeforeParse: hashBeforeParse ? hashBeforeParse.substring(0, 80) : "", hasOpener: !!window.opener, hasCalendlyInHash }, timestamp: Date.now(), hypothesisId: "H1" }) }).catch(() => {
-      });
       if (window.location.hash) parseHashRoute();
       if (typeof window !== "undefined" && window.opener && hasCalendlyInHash) {
-        if (typeof fetch === "function") fetch("http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "main.js:popup-close", message: "entering popup close block", data: { hashAfterParse: (window.location.hash || "").substring(0, 60) }, timestamp: Date.now(), hypothesisId: "H2" }) }).catch(() => {
-        });
         if (hashBeforeParse.includes("calendly=error")) {
           const hashQuery = hashBeforeParse.split("?")[1] || "";
           const params2 = new URLSearchParams(hashQuery);

@@ -7656,10 +7656,6 @@ function _renderViewImpl() {
     // Defer loading Calendly iframe until after paint so the rest of the app (and other views) stay fast
     if (view === 'teacher-booking') {
         var calIframe = document.getElementById('calendly-inline-iframe');
-        var dataSrc = calIframe ? (calIframe.dataset.src || '') : '';
-        // #region agent log
-        if (typeof fetch === 'function') fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'legacy.js:teacher-booking-iframe',message:'Calendly iframe state',data:{view:view,hasIframe:!!calIframe,dataSrcLen:dataSrc.length,dataSrcPreview:dataSrc ? dataSrc.substring(0,50) : '' },timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-        // #endregion
         if (calIframe && calIframe.dataset.src) {
             requestAnimationFrame(function () {
                 requestAnimationFrame(function () {
