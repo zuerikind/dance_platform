@@ -1,0 +1,38 @@
+---
+description: Production safety — never break existing functionality. Applies to all changes.
+alwaysApply: true
+---
+
+# Live / production safety
+
+The product is **live**. Existing functionality must **never** break for users or other schools.
+
+## Rules (mandatory)
+
+1. **Backward compatibility**
+   - Any change to APIs, RPCs, database functions, or frontend calls must remain backward compatible unless a coordinated migration and deployment is explicitly planned.
+   - Prefer adding optional parameters (with DEFAULT) and leaving existing callers unchanged.
+
+2. **No breaking overloads**
+   - Do **not** introduce a new function/RPC with the same name and a different signature (e.g. extra parameter) without **first dropping or replacing** the old one. Multiple overloads can cause "Could not choose the best candidate function" and break all callers (every school, every flow).
+
+3. **Supabase migrations**
+   - When changing an existing RPC/function: in the **same** migration (or the next one), **DROP** the old signature if the signature changes, then CREATE the new one. Never leave two overloads of the same function in place.
+   - New optional parameters: add with `DEFAULT NULL` (or another default) so existing callers still work.
+
+4. **School- or feature-specific logic**
+   - When adding behavior for one school (e.g. Aure), gate it by `isAureSchool(school)` or equivalent so other schools are unaffected. Do not change shared code paths in a way that breaks non-Aure flows.
+
+5. **Before merging**
+   - Consider: "If this runs in production, does any existing user flow break?" If yes, fix the change or add a migration that removes the old behavior before the new one is relied on.
+
+## Example (Supabase)
+
+```sql
+-- BAD: adds overload; production gets "Could not choose the best candidate function"
+CREATE OR REPLACE FUNCTION public.create_payment_request(..., p_slot_id uuid DEFAULT NULL) ...
+
+-- GOOD: same migration (or immediate follow-up) drops old, then one function exists
+DROP FUNCTION IF EXISTS public.create_payment_request(text, text, text, numeric, text, uuid);
+CREATE OR REPLACE FUNCTION public.create_payment_request(..., p_slot_id uuid DEFAULT NULL) ...
+```

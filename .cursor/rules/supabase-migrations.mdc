@@ -1,0 +1,31 @@
+---
+description: Supabase migrations — no RPC overloads, backward compatibility
+globs: supabase/migrations/**/*.sql
+alwaysApply: false
+---
+
+# Supabase migrations (SQL)
+
+Strict rules so migrations never break live RPCs or existing callers.
+
+## 1. One signature per function name
+
+- **Never** create a second overload of an existing function (same name, different parameters). Postgres will then fail with "Could not choose the best candidate function" when the client calls with a fixed set of arguments.
+- To **change** a function's signature (e.g. add a parameter):
+  1. In the **same migration** (or the very next migration), run `DROP FUNCTION IF EXISTS public.func_name(old_arg_types);`
+  2. Then `CREATE OR REPLACE FUNCTION public.func_name(new_args...) ...` so only **one** version exists.
+
+## 2. Adding optional parameters
+
+- Prefer adding parameters with `DEFAULT NULL` (or another default) so existing callers do not need to change.
+- Example: `p_slot_id uuid DEFAULT NULL` — frontend can send 6 or 7 args; one function handles both.
+
+## 3. Checklist before adding/changing an RPC
+
+- [ ] Is there already a function with this name? If yes, am I **replacing** it (same signature) or **changing** the signature?
+- [ ] If changing signature: did I **drop the old function** in this migration (or the previous one)?
+- [ ] After my migration, is there exactly **one** function with this name (no overloads)?
+
+## 4. Reference
+
+- The fix for `create_payment_request` overload is in `20260227220000_drop_old_create_payment_request.sql`: drop the 6-param version so only the 7-param version (with `p_slot_id`) remains. Use the same pattern for any future RPC signature change.

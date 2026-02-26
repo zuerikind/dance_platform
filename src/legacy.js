@@ -615,6 +615,8 @@ const DANCE_LOCALES = {
         aure_no_classes_in_schedule: "Add classes in Schedule first.",
         aure_use_schedule_as_options: "Use schedule as options",
         aure_option_two_classes_hint: "Add the 2 classes that make up this option.",
+        aure_add_second_class: "Add the second class: select above and click Add.",
+        aure_same_class_two_days_note: "To use the same class on two days (e.g. Tue + Thu), add it twice in Schedule with the same name.",
         aure_no_options_yet: "No options yet. Add one below.",
         aure_add_option: "Add option",
         aure_no_group_plans: "Create a group plan first (e.g. 4 or 8 classes) in Plans.",
@@ -1271,6 +1273,8 @@ const DANCE_LOCALES = {
         aure_no_classes_in_schedule: "Añade clases en Horario primero.",
         aure_use_schedule_as_options: "Usar horario como opciones",
         aure_option_two_classes_hint: "Añade las 2 clases que forman esta opción.",
+        aure_add_second_class: "Añade la segunda clase: elige arriba y pulsa Añadir.",
+        aure_same_class_two_days_note: "Para usar la misma clase dos días (ej. Martes + Jueves), añádela dos veces en Horario con el mismo nombre.",
         aure_no_options_yet: "Ninguna opción. Añade una abajo.",
         aure_add_option: "Añadir opción",
         aure_no_group_plans: "Crea primero un plan de grupo (ej. 4 u 8 clases) en Planes.",
@@ -1977,6 +1981,8 @@ const DANCE_LOCALES = {
         aure_no_classes_in_schedule: "Zuerst Kurse im Stundenplan anlegen.",
         aure_use_schedule_as_options: "Stundenplan als Optionen übernehmen",
         aure_option_two_classes_hint: "Füge die 2 Kurse hinzu, die diese Option bilden.",
+        aure_add_second_class: "Füge den zweiten Kurs hinzu: oben wählen und auf Hinzufügen klicken.",
+        aure_same_class_two_days_note: "Für denselben Kurs an zwei Tagen (z. B. Di + Do) den Kurs zweimal im Stundenplan anlegen.",
         aure_no_options_yet: "Noch keine Option. Unten hinzufügen.",
         aure_add_option: "Option hinzufügen",
         aure_no_group_plans: "Zuerst einen Gruppenplan (z. B. 4 oder 8 Kurse) unter Pläne anlegen.",
@@ -7599,15 +7605,16 @@ function _renderViewImpl() {
                         <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t.aure_option_label_field || 'Nombre de la opción'}</label>
                         <input type="text" id="aure-slot-label" value="${(form.label || '').replace(/"/g, '&quot;')}" placeholder="${(t.aure_option_label_placeholder || 'ej. Domingos 2h').replace(/"/g, '&quot;')}" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
                         <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t.aure_option_slots_field || 'Clase, día y horario'}</label>
-                        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">${(eightClass ? (t.aure_option_two_classes_hint || 'Añade las 2 clases que forman esta opción.') : (t.aure_option_schedule_hint || 'Elige las clases de tu horario que forman esta opción.')).replace(/</g, '&lt;')}</p>
+                        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">${(eightClass ? (t.aure_option_two_classes_hint || 'Añade las 2 clases que forman esta opción.') : (t.aure_option_schedule_hint || 'Elige las clases de tu horario que forman esta opción.')).replace(/</g, '&lt;')}</p>
+                        ${eightClass ? `<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">${(t.aure_same_class_two_days_note || 'Para la misma clase en dos días (ej. Martes + Jueves), añádela dos veces en Horario.').replace(/</g, '&lt;')}</p>` : ''}
                         <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
                             <select id="aure-schedule-slot-select" style="flex: 1; min-width: 180px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px;">
                                 <option value="">${t.aure_select_schedule_placeholder || 'Elige una clase…'}</option>
                                 ${scheduleSlots.map(s => {
-                                    const alreadyAdded = (form.definition || []).some(d => String(d.class_id) === String(s.class_id));
+                                    const alreadyAdded = (form.definition || []).some(d => String(d.class_id) === String(s.class_id) && String(d.day || '') === String(s.day || '') && String(d.time || '') === String(s.time || ''));
                                     const timeStr = s.end_time ? s.time + '–' + s.end_time : s.time;
                                     const label = (s.class_name || '').replace(/</g, '&lt;') + ' · ' + s.day + ' ' + timeStr;
-                                    return `<option value="${s.class_id}" ${alreadyAdded ? 'disabled' : ''}>${label}</option>`;
+                                    return `<option value="${String(s.class_id)}" ${alreadyAdded ? 'disabled' : ''}>${label}</option>`;
                                 }).join('')}
                             </select>
                             <button type="button" onclick="window.addAurePackageSlotFromScheduleFromUi();" style="padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px;">
@@ -7627,7 +7634,7 @@ function _renderViewImpl() {
                             </div>`;
                             }).join('')}
                         </div>
-                        ${(!form.definition || form.definition.length === 0) ? `<div style="font-size: 13px; color: var(--text-muted); padding: 10px 0;">${t.aure_no_options_yet || 'Ninguna clase añadida. Elige una arriba y pulsa Añadir.'}</div>` : ''}
+                        ${(!form.definition || form.definition.length === 0) ? `<div style="font-size: 13px; color: var(--text-muted); padding: 10px 0;">${t.aure_no_options_yet || 'Ninguna clase añadida. Elige una arriba y pulsa Añadir.'}</div>` : (eightClass && form.definition.length === 1) ? `<div style="font-size: 13px; color: var(--secondary); padding: 10px 0;">${(t.aure_add_second_class || 'Añade la segunda clase: elige arriba y pulsa Añadir.').replace(/</g, '&lt;')}</div>` : ''}
                         <div style="display: flex; gap: 8px; margin-top: 12px;">
                             <button type="button" onclick="window.saveAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: none; background: var(--secondary); color: white; cursor: pointer;">${t.save_btn || 'Guardar'}</button>
                             <button type="button" onclick="window.cancelAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); cursor: pointer;">${t.cancel_btn || 'Cancelar'}</button>
@@ -10855,6 +10862,8 @@ window.submitPaymentRequest = async (subId, method) => {
             }
             if (msg.includes('Could not find the function') || msg.includes('schema cache')) {
                 alert("Payment requests are not set up. Please run the Supabase SQL migration:\n\nsupabase/migrations/20260210100000_login_credentials_rpc.sql\n\nin your project's SQL Editor (Dashboard → SQL Editor → New query, paste file contents, Run).");
+            } else if (msg.includes('Could not choose the best candidate') && msg.includes('create_payment_request')) {
+                alert("Payment request failed: the database has two versions of create_payment_request. Run this migration in Supabase SQL Editor to fix:\n\nsupabase/migrations/20260227220000_drop_old_create_payment_request.sql");
             } else {
                 alert("Error sending request: " + msg);
             }
@@ -11567,7 +11576,8 @@ window.addAurePackageSlotFromSchedule = (classId) => {
     if (!form || !classId) return;
     const c = (state.classes || []).find(x => String(x.id) === String(classId));
     if (!c) return;
-    if ((form.definition || []).some(d => String(d.class_id) === String(classId))) return;
+    const alreadySameSlot = (form.definition || []).some(d => String(d.class_id) === String(classId) && String(d.day || '') === String(c.day || '') && String(d.time || '') === String(c.time || ''));
+    if (alreadySameSlot) return;
     const parseTimeMin = (s) => { const [h, m] = (String(s || '10:00').trim().split(':')).map(Number); return (h || 0) * 60 + (m || 0); };
     const start = parseTimeMin(c.time);
     const end = parseTimeMin(c.end_time || c.time);
