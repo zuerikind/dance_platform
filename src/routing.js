@@ -98,7 +98,13 @@ export function parseHashRoute() {
             state._calendlyReturnSchoolId = schoolId;
         }
         if (params.get('calendly') === 'error') {
-            state.calendlyErrorFromRedirect = decodeURIComponent(params.get('message') || 'Connection failed');
+            const msg = decodeURIComponent(params.get('message') || 'Connection failed');
+            const errcode = params.get('errcode') || '';
+            state.calendlyErrorFromRedirect = msg;
+            if (schoolId) state._calendlyReturnSchoolId = schoolId;
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9cbdaf'},body:JSON.stringify({sessionId:'9cbdaf',location:'routing.js:parseHashRoute(calendly=error)',message:'Calendly callback error',data:{message:msg,errcode:errcode,school_id:schoolId||null},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
                 window.history.replaceState(null, '', (window.location.pathname || '') + '#/settings');
             }

@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     const expiresAt = stateRow.expires_at as string;
     if (new Date(expiresAt) <= new Date()) {
       await adminClient.from('calendly_oauth_state').delete().eq('state', state);
-      return redirectWithError('State expired');
+      return redirectWithError('State expired', schoolId);
     }
 
     await adminClient.from('calendly_oauth_state').delete().eq('state', state);
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       .single();
     if (schoolErr || !schoolRow) {
       console.error('calendly-oauth-callback: school not found', { schoolId, error: schoolErr });
-      return redirectWithError('School not found. Please try again from the app.');
+      return redirectWithError('School not found. Please try again from the app.', schoolId);
     }
 
     const tokenBody = new URLSearchParams({
@@ -91,14 +91,14 @@ Deno.serve(async (req) => {
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
       console.error('Calendly token error:', tokenRes.status, errText);
-      return redirectWithError('Token exchange failed');
+      return redirectWithError('Token exchange failed', schoolId);
     }
     const tokenData = await tokenRes.json();
     const accessToken = tokenData.access_token;
     const refreshToken = tokenData.refresh_token;
     const expiresIn = tokenData.expires_in ?? 7200;
     if (!accessToken || !refreshToken) {
-      return redirectWithError('Invalid token response');
+      return redirectWithError('Invalid token response', schoolId);
     }
     const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     });
     if (!userRes.ok) {
       console.error('Calendly user/me error:', userRes.status, await userRes.text());
-      return redirectWithError('Failed to get Calendly user');
+      return redirectWithError('Failed to get Calendly user', schoolId);
     }
     const userData = await userRes.json();
     const resource = userData.resource ?? userData;
@@ -115,10 +115,10 @@ Deno.serve(async (req) => {
     const organizationUri =
       resource.current_organization ?? resource.organization ?? (userData as { organization?: string }).organization;
     if (!calendlyUserUri) {
-      return redirectWithError('Invalid Calendly user response');
+      return redirectWithError('Invalid Calendly user response', schoolId);
     }
     if (!organizationUri) {
-      return redirectWithError('Missing organization URI from Calendly');
+      return redirectWithError('Missing organization URI from Calendly', schoolId);
     }
 
     const now = new Date().toISOString();
@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
               : code === '42703'
                 ? 'Database schema mismatch; please contact support.'
                 : 'Failed to save connection. Please try again or contact support.';
-      return redirectWithError(msg);
+      return redirectWithError(msg, schoolId, code ?? err.code ?? '');
     }
 
     const { data: conn, error: connErr } = await adminClient
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
       .single();
     if (connErr || !conn) {
       console.error('calendly_connections select after upsert:', { schoolId, error: connErr, hasData: !!conn });
-      return redirectWithError('Failed to load connection');
+      return redirectWithError('Failed to load connection', schoolId);
     }
 
     let webhookSubscriptionUri = (conn.webhook_subscription_uri as string) || null;
@@ -235,10 +235,13 @@ Deno.serve(async (req) => {
   }
 });
 
-function redirectWithError(message: string): Response {
+function redirectWithError(message: string, schoolId?: string, errcode?: string): Response {
   const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
   const appOrigin = Deno.env.get('APP_ORIGIN') || supabaseUrl.replace(/\.supabase\.co.*/, '');
-  const redirectUrl = `${appOrigin}/#/settings?calendly=error&message=${encodeURIComponent(message)}`;
+  const params = new URLSearchParams({ calendly: 'error', message });
+  if (schoolId) params.set('school_id', schoolId);
+  if (errcode) params.set('errcode', errcode);
+  const redirectUrl = `${appOrigin}/#/settings?${params.toString()}`;
   return new Response(null, {
     status: 302,
     headers: {
