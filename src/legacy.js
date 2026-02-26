@@ -5450,17 +5450,27 @@ function _renderViewImpl() {
             </div>`;
         };
 
-        // Week context
-        const weekRange = window.getCurrentWeekRange();
+        // Week context: use schedule week when in weekly view (for carousel), else current week
+        const weekRange = state.scheduleView === 'weekly' ? window.getScheduleWeekRange() : window.getCurrentWeekRange();
         const weekStartStr = window.formatShortDate(weekRange.start, state.language);
         const weekEndStr = window.formatShortDate(weekRange.end, state.language);
         const weekBannerText = (t.week_of || 'Week of {start} – {end}').replace('{start}', weekStartStr).replace('{end}', weekEndStr);
+        const scheduleWeekOffset = state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
 
         html += `<h1 style="margin-bottom: 0.5rem;">${t.schedule_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 0.8rem; font-size: 1.1rem;">${t.classes_subtitle}</p>`;
 
-        // Week banner
-        html += `
+        // Week banner: with prev/next carousel when in weekly view
+        html += state.scheduleView === 'weekly' ? `
+            <div class="week-banner week-banner-carousel" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <button type="button" class="btn-ghost week-nav-btn" style="padding: 6px 10px; flex-shrink: 0;" onclick="state.scheduleWeekOffset=${scheduleWeekOffset - 1}; window.loadClassAvailability().then(function(){ renderView(); if (window.lucide) window.lucide.createIcons(); }).catch(function(){});" aria-label="${t.go_back || 'Previous week'}"><i data-lucide="chevron-left" size="20"></i></button>
+                <div style="display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; min-width: 0;">
+                    <i data-lucide="calendar-range" size="16" style="opacity: 0.6; flex-shrink: 0;"></i>
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${weekBannerText}</span>
+                </div>
+                <button type="button" class="btn-ghost week-nav-btn" style="padding: 6px 10px; flex-shrink: 0;" onclick="state.scheduleWeekOffset=${scheduleWeekOffset + 1}; window.loadClassAvailability().then(function(){ renderView(); if (window.lucide) window.lucide.createIcons(); }).catch(function(){});" aria-label="${t.week_of_short || 'Next week'}"><i data-lucide="chevron-right" size="20"></i></button>
+            </div>
+        ` : `
             <div class="week-banner">
                 <i data-lucide="calendar-range" size="16" style="opacity: 0.6;"></i>
                 <span>${weekBannerText}</span>
@@ -5516,10 +5526,13 @@ function _renderViewImpl() {
             daysOrder.forEach(dayKey => {
                 const aliases = dayAliases[dayKey];
                 const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
-                const isPastDay = regEnabled && window.isDayPastInCurrentWeek(dayKey);
-                const dayDate = window.getCurrentWeekDate(dayKey);
+                const dayDate = window.getScheduleWeekDate(dayKey);
+                const todayStart = new Date(getTodayForMonthly());
+                todayStart.setHours(0, 0, 0, 0);
+                const dayStart = dayDate ? new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate()) : null;
+                const isPastDay = regEnabled && dayStart && dayStart.getTime() < todayStart.getTime();
                 const dayDateStr = dayDate ? dayDate.toLocaleDateString(state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short' }) : '';
-                const isToday = dayDate && (() => { const td = new Date(getTodayForMonthly()); td.setHours(0,0,0,0); return dayDate.getTime() === td.getTime(); })();
+                const isToday = dayStart && dayStart.getTime() === todayStart.getTime();
 
                 html += `
                     <div class="day-tile ${isPastDay ? 'day-tile-past' : ''}">
@@ -7743,6 +7756,7 @@ window.showAdminFields = () => {
 
 window.setScheduleView = (v) => {
     state.scheduleView = v;
+    if (v === 'list') state.scheduleWeekOffset = 0;
     saveState();
     renderView();
     window.scrollTo(0, 0);
@@ -7750,19 +7764,19 @@ window.setScheduleView = (v) => {
 
 // --- CLASS REGISTRATION HELPERS ---
 
+// Uses mock date as "today" when state.mockDate is set (e.g. ?mockDate=2026-03-02), so "next" class is relative to mock.
 window.getNextClassDate = (dayCode) => {
     const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
     const dayAliases = { 'Mo': 1, 'Monday': 1, 'Tu': 2, 'Tuesday': 2, 'We': 3, 'Wednesday': 3, 'Th': 4, 'Thursday': 4, 'Fr': 5, 'Friday': 5, 'Sa': 6, 'Saturday': 6, 'Su': 0, 'Sunday': 0 };
     let targetDay = dayMap[dayCode];
     if (targetDay === undefined) targetDay = dayAliases[dayCode];
     if (targetDay === undefined) return null;
-    const now = new Date();
+    const now = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly() : new Date();
     const today = now.getDay(); // 0=Sun
     let daysUntil = targetDay - today;
     if (daysUntil < 0) daysUntil += 7;
     if (daysUntil === 0) {
-        // Today: if time not passed yet, use today. Otherwise next week.
-        // For registration, always use today if same day.
+        // Today: use today for registration (time check is done separately with getVirtualNow).
     }
     const result = new Date(now);
     result.setDate(result.getDate() + daysUntil);
@@ -7809,6 +7823,31 @@ window.getCurrentWeekRange = () => {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     return { start: monday, end: sunday };
+};
+
+// Returns {start: Date, end: Date} for the schedule weekly view; uses scheduleWeekOffset (0 = current week, ±1 = prev/next).
+window.getScheduleWeekRange = () => {
+    const base = window.getCurrentWeekRange();
+    const offset = (state && (state.scheduleWeekOffset != null)) ? state.scheduleWeekOffset : 0;
+    if (offset === 0) return base;
+    const monday = new Date(base.start);
+    monday.setDate(monday.getDate() + offset * 7);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { start: monday, end: sunday };
+};
+
+// Returns the date for a given day code within the schedule display week (for weekly view carousel).
+window.getScheduleWeekDate = (dayCode) => {
+    const dayOffsets = { 'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6 };
+    const dayAliasMap = { 'Mo': 0, 'Monday': 0, 'Tu': 1, 'Tuesday': 1, 'We': 2, 'Wednesday': 2, 'Th': 3, 'Thursday': 3, 'Fr': 4, 'Friday': 4, 'Sa': 5, 'Saturday': 5, 'Su': 6, 'Sunday': 6 };
+    let offset = dayOffsets[dayCode];
+    if (offset === undefined) offset = dayAliasMap[dayCode];
+    if (offset === undefined) return null;
+    const weekRange = window.getScheduleWeekRange();
+    const result = new Date(weekRange.start);
+    result.setDate(weekRange.start.getDate() + offset);
+    return result;
 };
 
 // Returns YYYY-MM-DD of Monday of the week containing the given date string (for grouping registrations by week).
@@ -7881,6 +7920,16 @@ window.loadClassAvailability = async () => {
     const weekRange = window.getCurrentWeekRange();
     for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
         dates.add(window.formatClassDate(d));
+    }
+    const scheduleOffset = (state && (state.scheduleWeekOffset != null)) ? state.scheduleWeekOffset : 0;
+    if (scheduleOffset !== 0) {
+        const displayMonday = new Date(weekRange.start);
+        displayMonday.setDate(displayMonday.getDate() + scheduleOffset * 7);
+        const displayEnd = new Date(displayMonday);
+        displayEnd.setDate(displayMonday.getDate() + 6);
+        for (let d = new Date(displayMonday); d <= displayEnd; d.setDate(d.getDate() + 1)) {
+            dates.add(window.formatClassDate(d));
+        }
     }
     (state.classes || []).forEach(c => {
         const nextDate = window.getNextClassDate(c.day);
