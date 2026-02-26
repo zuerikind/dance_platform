@@ -12601,6 +12601,8 @@ School: ${schoolName}`)) return;
         }
         if (msg.includes("Could not find the function") || msg.includes("schema cache")) {
           alert("Payment requests are not set up. Please run the Supabase SQL migration:\n\nsupabase/migrations/20260210100000_login_credentials_rpc.sql\n\nin your project's SQL Editor (Dashboard \u2192 SQL Editor \u2192 New query, paste file contents, Run).");
+        } else if (msg.includes("Could not choose the best candidate") && msg.includes("create_payment_request")) {
+          alert("Payment request failed: the database has two versions of create_payment_request. Run this migration in Supabase SQL Editor to fix:\n\nsupabase/migrations/20260227220000_drop_old_create_payment_request.sql");
         } else {
           alert("Error sending request: " + msg);
         }
