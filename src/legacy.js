@@ -1,4 +1,4 @@
-import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES } from './config.js';
+import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate } from './utils.js';
@@ -3622,9 +3622,17 @@ function shouldDeferRender() {
     return false;
 }
 
+window.isAureSchool = (school) => {
+    if (!school) return false;
+    if (school.id === AURE_SCHOOL_ID) return true;
+    const slug = (school.discovery_slug || '').toLowerCase().trim();
+    return slug === 'aure';
+};
+
 window.toggleExpandableNoRender = (key) => {
     const map = {
         'adminReg': ['adminRegExpanded', 'admin-reg-content', 'admin-reg-section'],
+        'aureAllStudents': ['aureAllStudentsExpanded', 'aure-all-students-content', 'aure-all-students-section'],
         'studentsFilter': ['studentsFilterExpanded', 'students-filter-content', 'students-filter-expandable'],
         'qrRegistrations': ['qrRegistrationsExpanded', 'qr-registrations-content', 'qr-registrations-expandable'],
         'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section'],
@@ -6360,6 +6368,46 @@ function _renderViewImpl() {
                         </div>
                     </div>`;
                 })() : ''}
+                ${window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool) ? (() => {
+                    const slots = state.packageSlots || [];
+                    const approvedWithSlot = (state.paymentRequests || []).filter(pr => pr.status === 'approved' && pr.slot_id);
+                    const bySub = {};
+                    slots.forEach(ps => {
+                        const subKey = ps.sub_name || ps.subscription_id || '—';
+                        if (!bySub[subKey]) bySub[subKey] = [];
+                        bySub[subKey].push(ps);
+                    });
+                    const subKeys = Object.keys(bySub).sort();
+                    if (subKeys.length === 0) return `
+                    <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
+                        <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px;">${t.aure_packages_by_option || 'Paquetes por opción'}</div>
+                        <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">${t.no_package_options_yet || 'No hay opciones de paquete configuradas. Configúralas en Ajustes.'}</div>
+                    </div>`;
+                    return `
+                    <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
+                        <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 10px;">${t.aure_packages_by_option || 'Paquetes por opción'}</div>
+                        ${subKeys.map(subKey => {
+                            const slotList = bySub[subKey];
+                            return `
+                            <div style="margin-bottom: 1rem;">
+                                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${(subKey || '').replace(/</g, '&lt;')}</div>
+                                ${slotList.map(slot => {
+                                    const studentsForSlot = approvedWithSlot.filter(pr => pr.slot_id === slot.id).map(pr => {
+                                        const st = (state.students || []).find(s => String(s.id) === String(pr.student_id));
+                                        return st?.name || pr.student_id || '—';
+                                    });
+                                    return `
+                                    <div style="margin-left: 12px; margin-bottom: 10px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px;">
+                                        <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${(slot.label || '').replace(/</g, '&lt;')}</div>
+                                        <div style="font-size: 13px;">
+                                            ${studentsForSlot.length === 0 ? '<span style="color: var(--text-muted); font-style: italic;">' + (t.no_students_yet || 'Ningún alumno') + '</span>' : studentsForSlot.map(n => '<span style="display: block; margin-bottom: 2px;">' + (n || '').replace(/</g, '&lt;') + '</span>').join('')}
+                                        </div>
+                                    </div>`;
+                                }).join('')}
+                            </div>`;
+                        }).join('')}
+                    </div>`;
+                })() : ''}
                 ${state.currentSchool?.profile_type === 'private_teacher' ? (() => {
                     const lessons = (state.privateLessons || []).filter(l => l.status === 'confirmed' || l.status === 'attended');
                     const acceptedReqs = (state.privateClassRequests || []).filter(r => r.status === 'accepted');
@@ -6483,7 +6531,17 @@ function _renderViewImpl() {
                         </div>
                     </div>`;
                 })() : ''}
-                ${state.currentSchool?.profile_type === 'private_teacher' ? `
+                ${(window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool)) ? `
+                <div class="admin-reg-section aure-all-students-section ${state.aureAllStudentsExpanded ? 'expanded' : ''}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
+                    <div class="admin-reg-header" onclick="toggleExpandableNoRender('aureAllStudents')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
+                        <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.aure_ver_todos_los_alumnos || 'Ver todos los alumnos'}</span>
+                        <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
+                    </div>
+                    <div id="aure-all-students-content" style="padding: 0.8rem 0; display: ${state.aureAllStudentsExpanded ? '' : 'none'};">
+                        ${adminStudentsFilterBlock}
+                    </div>
+                </div>
+                ` : (state.currentSchool?.profile_type === 'private_teacher' ? `
                 <div class="admin-students-list-expandable ${state.adminStudentsListExpandedForPrivateTeacher ? 'expanded' : ''}" style="margin: 0 1.2rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
                     <div class="expandable-section-header" onclick="state.adminStudentsListExpandedForPrivateTeacher=!state.adminStudentsListExpandedForPrivateTeacher; saveState(); renderView();" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -6547,7 +6605,7 @@ function _renderViewImpl() {
                     </div>
                     ` : (() => { const _f = getFilteredStudents(state.adminStudentsSearch || ''); setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0); return _f.map(s => renderAdminStudentCard(s)).join(''); })()}
                 </div>
-                ` : adminStudentsFilterBlock}
+                ` : adminStudentsFilterBlock)}
             </div>
         `;
     } else if (view === 'admin-memberships') {
@@ -7375,6 +7433,91 @@ function _renderViewImpl() {
             </div>
             ` : ''}
             ` : ''}
+
+            ${window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool) ? (() => {
+                const aureSlots = state.packageSlots || [];
+                const aureGroupPlans = adminGroupOnly || [];
+                const form = state.aurePackageSlotForm;
+                const dayOpts = daysOrder.map(d => ({ value: d, label: d }));
+                const formatDefSummary = (def) => {
+                    if (!Array.isArray(def) || def.length === 0) return '—';
+                    const cls = state.classes || [];
+                    return def.map((row, i) => {
+                        const c = cls.find(x => String(x.id) === String(row.class_id));
+                        const name = c?.name || row.class_id || '?';
+                        const time = row.time || '';
+                        const dur = row.duration_minutes ? row.duration_minutes + ' min' : '';
+                        return (name + ' · ' + (row.day || '') + (time ? ' ' + time : '') + (dur ? ' (' + dur + ')' : '')).trim();
+                    }).join('; ') || '—';
+                };
+                return `
+            <div class="settings-section-header" onclick="state.aurePackageOptionsExpanded=!state.aurePackageOptionsExpanded; renderView();" style="padding: 0 1.2rem; margin-top: 2.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                <span>${t.aure_package_options_title || 'Opciones de paquetes'}</span>
+                <i data-lucide="chevron-${state.aurePackageOptionsExpanded ? 'up' : 'down'}" size="18" style="opacity: 0.6;"></i>
+            </div>
+            ${state.aurePackageOptionsExpanded ? `
+            <div style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 1rem;">${t.aure_package_options_desc || 'Define las opciones que los alumnos eligen al comprar un paquete (ej. Domingos 2h, Martes + Jueves).'}</p>
+                ${aureGroupPlans.length === 0 ? `<div style="padding: 1rem; background: var(--system-gray6); border-radius: 12px; color: var(--text-secondary); font-size: 14px;">${t.aure_no_group_plans || 'Crea primero un plan de grupo (ej. 4 o 8 clases) en Planes.'}</div>` : aureGroupPlans.map(sub => {
+                    const subSlots = aureSlots.filter(s => String(s.subscription_id) === String(sub.id) || (s.sub_name || '').trim() === (sub.name || '').trim());
+                    const isFormForThis = form && (String(form.subscription_id) === String(sub.id) || (form.sub_name || '').trim() === (sub.name || '').trim());
+                    return `
+                <div class="aure-plan-slots-block" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--system-gray6); border-radius: 16px;">
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(sub.name || '').replace(/</g, '&lt;')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${t.aure_options_students_choose || 'Opciones que eligen los alumnos'}:</div>
+                    ${subSlots.length === 0 && !isFormForThis ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">${t.aure_no_options_yet || 'Ninguna opción. Añade una abajo.'}</div>` : ''}
+                    ${subSlots.map(slot => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: var(--bg-body); border-radius: 10px; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;">${(slot.label || '').replace(/</g, '&lt;')}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">${formatDefSummary(slot.definition)}</div>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" onclick="window.openAurePackageSlotEdit('${slot.id}')" style="padding: 6px 10px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer;">${t.edit_btn || 'Editar'}</button>
+                            <button type="button" onclick="if(confirm('${(t.aure_delete_option_confirm || '¿Eliminar esta opción?').replace(/'/g, "\\'")}')) window.deleteAurePackageSlotOption('${slot.id}')" style="padding: 6px 10px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--system-red); cursor: pointer;">${t.delete_btn || 'Eliminar'}</button>
+                        </div>
+                    </div>`).join('')}
+                    ${isFormForThis ? `
+                    <div class="aure-slot-form" style="padding: 12px; background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); margin-top: 10px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t.aure_option_label_field || 'Nombre de la opción'}</label>
+                        <input type="text" id="aure-slot-label" value="${(form.label || '').replace(/"/g, '&quot;')}" placeholder="${(t.aure_option_label_placeholder || 'ej. Domingos 2h').replace(/"/g, '&quot;')}" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t.aure_option_slots_field || 'Clase, día y horario'}</label>
+                        <div id="aure-slot-definition-rows">
+                            ${(form.definition && form.definition.length ? form.definition : [{ class_id: '', day: '', time: '10:00', duration_minutes: 60 }]).map((row, idx) => `
+                            <div class="aure-def-row" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px;">
+                                <select class="aure-def-class" data-idx="${idx}" style="min-width: 120px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
+                                    <option value="">${t.aure_class_label || 'Clase'}</option>
+                                    ${classesList.map(c => `<option value="${c.id}" ${String(row.class_id) === String(c.id) ? 'selected' : ''}>${(c.name || '').replace(/</g, '&lt;')}</option>`).join('')}
+                                </select>
+                                <select class="aure-def-day" data-idx="${idx}" style="min-width: 80px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
+                                    ${dayOpts.map(o => `<option value="${o.value}" ${(row.day || '') === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+                                </select>
+                                <input type="text" class="aure-def-time" data-idx="${idx}" value="${(row.time || '10:00').replace(/"/g, '&quot;')}" placeholder="10:00" style="width: 70px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
+                                <input type="number" class="aure-def-duration" data-idx="${idx}" value="${row.duration_minutes != null ? row.duration_minutes : 60}" placeholder="60" min="15" step="15" style="width: 70px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
+                                <span style="font-size: 12px; color: var(--text-secondary);">min</span>
+                                ${idx > 0 ? `<button type="button" onclick="window.removeAurePackageSlotDefRow(${idx})" style="padding: 6px; color: var(--system-red); background: none; border: none; cursor: pointer;"><i data-lucide="trash-2" size="14"></i></button>` : ''}
+                            </div>`).join('')}
+                        </div>
+                        <button type="button" onclick="window.addAurePackageSlotDefRow()" style="margin-top: 8px; padding: 8px 12px; font-size: 13px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="plus" size="16"></i> ${t.aure_add_time_slot || 'Añadir otro horario'}
+                        </button>
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button type="button" onclick="window.saveAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: none; background: var(--secondary); color: white; cursor: pointer;">${t.save_btn || 'Guardar'}</button>
+                            <button type="button" onclick="window.cancelAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); cursor: pointer;">${t.cancel_btn || 'Cancelar'}</button>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${!isFormForThis ? `
+                    <button type="button" onclick="window.openAurePackageSlotForm('${(sub.id || '').replace(/'/g, "\\'")}', '${(sub.name || '').replace(/'/g, "\\'").replace(/</g, '&lt;')}')" style="margin-top: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="plus" size="18"></i> ${t.aure_add_option || 'Añadir opción'}
+                    </button>
+                    ` : ''}
+                </div>`;
+                }).join('')}
+            </div>
+            ` : ''}
+            `;
+            })() : ''}
 
             <!-- Profile, password, admins, additional features, private contact (expandable at bottom) -->
             <div class="settings-advanced-expandable ${state.settingsAdvancedExpanded ? 'expanded' : ''}" style="margin-top: 2.5rem; margin-bottom: 1rem; padding: 0 1.2rem; border-top: 1px solid var(--border); padding-top: 1rem;">
@@ -11144,6 +11287,125 @@ window.saveBankSettings = async (btn) => {
             btn.innerHTML = '<i data-lucide="save" size="16"></i> ' + (t('save_bank_btn') || 'Save Bank Details');
             if (window.lucide) lucide.createIcons();
         }
+    }
+};
+
+window.refreshAurePackageSlots = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+        const { data, error } = await supabaseClient.rpc('get_package_slots', { p_school_id: state.currentSchool.id, p_subscription_id: null });
+        state.packageSlots = !error && Array.isArray(data) ? data : [];
+    } catch (_) {
+        state.packageSlots = [];
+    }
+};
+
+window.openAurePackageSlotForm = (subId, subName) => {
+    state.aurePackageSlotForm = {
+        subscription_id: subId != null ? String(subId) : null,
+        sub_name: subName != null ? String(subName) : null,
+        label: '',
+        definition: [{ class_id: '', day: 'Mon', time: '10:00', duration_minutes: 60 }],
+        editId: null
+    };
+    renderView();
+};
+
+window.openAurePackageSlotEdit = (slotId) => {
+    const slot = (state.packageSlots || []).find(s => String(s.id) === String(slotId));
+    if (!slot) return;
+    const def = Array.isArray(slot.definition) ? slot.definition : (slot.definition && typeof slot.definition === 'object' ? [slot.definition] : []);
+    state.aurePackageSlotForm = {
+        subscription_id: slot.subscription_id,
+        sub_name: slot.sub_name,
+        label: slot.label || '',
+        definition: def.length ? def.map(d => ({ class_id: d.class_id ?? '', day: d.day || 'Mon', time: d.time || '10:00', duration_minutes: d.duration_minutes ?? 60 })) : [{ class_id: '', day: 'Mon', time: '10:00', duration_minutes: 60 }],
+        editId: slot.id
+    };
+    renderView();
+};
+
+window.cancelAurePackageSlotOption = () => {
+    state.aurePackageSlotForm = null;
+    renderView();
+};
+
+window.addAurePackageSlotDefRow = () => {
+    if (!state.aurePackageSlotForm) return;
+    state.aurePackageSlotForm.definition = state.aurePackageSlotForm.definition || [];
+    state.aurePackageSlotForm.definition.push({ class_id: '', day: 'Mon', time: '10:00', duration_minutes: 60 });
+    renderView();
+};
+
+window.removeAurePackageSlotDefRow = (idx) => {
+    if (!state.aurePackageSlotForm?.definition || idx <= 0) return;
+    state.aurePackageSlotForm.definition.splice(idx, 1);
+    renderView();
+};
+
+window.saveAurePackageSlotOption = async () => {
+    const form = state.aurePackageSlotForm;
+    if (!form || !state.currentSchool?.id || !supabaseClient) return;
+    const labelEl = document.getElementById('aure-slot-label');
+    const label = labelEl ? labelEl.value.trim() : '';
+    if (!label) {
+        alert((typeof window.t === 'function' ? window.t('aure_option_label_required') : null) || 'Escribe el nombre de la opción.');
+        return;
+    }
+    const rows = document.querySelectorAll('.aure-def-row');
+    const definition = [];
+    rows.forEach((row, i) => {
+        const classSel = row.querySelector('.aure-def-class');
+        const daySel = row.querySelector('.aure-def-day');
+        const timeInp = row.querySelector('.aure-def-time');
+        const durInp = row.querySelector('.aure-def-duration');
+        const class_id = classSel?.value ? (isNaN(Number(classSel.value)) ? classSel.value : Number(classSel.value)) : null;
+        const day = daySel?.value || '';
+        const time = timeInp?.value?.trim() || '10:00';
+        const duration_minutes = durInp?.value ? parseInt(durInp.value, 10) : 60;
+        if (class_id != null && day) definition.push({ class_id, day, time, duration_minutes: isNaN(duration_minutes) ? 60 : duration_minutes });
+    });
+    if (definition.length === 0) {
+        alert((typeof window.t === 'function' ? window.t('aure_option_def_required') : null) || 'Añade al menos una clase, día y horario.');
+        return;
+    }
+    try {
+        if (form.editId) {
+            const { error } = await supabaseClient.from('package_slots').update({ label, definition }).eq('id', form.editId).eq('school_id', state.currentSchool.id);
+            if (error) throw error;
+        } else {
+            const maxOrder = Math.max(0, ...(state.packageSlots || []).filter(s => s.subscription_id === form.subscription_id || s.sub_name === form.sub_name).map(s => s.sort_order || 0));
+            const { error } = await supabaseClient.from('package_slots').insert({
+                school_id: state.currentSchool.id,
+                subscription_id: form.subscription_id || null,
+                sub_name: form.sub_name || null,
+                label,
+                definition,
+                sort_order: maxOrder + 1
+            });
+            if (error) throw error;
+        }
+        state.aurePackageSlotForm = null;
+        await window.refreshAurePackageSlots();
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+        console.error('saveAurePackageSlotOption:', err);
+        alert((typeof window.t === 'function' ? window.t('error_saving') : null) || 'Error al guardar. ' + (err?.message || ''));
+    }
+};
+
+window.deleteAurePackageSlotOption = async (slotId) => {
+    if (!state.currentSchool?.id || !supabaseClient) return;
+    try {
+        const { error } = await supabaseClient.from('package_slots').delete().eq('id', slotId).eq('school_id', state.currentSchool.id);
+        if (error) throw error;
+        await window.refreshAurePackageSlots();
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+        console.error('deleteAurePackageSlotOption:', err);
+        alert((typeof window.t === 'function' ? window.t('error_deleting') : null) || 'Error al eliminar. ' + (err?.message || ''));
     }
 };
 

@@ -2,7 +2,7 @@
  * Data loading from Supabase: fetchAllData, fetchPlatformData, fetchDiscoveryData.
  * Uses state/saveState and calls window.renderView, window.checkExpirations, etc.
  */
-import { supabaseClient } from './config.js';
+import { supabaseClient, AURE_SCHOOL_ID } from './config.js';
 import { state, saveState } from './state.js';
 
 const FETCH_THROTTLE_MS = 1500;
@@ -417,6 +417,17 @@ export async function fetchAllData() {
                     });
                 }
                 state.adminWeekRegistrations = allWeekRegs;
+            }
+            const isAure = state.currentSchool && (state.currentSchool.id === AURE_SCHOOL_ID || (state.currentSchool.discovery_slug || '').toLowerCase().trim() === 'aure');
+            if (isAure && sid && supabaseClient) {
+                try {
+                    const { data: slotsData, error: slotsErr } = await supabaseClient.rpc('get_package_slots', { p_school_id: sid, p_subscription_id: null });
+                    state.packageSlots = !slotsErr && Array.isArray(slotsData) ? slotsData : [];
+                } catch (_) {
+                    state.packageSlots = [];
+                }
+            } else {
+                state.packageSlots = [];
             }
         }
         if (state.currentUser && !state.isAdmin && state.students?.length > 0) {

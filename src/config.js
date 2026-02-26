@@ -3,6 +3,9 @@
  * Change Supabase project, discovery countries, or XSS escaping here.
  */
 
+/** School id for AURÉ (Mexico City). Used for Aure-specific package slots and admin UI. */
+export const AURE_SCHOOL_ID = '38e570f9-5ca0-435e-8e99-70ebb5ae3b64';
+
 export const SUPABASE_URL = 'https://fziyybqhecfxhkagknvg.supabase.co';
 export const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs';
 export const supabaseClient = typeof window !== 'undefined' && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
