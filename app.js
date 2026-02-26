@@ -2766,7 +2766,7 @@
       student_registered_for: "Registrado en",
       register_success: "Registro exitoso!",
       register_error: "No se pudo registrar. Intenta de nuevo.",
-      no_active_membership_register: "No tienes membresía activa. Compra un plan primero.",
+      no_active_membership_register: "No tienes membres\xEDa activa. Compra un plan primero.",
       cancel_success: "Registro cancelado.",
       cancel_error: "No se pudo cancelar. Intenta de nuevo.",
       cancel_too_late_error: "No se puede cancelar con menos de 4 horas antes del inicio de la clase.",
@@ -9909,7 +9909,7 @@
       });
     } catch (e) {
       console.error("Registration error:", e);
-      const msg = (e && e.message) || "";
+      const msg = e && e.message || "";
       const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
       alert(isNoMembership ? t2("no_active_membership_register") : msg || t2("register_error"));
     }
@@ -9959,7 +9959,7 @@
       });
     } catch (e) {
       console.error("Monthly registration error:", e);
-      const msg = (e && e.message) || "";
+      const msg = e && e.message || "";
       const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
       alert(isNoMembership ? t2("no_active_membership_register") : msg || t2("register_error"));
     }
