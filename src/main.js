@@ -2,7 +2,7 @@
  * Entry point. Bundled to app.js so index.html keeps one script tag.
  * Attaches core modules to window for HTML and legacy, runs legacy, then init and event listeners.
  */
-import { escapeHtml, supabaseClient, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES } from './config.js';
+import { escapeHtml, supabaseClient, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, getPlanExpiryUseFixedDate } from './utils.js';
@@ -135,6 +135,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             const d = new Date(mockDateStr);
             if (!isNaN(d.getTime())) state.mockDate = mockDateStr;
         }
+        const hostname = typeof window !== 'undefined' && window.location && window.location.hostname ? window.location.hostname.toLowerCase() : '';
+        const isAureSubdomain = hostname === 'aure.bailadmin.lat' || hostname === 'aurea.bailadmin.lat';
+        if (isAureSubdomain) {
+            state.currentSchool = { id: AURE_SCHOOL_ID, name: 'AURÉ', discovery_slug: 'aure' };
+            state._aureSubdomain = true;
+        }
         const local = localStorage.getItem('dance_app_state');
         let saved = {};
         try {
@@ -157,6 +163,10 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (saved.currentUser?.school_id && !saved.isAdmin) {
                 const match = saved.currentSchool && saved.currentSchool.id === saved.currentUser.school_id;
                 state.currentSchool = match ? saved.currentSchool : { id: saved.currentUser.school_id, name: saved.currentSchool?.name || 'School' };
+            }
+            if (isAureSubdomain) {
+                state.currentSchool = { id: AURE_SCHOOL_ID, name: 'AURÉ', discovery_slug: 'aure' };
+                if (!state.currentUser && !state.isAdmin && !state.isPlatformDev) state.currentView = 'auth';
             }
             const hasUserState = !!(saved.currentUser || saved.isAdmin || saved.isPlatformDev);
             if (hasUserState && !sessionIdentityMatches(saved)) {
@@ -183,6 +193,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (saved.afterLogin !== undefined) state.afterLogin = saved.afterLogin;
             if (saved.reviewDraft !== undefined) state.reviewDraft = saved.reviewDraft;
         }
+        if (isAureSubdomain && !state.currentUser && !state.isAdmin && !state.isPlatformDev) state.currentView = 'auth';
 
         updateI18n();
         document.body.setAttribute('data-theme', state.theme);

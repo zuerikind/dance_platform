@@ -74,6 +74,7 @@ export let state = {
     aureAllStudentsExpanded: false,
     aurePackageOptionsExpanded: true,
     aurePackageSlotForm: null,
+    aureSelectedSlotId: null,
     teacherAcceptedClassesExpanded: true,
     teacherAcceptedClassesView: 'list',
     teacherAcceptedCalendarDate: null,

@@ -601,6 +601,35 @@ const DANCE_LOCALES = {
         week_of_short: "Week of {start}",
         class_registrations_title: "Class Registrations",
         no_registrations_yet: "No registrations this week",
+        aure_packages_by_option: "Packages by option",
+        aure_no_package_options_yet: "No package options configured yet. Set them up in Settings.",
+        aure_ver_todos_los_alumnos: "See all students",
+        aure_package_options_title: "Package options",
+        aure_package_options_desc: "Define the options students choose when buying a package (e.g. Sundays 2h, Tue + Thu).",
+        aure_options_students_choose: "Options students choose",
+        aure_choose_option_title: "Choose your option",
+        aure_choose_option_desc: "Choose the schedule option for this package.",
+        aure_selected_option: "Option:",
+        aure_4class_options_desc: "Options are the classes in your schedule. Students choose one.",
+        aure_8class_options_desc: "Define 4 options; each option = 2 classes from your schedule.",
+        aure_no_classes_in_schedule: "Add classes in Schedule first.",
+        aure_use_schedule_as_options: "Use schedule as options",
+        aure_option_two_classes_hint: "Add the 2 classes that make up this option.",
+        aure_no_options_yet: "No options yet. Add one below.",
+        aure_add_option: "Add option",
+        aure_no_group_plans: "Create a group plan first (e.g. 4 or 8 classes) in Plans.",
+        aure_option_label_field: "Option name",
+        aure_option_label_placeholder: "e.g. Sundays 2h",
+        aure_option_slots_field: "Class, day and time",
+        aure_option_schedule_hint: "Select which classes from your schedule make up this option.",
+        aure_class_label: "Class",
+        aure_add_time_slot: "Add another time slot",
+        aure_add_from_schedule: "Add class from schedule",
+        aure_select_schedule_placeholder: "Select a class…",
+        aure_select_class_first: "Select a class from the dropdown first, then click Add.",
+        aure_no_schedule_classes: "No classes in the schedule. Add classes in Schedule first.",
+        aure_delete_option_confirm: "Delete this option?",
+        no_students_yet: "No students yet",
         registered_count: "{n} registered",
         past_day: "Past",
         // Private classes
@@ -1228,6 +1257,35 @@ const DANCE_LOCALES = {
         week_of_short: "Semana del {start}",
         class_registrations_title: "Registros de clases",
         no_registrations_yet: "Sin registros esta semana",
+        aure_packages_by_option: "Paquetes por opción",
+        aure_no_package_options_yet: "No hay opciones de paquete configuradas. Configúralas en Ajustes.",
+        aure_ver_todos_los_alumnos: "Ver todos los alumnos",
+        aure_package_options_title: "Opciones de paquetes",
+        aure_package_options_desc: "Define las opciones que los alumnos eligen al comprar un paquete (ej. Domingos 2h, Martes + Jueves).",
+        aure_options_students_choose: "Opciones que eligen los alumnos",
+        aure_choose_option_title: "Elige tu opción",
+        aure_choose_option_desc: "Elige el horario que quieres para este paquete.",
+        aure_selected_option: "Opción:",
+        aure_4class_options_desc: "Las opciones son las clases de tu horario. Los alumnos eligen una.",
+        aure_8class_options_desc: "Define 4 opciones; cada opción = 2 clases de tu horario.",
+        aure_no_classes_in_schedule: "Añade clases en Horario primero.",
+        aure_use_schedule_as_options: "Usar horario como opciones",
+        aure_option_two_classes_hint: "Añade las 2 clases que forman esta opción.",
+        aure_no_options_yet: "Ninguna opción. Añade una abajo.",
+        aure_add_option: "Añadir opción",
+        aure_no_group_plans: "Crea primero un plan de grupo (ej. 4 u 8 clases) en Planes.",
+        aure_option_label_field: "Nombre de la opción",
+        aure_option_label_placeholder: "ej. Domingos 2h",
+        aure_option_slots_field: "Clase, día y horario",
+        aure_option_schedule_hint: "Elige las clases de tu horario que forman esta opción.",
+        aure_class_label: "Clase",
+        aure_add_time_slot: "Añadir otro horario",
+        aure_add_from_schedule: "Añadir clase del horario",
+        aure_select_schedule_placeholder: "Elige una clase…",
+        aure_select_class_first: "Elige una clase en el desplegable antes de añadir.",
+        aure_no_schedule_classes: "No hay clases en el horario. Añade clases en Horario primero.",
+        aure_delete_option_confirm: "¿Eliminar esta opción?",
+        no_students_yet: "Ningún alumno",
         registered_count: "{n} registrados",
         past_day: "Pasado",
         // Private classes
@@ -1905,6 +1963,35 @@ const DANCE_LOCALES = {
         week_of_short: "Woche vom {start}",
         class_registrations_title: "Kursanmeldungen",
         no_registrations_yet: "Noch keine Anmeldungen diese Woche",
+        aure_packages_by_option: "Pakete nach Option",
+        aure_no_package_options_yet: "Noch keine Paketoptionen. In den Einstellungen einrichten.",
+        aure_ver_todos_los_alumnos: "Alle Schüler anzeigen",
+        aure_package_options_title: "Paketoptionen",
+        aure_package_options_desc: "Optionen festlegen, die Schüler beim Paketkauf wählen (z. B. Sonntag 2h, Di + Do).",
+        aure_options_students_choose: "Optionen für Schüler",
+        aure_choose_option_title: "Wähle deine Option",
+        aure_choose_option_desc: "Wähle die gewünschte Kurszeit für dieses Paket.",
+        aure_selected_option: "Option:",
+        aure_4class_options_desc: "Die Optionen sind die Kurse in deinem Stundenplan. Schüler wählen einen.",
+        aure_8class_options_desc: "Lege 4 Optionen fest; jede Option = 2 Kurse aus deinem Stundenplan.",
+        aure_no_classes_in_schedule: "Zuerst Kurse im Stundenplan anlegen.",
+        aure_use_schedule_as_options: "Stundenplan als Optionen übernehmen",
+        aure_option_two_classes_hint: "Füge die 2 Kurse hinzu, die diese Option bilden.",
+        aure_no_options_yet: "Noch keine Option. Unten hinzufügen.",
+        aure_add_option: "Option hinzufügen",
+        aure_no_group_plans: "Zuerst einen Gruppenplan (z. B. 4 oder 8 Kurse) unter Pläne anlegen.",
+        aure_option_label_field: "Optionsname",
+        aure_option_label_placeholder: "z. B. Sonntag 2h",
+        aure_option_slots_field: "Kurs, Tag und Uhrzeit",
+        aure_option_schedule_hint: "Wähle die Kurse aus deinem Stundenplan für diese Option.",
+        aure_class_label: "Kurs",
+        aure_add_time_slot: "Weiteren Zeitblock hinzufügen",
+        aure_add_from_schedule: "Kurs aus dem Stundenplan hinzufügen",
+        aure_select_schedule_placeholder: "Kurs wählen…",
+        aure_select_class_first: "Wähle zuerst einen Kurs in der Liste, dann auf Hinzufügen klicken.",
+        aure_no_schedule_classes: "Keine Kurse im Stundenplan. Zuerst Kurse unter Stundenplan anlegen.",
+        aure_delete_option_confirm: "Diese Option löschen?",
+        no_students_yet: "Noch keine Schüler",
         registered_count: "{n} angemeldet",
         past_day: "Vergangen",
         // Private classes
@@ -6381,7 +6468,7 @@ function _renderViewImpl() {
                     if (subKeys.length === 0) return `
                     <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
                         <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px;">${t.aure_packages_by_option || 'Paquetes por opción'}</div>
-                        <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">${t.no_package_options_yet || 'No hay opciones de paquete configuradas. Configúralas en Ajustes.'}</div>
+                        <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">${t.aure_no_package_options_yet || 'No hay opciones de paquete configuradas. Configúralas en Ajustes.'}</div>
                     </div>`;
                     return `
                     <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
@@ -7438,7 +7525,15 @@ function _renderViewImpl() {
                 const aureSlots = state.packageSlots || [];
                 const aureGroupPlans = adminGroupOnly || [];
                 const form = state.aurePackageSlotForm;
-                const dayOpts = daysOrder.map(d => ({ value: d, label: d }));
+                const dayOrder = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                const dayIdx = (d) => { const i = dayOrder.indexOf(d); return i >= 0 ? i : 99; };
+                const parseTimeMin = (s) => { const [h, m] = (String(s || '10:00').trim().split(':')).map(Number); return (h || 0) * 60 + (m || 0); };
+                const scheduleSlots = (state.classes || []).slice().sort((a, b) => dayIdx(a.day) - dayIdx(b.day) || (a.time || '').localeCompare(b.time || '')).map(c => {
+                    const start = parseTimeMin(c.time);
+                    const end = parseTimeMin(c.end_time || c.time);
+                    const dur = end > start ? end - start : 60;
+                    return { class_id: c.id, class_name: c.name || '', day: c.day || 'Mon', time: (c.time || '10:00').trim(), end_time: (c.end_time || c.time || '').trim(), duration_minutes: dur };
+                });
                 const formatDefSummary = (def) => {
                     if (!Array.isArray(def) || def.length === 0) return '—';
                     const cls = state.classes || [];
@@ -7446,10 +7541,14 @@ function _renderViewImpl() {
                         const c = cls.find(x => String(x.id) === String(row.class_id));
                         const name = c?.name || row.class_id || '?';
                         const time = row.time || '';
-                        const dur = row.duration_minutes ? row.duration_minutes + ' min' : '';
-                        return (name + ' · ' + (row.day || '') + (time ? ' ' + time : '') + (dur ? ' (' + dur + ')' : '')).trim();
+                        const end = row.end_time || (row.duration_minutes ? null : '');
+                        const timeStr = end ? time + '–' + end : (time + (row.duration_minutes ? ' (' + row.duration_minutes + ' min)' : ''));
+                        return (name + ' · ' + (row.day || '') + ' ' + timeStr).trim();
                     }).join('; ') || '—';
                 };
+                const formatClassLine = (c) => { const t = (c.time || '10:00').trim(); const e = (c.end_time || c.time || '').trim(); return (c.name || '').replace(/</g, '&lt;') + ' · ' + (c.day || '') + ' ' + (e ? t + '–' + e : t); };
+                const is4ClassPlan = (s) => Number(s.limit_count) === 4;
+                const is8ClassPlan = (s) => Number(s.limit_count) === 8;
                 return `
             <div class="settings-section-header" onclick="state.aurePackageOptionsExpanded=!state.aurePackageOptionsExpanded; renderView();" style="padding: 0 1.2rem; margin-top: 2.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 <span>${t.aure_package_options_title || 'Opciones de paquetes'}</span>
@@ -7461,9 +7560,27 @@ function _renderViewImpl() {
                 ${aureGroupPlans.length === 0 ? `<div style="padding: 1rem; background: var(--system-gray6); border-radius: 12px; color: var(--text-secondary); font-size: 14px;">${t.aure_no_group_plans || 'Crea primero un plan de grupo (ej. 4 o 8 clases) en Planes.'}</div>` : aureGroupPlans.map(sub => {
                     const subSlots = aureSlots.filter(s => String(s.subscription_id) === String(sub.id) || (s.sub_name || '').trim() === (sub.name || '').trim());
                     const isFormForThis = form && (String(form.subscription_id) === String(sub.id) || (form.sub_name || '').trim() === (sub.name || '').trim());
+                    const fourClass = is4ClassPlan(sub);
+                    const eightClass = is8ClassPlan(sub);
+                    if (fourClass) {
+                        return `
+                <div class="aure-plan-slots-block aure-plan-4class" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--system-gray6); border-radius: 16px;">
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">${(sub.name || '').replace(/</g, '&lt;')}</div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${(t.aure_4class_options_desc || 'Las opciones son las clases de tu horario. Los alumnos eligen una.').replace(/</g, '&lt;')}</p>
+                    ${(state.classes || []).length === 0 ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">${t.aure_no_classes_in_schedule || 'Añade clases en Horario primero.'}</div>` : `
+                    <div style="margin-bottom: 10px;">
+                        ${(state.classes || []).slice().sort((a, b) => dayIdx(a.day) - dayIdx(b.day) || (a.time || '').localeCompare(b.time || '')).map(c => `
+                        <div style="padding: 8px 12px; background: var(--bg-body); border-radius: 10px; margin-bottom: 6px; font-size: 14px;">${formatClassLine(c)}</div>`).join('')}
+                    </div>
+                    <button type="button" onclick="window.syncAure4ClassOptionsFromSchedule('${(sub.id || '').replace(/'/g, "\\'")}', '${(sub.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" style="padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="refresh-cw" size="18"></i> ${t.aure_use_schedule_as_options || 'Usar horario como opciones'}
+                    </button>`}
+                </div>`;
+                    }
                     return `
                 <div class="aure-plan-slots-block" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--system-gray6); border-radius: 16px;">
-                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(sub.name || '').replace(/</g, '&lt;')}</div>
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">${(sub.name || '').replace(/</g, '&lt;')}</div>
+                    ${eightClass ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${(t.aure_8class_options_desc || 'Define 4 opciones; cada opción = 2 clases de tu horario.').replace(/</g, '&lt;')}</p>` : ''}
                     <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${t.aure_options_students_choose || 'Opciones que eligen los alumnos'}:</div>
                     ${subSlots.length === 0 && !isFormForThis ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">${t.aure_no_options_yet || 'Ninguna opción. Añade una abajo.'}</div>` : ''}
                     ${subSlots.map(slot => `
@@ -7482,25 +7599,35 @@ function _renderViewImpl() {
                         <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t.aure_option_label_field || 'Nombre de la opción'}</label>
                         <input type="text" id="aure-slot-label" value="${(form.label || '').replace(/"/g, '&quot;')}" placeholder="${(t.aure_option_label_placeholder || 'ej. Domingos 2h').replace(/"/g, '&quot;')}" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
                         <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t.aure_option_slots_field || 'Clase, día y horario'}</label>
-                        <div id="aure-slot-definition-rows">
-                            ${(form.definition && form.definition.length ? form.definition : [{ class_id: '', day: '', time: '10:00', duration_minutes: 60 }]).map((row, idx) => `
-                            <div class="aure-def-row" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px;">
-                                <select class="aure-def-class" data-idx="${idx}" style="min-width: 120px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
-                                    <option value="">${t.aure_class_label || 'Clase'}</option>
-                                    ${classesList.map(c => `<option value="${c.id}" ${String(row.class_id) === String(c.id) ? 'selected' : ''}>${(c.name || '').replace(/</g, '&lt;')}</option>`).join('')}
-                                </select>
-                                <select class="aure-def-day" data-idx="${idx}" style="min-width: 80px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
-                                    ${dayOpts.map(o => `<option value="${o.value}" ${(row.day || '') === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
-                                </select>
-                                <input type="text" class="aure-def-time" data-idx="${idx}" value="${(row.time || '10:00').replace(/"/g, '&quot;')}" placeholder="10:00" style="width: 70px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
-                                <input type="number" class="aure-def-duration" data-idx="${idx}" value="${row.duration_minutes != null ? row.duration_minutes : 60}" placeholder="60" min="15" step="15" style="width: 70px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 13px;">
-                                <span style="font-size: 12px; color: var(--text-secondary);">min</span>
-                                ${idx > 0 ? `<button type="button" onclick="window.removeAurePackageSlotDefRow(${idx})" style="padding: 6px; color: var(--system-red); background: none; border: none; cursor: pointer;"><i data-lucide="trash-2" size="14"></i></button>` : ''}
-                            </div>`).join('')}
+                        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">${(eightClass ? (t.aure_option_two_classes_hint || 'Añade las 2 clases que forman esta opción.') : (t.aure_option_schedule_hint || 'Elige las clases de tu horario que forman esta opción.')).replace(/</g, '&lt;')}</p>
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <select id="aure-schedule-slot-select" style="flex: 1; min-width: 180px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px;">
+                                <option value="">${t.aure_select_schedule_placeholder || 'Elige una clase…'}</option>
+                                ${scheduleSlots.map(s => {
+                                    const alreadyAdded = (form.definition || []).some(d => String(d.class_id) === String(s.class_id));
+                                    const timeStr = s.end_time ? s.time + '–' + s.end_time : s.time;
+                                    const label = (s.class_name || '').replace(/</g, '&lt;') + ' · ' + s.day + ' ' + timeStr;
+                                    return `<option value="${s.class_id}" ${alreadyAdded ? 'disabled' : ''}>${label}</option>`;
+                                }).join('')}
+                            </select>
+                            <button type="button" onclick="window.addAurePackageSlotFromScheduleFromUi();" style="padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="plus" size="16"></i> ${t.aure_add_from_schedule || 'Añadir clase del horario'}
+                            </button>
                         </div>
-                        <button type="button" onclick="window.addAurePackageSlotDefRow()" style="margin-top: 8px; padding: 8px 12px; font-size: 13px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="plus" size="16"></i> ${t.aure_add_time_slot || 'Añadir otro horario'}
-                        </button>
+                        <div id="aure-slot-definition-rows">
+                            ${(form.definition && form.definition.length ? form.definition : []).map((row, idx) => {
+                                const c = (state.classes || []).find(x => String(x.id) === String(row.class_id));
+                                const name = c?.name || row.class_id || '?';
+                                const timeStr = (row.end_time ? (row.time || '') + '–' + row.end_time : (row.time || '') + (row.duration_minutes ? ' (' + row.duration_minutes + ' min)' : '')).trim();
+                                const slotLabel = (name + ' · ' + (row.day || '') + ' ' + timeStr).replace(/</g, '&lt;');
+                                return `
+                            <div class="aure-selected-slot-row" data-idx="${idx}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: var(--system-gray6); border-radius: 10px; margin-bottom: 8px;">
+                                <span style="font-size: 14px; font-weight: 500;">${slotLabel}</span>
+                                <button type="button" onclick="window.removeAurePackageSlotDefRow(${idx})" style="padding: 6px; color: var(--system-red); background: none; border: none; cursor: pointer;" title="${(t.delete_btn || 'Eliminar').replace(/"/g, '&quot;')}"><i data-lucide="trash-2" size="16"></i></button>
+                            </div>`;
+                            }).join('')}
+                        </div>
+                        ${(!form.definition || form.definition.length === 0) ? `<div style="font-size: 13px; color: var(--text-muted); padding: 10px 0;">${t.aure_no_options_yet || 'Ninguna clase añadida. Elige una arriba y pulsa Añadir.'}</div>` : ''}
                         <div style="display: flex; gap: 8px; margin-top: 12px;">
                             <button type="button" onclick="window.saveAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: none; background: var(--secondary); color: white; cursor: pointer;">${t.save_btn || 'Guardar'}</button>
                             <button type="button" onclick="window.cancelAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); cursor: pointer;">${t.cancel_btn || 'Cancelar'}</button>
@@ -10549,7 +10676,14 @@ window.activatePackage = async (studentId, packageName) => {
     }
 }
 
-window.openPaymentModal = async (subId) => {
+window.getSlotsForSubscription = (subId) => {
+    const sub = (state.subscriptions || []).find(s => s.id === subId);
+    if (!sub) return [];
+    const slots = state.packageSlots || [];
+    return slots.filter(s => String(s.subscription_id) === String(subId) || ((s.sub_name || '').trim() === (sub.name || '').trim()));
+};
+
+window.openPaymentModal = async (subId, slotId) => {
     const sub = state.subscriptions.find(s => s.id === subId);
     if (!sub) return;
     const t = new Proxy(window.t, {
@@ -10557,6 +10691,61 @@ window.openPaymentModal = async (subId) => {
     });
     const modal = document.getElementById('payment-modal');
     const content = document.getElementById('payment-modal-content');
+    const isAure = window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool);
+    const slotsForSub = window.getSlotsForSubscription ? window.getSlotsForSubscription(subId) : [];
+
+    // Step 1: Aure with options and no slot chosen yet → show option picker
+    if (isAure && slotsForSub.length > 0 && !slotId) {
+        const formatSlotSummary = (def) => {
+            if (!Array.isArray(def) || def.length === 0) return '—';
+            const cls = state.classes || [];
+            return def.map(row => {
+                const c = cls.find(x => String(x.id) === String(row.class_id));
+                const name = c?.name || row.class_id || '?';
+                const time = row.time || '';
+                const end = row.end_time || (row.duration_minutes ? null : '');
+                const timeStr = end ? time + '–' + end : (time + (row.duration_minutes ? ' (' + row.duration_minutes + ' min)' : ''));
+                return (name + ' · ' + (row.day || '') + ' ' + timeStr).trim();
+            }).join('; ') || '—';
+        };
+        content.innerHTML = `
+            <div class="payment-modal-header">
+                <div class="payment-modal-icon">
+                    <i data-lucide="calendar-clock" size="28"></i>
+                </div>
+                <h2 class="payment-modal-title">${(t('aure_choose_option_title') || 'Elige tu opción').replace(/</g, '&lt;')}</h2>
+                <p class="text-muted" style="margin: 0 0 1rem 0; font-size: 0.9rem;">${(t('aure_choose_option_desc') || 'Elige el horario que quieres para este paquete.').replace(/</g, '&lt;')}</p>
+                <div class="payment-modal-package" style="margin-bottom: 1rem;">
+                    <span class="payment-modal-package-name">${(sub.name || '').replace(/</g, '&lt;')}</span>
+                    <span class="payment-modal-package-price">${formatPrice(sub.price, state.currentSchool?.currency || 'MXN')}</span>
+                </div>
+            </div>
+            <div class="payment-modal-options-list" style="display: flex; flex-direction: column; gap: 10px;">
+                ${slotsForSub.map(slot => {
+                    const summary = formatSlotSummary(slot.definition);
+                    const label = (slot.label || '').replace(/</g, '&lt;');
+                    const summaryEsc = (summary || '').replace(/</g, '&lt;');
+                    return `
+                <button type="button" onclick="window.openPaymentModal('${(subId || '').replace(/'/g, "\\'")}', '${(slot.id || '').replace(/'/g, "\\'")}')" style="text-align: left; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer; font-size: 14px;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">${label}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${summaryEsc}</div>
+                </button>`;
+                }).join('')}
+            </div>
+            <div style="margin-top: 1rem;">
+                <button type="button" class="btn-icon w-full payment-modal-btn" onclick="document.getElementById('payment-modal').classList.add('hidden')">
+                    <i data-lucide="x" size="20"></i>
+                    ${t('close')}
+                </button>
+            </div>
+        `;
+        modal.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+
+    // Step 2: Payment (with or without slot)
+    state.aureSelectedSlotId = slotId || null;
 
     // Load bank details on demand if missing (e.g. student or RPC not run yet)
     const needsBank = !state.adminSettings || (!state.adminSettings.bank_name && !state.adminSettings.bank_cbu);
@@ -10571,6 +10760,8 @@ window.openPaymentModal = async (subId) => {
     const bankCbu = state.adminSettings?.bank_cbu || 'N/A';
     const bankAlias = state.adminSettings?.bank_alias || 'N/A';
     const bankHolder = state.adminSettings?.bank_holder || 'N/A';
+    const selectedSlot = slotId ? (state.packageSlots || []).find(s => String(s.id) === String(slotId)) : null;
+    const selectedOptionLine = selectedSlot ? `<p class="text-muted" style="font-size: 0.85rem; margin-top: 4px;">${(t('aure_selected_option') || 'Opción:').replace(/</g, '&lt;')} ${(selectedSlot.label || '').replace(/</g, '&lt;')}</p>` : '';
 
     content.innerHTML = `
         <div class="payment-modal-header">
@@ -10582,6 +10773,7 @@ window.openPaymentModal = async (subId) => {
                 <span class="payment-modal-package-name">${sub.name}</span>
                 <span class="payment-modal-package-price">${formatPrice(sub.price, state.currentSchool?.currency || 'MXN')}</span>
             </div>
+            ${selectedOptionLine}
         </div>
         <div class="payment-modal-bank ios-list">
             <div class="ios-list-item payment-modal-bank-row">
@@ -10642,13 +10834,15 @@ window.submitPaymentRequest = async (subId, method) => {
 
     if (supabaseClient) {
         // Students cannot insert into payment_requests (RLS); use RPC so request is created.
+        const slotId = state.aureSelectedSlotId || null;
         const { error } = await supabaseClient.rpc('create_payment_request', {
             p_student_id: state.currentUser.id,
             p_sub_id: String(sub.id),
             p_sub_name: sub.name,
             p_price: sub.price,
             p_payment_method: method,
-            p_school_id: state.currentSchool.id
+            p_school_id: state.currentSchool.id,
+            p_slot_id: slotId
         });
         if (error) {
             const msg = error.message || '';
@@ -10668,6 +10862,7 @@ window.submitPaymentRequest = async (subId, method) => {
         }
     }
 
+    state.aureSelectedSlotId = null;
     // Show success immediately; refresh data in background so confirmation feels instant
     const content = document.getElementById('payment-modal-content');
     content.innerHTML = `
@@ -11290,6 +11485,48 @@ window.saveBankSettings = async (btn) => {
     }
 };
 
+window.syncAure4ClassOptionsFromSchedule = async (subId, subName) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const classes = (state.classes || []).slice();
+    if (classes.length === 0) {
+        alert((typeof window.t === 'function' ? window.t('aure_no_classes_in_schedule') : null) || 'Añade clases en Horario primero.');
+        return;
+    }
+    const dayOrder = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const dayIdx = (d) => dayOrder.indexOf(d) >= 0 ? dayOrder.indexOf(d) : 99;
+    classes.sort((a, b) => dayIdx(a.day) - dayIdx(b.day) || (a.time || '').localeCompare(b.time || ''));
+    try {
+        const toDelete = (state.packageSlots || []).filter(s => String(s.subscription_id) === String(subId) || (s.sub_name || '').trim() === (subName || '').trim());
+        for (const slot of toDelete) {
+            await supabaseClient.from('package_slots').delete().eq('id', slot.id).eq('school_id', state.currentSchool.id);
+        }
+        const parseTimeMin = (s) => { const [h, m] = (String(s || '10:00').trim().split(':')).map(Number); return (h || 0) * 60 + (m || 0); };
+        for (let i = 0; i < classes.length; i++) {
+            const c = classes[i];
+            const start = parseTimeMin(c.time);
+            const end = parseTimeMin(c.end_time || c.time);
+            const duration_minutes = end > start ? end - start : 60;
+            const label = (c.name || '').trim() + ' · ' + (c.day || '') + ' ' + (c.time || '10:00').trim() + (c.end_time ? '–' + (c.end_time || '').trim() : '');
+            const definition = [{ class_id: c.id, day: c.day || 'Mon', time: (c.time || '10:00').trim(), end_time: (c.end_time || c.time || '').trim() || undefined, duration_minutes }];
+            const { error } = await supabaseClient.from('package_slots').insert({
+                school_id: state.currentSchool.id,
+                subscription_id: subId || null,
+                sub_name: subName || null,
+                label: label || 'Clase ' + (i + 1),
+                definition,
+                sort_order: i + 1
+            });
+            if (error) throw error;
+        }
+        await window.refreshAurePackageSlots();
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+        console.error('syncAure4ClassOptionsFromSchedule:', err);
+        alert((typeof window.t === 'function' ? window.t('error_saving') : null) || 'Error al guardar. ' + (err?.message || ''));
+    }
+};
+
 window.refreshAurePackageSlots = async () => {
     if (!supabaseClient || !state.currentSchool?.id) return;
     try {
@@ -11305,21 +11542,69 @@ window.openAurePackageSlotForm = (subId, subName) => {
         subscription_id: subId != null ? String(subId) : null,
         sub_name: subName != null ? String(subName) : null,
         label: '',
-        definition: [{ class_id: '', day: 'Mon', time: '10:00', duration_minutes: 60 }],
+        definition: [],
         editId: null
     };
     renderView();
+};
+
+window.addAurePackageSlotFromScheduleFromUi = () => {
+    const sel = document.getElementById('aure-schedule-slot-select');
+    if (!sel) return;
+    const val = (sel.value || '').trim();
+    if (!val) {
+        const msg = sel.options.length <= 1
+            ? ((typeof window.t === 'function' ? window.t('aure_no_schedule_classes') : null) || 'No hay clases en el horario. Añade clases en Horario primero.')
+            : ((typeof window.t === 'function' ? window.t('aure_select_class_first') : null) || 'Elige una clase en el desplegable antes de añadir.');
+        alert(msg);
+        return;
+    }
+    window.addAurePackageSlotFromSchedule(val);
+};
+
+window.addAurePackageSlotFromSchedule = (classId) => {
+    const form = state.aurePackageSlotForm;
+    if (!form || !classId) return;
+    const c = (state.classes || []).find(x => String(x.id) === String(classId));
+    if (!c) return;
+    if ((form.definition || []).some(d => String(d.class_id) === String(classId))) return;
+    const parseTimeMin = (s) => { const [h, m] = (String(s || '10:00').trim().split(':')).map(Number); return (h || 0) * 60 + (m || 0); };
+    const start = parseTimeMin(c.time);
+    const end = parseTimeMin(c.end_time || c.time);
+    const duration_minutes = end > start ? end - start : 60;
+    form.definition = form.definition || [];
+    form.definition.push({
+        class_id: c.id,
+        day: c.day || 'Mon',
+        time: (c.time || '10:00').trim(),
+        end_time: (c.end_time || c.time || '').trim() || undefined,
+        duration_minutes
+    });
+    renderView();
+    if (window.lucide) window.lucide.createIcons();
 };
 
 window.openAurePackageSlotEdit = (slotId) => {
     const slot = (state.packageSlots || []).find(s => String(s.id) === String(slotId));
     if (!slot) return;
     const def = Array.isArray(slot.definition) ? slot.definition : (slot.definition && typeof slot.definition === 'object' ? [slot.definition] : []);
+    const classes = state.classes || [];
     state.aurePackageSlotForm = {
         subscription_id: slot.subscription_id,
         sub_name: slot.sub_name,
         label: slot.label || '',
-        definition: def.length ? def.map(d => ({ class_id: d.class_id ?? '', day: d.day || 'Mon', time: d.time || '10:00', duration_minutes: d.duration_minutes ?? 60 })) : [{ class_id: '', day: 'Mon', time: '10:00', duration_minutes: 60 }],
+        definition: def.length ? def.map(d => {
+            const c = classes.find(x => String(x.id) === String(d.class_id));
+            const time = (d.time || '10:00').trim();
+            const end_time = (d.end_time || (c && c.end_time) || time).trim();
+            let dur = d.duration_minutes;
+            if (dur == null && c) {
+                const parse = (s) => { const [h, m] = (String(s || '').split(':')).map(Number); return (h || 0) * 60 + (m || 0); };
+                dur = parse(end_time) - parse(time);
+                if (dur <= 0) dur = 60;
+            }
+            return { class_id: d.class_id, day: d.day || 'Mon', time, end_time: end_time || undefined, duration_minutes: dur ?? 60 };
+        }) : [],
         editId: slot.id
     };
     renderView();
@@ -11352,19 +11637,13 @@ window.saveAurePackageSlotOption = async () => {
         alert((typeof window.t === 'function' ? window.t('aure_option_label_required') : null) || 'Escribe el nombre de la opción.');
         return;
     }
-    const rows = document.querySelectorAll('.aure-def-row');
-    const definition = [];
-    rows.forEach((row, i) => {
-        const classSel = row.querySelector('.aure-def-class');
-        const daySel = row.querySelector('.aure-def-day');
-        const timeInp = row.querySelector('.aure-def-time');
-        const durInp = row.querySelector('.aure-def-duration');
-        const class_id = classSel?.value ? (isNaN(Number(classSel.value)) ? classSel.value : Number(classSel.value)) : null;
-        const day = daySel?.value || '';
-        const time = timeInp?.value?.trim() || '10:00';
-        const duration_minutes = durInp?.value ? parseInt(durInp.value, 10) : 60;
-        if (class_id != null && day) definition.push({ class_id, day, time, duration_minutes: isNaN(duration_minutes) ? 60 : duration_minutes });
-    });
+    const definition = (form.definition || []).map(d => ({
+        class_id: d.class_id,
+        day: d.day || 'Mon',
+        time: d.time || '10:00',
+        end_time: d.end_time || undefined,
+        duration_minutes: d.duration_minutes != null ? d.duration_minutes : 60
+    })).filter(d => d.class_id != null);
     if (definition.length === 0) {
         alert((typeof window.t === 'function' ? window.t('aure_option_def_required') : null) || 'Añade al menos una clase, día y horario.');
         return;

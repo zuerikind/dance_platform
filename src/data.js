@@ -3,6 +3,12 @@
  * Uses state/saveState and calls window.renderView, window.checkExpirations, etc.
  */
 import { supabaseClient, AURE_SCHOOL_ID } from './config.js';
+
+function isAureSubdomain() {
+    if (typeof window === 'undefined' || !window.location || !window.location.hostname) return false;
+    const h = window.location.hostname.toLowerCase();
+    return h === 'aure.bailadmin.lat' || h === 'aurea.bailadmin.lat';
+}
 import { state, saveState } from './state.js';
 
 const FETCH_THROTTLE_MS = 1500;
@@ -60,11 +66,16 @@ export async function fetchAllData() {
             state.discoveryEnabled = !!discEnabled;
         }
         if (!state.isPlatformDev && !state._discoveryOnlyEdit && state.currentSchool && !state.schools.some(s => s.id === state.currentSchool.id)) {
-            state.currentSchool = null;
-            state.currentUser = null;
-            state.isAdmin = false;
-            state.currentView = 'school-selection';
-            saveState();
+            if (state.currentSchool.id === AURE_SCHOOL_ID && isAureSubdomain()) {
+                const aureSchool = state.schools.find(s => s.id === AURE_SCHOOL_ID);
+                state.currentSchool = aureSchool ? { ...aureSchool } : { id: AURE_SCHOOL_ID, name: 'AURÉ', discovery_slug: 'aure' };
+            } else {
+                state.currentSchool = null;
+                state.currentUser = null;
+                state.isAdmin = false;
+                state.currentView = 'school-selection';
+                saveState();
+            }
         }
         if (state.currentView === 'school-selection' && typeof window.renderView === 'function') window.renderView();
 
@@ -429,6 +440,14 @@ export async function fetchAllData() {
             } else {
                 state.packageSlots = [];
             }
+        }
+        // Aure: load package_slots for shop (option picker) even when class_registration_enabled is off
+        const isAureSchool = state.currentSchool && (state.currentSchool.id === AURE_SCHOOL_ID || (state.currentSchool.discovery_slug || '').toLowerCase().trim() === 'aure');
+        if (isAureSchool && sid && supabaseClient && !(state.packageSlots && state.packageSlots.length > 0)) {
+            try {
+                const { data: slotsData, error: slotsErr } = await supabaseClient.rpc('get_package_slots', { p_school_id: sid, p_subscription_id: null });
+                if (!slotsErr && Array.isArray(slotsData)) state.packageSlots = slotsData;
+            } catch (_) { /* keep existing */ }
         }
         if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
             const updated = state.students.find(s => s.id === state.currentUser.id);
