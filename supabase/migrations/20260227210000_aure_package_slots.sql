@@ -21,10 +21,22 @@ CREATE INDEX IF NOT EXISTS idx_package_slots_sub ON public.package_slots(school_
 
 ALTER TABLE public.package_slots ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "package_slots_school_admin"
-  ON public.package_slots FOR ALL
-  USING (public.is_school_admin(school_id))
-  WITH CHECK (public.is_school_admin(school_id));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'package_slots'
+      AND policyname = 'package_slots_school_admin'
+  ) THEN
+    CREATE POLICY "package_slots_school_admin"
+      ON public.package_slots FOR ALL
+      USING (public.is_school_admin(school_id))
+      WITH CHECK (public.is_school_admin(school_id));
+  END IF;
+END;
+$$;
 
 -- 2) payment_requests: optional slot_id (set when student chooses a package option at Aure)
 ALTER TABLE public.payment_requests

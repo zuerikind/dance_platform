@@ -100,12 +100,8 @@
     todayRegistrations: [],
     classRegLoaded: false,
     adminWeekRegistrations: [],
-    packageSlots: [],
     adminRegExpanded: false,
-    aureAllStudentsExpanded: false,
-    aurePackageOptionsExpanded: true,
-    aurePackageSlotForm: null,
-    aureSelectedSlotId: null,
+    adminRegMonth: null,
     teacherAcceptedClassesExpanded: true,
     teacherAcceptedClassesView: "list",
     teacherAcceptedCalendarDate: null,
@@ -873,13 +869,19 @@
             });
           }
         }
+        if (state.isAdmin && typeof window.loadClassAvailability === "function") {
+          window.loadClassAvailability().then(() => {
+            if (state.currentView === "admin-memberships" && typeof window.renderView === "function") window.renderView();
+          }).catch(() => {
+          });
+        }
         if (state.isAdmin) {
           const allWeekRegs = [];
           const allDates = /* @__PURE__ */ new Set();
           const getToday = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly : () => /* @__PURE__ */ new Date();
           const now2 = getToday();
-          const start = new Date(now2.getFullYear(), now2.getMonth(), 1);
-          const end = new Date(now2.getFullYear(), now2.getMonth() + 2, 0);
+          const start = new Date(now2.getFullYear(), now2.getMonth() - 1, 1);
+          const end = new Date(now2.getFullYear(), now2.getMonth() + 3, 0);
           for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
             allDates.add(typeof window.formatClassDate === "function" ? window.formatClassDate(d) : d.toISOString().slice(0, 10));
           }
@@ -897,25 +899,6 @@
             });
           }
           state.adminWeekRegistrations = allWeekRegs;
-        }
-        const isAure = state.currentSchool && (state.currentSchool.id === AURE_SCHOOL_ID || (state.currentSchool.discovery_slug || "").toLowerCase().trim() === "aure");
-        if (isAure && sid && supabaseClient) {
-          try {
-            const { data: slotsData, error: slotsErr } = await supabaseClient.rpc("get_package_slots", { p_school_id: sid, p_subscription_id: null });
-            state.packageSlots = !slotsErr && Array.isArray(slotsData) ? slotsData : [];
-          } catch (_) {
-            state.packageSlots = [];
-          }
-        } else {
-          state.packageSlots = [];
-        }
-      }
-      const isAureSchool = state.currentSchool && (state.currentSchool.id === AURE_SCHOOL_ID || (state.currentSchool.discovery_slug || "").toLowerCase().trim() === "aure");
-      if (isAureSchool && sid && supabaseClient && !(state.packageSlots && state.packageSlots.length > 0)) {
-        try {
-          const { data: slotsData, error: slotsErr } = await supabaseClient.rpc("get_package_slots", { p_school_id: sid, p_subscription_id: null });
-          if (!slotsErr && Array.isArray(slotsData)) state.packageSlots = slotsData;
-        } catch (_) {
         }
       }
       if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
@@ -2061,6 +2044,11 @@
       leave_blank_keep: "leave blank to keep",
       invalid_pass_msg: "Incorrect Admin Password.",
       save_btn: "Save",
+      edit_btn: "Edit",
+      delete_btn: "Delete",
+      delete_registration: "Remove registration",
+      admin_password_confirm_delete: "Enter your admin password to remove this registration:",
+      admin_password_placeholder: "Admin password",
       saving_label: "Saving\u2026",
       save_schedule_btn: "Save schedule",
       save_plans_btn: "Save plans",
@@ -2146,6 +2134,7 @@
       upcoming_classes: "Upcoming",
       past_classes: "Past Classes",
       no_upcoming: "No upcoming registrations",
+      more: "more",
       no_past_classes: "No past class history",
       cancelled: "Cancelled",
       attended: "Attended",
@@ -2180,36 +2169,8 @@
       week_of_short: "Week of {start}",
       class_registrations_title: "Class Registrations",
       no_registrations_yet: "No registrations this week",
-      aure_packages_by_option: "Packages by option",
-      aure_no_package_options_yet: "No package options configured yet. Set them up in Settings.",
-      aure_ver_todos_los_alumnos: "See all students",
-      aure_package_options_title: "Package options",
-      aure_package_options_desc: "Define the options students choose when buying a package (e.g. Sundays 2h, Tue + Thu).",
-      aure_options_students_choose: "Options students choose",
-      aure_choose_option_title: "Choose your option",
-      aure_choose_option_desc: "Choose the schedule option for this package.",
-      aure_selected_option: "Option:",
-      aure_4class_options_desc: "Options are the classes in your schedule. Students choose one.",
-      aure_8class_options_desc: "Define 4 options; each option = 2 classes from your schedule.",
-      aure_no_classes_in_schedule: "Add classes in Schedule first.",
-      aure_use_schedule_as_options: "Use schedule as options",
-      aure_option_two_classes_hint: "Add the 2 classes that make up this option.",
-      aure_add_second_class: "Add the second class: select above and click Add.",
-      aure_same_class_two_days_note: "To use the same class on two days (e.g. Tue + Thu), add it twice in Schedule with the same name.",
-      aure_no_options_yet: "No options yet. Add one below.",
-      aure_add_option: "Add option",
-      aure_no_group_plans: "Create a group plan first (e.g. 4 or 8 classes) in Plans.",
-      aure_option_label_field: "Option name",
-      aure_option_label_placeholder: "e.g. Sundays 2h",
-      aure_option_slots_field: "Class, day and time",
-      aure_option_schedule_hint: "Select which classes from your schedule make up this option.",
-      aure_class_label: "Class",
-      aure_add_time_slot: "Add another time slot",
-      aure_add_from_schedule: "Add class from schedule",
-      aure_select_schedule_placeholder: "Select a class\u2026",
-      aure_select_class_first: "Select a class from the dropdown first, then click Add.",
-      aure_no_schedule_classes: "No classes in the schedule. Add classes in Schedule first.",
-      aure_delete_option_confirm: "Delete this option?",
+      no_registrations_this_month: "No registrations this month",
+      spots_left_format: "{left}/{max} spots left",
       no_students_yet: "No students yet",
       registered_count: "{n} registered",
       past_day: "Past",
@@ -2734,6 +2695,11 @@
       leave_blank_keep: "dejar en blanco para mantener",
       invalid_pass_msg: "Contrase\xF1a Incorrecta.",
       save_btn: "Guardar",
+      edit_btn: "Editar",
+      delete_btn: "Eliminar",
+      delete_registration: "Quitar registro",
+      admin_password_confirm_delete: "Introduce tu contrase\xF1a de administrador para quitar este registro:",
+      admin_password_placeholder: "Contrase\xF1a de administrador",
       saving_label: "Guardando\u2026",
       save_schedule_btn: "Guardar horario",
       save_plans_btn: "Guardar planes",
@@ -2819,6 +2785,7 @@
       upcoming_classes: "Pr\xF3ximas",
       past_classes: "Clases pasadas",
       no_upcoming: "No hay registros pr\xF3ximos",
+      more: "m\xE1s",
       no_past_classes: "No hay historial de clases",
       cancelled: "Cancelado",
       attended: "Asisti\xF3",
@@ -2853,36 +2820,8 @@
       week_of_short: "Semana del {start}",
       class_registrations_title: "Registros de clases",
       no_registrations_yet: "Sin registros esta semana",
-      aure_packages_by_option: "Paquetes por opci\xF3n",
-      aure_no_package_options_yet: "No hay opciones de paquete configuradas. Config\xFAralas en Ajustes.",
-      aure_ver_todos_los_alumnos: "Ver todos los alumnos",
-      aure_package_options_title: "Opciones de paquetes",
-      aure_package_options_desc: "Define las opciones que los alumnos eligen al comprar un paquete (ej. Domingos 2h, Martes + Jueves).",
-      aure_options_students_choose: "Opciones que eligen los alumnos",
-      aure_choose_option_title: "Elige tu opci\xF3n",
-      aure_choose_option_desc: "Elige el horario que quieres para este paquete.",
-      aure_selected_option: "Opci\xF3n:",
-      aure_4class_options_desc: "Las opciones son las clases de tu horario. Los alumnos eligen una.",
-      aure_8class_options_desc: "Define 4 opciones; cada opci\xF3n = 2 clases de tu horario.",
-      aure_no_classes_in_schedule: "A\xF1ade clases en Horario primero.",
-      aure_use_schedule_as_options: "Usar horario como opciones",
-      aure_option_two_classes_hint: "A\xF1ade las 2 clases que forman esta opci\xF3n.",
-      aure_add_second_class: "A\xF1ade la segunda clase: elige arriba y pulsa A\xF1adir.",
-      aure_same_class_two_days_note: "Para usar la misma clase dos d\xEDas (ej. Martes + Jueves), a\xF1\xE1dela dos veces en Horario con el mismo nombre.",
-      aure_no_options_yet: "Ninguna opci\xF3n. A\xF1ade una abajo.",
-      aure_add_option: "A\xF1adir opci\xF3n",
-      aure_no_group_plans: "Crea primero un plan de grupo (ej. 4 u 8 clases) en Planes.",
-      aure_option_label_field: "Nombre de la opci\xF3n",
-      aure_option_label_placeholder: "ej. Domingos 2h",
-      aure_option_slots_field: "Clase, d\xEDa y horario",
-      aure_option_schedule_hint: "Elige las clases de tu horario que forman esta opci\xF3n.",
-      aure_class_label: "Clase",
-      aure_add_time_slot: "A\xF1adir otro horario",
-      aure_add_from_schedule: "A\xF1adir clase del horario",
-      aure_select_schedule_placeholder: "Elige una clase\u2026",
-      aure_select_class_first: "Elige una clase en el desplegable antes de a\xF1adir.",
-      aure_no_schedule_classes: "No hay clases en el horario. A\xF1ade clases en Horario primero.",
-      aure_delete_option_confirm: "\xBFEliminar esta opci\xF3n?",
+      no_registrations_this_month: "Sin registros este mes",
+      spots_left_format: "{left}/{max} plazas libres",
       no_students_yet: "Ning\xFAn alumno",
       registered_count: "{n} registrados",
       past_day: "Pasado",
@@ -3474,6 +3413,11 @@
       leave_blank_keep: "leer lassen um beizubehalten",
       invalid_pass_msg: "Falsches Admin-Passwort.",
       save_btn: "Speichern",
+      edit_btn: "Bearbeiten",
+      delete_btn: "L\xF6schen",
+      delete_registration: "Anmeldung entfernen",
+      admin_password_confirm_delete: "Gib dein Admin-Passwort ein, um diese Anmeldung zu entfernen:",
+      admin_password_placeholder: "Admin-Passwort",
       saving_label: "Speichern\u2026",
       save_schedule_btn: "Stundenplan speichern",
       save_plans_btn: "Pakete speichern",
@@ -3533,6 +3477,7 @@
       upcoming_classes: "Kommende",
       past_classes: "Vergangene Kurse",
       no_upcoming: "Keine kommenden Anmeldungen",
+      more: "mehr",
       no_past_classes: "Kein Kursverlauf",
       cancelled: "Storniert",
       attended: "Teilgenommen",
@@ -3567,36 +3512,8 @@
       week_of_short: "Woche vom {start}",
       class_registrations_title: "Kursanmeldungen",
       no_registrations_yet: "Noch keine Anmeldungen diese Woche",
-      aure_packages_by_option: "Pakete nach Option",
-      aure_no_package_options_yet: "Noch keine Paketoptionen. In den Einstellungen einrichten.",
-      aure_ver_todos_los_alumnos: "Alle Sch\xFCler anzeigen",
-      aure_package_options_title: "Paketoptionen",
-      aure_package_options_desc: "Optionen festlegen, die Sch\xFCler beim Paketkauf w\xE4hlen (z. B. Sonntag 2h, Di + Do).",
-      aure_options_students_choose: "Optionen f\xFCr Sch\xFCler",
-      aure_choose_option_title: "W\xE4hle deine Option",
-      aure_choose_option_desc: "W\xE4hle die gew\xFCnschte Kurszeit f\xFCr dieses Paket.",
-      aure_selected_option: "Option:",
-      aure_4class_options_desc: "Die Optionen sind die Kurse in deinem Stundenplan. Sch\xFCler w\xE4hlen einen.",
-      aure_8class_options_desc: "Lege 4 Optionen fest; jede Option = 2 Kurse aus deinem Stundenplan.",
-      aure_no_classes_in_schedule: "Zuerst Kurse im Stundenplan anlegen.",
-      aure_use_schedule_as_options: "Stundenplan als Optionen \xFCbernehmen",
-      aure_option_two_classes_hint: "F\xFCge die 2 Kurse hinzu, die diese Option bilden.",
-      aure_add_second_class: "F\xFCge den zweiten Kurs hinzu: oben w\xE4hlen und auf Hinzuf\xFCgen klicken.",
-      aure_same_class_two_days_note: "F\xFCr denselben Kurs an zwei Tagen (z. B. Di + Do) den Kurs zweimal im Stundenplan anlegen.",
-      aure_no_options_yet: "Noch keine Option. Unten hinzuf\xFCgen.",
-      aure_add_option: "Option hinzuf\xFCgen",
-      aure_no_group_plans: "Zuerst einen Gruppenplan (z. B. 4 oder 8 Kurse) unter Pl\xE4ne anlegen.",
-      aure_option_label_field: "Optionsname",
-      aure_option_label_placeholder: "z. B. Sonntag 2h",
-      aure_option_slots_field: "Kurs, Tag und Uhrzeit",
-      aure_option_schedule_hint: "W\xE4hle die Kurse aus deinem Stundenplan f\xFCr diese Option.",
-      aure_class_label: "Kurs",
-      aure_add_time_slot: "Weiteren Zeitblock hinzuf\xFCgen",
-      aure_add_from_schedule: "Kurs aus dem Stundenplan hinzuf\xFCgen",
-      aure_select_schedule_placeholder: "Kurs w\xE4hlen\u2026",
-      aure_select_class_first: "W\xE4hle zuerst einen Kurs in der Liste, dann auf Hinzuf\xFCgen klicken.",
-      aure_no_schedule_classes: "Keine Kurse im Stundenplan. Zuerst Kurse unter Stundenplan anlegen.",
-      aure_delete_option_confirm: "Diese Option l\xF6schen?",
+      no_registrations_this_month: "Noch keine Anmeldungen in diesem Monat",
+      spots_left_format: "{left}/{max} Pl\xE4tze frei",
       no_students_yet: "Noch keine Sch\xFCler",
       registered_count: "{n} angemeldet",
       past_day: "Vergangen",
@@ -5487,16 +5404,9 @@
     if (Date.now() - _lastUserInteractionAt2 < 500) return true;
     return false;
   }
-  window.isAureSchool = (school) => {
-    if (!school) return false;
-    if (school.id === AURE_SCHOOL_ID) return true;
-    const slug = (school.discovery_slug || "").toLowerCase().trim();
-    return slug === "aure";
-  };
   window.toggleExpandableNoRender = (key) => {
     const map = {
       "adminReg": ["adminRegExpanded", "admin-reg-content", "admin-reg-section"],
-      "aureAllStudents": ["aureAllStudentsExpanded", "aure-all-students-content", "aure-all-students-section"],
       "studentsFilter": ["studentsFilterExpanded", "students-filter-content", "students-filter-expandable"],
       "qrRegistrations": ["qrRegistrationsExpanded", "qr-registrations-content", "qr-registrations-expandable"],
       "additionalFeatures": ["additionalFeaturesExpanded", "additional-features-content", "expandable-section"],
@@ -7357,6 +7267,40 @@
         const scheduleWeekOffset = state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
         html += `<h1 style="margin-bottom: 0.5rem;">${t2.schedule_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 0.8rem; font-size: 1.1rem;">${t2.classes_subtitle}</p>`;
+        if (regEnabled && state.classRegLoaded) {
+          const upcomingRegs = (state.studentRegistrations || []).filter((r) => r.status === "registered");
+          const locale = state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US";
+          const fmtDateShort = (d) => d ? (/* @__PURE__ */ new Date(d + "T00:00:00")).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" }) : "";
+          const canCancelReg = (r) => (/* @__PURE__ */ new Date(r.class_date + "T" + (r.time || "23:59"))).getTime() - getVirtualNow().getTime() > 4 * 60 * 60 * 1e3;
+          html += `
+            <div class="schedule-my-classes" style="margin-bottom: 1.2rem; border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; background: var(--system-gray6);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: ${upcomingRegs.length > 0 ? "10px" : "0"};">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="calendar-check" size="16" style="color: var(--system-green); flex-shrink: 0;"></i>
+                        <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${t2.my_registrations_label || "My Registered Classes"}</span>
+                        ${upcomingRegs.length > 0 ? `<span style="font-size: 10px; font-weight: 700; background: var(--system-green); color: white; padding: 2px 7px; border-radius: 8px;">${upcomingRegs.length}</span>` : ""}
+                    </div>
+                    ${upcomingRegs.length > 0 ? `<button type="button" onclick="window.downloadCalendarIcs('student')" style="background: none; border: none; padding: 4px 8px; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;" title="${(t2.export_all_to_calendar || "Export all").replace(/"/g, "&quot;")}"><i data-lucide="calendar-plus" size="14"></i></button>` : ""}
+                </div>
+                ${upcomingRegs.length === 0 ? `<div style="font-size: 12px; color: var(--text-secondary); padding: 4px 0;">${t2.no_upcoming || "No upcoming registrations"}</div>` : `<div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${upcomingRegs.sort((a, b) => (a.class_date + (a.time || "")).localeCompare(b.class_date + (b.time || ""))).slice(0, 10).map((r) => {
+            const dateLabel = fmtDateShort(r.class_date);
+            const canCancel = canCancelReg(r);
+            return `<div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg-body); border-radius: 12px;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${(r.class_name || "").replace(/</g, "&lt;")}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">${dateLabel} \u2022 ${r.time || ""}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                <button type="button" onclick="window.downloadGroupClassIcsOne('${String(r.id || "").replace(/'/g, "\\'")}');" style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--text-secondary);" title="${(t2.export_to_calendar || "Export").replace(/"/g, "&quot;")}"><i data-lucide="calendar-plus" size="14"></i></button>
+                                ${canCancel ? `<button type="button" onclick="event.stopPropagation(); window.showCancelConfirmModal('${r.id}')" style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--system-red);" title="${(t2.cancel_registration || "Cancel").replace(/"/g, "&quot;")}"><i data-lucide="x" size="14"></i></button>` : ""}
+                            </div>
+                        </div>`;
+          }).join("")}
+                    ${upcomingRegs.length > 10 ? `<div style="font-size: 11px; color: var(--text-secondary); text-align: center; padding: 4px 0;">+ ${upcomingRegs.length - 10} ${t2.more || "more"}</div>` : ""}
+                </div>`}
+            </div>`;
+        }
         html += state.scheduleView === "weekly" ? `
             <div class="week-banner week-banner-carousel" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                 <button type="button" class="btn-ghost week-nav-btn" style="padding: 6px 10px; flex-shrink: 0;" onclick="state.scheduleWeekOffset=${scheduleWeekOffset - 1}; window.loadClassAvailability().then(function(){ renderView(); if (window.lucide) window.lucide.createIcons(); }).catch(function(){});" aria-label="${t2.go_back || "Previous week"}"><i data-lucide="chevron-left" size="20"></i></button>
@@ -7869,9 +7813,12 @@
           };
           return `
                     <div class="qr-registrations-expandable ${regExpanded ? "expanded" : ""}" style="margin-top: 1.5rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; border-top: 1px solid var(--border); padding-top: 1rem;">
-                        <div class="qr-registrations-header" onclick="toggleExpandableNoRender('qrRegistrations')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer;">
-                            <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.my_registrations_label || "Class Registrations"}</span>
-                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        <div class="qr-registrations-header" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 6px; flex: 1;" onclick="toggleExpandableNoRender('qrRegistrations')">
+                                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.my_registrations_label || "Class Registrations"}</span>
+                                <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                            </div>
+                            ${upcoming.length > 0 ? `<button type="button" onclick="event.stopPropagation(); window.downloadCalendarIcs('student');" style="background: none; border: none; padding: 4px 8px; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;" title="${(t2.export_all_to_calendar || "Export all").replace(/"/g, "&quot;")}"><i data-lucide="calendar-plus" size="14"></i></button>` : ""}
                         </div>
                         <div id="qr-registrations-content" style="display: ${regExpanded ? "" : "none"};">
                         <div style="display: flex; flex-direction: column; gap: 14px;">
@@ -7890,7 +7837,10 @@
             const showCancelAll = sameClassCancelableIds.length > 1;
             const cancelAllIdsAttr = showCancelAll ? sameClassCancelableIds.join(",") : "";
             return `<div class="card qr-reg-card" style="padding: 10px 14px; border-radius: 12px; font-size: 13px;">
-                                        <div style="font-weight: 700;">${(r.class_name || "").replace(/</g, "&lt;")}</div>
+                                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                                            <div style="font-weight: 700;">${(r.class_name || "").replace(/</g, "&lt;")}</div>
+                                            <button type="button" onclick="window.downloadGroupClassIcsOne('${String(r.id || "").replace(/'/g, "\\'")}');" style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--text-secondary); flex-shrink: 0;" title="${(t2.export_to_calendar || "Export").replace(/"/g, "&quot;")}"><i data-lucide="calendar-plus" size="14"></i></button>
+                                        </div>
                                         <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${dateLabel} \u2022 ${r.time || ""}</div>
                                         <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
                                         ${canCancel ? `<button type="button" class="reg-cancel-btn" style="font-size: 11px; padding: 4px 10px;" onclick="event.stopPropagation(); window.showCancelConfirmModal('${r.id}')">${t2.cancel_this_class || "Cancel this class"}</button>` : ""}
@@ -8143,43 +8093,63 @@
                 ` : ""}
                 ${state.currentSchool?.class_registration_enabled ? (() => {
           const weekRegs = state.adminWeekRegistrations || [];
-          const activeRegs = weekRegs;
+          const scheduleDayToDow = (dayStr) => {
+            if (!dayStr) return null;
+            const s = String(dayStr).trim();
+            const map = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6, Su: 0 };
+            return map[s] != null ? map[s] : null;
+          };
+          const getToday = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly : () => /* @__PURE__ */ new Date();
+          const now = getToday();
+          const currentMonthStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+          const viewMonth = state.adminRegMonth || currentMonthStr;
+          const [viewYear, viewMonthNum] = viewMonth.split("-").map(Number);
+          const firstDay = viewMonth + "-01";
+          const lastDayOfMonth = new Date(viewYear, viewMonthNum, 0);
+          const lastDayStr = lastDayOfMonth.getFullYear() + "-" + String(lastDayOfMonth.getMonth() + 1).padStart(2, "0") + "-" + String(lastDayOfMonth.getDate()).padStart(2, "0");
+          const classes = state.classes || [];
           const grouped = {};
-          activeRegs.forEach((r) => {
+          (weekRegs || []).forEach((r) => {
             const key = r.class_id + "_" + r.class_date;
-            if (!grouped[key]) grouped[key] = { class_name: r.class_name, class_time: r.class_time, class_date: r.class_date, students: [] };
+            if (!grouped[key]) grouped[key] = { class_id: r.class_id, class_name: r.class_name, class_time: r.class_time, class_date: r.class_date, students: [] };
             grouped[key].students.push(r);
           });
-          const groupedArr = Object.values(grouped).sort((a, b) => (a.class_date + a.class_time).localeCompare(b.class_date + b.class_time));
-          const allRegDates = activeRegs.map((r) => r.class_date).filter(Boolean);
-          let dateRangeLabel = "";
-          if (allRegDates.length > 0) {
-            const sorted = [...new Set(allRegDates)].sort();
-            const minD = /* @__PURE__ */ new Date(sorted[0] + "T00:00:00");
-            const maxD = /* @__PURE__ */ new Date(sorted[sorted.length - 1] + "T00:00:00");
-            dateRangeLabel = window.formatShortDate(minD, state.language) + " \u2013 " + window.formatShortDate(maxD, state.language);
-          } else {
-            const weekRange = window.getCurrentWeekRange();
-            dateRangeLabel = window.formatShortDate(weekRange.start, state.language) + " \u2013 " + window.formatShortDate(weekRange.end, state.language);
-          }
+          const allGroupedArr = Object.values(grouped).filter((g) => {
+            const cls = classes.find((c) => c.id === g.class_id);
+            if (!cls) return false;
+            const scheduledDow = scheduleDayToDow(cls.day);
+            if (scheduledDow == null) return true;
+            const dateDow = (/* @__PURE__ */ new Date(g.class_date + "T00:00:00")).getDay();
+            return dateDow === scheduledDow;
+          }).sort((a, b) => (a.class_date + a.class_time).localeCompare(b.class_date + b.class_time));
+          const groupedArr = allGroupedArr.filter((g) => g.class_date >= firstDay && g.class_date <= lastDayStr);
+          const monthLabel = new Date(viewYear, viewMonthNum - 1, 1).toLocaleDateString(state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US", { month: "long", year: "numeric" });
+          const prevMonth = viewMonthNum === 1 ? viewYear - 1 + "-12" : viewYear + "-" + String(viewMonthNum - 1).padStart(2, "0");
+          const nextMonth = viewMonthNum === 12 ? viewYear + 1 + "-01" : viewYear + "-" + String(viewMonthNum + 1).padStart(2, "0");
+          const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.length, 0);
           return `
                     <div class="admin-reg-section ${state.adminRegExpanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
                         <div class="admin-reg-header" onclick="toggleExpandableNoRender('adminReg')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <i data-lucide="calendar-check" size="16" style="opacity: 0.6;"></i>
                                 <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.class_registrations_title}</span>
-                                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500;">${dateRangeLabel}</span>
+                                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500;">${monthLabel}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                ${activeRegs.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${activeRegs.length}</span>` : ""}
+                                ${filteredRegCount > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${filteredRegCount}</span>` : ""}
                                 <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
                         </div>
                         <div id="admin-reg-content" class="admin-reg-content" style="padding: 0.8rem 0; display: ${state.adminRegExpanded ? "" : "none"};">
+                            <div class="admin-reg-month-carousel" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 8px 0;">
+                                <button type="button" onclick="event.stopPropagation(); state.adminRegMonth='${prevMonth}'; renderView();" style="background: var(--system-gray6); border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);" aria-label="${t2.previous || "Previous"}"><i data-lucide="chevron-left" size="20"></i></button>
+                                <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-transform: capitalize;">${monthLabel}</span>
+                                <button type="button" onclick="event.stopPropagation(); state.adminRegMonth='${nextMonth}'; renderView();" style="background: var(--system-gray6); border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);" aria-label="${t2.next || "Next"}"><i data-lucide="chevron-right" size="20"></i></button>
+                            </div>
                             ${groupedArr.length === 0 ? `
                                 <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">
                                     <i data-lucide="inbox" size="24" style="opacity: 0.2; margin-bottom: 0.3rem;"></i>
-                                    <div>${t2.no_registrations_yet}</div>
+                                    <div>${t2.no_registrations_this_month || t2.no_registrations_yet}</div>
                                 </div>
                             ` : groupedArr.map((g) => {
             const dateObj = /* @__PURE__ */ new Date(g.class_date + "T00:00:00");
@@ -8197,7 +8167,7 @@
               const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t2.monthly_badge || "Monthly") + "</span>" : "";
               const displayName = (state.students || []).find((st) => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || "\u2014";
               const rowStyle = s.status === "cancelled" ? " opacity: 0.7;" : "";
-              return `<div class="admin-reg-student-row" style="${rowStyle}">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span></div>`;
+              return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span></div>`;
             };
             return `
                                 <div class="admin-reg-card">
@@ -8209,60 +8179,20 @@
                                         <div class="admin-reg-count">${capLabel}</div>
                                     </div>
                                     <div class="admin-reg-students">
-                                        ${registeredStudents.map(renderStudentRow).join("")}
+                                        ${registeredStudents.map((s) => renderStudentRow(s)).join("")}
                                         ${cancelledStudents.length > 0 ? `
                                         <div class="admin-reg-cancelled-section" style="margin-top: 8px;">
                                             <button type="button" class="admin-reg-cancelled-toggle" onclick="state.adminRegCancelledExpanded=state.adminRegCancelledExpanded||{}; state.adminRegCancelledExpanded['${cardKey}']=!state.adminRegCancelledExpanded['${cardKey}']; renderView();" style="display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 0; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); background: none; border: none; cursor: pointer; text-align: left;">
                                                 <i data-lucide="chevron-${cancelledExpanded ? "up" : "down"}" size="14"></i>
                                                 ${t2.cancelled || "Cancelled"} (${cancelledStudents.length})
                                             </button>
-                                            ${cancelledExpanded ? `<div class="admin-reg-cancelled-list" style="padding-left: 4px;">${cancelledStudents.map(renderStudentRow).join("")}</div>` : ""}
+                                            ${cancelledExpanded ? `<div class="admin-reg-cancelled-list" style="padding-left: 4px;">${cancelledStudents.map((s) => renderStudentRow(s)).join("")}</div>` : ""}
                                         </div>
                                         ` : ""}
                                     </div>
                                 </div>`;
           }).join("")}
                         </div>
-                    </div>`;
-        })() : ""}
-                ${window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool) ? (() => {
-          const slots = state.packageSlots || [];
-          const approvedWithSlot = (state.paymentRequests || []).filter((pr) => pr.status === "approved" && pr.slot_id);
-          const bySub = {};
-          slots.forEach((ps) => {
-            const subKey = ps.sub_name || ps.subscription_id || "\u2014";
-            if (!bySub[subKey]) bySub[subKey] = [];
-            bySub[subKey].push(ps);
-          });
-          const subKeys = Object.keys(bySub).sort();
-          if (subKeys.length === 0) return `
-                    <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                        <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px;">${t2.aure_packages_by_option || "Paquetes por opci\xF3n"}</div>
-                        <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">${t2.aure_no_package_options_yet || "No hay opciones de paquete configuradas. Config\xFAralas en Ajustes."}</div>
-                    </div>`;
-          return `
-                    <div class="admin-reg-section" style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                        <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 10px;">${t2.aure_packages_by_option || "Paquetes por opci\xF3n"}</div>
-                        ${subKeys.map((subKey) => {
-            const slotList = bySub[subKey];
-            return `
-                            <div style="margin-bottom: 1rem;">
-                                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${(subKey || "").replace(/</g, "&lt;")}</div>
-                                ${slotList.map((slot) => {
-              const studentsForSlot = approvedWithSlot.filter((pr) => pr.slot_id === slot.id).map((pr) => {
-                const st = (state.students || []).find((s) => String(s.id) === String(pr.student_id));
-                return st?.name || pr.student_id || "\u2014";
-              });
-              return `
-                                    <div style="margin-left: 12px; margin-bottom: 10px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px;">
-                                        <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${(slot.label || "").replace(/</g, "&lt;")}</div>
-                                        <div style="font-size: 13px;">
-                                            ${studentsForSlot.length === 0 ? '<span style="color: var(--text-muted); font-style: italic;">' + (t2.no_students_yet || "Ning\xFAn alumno") + "</span>" : studentsForSlot.map((n) => '<span style="display: block; margin-bottom: 2px;">' + (n || "").replace(/</g, "&lt;") + "</span>").join("")}
-                                        </div>
-                                    </div>`;
-            }).join("")}
-                            </div>`;
-          }).join("")}
                     </div>`;
         })() : ""}
                 ${state.currentSchool?.profile_type === "private_teacher" ? (() => {
@@ -8392,17 +8322,7 @@
                         </div>
                     </div>`;
         })() : ""}
-                ${window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool) ? `
-                <div class="admin-reg-section aure-all-students-section ${state.aureAllStudentsExpanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                    <div class="admin-reg-header" onclick="toggleExpandableNoRender('aureAllStudents')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
-                        <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.aure_ver_todos_los_alumnos || "Ver todos los alumnos"}</span>
-                        <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
-                    </div>
-                    <div id="aure-all-students-content" style="padding: 0.8rem 0; display: ${state.aureAllStudentsExpanded ? "" : "none"};">
-                        ${adminStudentsFilterBlock}
-                    </div>
-                </div>
-                ` : state.currentSchool?.profile_type === "private_teacher" ? `
+                ${state.currentSchool?.profile_type === "private_teacher" ? `
                 <div class="admin-students-list-expandable ${state.adminStudentsListExpandedForPrivateTeacher ? "expanded" : ""}" style="margin: 0 1.2rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
                     <div class="expandable-section-header" onclick="state.adminStudentsListExpandedForPrivateTeacher=!state.adminStudentsListExpandedForPrivateTeacher; saveState(); renderView();" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -8500,7 +8420,7 @@
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 17px;">${studentName}</div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} \u2022 ${formatPrice(req.price, state.currentSchool?.currency || "MXN")}</div>
                                         <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
                                             <i data-lucide="${req.payment_method === "cash" ? "banknote" : "send"}" size="10"></i> ${t2[req.payment_method] || req.payment_method}
@@ -9313,142 +9233,6 @@
             </div>
             ` : ""}
             ` : ""}
-
-            ${window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool) ? (() => {
-          const aureSlots = state.packageSlots || [];
-          const aureGroupPlans = adminGroupOnly || [];
-          const form = state.aurePackageSlotForm;
-          const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-          const dayIdx = (d) => {
-            const i = dayOrder.indexOf(d);
-            return i >= 0 ? i : 99;
-          };
-          const parseTimeMin = (s) => {
-            const [h, m] = String(s || "10:00").trim().split(":").map(Number);
-            return (h || 0) * 60 + (m || 0);
-          };
-          const scheduleSlots = (state.classes || []).slice().sort((a, b) => dayIdx(a.day) - dayIdx(b.day) || (a.time || "").localeCompare(b.time || "")).map((c) => {
-            const start = parseTimeMin(c.time);
-            const end = parseTimeMin(c.end_time || c.time);
-            const dur = end > start ? end - start : 60;
-            return { class_id: c.id, class_name: c.name || "", day: c.day || "Mon", time: (c.time || "10:00").trim(), end_time: (c.end_time || c.time || "").trim(), duration_minutes: dur };
-          });
-          const formatDefSummary = (def) => {
-            if (!Array.isArray(def) || def.length === 0) return "\u2014";
-            const cls = state.classes || [];
-            return def.map((row, i) => {
-              const c = cls.find((x) => String(x.id) === String(row.class_id));
-              const name = c?.name || row.class_id || "?";
-              const time = row.time || "";
-              const end = row.end_time || (row.duration_minutes ? null : "");
-              const timeStr = end ? time + "\u2013" + end : time + (row.duration_minutes ? " (" + row.duration_minutes + " min)" : "");
-              return (name + " \xB7 " + (row.day || "") + " " + timeStr).trim();
-            }).join("; ") || "\u2014";
-          };
-          const formatClassLine = (c) => {
-            const t3 = (c.time || "10:00").trim();
-            const e = (c.end_time || c.time || "").trim();
-            return (c.name || "").replace(/</g, "&lt;") + " \xB7 " + (c.day || "") + " " + (e ? t3 + "\u2013" + e : t3);
-          };
-          const is4ClassPlan = (s) => Number(s.limit_count) === 4;
-          const is8ClassPlan = (s) => Number(s.limit_count) === 8;
-          return `
-            <div class="settings-section-header" onclick="state.aurePackageOptionsExpanded=!state.aurePackageOptionsExpanded; renderView();" style="padding: 0 1.2rem; margin-top: 2.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                <span>${t2.aure_package_options_title || "Opciones de paquetes"}</span>
-                <i data-lucide="chevron-${state.aurePackageOptionsExpanded ? "up" : "down"}" size="18" style="opacity: 0.6;"></i>
-            </div>
-            ${state.aurePackageOptionsExpanded ? `
-            <div style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
-                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 1rem;">${t2.aure_package_options_desc || "Define las opciones que los alumnos eligen al comprar un paquete (ej. Domingos 2h, Martes + Jueves)."}</p>
-                ${aureGroupPlans.length === 0 ? `<div style="padding: 1rem; background: var(--system-gray6); border-radius: 12px; color: var(--text-secondary); font-size: 14px;">${t2.aure_no_group_plans || "Crea primero un plan de grupo (ej. 4 o 8 clases) en Planes."}</div>` : aureGroupPlans.map((sub) => {
-            const subSlots = aureSlots.filter((s) => String(s.subscription_id) === String(sub.id) || (s.sub_name || "").trim() === (sub.name || "").trim());
-            const isFormForThis = form && (String(form.subscription_id) === String(sub.id) || (form.sub_name || "").trim() === (sub.name || "").trim());
-            const fourClass = is4ClassPlan(sub);
-            const eightClass = is8ClassPlan(sub);
-            if (fourClass) {
-              return `
-                <div class="aure-plan-slots-block aure-plan-4class" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--system-gray6); border-radius: 16px;">
-                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">${(sub.name || "").replace(/</g, "&lt;")}</div>
-                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.aure_4class_options_desc || "Las opciones son las clases de tu horario. Los alumnos eligen una.").replace(/</g, "&lt;")}</p>
-                    ${(state.classes || []).length === 0 ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">${t2.aure_no_classes_in_schedule || "A\xF1ade clases en Horario primero."}</div>` : `
-                    <div style="margin-bottom: 10px;">
-                        ${(state.classes || []).slice().sort((a, b) => dayIdx(a.day) - dayIdx(b.day) || (a.time || "").localeCompare(b.time || "")).map((c) => `
-                        <div style="padding: 8px 12px; background: var(--bg-body); border-radius: 10px; margin-bottom: 6px; font-size: 14px;">${formatClassLine(c)}</div>`).join("")}
-                    </div>
-                    <button type="button" onclick="window.syncAure4ClassOptionsFromSchedule('${(sub.id || "").replace(/'/g, "\\'")}', '${(sub.name || "").replace(/'/g, "\\'").replace(/"/g, "&quot;")}')" style="padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="refresh-cw" size="18"></i> ${t2.aure_use_schedule_as_options || "Usar horario como opciones"}
-                    </button>`}
-                </div>`;
-            }
-            return `
-                <div class="aure-plan-slots-block" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--system-gray6); border-radius: 16px;">
-                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">${(sub.name || "").replace(/</g, "&lt;")}</div>
-                    ${eightClass ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.aure_8class_options_desc || "Define 4 opciones; cada opci\xF3n = 2 clases de tu horario.").replace(/</g, "&lt;")}</p>` : ""}
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${t2.aure_options_students_choose || "Opciones que eligen los alumnos"}:</div>
-                    ${subSlots.length === 0 && !isFormForThis ? `<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">${t2.aure_no_options_yet || "Ninguna opci\xF3n. A\xF1ade una abajo."}</div>` : ""}
-                    ${subSlots.map((slot) => `
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: var(--bg-body); border-radius: 10px; margin-bottom: 8px;">
-                        <div>
-                            <div style="font-weight: 600; font-size: 14px;">${(slot.label || "").replace(/</g, "&lt;")}</div>
-                            <div style="font-size: 11px; color: var(--text-secondary);">${formatDefSummary(slot.definition)}</div>
-                        </div>
-                        <div style="display: flex; gap: 6px;">
-                            <button type="button" onclick="window.openAurePackageSlotEdit('${slot.id}')" style="padding: 6px 10px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer;">${t2.edit_btn || "Editar"}</button>
-                            <button type="button" onclick="if(confirm('${(t2.aure_delete_option_confirm || "\xBFEliminar esta opci\xF3n?").replace(/'/g, "\\'")}')) window.deleteAurePackageSlotOption('${slot.id}')" style="padding: 6px 10px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--system-red); cursor: pointer;">${t2.delete_btn || "Eliminar"}</button>
-                        </div>
-                    </div>`).join("")}
-                    ${isFormForThis ? `
-                    <div class="aure-slot-form" style="padding: 12px; background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); margin-top: 10px;">
-                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t2.aure_option_label_field || "Nombre de la opci\xF3n"}</label>
-                        <input type="text" id="aure-slot-label" value="${(form.label || "").replace(/"/g, "&quot;")}" placeholder="${(t2.aure_option_label_placeholder || "ej. Domingos 2h").replace(/"/g, "&quot;")}" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
-                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">${t2.aure_option_slots_field || "Clase, d\xEDa y horario"}</label>
-                        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">${(eightClass ? t2.aure_option_two_classes_hint || "A\xF1ade las 2 clases que forman esta opci\xF3n." : t2.aure_option_schedule_hint || "Elige las clases de tu horario que forman esta opci\xF3n.").replace(/</g, "&lt;")}</p>
-                        ${eightClass ? `<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">${(t2.aure_same_class_two_days_note || "Para la misma clase en dos d\xEDas (ej. Martes + Jueves), a\xF1\xE1dela dos veces en Horario.").replace(/</g, "&lt;")}</p>` : ""}
-                        <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
-                            <select id="aure-schedule-slot-select" style="flex: 1; min-width: 180px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 14px;">
-                                <option value="">${t2.aure_select_schedule_placeholder || "Elige una clase\u2026"}</option>
-                                ${scheduleSlots.map((s) => {
-              const alreadyAdded = (form.definition || []).some((d) => String(d.class_id) === String(s.class_id) && String(d.day || "") === String(s.day || "") && String(d.time || "") === String(s.time || ""));
-              const timeStr = s.end_time ? s.time + "\u2013" + s.end_time : s.time;
-              const label = (s.class_name || "").replace(/</g, "&lt;") + " \xB7 " + s.day + " " + timeStr;
-              return `<option value="${String(s.class_id)}" ${alreadyAdded ? "disabled" : ""}>${label}</option>`;
-            }).join("")}
-                            </select>
-                            <button type="button" onclick="window.addAurePackageSlotFromScheduleFromUi();" style="padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="plus" size="16"></i> ${t2.aure_add_from_schedule || "A\xF1adir clase del horario"}
-                            </button>
-                        </div>
-                        <div id="aure-slot-definition-rows">
-                            ${(form.definition && form.definition.length ? form.definition : []).map((row, idx) => {
-              const c = (state.classes || []).find((x) => String(x.id) === String(row.class_id));
-              const name = c?.name || row.class_id || "?";
-              const timeStr = (row.end_time ? (row.time || "") + "\u2013" + row.end_time : (row.time || "") + (row.duration_minutes ? " (" + row.duration_minutes + " min)" : "")).trim();
-              const slotLabel = (name + " \xB7 " + (row.day || "") + " " + timeStr).replace(/</g, "&lt;");
-              return `
-                            <div class="aure-selected-slot-row" data-idx="${idx}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: var(--system-gray6); border-radius: 10px; margin-bottom: 8px;">
-                                <span style="font-size: 14px; font-weight: 500;">${slotLabel}</span>
-                                <button type="button" onclick="window.removeAurePackageSlotDefRow(${idx})" style="padding: 6px; color: var(--system-red); background: none; border: none; cursor: pointer;" title="${(t2.delete_btn || "Eliminar").replace(/"/g, "&quot;")}"><i data-lucide="trash-2" size="16"></i></button>
-                            </div>`;
-            }).join("")}
-                        </div>
-                        ${!form.definition || form.definition.length === 0 ? `<div style="font-size: 13px; color: var(--text-muted); padding: 10px 0;">${t2.aure_no_options_yet || "Ninguna clase a\xF1adida. Elige una arriba y pulsa A\xF1adir."}</div>` : eightClass && form.definition.length === 1 ? `<div style="font-size: 13px; color: var(--secondary); padding: 10px 0;">${(t2.aure_add_second_class || "A\xF1ade la segunda clase: elige arriba y pulsa A\xF1adir.").replace(/</g, "&lt;")}</div>` : ""}
-                        <div style="display: flex; gap: 8px; margin-top: 12px;">
-                            <button type="button" onclick="window.saveAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: none; background: var(--secondary); color: white; cursor: pointer;">${t2.save_btn || "Guardar"}</button>
-                            <button type="button" onclick="window.cancelAurePackageSlotOption()" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); cursor: pointer;">${t2.cancel_btn || "Cancelar"}</button>
-                        </div>
-                    </div>
-                    ` : ""}
-                    ${!isFormForThis ? `
-                    <button type="button" onclick="window.openAurePackageSlotForm('${(sub.id || "").replace(/'/g, "\\'")}', '${(sub.name || "").replace(/'/g, "\\'").replace(/</g, "&lt;")}')" style="margin-top: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="plus" size="18"></i> ${t2.aure_add_option || "A\xF1adir opci\xF3n"}
-                    </button>
-                    ` : ""}
-                </div>`;
-          }).join("")}
-            </div>
-            ` : ""}
-            `;
-        })() : ""}
 
             <!-- Profile, password, admins, additional features, private contact (expandable at bottom) -->
             <div class="settings-advanced-expandable ${state.settingsAdvancedExpanded ? "expanded" : ""}" style="margin-top: 2.5rem; margin-bottom: 1rem; padding: 0 1.2rem; border-top: 1px solid var(--border); padding-top: 1rem;">
@@ -12112,6 +11896,37 @@ School: ${schoolName}`)) return;
     const events = [{ uid: "lesson-" + (lesson.id || "") + "@bailadmin", start, end, summary }];
     downloadIcsBlob(buildIcsFromEvents(events), "private-lesson.ics");
   };
+  window.downloadGroupClassIcsOne = function(registrationId) {
+    const allRegs = [...state.studentRegistrations || [], ...state.studentPastRegistrations || []];
+    const reg = allRegs.find(function(r) {
+      return String(r.id) === String(registrationId);
+    });
+    if (!reg || !reg.class_date) {
+      alert("Cannot export: registration not found.");
+      return;
+    }
+    const cls = (state.classes || []).find(function(c) {
+      return c.id === reg.class_id;
+    });
+    const startTime = reg.time || cls?.time || "00:00";
+    const endTime = cls?.end_time || null;
+    const start = /* @__PURE__ */ new Date(reg.class_date + "T" + startTime);
+    let end;
+    if (endTime) {
+      end = /* @__PURE__ */ new Date(reg.class_date + "T" + endTime);
+    } else {
+      end = new Date(start.getTime() + 60 * 60 * 1e3);
+    }
+    const summary = (reg.class_name || cls?.name || "Class") + (state.currentSchool?.name ? " - " + state.currentSchool.name : "");
+    const location = cls?.location || "";
+    downloadIcsBlob(buildIcsFromEvents([{
+      uid: "group-class-" + reg.id + "@bailadmin",
+      start,
+      end,
+      summary,
+      location
+    }]), (reg.class_name || "class") + ".ics");
+  };
   window.downloadCalendarIcs = async function(type, useClientOnly) {
     const t2 = DANCE_LOCALES[state.language || "en"];
     const tryClientFallback = function() {
@@ -12127,6 +11942,25 @@ School: ${schoolName}`)) return;
             start: new Date(l.start_at_utc),
             end: new Date(l.end_at_utc),
             summary: "Private lesson with " + schoolName
+          });
+        });
+        var groupRegs = (state.studentRegistrations || []).filter(function(r) {
+          return r.status === "registered" && r.class_date;
+        });
+        groupRegs.forEach(function(r) {
+          var cls = (state.classes || []).find(function(c) {
+            return c.id === r.class_id;
+          });
+          var startTime = r.time || (cls ? cls.time : null) || "00:00";
+          var endTime = cls ? cls.end_time : null;
+          var start = /* @__PURE__ */ new Date(r.class_date + "T" + startTime);
+          var end = endTime ? /* @__PURE__ */ new Date(r.class_date + "T" + endTime) : new Date(start.getTime() + 60 * 60 * 1e3);
+          events.push({
+            uid: "group-class-" + r.id + "@bailadmin",
+            start,
+            end,
+            summary: (r.class_name || (cls ? cls.name : "") || "Class") + (schoolName ? " - " + schoolName : ""),
+            location: cls ? cls.location || "" : ""
           });
         });
       } else {
@@ -12432,13 +12266,7 @@ School: ${schoolName}`)) return;
       saveState();
     }
   };
-  window.getSlotsForSubscription = (subId) => {
-    const sub = (state.subscriptions || []).find((s) => s.id === subId);
-    if (!sub) return [];
-    const slots = state.packageSlots || [];
-    return slots.filter((s) => String(s.subscription_id) === String(subId) || (s.sub_name || "").trim() === (sub.name || "").trim());
-  };
-  window.openPaymentModal = async (subId, slotId) => {
+  window.openPaymentModal = async (subId) => {
     const sub = state.subscriptions.find((s) => s.id === subId);
     if (!sub) return;
     const t2 = new Proxy(window.t, {
@@ -12446,57 +12274,6 @@ School: ${schoolName}`)) return;
     });
     const modal = document.getElementById("payment-modal");
     const content = document.getElementById("payment-modal-content");
-    const isAure = window.isAureSchool && state.currentSchool && window.isAureSchool(state.currentSchool);
-    const slotsForSub = window.getSlotsForSubscription ? window.getSlotsForSubscription(subId) : [];
-    if (isAure && slotsForSub.length > 0 && !slotId) {
-      const formatSlotSummary = (def) => {
-        if (!Array.isArray(def) || def.length === 0) return "\u2014";
-        const cls = state.classes || [];
-        return def.map((row) => {
-          const c = cls.find((x) => String(x.id) === String(row.class_id));
-          const name = c?.name || row.class_id || "?";
-          const time = row.time || "";
-          const end = row.end_time || (row.duration_minutes ? null : "");
-          const timeStr = end ? time + "\u2013" + end : time + (row.duration_minutes ? " (" + row.duration_minutes + " min)" : "");
-          return (name + " \xB7 " + (row.day || "") + " " + timeStr).trim();
-        }).join("; ") || "\u2014";
-      };
-      content.innerHTML = `
-            <div class="payment-modal-header">
-                <div class="payment-modal-icon">
-                    <i data-lucide="calendar-clock" size="28"></i>
-                </div>
-                <h2 class="payment-modal-title">${(t2("aure_choose_option_title") || "Elige tu opci\xF3n").replace(/</g, "&lt;")}</h2>
-                <p class="text-muted" style="margin: 0 0 1rem 0; font-size: 0.9rem;">${(t2("aure_choose_option_desc") || "Elige el horario que quieres para este paquete.").replace(/</g, "&lt;")}</p>
-                <div class="payment-modal-package" style="margin-bottom: 1rem;">
-                    <span class="payment-modal-package-name">${(sub.name || "").replace(/</g, "&lt;")}</span>
-                    <span class="payment-modal-package-price">${formatPrice(sub.price, state.currentSchool?.currency || "MXN")}</span>
-                </div>
-            </div>
-            <div class="payment-modal-options-list" style="display: flex; flex-direction: column; gap: 10px;">
-                ${slotsForSub.map((slot) => {
-        const summary = formatSlotSummary(slot.definition);
-        const label = (slot.label || "").replace(/</g, "&lt;");
-        const summaryEsc = (summary || "").replace(/</g, "&lt;");
-        return `
-                <button type="button" onclick="window.openPaymentModal('${(subId || "").replace(/'/g, "\\'")}', '${(slot.id || "").replace(/'/g, "\\'")}')" style="text-align: left; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); cursor: pointer; font-size: 14px;">
-                    <div style="font-weight: 600; margin-bottom: 4px;">${label}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${summaryEsc}</div>
-                </button>`;
-      }).join("")}
-            </div>
-            <div style="margin-top: 1rem;">
-                <button type="button" class="btn-icon w-full payment-modal-btn" onclick="document.getElementById('payment-modal').classList.add('hidden')">
-                    <i data-lucide="x" size="20"></i>
-                    ${t2("close")}
-                </button>
-            </div>
-        `;
-      modal.classList.remove("hidden");
-      if (window.lucide) lucide.createIcons();
-      return;
-    }
-    state.aureSelectedSlotId = slotId || null;
     const needsBank = !state.adminSettings || !state.adminSettings.bank_name && !state.adminSettings.bank_cbu;
     if (needsBank && supabaseClient && state.currentSchool) {
       content.innerHTML = `<p class="text-muted">${t2("loading")}</p>`;
@@ -12508,8 +12285,6 @@ School: ${schoolName}`)) return;
     const bankCbu = state.adminSettings?.bank_cbu || "N/A";
     const bankAlias = state.adminSettings?.bank_alias || "N/A";
     const bankHolder = state.adminSettings?.bank_holder || "N/A";
-    const selectedSlot = slotId ? (state.packageSlots || []).find((s) => String(s.id) === String(slotId)) : null;
-    const selectedOptionLine = selectedSlot ? `<p class="text-muted" style="font-size: 0.85rem; margin-top: 4px;">${(t2("aure_selected_option") || "Opci\xF3n:").replace(/</g, "&lt;")} ${(selectedSlot.label || "").replace(/</g, "&lt;")}</p>` : "";
     content.innerHTML = `
         <div class="payment-modal-header">
             <div class="payment-modal-icon">
@@ -12520,7 +12295,6 @@ School: ${schoolName}`)) return;
                 <span class="payment-modal-package-name">${sub.name}</span>
                 <span class="payment-modal-package-price">${formatPrice(sub.price, state.currentSchool?.currency || "MXN")}</span>
             </div>
-            ${selectedOptionLine}
         </div>
         <div class="payment-modal-bank ios-list">
             <div class="ios-list-item payment-modal-bank-row">
@@ -12580,15 +12354,13 @@ School: ${schoolName}`)) return;
       if (window.lucide) lucide.createIcons();
     }
     if (supabaseClient) {
-      const slotId = state.aureSelectedSlotId || null;
       const { error } = await supabaseClient.rpc("create_payment_request", {
         p_student_id: state.currentUser.id,
         p_sub_id: String(sub.id),
         p_sub_name: sub.name,
         p_price: sub.price,
         p_payment_method: method,
-        p_school_id: state.currentSchool.id,
-        p_slot_id: slotId
+        p_school_id: state.currentSchool.id
       });
       if (error) {
         const msg = error.message || "";
@@ -12601,15 +12373,12 @@ School: ${schoolName}`)) return;
         }
         if (msg.includes("Could not find the function") || msg.includes("schema cache")) {
           alert("Payment requests are not set up. Please run the Supabase SQL migration:\n\nsupabase/migrations/20260210100000_login_credentials_rpc.sql\n\nin your project's SQL Editor (Dashboard \u2192 SQL Editor \u2192 New query, paste file contents, Run).");
-        } else if (msg.includes("Could not choose the best candidate") && msg.includes("create_payment_request")) {
-          alert("Payment request failed: the database has two versions of create_payment_request. Run this migration in Supabase SQL Editor to fix:\n\nsupabase/migrations/20260227220000_drop_old_create_payment_request.sql");
         } else {
           alert("Error sending request: " + msg);
         }
         return;
       }
     }
-    state.aureSelectedSlotId = null;
     const content = document.getElementById("payment-modal-content");
     content.innerHTML = `
         <div class="payment-modal-header">
@@ -13228,206 +12997,6 @@ School: ${schoolName}`)) return;
         btn.innerHTML = '<i data-lucide="save" size="16"></i> ' + (t2("save_bank_btn") || "Save Bank Details");
         if (window.lucide) lucide.createIcons();
       }
-    }
-  };
-  window.syncAure4ClassOptionsFromSchedule = async (subId, subName) => {
-    if (!supabaseClient || !state.currentSchool?.id) return;
-    const classes = (state.classes || []).slice();
-    if (classes.length === 0) {
-      alert((typeof window.t === "function" ? window.t("aure_no_classes_in_schedule") : null) || "A\xF1ade clases en Horario primero.");
-      return;
-    }
-    const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const dayIdx = (d) => dayOrder.indexOf(d) >= 0 ? dayOrder.indexOf(d) : 99;
-    classes.sort((a, b) => dayIdx(a.day) - dayIdx(b.day) || (a.time || "").localeCompare(b.time || ""));
-    try {
-      const toDelete = (state.packageSlots || []).filter((s) => String(s.subscription_id) === String(subId) || (s.sub_name || "").trim() === (subName || "").trim());
-      for (const slot of toDelete) {
-        await supabaseClient.from("package_slots").delete().eq("id", slot.id).eq("school_id", state.currentSchool.id);
-      }
-      const parseTimeMin = (s) => {
-        const [h, m] = String(s || "10:00").trim().split(":").map(Number);
-        return (h || 0) * 60 + (m || 0);
-      };
-      for (let i = 0; i < classes.length; i++) {
-        const c = classes[i];
-        const start = parseTimeMin(c.time);
-        const end = parseTimeMin(c.end_time || c.time);
-        const duration_minutes = end > start ? end - start : 60;
-        const label = (c.name || "").trim() + " \xB7 " + (c.day || "") + " " + (c.time || "10:00").trim() + (c.end_time ? "\u2013" + (c.end_time || "").trim() : "");
-        const definition = [{ class_id: c.id, day: c.day || "Mon", time: (c.time || "10:00").trim(), end_time: (c.end_time || c.time || "").trim() || void 0, duration_minutes }];
-        const { error } = await supabaseClient.from("package_slots").insert({
-          school_id: state.currentSchool.id,
-          subscription_id: subId || null,
-          sub_name: subName || null,
-          label: label || "Clase " + (i + 1),
-          definition,
-          sort_order: i + 1
-        });
-        if (error) throw error;
-      }
-      await window.refreshAurePackageSlots();
-      renderView();
-      if (window.lucide) window.lucide.createIcons();
-    } catch (err) {
-      console.error("syncAure4ClassOptionsFromSchedule:", err);
-      alert((typeof window.t === "function" ? window.t("error_saving") : null) || "Error al guardar. " + (err?.message || ""));
-    }
-  };
-  window.refreshAurePackageSlots = async () => {
-    if (!supabaseClient || !state.currentSchool?.id) return;
-    try {
-      const { data, error } = await supabaseClient.rpc("get_package_slots", { p_school_id: state.currentSchool.id, p_subscription_id: null });
-      state.packageSlots = !error && Array.isArray(data) ? data : [];
-    } catch (_) {
-      state.packageSlots = [];
-    }
-  };
-  window.openAurePackageSlotForm = (subId, subName) => {
-    state.aurePackageSlotForm = {
-      subscription_id: subId != null ? String(subId) : null,
-      sub_name: subName != null ? String(subName) : null,
-      label: "",
-      definition: [],
-      editId: null
-    };
-    renderView();
-  };
-  window.addAurePackageSlotFromScheduleFromUi = () => {
-    const sel = document.getElementById("aure-schedule-slot-select");
-    if (!sel) return;
-    const val = (sel.value || "").trim();
-    if (!val) {
-      const msg = sel.options.length <= 1 ? (typeof window.t === "function" ? window.t("aure_no_schedule_classes") : null) || "No hay clases en el horario. A\xF1ade clases en Horario primero." : (typeof window.t === "function" ? window.t("aure_select_class_first") : null) || "Elige una clase en el desplegable antes de a\xF1adir.";
-      alert(msg);
-      return;
-    }
-    window.addAurePackageSlotFromSchedule(val);
-  };
-  window.addAurePackageSlotFromSchedule = (classId) => {
-    const form = state.aurePackageSlotForm;
-    if (!form || !classId) return;
-    const c = (state.classes || []).find((x) => String(x.id) === String(classId));
-    if (!c) return;
-    const alreadySameSlot = (form.definition || []).some((d) => String(d.class_id) === String(classId) && String(d.day || "") === String(c.day || "") && String(d.time || "") === String(c.time || ""));
-    if (alreadySameSlot) return;
-    const parseTimeMin = (s) => {
-      const [h, m] = String(s || "10:00").trim().split(":").map(Number);
-      return (h || 0) * 60 + (m || 0);
-    };
-    const start = parseTimeMin(c.time);
-    const end = parseTimeMin(c.end_time || c.time);
-    const duration_minutes = end > start ? end - start : 60;
-    form.definition = form.definition || [];
-    form.definition.push({
-      class_id: c.id,
-      day: c.day || "Mon",
-      time: (c.time || "10:00").trim(),
-      end_time: (c.end_time || c.time || "").trim() || void 0,
-      duration_minutes
-    });
-    renderView();
-    if (window.lucide) window.lucide.createIcons();
-  };
-  window.openAurePackageSlotEdit = (slotId) => {
-    const slot = (state.packageSlots || []).find((s) => String(s.id) === String(slotId));
-    if (!slot) return;
-    const def = Array.isArray(slot.definition) ? slot.definition : slot.definition && typeof slot.definition === "object" ? [slot.definition] : [];
-    const classes = state.classes || [];
-    state.aurePackageSlotForm = {
-      subscription_id: slot.subscription_id,
-      sub_name: slot.sub_name,
-      label: slot.label || "",
-      definition: def.length ? def.map((d) => {
-        const c = classes.find((x) => String(x.id) === String(d.class_id));
-        const time = (d.time || "10:00").trim();
-        const end_time = (d.end_time || c && c.end_time || time).trim();
-        let dur = d.duration_minutes;
-        if (dur == null && c) {
-          const parse = (s) => {
-            const [h, m] = String(s || "").split(":").map(Number);
-            return (h || 0) * 60 + (m || 0);
-          };
-          dur = parse(end_time) - parse(time);
-          if (dur <= 0) dur = 60;
-        }
-        return { class_id: d.class_id, day: d.day || "Mon", time, end_time: end_time || void 0, duration_minutes: dur ?? 60 };
-      }) : [],
-      editId: slot.id
-    };
-    renderView();
-  };
-  window.cancelAurePackageSlotOption = () => {
-    state.aurePackageSlotForm = null;
-    renderView();
-  };
-  window.addAurePackageSlotDefRow = () => {
-    if (!state.aurePackageSlotForm) return;
-    state.aurePackageSlotForm.definition = state.aurePackageSlotForm.definition || [];
-    state.aurePackageSlotForm.definition.push({ class_id: "", day: "Mon", time: "10:00", duration_minutes: 60 });
-    renderView();
-  };
-  window.removeAurePackageSlotDefRow = (idx) => {
-    if (!state.aurePackageSlotForm?.definition || idx <= 0) return;
-    state.aurePackageSlotForm.definition.splice(idx, 1);
-    renderView();
-  };
-  window.saveAurePackageSlotOption = async () => {
-    const form = state.aurePackageSlotForm;
-    if (!form || !state.currentSchool?.id || !supabaseClient) return;
-    const labelEl = document.getElementById("aure-slot-label");
-    const label = labelEl ? labelEl.value.trim() : "";
-    if (!label) {
-      alert((typeof window.t === "function" ? window.t("aure_option_label_required") : null) || "Escribe el nombre de la opci\xF3n.");
-      return;
-    }
-    const definition = (form.definition || []).map((d) => ({
-      class_id: d.class_id,
-      day: d.day || "Mon",
-      time: d.time || "10:00",
-      end_time: d.end_time || void 0,
-      duration_minutes: d.duration_minutes != null ? d.duration_minutes : 60
-    })).filter((d) => d.class_id != null);
-    if (definition.length === 0) {
-      alert((typeof window.t === "function" ? window.t("aure_option_def_required") : null) || "A\xF1ade al menos una clase, d\xEDa y horario.");
-      return;
-    }
-    try {
-      if (form.editId) {
-        const { error } = await supabaseClient.from("package_slots").update({ label, definition }).eq("id", form.editId).eq("school_id", state.currentSchool.id);
-        if (error) throw error;
-      } else {
-        const maxOrder = Math.max(0, ...(state.packageSlots || []).filter((s) => s.subscription_id === form.subscription_id || s.sub_name === form.sub_name).map((s) => s.sort_order || 0));
-        const { error } = await supabaseClient.from("package_slots").insert({
-          school_id: state.currentSchool.id,
-          subscription_id: form.subscription_id || null,
-          sub_name: form.sub_name || null,
-          label,
-          definition,
-          sort_order: maxOrder + 1
-        });
-        if (error) throw error;
-      }
-      state.aurePackageSlotForm = null;
-      await window.refreshAurePackageSlots();
-      renderView();
-      if (window.lucide) window.lucide.createIcons();
-    } catch (err) {
-      console.error("saveAurePackageSlotOption:", err);
-      alert((typeof window.t === "function" ? window.t("error_saving") : null) || "Error al guardar. " + (err?.message || ""));
-    }
-  };
-  window.deleteAurePackageSlotOption = async (slotId) => {
-    if (!state.currentSchool?.id || !supabaseClient) return;
-    try {
-      const { error } = await supabaseClient.from("package_slots").delete().eq("id", slotId).eq("school_id", state.currentSchool.id);
-      if (error) throw error;
-      await window.refreshAurePackageSlots();
-      renderView();
-      if (window.lucide) window.lucide.createIcons();
-    } catch (err) {
-      console.error("deleteAurePackageSlotOption:", err);
-      alert((typeof window.t === "function" ? window.t("error_deleting") : null) || "Error al eliminar. " + (err?.message || ""));
     }
   };
   window.updateAdminSetting = async (key, value) => {

@@ -404,13 +404,18 @@ export async function fetchAllData() {
                     }).catch(() => {});
                 }
             }
+            if (state.isAdmin && typeof window.loadClassAvailability === 'function') {
+                window.loadClassAvailability().then(() => {
+                    if (state.currentView === 'admin-memberships' && typeof window.renderView === 'function') window.renderView();
+                }).catch(() => {});
+            }
             if (state.isAdmin) {
                 const allWeekRegs = [];
                 const allDates = new Set();
                 const getToday = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly : () => new Date();
                 const now = getToday();
-                const start = new Date(now.getFullYear(), now.getMonth(), 1);
-                const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+                const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const end = new Date(now.getFullYear(), now.getMonth() + 3, 0);
                 for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                     allDates.add(typeof window.formatClassDate === 'function' ? window.formatClassDate(d) : d.toISOString().slice(0, 10));
                 }
@@ -429,25 +434,6 @@ export async function fetchAllData() {
                 }
                 state.adminWeekRegistrations = allWeekRegs;
             }
-            const isAure = state.currentSchool && (state.currentSchool.id === AURE_SCHOOL_ID || (state.currentSchool.discovery_slug || '').toLowerCase().trim() === 'aure');
-            if (isAure && sid && supabaseClient) {
-                try {
-                    const { data: slotsData, error: slotsErr } = await supabaseClient.rpc('get_package_slots', { p_school_id: sid, p_subscription_id: null });
-                    state.packageSlots = !slotsErr && Array.isArray(slotsData) ? slotsData : [];
-                } catch (_) {
-                    state.packageSlots = [];
-                }
-            } else {
-                state.packageSlots = [];
-            }
-        }
-        // Aure: load package_slots for shop (option picker) even when class_registration_enabled is off
-        const isAureSchool = state.currentSchool && (state.currentSchool.id === AURE_SCHOOL_ID || (state.currentSchool.discovery_slug || '').toLowerCase().trim() === 'aure');
-        if (isAureSchool && sid && supabaseClient && !(state.packageSlots && state.packageSlots.length > 0)) {
-            try {
-                const { data: slotsData, error: slotsErr } = await supabaseClient.rpc('get_package_slots', { p_school_id: sid, p_subscription_id: null });
-                if (!slotsErr && Array.isArray(slotsData)) state.packageSlots = slotsData;
-            } catch (_) { /* keep existing */ }
         }
         if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
             const updated = state.students.find(s => s.id === state.currentUser.id);
