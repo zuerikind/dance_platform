@@ -19,6 +19,28 @@ export function resetFetchThrottle() {
     _lastFetchEndTime = 0;
 }
 
+export async function refreshSingleStudent(studentId, schoolId) {
+    if (!supabaseClient || !studentId || !schoolId) return;
+    try {
+        const { data } = await supabaseClient.rpc('get_student_by_id', {
+            p_student_id: String(studentId),
+            p_school_id: schoolId
+        });
+        if (!data || !Array.isArray(data) || data.length === 0) return;
+        const row = data[0];
+        const idx = state.students.findIndex(s => String(s.id) === String(row.id));
+        if (idx >= 0) {
+            state.students[idx] = row;
+        } else {
+            state.students.push(row);
+        }
+        saveState();
+        if (typeof window.renderView === 'function') window.renderView();
+    } catch (e) {
+        console.error('Error refreshing single student:', e);
+    }
+}
+
 export async function fetchAllData() {
     if (!window.supabase || !supabaseClient) {
         state.loading = false;

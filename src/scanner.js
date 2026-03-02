@@ -4,7 +4,7 @@
 import { supabaseClient } from './config.js';
 import { escapeHtml } from './config.js';
 import { state, saveState } from './state.js';
-import { fetchAllData } from './data.js';
+import { refreshSingleStudent } from './data.js';
 
 let html5QrCode;
 
@@ -163,7 +163,7 @@ export async function handleScan(scannedId) {
         `).join('');
 
         const regBtns = todayRegs.map(r => `
-            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
+            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}', '${escapeHtml(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('confirm_attendance_registered')} – ${escapeHtml(r.class_name)}
             </button>
         `).join('');
@@ -349,7 +349,7 @@ export function cancelAttendance() {
     }
 }
 
-export async function confirmRegisteredAttendance(registrationId) {
+export async function confirmRegisteredAttendance(registrationId, studentId) {
     const schoolId = state.currentSchool?.id;
     if (!schoolId || !supabaseClient) return;
     if (state.scanDeductionLoading) return;
@@ -373,10 +373,8 @@ export async function confirmRegisteredAttendance(registrationId) {
             p_school_id: schoolId
         });
         if (error) throw error;
-
-        if (supabaseClient && schoolId) {
-            const { data: freshStudents } = await supabaseClient.rpc('get_school_students', { p_school_id: schoolId });
-            if (freshStudents) state.students = freshStudents;
+        if (studentId) {
+            await refreshSingleStudent(studentId, schoolId);
         }
 
         resultEl.innerHTML = `
@@ -446,7 +444,11 @@ export async function confirmAttendance(studentId, count, classType) {
     if (window.lucide) window.lucide.createIcons();
 
     try {
-    const shouldDeduct = classType === 'private' ? (effectivePrivate >= countNum) : classType === 'event' ? (effectiveEvents >= countNum) : (!isUnlimited && student.balance !== null);
+        const shouldDeduct = classType === 'private'
+            ? (effectivePrivate >= countNum)
+            : classType === 'event'
+            ? (effectiveEvents >= countNum)
+            : (!isUnlimited && student.balance !== null);
     if (shouldDeduct) {
         const schoolId = student.school_id || state.currentSchool?.id;
         let updated = false;
@@ -532,7 +534,9 @@ export async function confirmAttendance(studentId, count, classType) {
         }
 
         saveState();
-        await fetchAllData();
+        if (schoolId) {
+            await refreshSingleStudent(studentId, schoolId);
+        }
     }
 
     const newRemaining = classType === 'private'
@@ -569,7 +573,7 @@ export async function confirmAttendance(studentId, count, classType) {
                 console.warn("Could not resume scanner:", e);
             }
         }
-    }, 2000);
+    }, 800);
     } catch (e) {
         console.error('Error confirming attendance:', e);
         resultEl.innerHTML = `

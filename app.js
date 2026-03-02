@@ -472,6 +472,27 @@
   function resetFetchThrottle() {
     _lastFetchEndTime = 0;
   }
+  async function refreshSingleStudent(studentId, schoolId) {
+    if (!supabaseClient || !studentId || !schoolId) return;
+    try {
+      const { data } = await supabaseClient.rpc("get_student_by_id", {
+        p_student_id: String(studentId),
+        p_school_id: schoolId
+      });
+      if (!data || !Array.isArray(data) || data.length === 0) return;
+      const row = data[0];
+      const idx = state.students.findIndex((s) => String(s.id) === String(row.id));
+      if (idx >= 0) {
+        state.students[idx] = row;
+      } else {
+        state.students.push(row);
+      }
+      saveState();
+      if (typeof window.renderView === "function") window.renderView();
+    } catch (e) {
+      console.error("Error refreshing single student:", e);
+    }
+  }
   async function fetchAllData() {
     if (!window.supabase || !supabaseClient) {
       state.loading = false;
@@ -1246,7 +1267,7 @@
             </div>
         `).join("");
       const regBtns = todayRegs.map((r) => `
-            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml2(r.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
+            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml2(r.id)}', '${escapeHtml2(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("confirm_attendance_registered")} \u2013 ${escapeHtml2(r.class_name)}
             </button>
         `).join("");
@@ -1406,7 +1427,7 @@
       }
     }
   }
-  async function confirmRegisteredAttendance(registrationId) {
+  async function confirmRegisteredAttendance(registrationId, studentId) {
     const schoolId = state.currentSchool?.id;
     if (!schoolId || !supabaseClient) return;
     if (state.scanDeductionLoading) return;
@@ -1428,9 +1449,8 @@
         p_school_id: schoolId
       });
       if (error) throw error;
-      if (supabaseClient && schoolId) {
-        const { data: freshStudents } = await supabaseClient.rpc("get_school_students", { p_school_id: schoolId });
-        if (freshStudents) state.students = freshStudents;
+      if (studentId) {
+        await refreshSingleStudent(studentId, schoolId);
       }
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 20px; padding: 1.5rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
@@ -1576,7 +1596,9 @@
           }
         }
         saveState();
-        await fetchAllData();
+        if (schoolId) {
+          await refreshSingleStudent(studentId, schoolId);
+        }
       }
       const newRemaining = classType === "private" ? student.balance_private ?? 0 : classType === "event" ? student.balance_events ?? 0 : isUnlimited ? t2("unlimited") : student.balance ?? 0;
       const unitLabel = classType === "event" ? countNum === 1 ? t2("event_unit") : t2("events_unit") : countNum === 1 ? t2("class_unit") : t2("classes_unit");
@@ -1601,7 +1623,7 @@
             console.warn("Could not resume scanner:", e);
           }
         }
-      }, 2e3);
+      }, 800);
     } catch (e) {
       console.error("Error confirming attendance:", e);
       resultEl.innerHTML = `
