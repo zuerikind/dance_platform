@@ -44,23 +44,23 @@ Deferred; to be refined when v1 is underway.
 
 ## Traceability
 
-To be filled by roadmap. Every v1 requirement must map to exactly one phase.
+Every v1 requirement maps to exactly one phase. See [ROADMAP.md](ROADMAP.md).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TRIAL-01 | — | Pending |
-| TRIAL-02 | — | Pending |
-| TRIAL-03 | — | Pending |
-| TRIAL-04 | — | Pending |
-| GROW-01 | — | Pending |
-| GROW-02 | — | Pending |
-| ADMIN-01 | — | Pending |
-| STUDENT-01 | — | Pending |
+| TRIAL-01 | Phase 1 – Trial stability & support | Pending |
+| TRIAL-02 | Phase 1 – Trial stability & support | Pending |
+| TRIAL-03 | Phase 1 – Trial stability & support | Pending |
+| TRIAL-04 | Phase 1 – Trial stability & support | Pending |
+| GROW-01 | Phase 2 – Growth | Pending |
+| GROW-02 | Phase 2 – Growth | Pending |
+| ADMIN-01 | Phase 3 – Admin features | Pending |
+| STUDENT-01 | Phase 4 – Student features | Pending |
 
 **Coverage:**
 - v1 requirements: 8 total
-- Mapped to phases: 0
-- Unmapped: 8 ⚠️
+- Mapped to phases: 8
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2025-03-02*
