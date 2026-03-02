@@ -8900,6 +8900,8 @@ window.signUpStudent = async () => {
                 return;
             }
         } catch (e) {
+            let fallbackRpcError = null;
+            let fallbackCatchErr = null;
             try {
                 const { data: rpcRow, error: rpcError } = await supabaseClient.rpc('create_student_legacy', {
                     p_name: name,
@@ -8908,6 +8910,7 @@ window.signUpStudent = async () => {
                     p_password: pass,
                     p_school_id: state.currentSchool.id
                 });
+                if (rpcError) fallbackRpcError = rpcError;
                 if (!rpcError && rpcRow) {
                     const created = typeof rpcRow === 'object' ? rpcRow : (typeof rpcRow === 'string' ? JSON.parse(rpcRow) : null);
                     if (created) {
@@ -8916,9 +8919,13 @@ window.signUpStudent = async () => {
                         studentCreated = true;
                     }
                 }
-            } catch (_) {}
+            } catch (err) {
+                console.warn('Signup fallback create_student_legacy failed:', err);
+                fallbackCatchErr = err;
+            }
             if (!studentCreated) {
-                alert("Unexpected signup error: " + (e.message || "Try again."));
+                const msg = (fallbackRpcError?.message || fallbackCatchErr?.message || e?.message || 'Try again.').replace(/\s+/g, ' ').substring(0, 200);
+                alert("Unexpected signup error: " + msg);
                 return;
             }
         }
