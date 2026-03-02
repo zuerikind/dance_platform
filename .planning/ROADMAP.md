@@ -21,6 +21,14 @@ This roadmap delivers trial stability, growth beyond the two trial schools, and 
 3. Schools have documentation for using admin, schedules, students, QR, and packages; they can self-serve.
 4. No data loss; attendance and payment flows are reliable; schools and students report satisfaction and trial runs without critical bugs.
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Fix critical bugs (TRIAL-01); verify attendance/payment
+- [ ] 01-02-PLAN.md — School documentation index and task-oriented pages (TRIAL-03)
+- [ ] 01-03-PLAN.md — Small UX/clarity/performance improvements (TRIAL-02)
+- [ ] 01-04-PLAN.md — Full verification and trial readiness (TRIAL-04); human sign-off
+
 ---
 
 ### Phase 2: Growth
