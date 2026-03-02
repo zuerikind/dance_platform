@@ -4,7 +4,7 @@ import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate } from './utils.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
 import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle } from './data.js';
-import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmAttendance, updateStickyFooterVisibility } from './scanner.js';
+import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility } from './scanner.js';
 
 // --- TRANSLATIONS (DANCE_LOCALES) ---
 const DANCE_LOCALES = {
@@ -86,6 +86,7 @@ const DANCE_LOCALES = {
         approved: 'Approved',
         rejected: 'Not Approved',
         pending: 'Pending',
+        scan_deducting: "Processing...",
         one_class: "1 Class",
         two_classes: "2 Classes",
         class_unit: "class",
@@ -838,6 +839,7 @@ const DANCE_LOCALES = {
         request_sent_title: "¡Gracias por tu pago!",
         request_sent_msg: "Tu acceso será activado una vez que validemos el pago.",
         close: "Cerrar",
+        scan_deducting: "Procesando...",
         one_class: "1 Clase",
         two_classes: "2 Clases",
         class_unit: "clase",
@@ -1567,6 +1569,7 @@ const DANCE_LOCALES = {
         request_sent_title: "Anfrage gesendet!",
         request_sent_msg: "Dein Zugang wird aktiviert, sobald wir die Zahlung geprüft haben.",
         close: "Schließen",
+        scan_deducting: "Verarbeitung...",
         one_class: "1 Stunde",
         two_classes: "2 Stunden",
         class_unit: "Stunde",
@@ -2230,6 +2233,7 @@ window.handleScan = handleScan;
 window.cancelAttendance = cancelAttendance;
 window.confirmRegisteredAttendance = confirmRegisteredAttendance;
 window.confirmAttendance = confirmAttendance;
+window.handleScannerPrivateCheckIn = handleScannerPrivateCheckIn;
 window.updateStickyFooterVisibility = updateStickyFooterVisibility;
 
 window.slugFromName = (name) => {

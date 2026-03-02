@@ -110,6 +110,7 @@
     adminStudentsListExpandedForPrivateTeacher: false,
     adminRevenueFiltersExpanded: false,
     scanDeductionType: "group",
+    scanDeductionLoading: false,
     settingsClassesExpanded: false,
     settingsPlansExpanded: false,
     lastAddedSubscriptionId: null,
@@ -1252,7 +1253,7 @@
       const privateLessonSection = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
         const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
         const checkedIn = l.status === "attended";
-        const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml2(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
+        const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
         return checkInBtn;
       }).join("") : "";
       const regBalanceLabel = hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${student.balance === null ? t2("unlimited") : student.balance} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${student.balance === null ? t2("unlimited") : student.balance}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
@@ -1332,7 +1333,7 @@
       const privateLessonBlock = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
         const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
         const checkedIn = l.status === "attended";
-        return !checkedIn && l.status === "confirmed" ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t2("private_lesson") || "Private lesson"} ${timeStr}</div><button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml2(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"}</button></div>` : checkedIn ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
+        return !checkedIn && l.status === "confirmed" ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t2("private_lesson") || "Private lesson"} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"}</button></div>` : checkedIn ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
       }).join("") : "";
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
@@ -1362,7 +1363,38 @@
     }
     if (window.lucide) window.lucide.createIcons();
   }
+  async function handleScannerPrivateCheckIn(lessonId) {
+    if (state.scanDeductionLoading) return;
+    const t2 = new Proxy(window.t, {
+      get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
+    });
+    const resultEl = document.getElementById("inline-scan-result");
+    state.scanDeductionLoading = true;
+    resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t2("scan_deducting")}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+    try {
+      await window.markPrivateLessonAttended(lessonId);
+      cancelAttendance();
+    } catch (e) {
+      console.error("Error checking in private lesson:", e);
+      resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
+                <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
+            </div>
+        `;
+      if (window.lucide) window.lucide.createIcons();
+    } finally {
+      state.scanDeductionLoading = false;
+    }
+  }
   function cancelAttendance() {
+    state.scanDeductionLoading = false;
     document.getElementById("inline-scan-result").innerHTML = "";
     const scanHint = document.getElementById("scan-align-hint");
     if (scanHint) scanHint.style.display = "";
@@ -1377,10 +1409,19 @@
   async function confirmRegisteredAttendance(registrationId) {
     const schoolId = state.currentSchool?.id;
     if (!schoolId || !supabaseClient) return;
+    if (state.scanDeductionLoading) return;
     const t2 = new Proxy(window.t, {
       get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
     });
     const resultEl = document.getElementById("inline-scan-result");
+    state.scanDeductionLoading = true;
+    resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t2("scan_deducting")}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
     try {
       const { error } = await supabaseClient.rpc("mark_registration_attended", {
         p_registration_id: registrationId,
@@ -1410,11 +1451,14 @@
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
         `;
+    } finally {
+      state.scanDeductionLoading = false;
     }
   }
   async function confirmAttendance(studentId, count, classType) {
     const student = state.students.find((s) => s.id === studentId);
     if (!student) return;
+    if (state.scanDeductionLoading) return;
     if (classType !== "group" && classType !== "private" && classType !== "event") classType = state.scanDeductionType === "private" ? "private" : state.scanDeductionType === "event" ? "event" : "group";
     const t2 = new Proxy(window.t, {
       get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
@@ -1437,100 +1481,107 @@
       alert(t2("not_enough_balance"));
       return;
     }
-    const shouldDeduct = classType === "private" ? effectivePrivate >= countNum : classType === "event" ? effectiveEvents >= countNum : !isUnlimited && student.balance !== null;
-    if (shouldDeduct) {
-      const schoolId = student.school_id || state.currentSchool?.id;
-      let updated = false;
-      if (supabaseClient && schoolId) {
-        const { error: rpcError } = await supabaseClient.rpc("deduct_student_classes", {
-          p_student_id: String(studentId),
-          p_school_id: schoolId,
-          p_count: countNum,
-          p_class_type: classType
-        });
-        if (!rpcError) {
-          updated = true;
-          const now2 = /* @__PURE__ */ new Date();
-          const packs2 = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-          let remaining = countNum;
-          for (const pack of packs2) {
-            if (remaining <= 0) break;
-            if (new Date(pack.expires_at) <= now2) continue;
-            if (classType === "private") {
-              const c = pack.private_count ?? 0;
-              const deduct = Math.min(c, remaining);
-              pack.private_count = c - deduct;
-              remaining -= deduct;
-            } else if (classType === "event") {
-              const c = pack.event_count ?? 0;
-              const deduct = Math.min(c, remaining);
-              pack.event_count = c - deduct;
-              remaining -= deduct;
-            } else {
-              const c = pack.count || 0;
-              const deduct = Math.min(c, remaining);
-              pack.count = c - deduct;
-              remaining -= deduct;
-            }
-          }
-          student.active_packs = packs2.filter((p) => (classType === "private" ? p.private_count || 0 : classType === "event" ? p.event_count || 0 : p.count || 0) > 0 || new Date(p.expires_at) <= now2);
-          if (classType === "private") {
-            student.balance_private = Math.max(0, (student.balance_private ?? 0) - countNum);
-          } else if (classType === "event") {
-            student.balance_events = student.active_packs.filter((p) => new Date(p.expires_at) > now2).reduce((s, p) => s + (p.event_count || 0), 0);
-          } else {
-            student.balance = (student.balance || 0) - countNum;
-          }
-        }
-      }
-      if (!updated && classType === "group") {
-        const now2 = /* @__PURE__ */ new Date();
-        const allPacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
-        const activePacks2 = allPacks.filter((p) => new Date(p.expires_at) > now2).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-        let remainingToDeduct = countNum;
-        if (activePacks2.length > 0) {
-          for (let i = 0; i < activePacks2.length && remainingToDeduct > 0; i++) {
-            const pack = activePacks2[i];
-            const c = pack.count || 0;
-            if (c >= remainingToDeduct) {
-              pack.count = c - remainingToDeduct;
-              remainingToDeduct = 0;
-            } else {
-              remainingToDeduct -= c;
-              pack.count = 0;
-            }
-          }
-          const expiredPacks = allPacks.filter((p) => new Date(p.expires_at) <= now2);
-          const updatedPacks = [...activePacks2.filter((p) => (p.count || 0) > 0), ...expiredPacks];
-          const newBalance = updatedPacks.filter((p) => new Date(p.expires_at) > now2).reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
-          if (supabaseClient) {
-            const { error } = await supabaseClient.from("students").update({ balance: newBalance, active_packs: updatedPacks }).eq("id", studentId);
-            if (error) {
-              alert("Error updating balance: " + error.message);
-              return;
-            }
-          }
-          student.balance = newBalance;
-          student.active_packs = updatedPacks;
-        } else {
-          const newBalance = student.balance - countNum;
-          if (supabaseClient) {
-            const { error } = await supabaseClient.from("students").update({ balance: newBalance }).eq("id", studentId);
-            if (error) {
-              alert("Error updating balance: " + error.message);
-              return;
-            }
-          }
-          student.balance = newBalance;
-        }
-      }
-      saveState();
-      await fetchAllData();
-    }
-    const newRemaining = classType === "private" ? student.balance_private ?? 0 : classType === "event" ? student.balance_events ?? 0 : isUnlimited ? t2("unlimited") : student.balance ?? 0;
-    const unitLabel = classType === "event" ? countNum === 1 ? t2("event_unit") : t2("events_unit") : countNum === 1 ? t2("class_unit") : t2("classes_unit");
-    const remainingLabel = classType === "event" ? t2("events_remaining") : classType === "private" ? t2("private_classes_remaining") : t2("remaining_classes");
+    state.scanDeductionLoading = true;
     resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t2("scan_deducting")}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+    try {
+      const shouldDeduct = classType === "private" ? effectivePrivate >= countNum : classType === "event" ? effectiveEvents >= countNum : !isUnlimited && student.balance !== null;
+      if (shouldDeduct) {
+        const schoolId = student.school_id || state.currentSchool?.id;
+        let updated = false;
+        if (supabaseClient && schoolId) {
+          const { error: rpcError } = await supabaseClient.rpc("deduct_student_classes", {
+            p_student_id: String(studentId),
+            p_school_id: schoolId,
+            p_count: countNum,
+            p_class_type: classType
+          });
+          if (!rpcError) {
+            updated = true;
+            const now2 = /* @__PURE__ */ new Date();
+            const packs2 = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+            let remaining = countNum;
+            for (const pack of packs2) {
+              if (remaining <= 0) break;
+              if (new Date(pack.expires_at) <= now2) continue;
+              if (classType === "private") {
+                const c = pack.private_count ?? 0;
+                const deduct = Math.min(c, remaining);
+                pack.private_count = c - deduct;
+                remaining -= deduct;
+              } else if (classType === "event") {
+                const c = pack.event_count ?? 0;
+                const deduct = Math.min(c, remaining);
+                pack.event_count = c - deduct;
+                remaining -= deduct;
+              } else {
+                const c = pack.count || 0;
+                const deduct = Math.min(c, remaining);
+                pack.count = c - deduct;
+                remaining -= deduct;
+              }
+            }
+            student.active_packs = packs2.filter((p) => (classType === "private" ? p.private_count || 0 : classType === "event" ? p.event_count || 0 : p.count || 0) > 0 || new Date(p.expires_at) <= now2);
+            if (classType === "private") {
+              student.balance_private = Math.max(0, (student.balance_private ?? 0) - countNum);
+            } else if (classType === "event") {
+              student.balance_events = student.active_packs.filter((p) => new Date(p.expires_at) > now2).reduce((s, p) => s + (p.event_count || 0), 0);
+            } else {
+              student.balance = (student.balance || 0) - countNum;
+            }
+          }
+        }
+        if (!updated && classType === "group") {
+          const now2 = /* @__PURE__ */ new Date();
+          const allPacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+          const activePacks2 = allPacks.filter((p) => new Date(p.expires_at) > now2).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+          let remainingToDeduct = countNum;
+          if (activePacks2.length > 0) {
+            for (let i = 0; i < activePacks2.length && remainingToDeduct > 0; i++) {
+              const pack = activePacks2[i];
+              const c = pack.count || 0;
+              if (c >= remainingToDeduct) {
+                pack.count = c - remainingToDeduct;
+                remainingToDeduct = 0;
+              } else {
+                remainingToDeduct -= c;
+                pack.count = 0;
+              }
+            }
+            const expiredPacks = allPacks.filter((p) => new Date(p.expires_at) <= now2);
+            const updatedPacks = [...activePacks2.filter((p) => (p.count || 0) > 0), ...expiredPacks];
+            const newBalance = updatedPacks.filter((p) => new Date(p.expires_at) > now2).reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
+            if (supabaseClient) {
+              const { error } = await supabaseClient.from("students").update({ balance: newBalance, active_packs: updatedPacks }).eq("id", studentId);
+              if (error) {
+                throw new Error(error.message);
+              }
+            }
+            student.balance = newBalance;
+            student.active_packs = updatedPacks;
+          } else {
+            const newBalance = student.balance - countNum;
+            if (supabaseClient) {
+              const { error } = await supabaseClient.from("students").update({ balance: newBalance }).eq("id", studentId);
+              if (error) {
+                throw new Error(error.message);
+              }
+            }
+            student.balance = newBalance;
+          }
+        }
+        saveState();
+        await fetchAllData();
+      }
+      const newRemaining = classType === "private" ? student.balance_private ?? 0 : classType === "event" ? student.balance_events ?? 0 : isUnlimited ? t2("unlimited") : student.balance ?? 0;
+      const unitLabel = classType === "event" ? countNum === 1 ? t2("event_unit") : t2("events_unit") : countNum === 1 ? t2("class_unit") : t2("classes_unit");
+      const remainingLabel = classType === "event" ? t2("events_remaining") : classType === "private" ? t2("private_classes_remaining") : t2("remaining_classes");
+      resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t2("attendance_success")}</div>
@@ -1538,19 +1589,31 @@
              <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${remainingLabel}: ${newRemaining}</div>
         </div>
         `;
-    if (window.lucide) window.lucide.createIcons();
-    setTimeout(() => {
-      resultEl.innerHTML = "";
-      const scanHint = document.getElementById("scan-align-hint");
-      if (scanHint) scanHint.style.display = "";
-      if (html5QrCode) {
-        try {
-          html5QrCode.resume();
-        } catch (e) {
-          console.warn("Could not resume scanner:", e);
+      if (window.lucide) window.lucide.createIcons();
+      setTimeout(() => {
+        resultEl.innerHTML = "";
+        const scanHint = document.getElementById("scan-align-hint");
+        if (scanHint) scanHint.style.display = "";
+        if (html5QrCode) {
+          try {
+            html5QrCode.resume();
+          } catch (e) {
+            console.warn("Could not resume scanner:", e);
+          }
         }
-      }
-    }, 2e3);
+      }, 2e3);
+    } catch (e) {
+      console.error("Error confirming attendance:", e);
+      resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
+                <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
+            </div>
+        `;
+      if (window.lucide) window.lucide.createIcons();
+    } finally {
+      state.scanDeductionLoading = false;
+    }
   }
   function updateStickyFooterVisibility() {
     const el = document.querySelector(".sticky-footer-inner");
@@ -1648,6 +1711,7 @@
       approved: "Approved",
       rejected: "Not Approved",
       pending: "Pending",
+      scan_deducting: "Processing...",
       one_class: "1 Class",
       two_classes: "2 Classes",
       class_unit: "class",
@@ -2415,6 +2479,7 @@
       request_sent_title: "\xA1Gracias por tu pago!",
       request_sent_msg: "Tu acceso ser\xE1 activado una vez que validemos el pago.",
       close: "Cerrar",
+      scan_deducting: "Procesando...",
       one_class: "1 Clase",
       two_classes: "2 Clases",
       class_unit: "clase",
@@ -3150,6 +3215,7 @@
       request_sent_title: "Anfrage gesendet!",
       request_sent_msg: "Dein Zugang wird aktiviert, sobald wir die Zahlung gepr\xFCft haben.",
       close: "Schlie\xDFen",
+      scan_deducting: "Verarbeitung...",
       one_class: "1 Stunde",
       two_classes: "2 Stunden",
       class_unit: "Stunde",
@@ -3807,6 +3873,7 @@
   window.cancelAttendance = cancelAttendance;
   window.confirmRegisteredAttendance = confirmRegisteredAttendance;
   window.confirmAttendance = confirmAttendance;
+  window.handleScannerPrivateCheckIn = handleScannerPrivateCheckIn;
   window.updateStickyFooterVisibility = updateStickyFooterVisibility;
   window.slugFromName = (name) => {
     if (!name || typeof name !== "string") return "";

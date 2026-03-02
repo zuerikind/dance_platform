@@ -79,6 +79,7 @@ export let state = {
     adminStudentsListExpandedForPrivateTeacher: false,
     adminRevenueFiltersExpanded: false,
     scanDeductionType: 'group',
+    scanDeductionLoading: false,
     settingsClassesExpanded: false,
     settingsPlansExpanded: false,
     lastAddedSubscriptionId: null,

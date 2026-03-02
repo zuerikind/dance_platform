@@ -173,7 +173,7 @@ export async function handleScan(scannedId) {
                 const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
                 const checkedIn = l.status === 'attended';
                 const checkInBtn = !checkedIn && l.status === 'confirmed'
-                    ? `<button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'} – Private lesson ${timeStr}</button>`
+                    ? `<button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'} – Private lesson ${timeStr}</button>`
                     : checkedIn
                         ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t('checked_in') || 'Checked in'} – Private lesson ${timeStr}</div>`
                         : '';
@@ -266,7 +266,7 @@ export async function handleScan(scannedId) {
                 const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
                 const checkedIn = l.status === 'attended';
                 return !checkedIn && l.status === 'confirmed'
-                    ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t('private_lesson') || 'Private lesson'} ${timeStr}</div><button class="btn-primary w-full" onclick="window.markPrivateLessonAttended('${escapeHtml(l.id)}'); window.cancelAttendance();" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'}</button></div>`
+                    ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t('private_lesson') || 'Private lesson'} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'}</button></div>`
                     : checkedIn
                         ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t('checked_in') || 'Checked in'} – Private lesson ${timeStr}</div>`
                         : '';
@@ -302,7 +302,41 @@ export async function handleScan(scannedId) {
     if (window.lucide) window.lucide.createIcons();
 }
 
+export async function handleScannerPrivateCheckIn(lessonId) {
+    if (state.scanDeductionLoading) return;
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    const resultEl = document.getElementById('inline-scan-result');
+
+    state.scanDeductionLoading = true;
+    resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t('scan_deducting')}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+
+    try {
+        await window.markPrivateLessonAttended(lessonId);
+        cancelAttendance();
+    } catch (e) {
+        console.error('Error checking in private lesson:', e);
+        resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <p style="color: var(--danger);">${escapeHtml(e.message || t('error_confirming_attendance'))}</p>
+                <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t('close')}</button>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+    } finally {
+        state.scanDeductionLoading = false;
+    }
+}
+
 export function cancelAttendance() {
+    state.scanDeductionLoading = false;
     document.getElementById('inline-scan-result').innerHTML = '';
     const scanHint = document.getElementById('scan-align-hint');
     if (scanHint) scanHint.style.display = '';
@@ -318,10 +352,20 @@ export function cancelAttendance() {
 export async function confirmRegisteredAttendance(registrationId) {
     const schoolId = state.currentSchool?.id;
     if (!schoolId || !supabaseClient) return;
+    if (state.scanDeductionLoading) return;
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
     const resultEl = document.getElementById('inline-scan-result');
+
+    state.scanDeductionLoading = true;
+    resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t('scan_deducting')}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
 
     try {
         const { error } = await supabaseClient.rpc('mark_registration_attended', {
@@ -354,12 +398,15 @@ export async function confirmRegisteredAttendance(registrationId) {
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t('close')}</button>
             </div>
         `;
+    } finally {
+        state.scanDeductionLoading = false;
     }
 }
 
 export async function confirmAttendance(studentId, count, classType) {
     const student = state.students.find(s => s.id === studentId);
     if (!student) return;
+    if (state.scanDeductionLoading) return;
     if (classType !== 'group' && classType !== 'private' && classType !== 'event') classType = (state.scanDeductionType === 'private') ? 'private' : (state.scanDeductionType === 'event') ? 'event' : 'group';
     const t = new Proxy(window.t, {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
@@ -389,6 +436,16 @@ export async function confirmAttendance(studentId, count, classType) {
         return;
     }
 
+    state.scanDeductionLoading = true;
+    resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t('scan_deducting')}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+
+    try {
     const shouldDeduct = classType === 'private' ? (effectivePrivate >= countNum) : classType === 'event' ? (effectiveEvents >= countNum) : (!isUnlimited && student.balance !== null);
     if (shouldDeduct) {
         const schoolId = student.school_id || state.currentSchool?.id;
@@ -460,7 +517,7 @@ export async function confirmAttendance(studentId, count, classType) {
                 const newBalance = updatedPacks.filter(p => new Date(p.expires_at) > now).reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
                 if (supabaseClient) {
                     const { error } = await supabaseClient.from('students').update({ balance: newBalance, active_packs: updatedPacks }).eq('id', studentId);
-                    if (error) { alert("Error updating balance: " + error.message); return; }
+                    if (error) { throw new Error(error.message); }
                 }
                 student.balance = newBalance;
                 student.active_packs = updatedPacks;
@@ -468,7 +525,7 @@ export async function confirmAttendance(studentId, count, classType) {
                 const newBalance = student.balance - countNum;
                 if (supabaseClient) {
                     const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
-                    if (error) { alert("Error updating balance: " + error.message); return; }
+                    if (error) { throw new Error(error.message); }
                 }
                 student.balance = newBalance;
             }
@@ -513,6 +570,18 @@ export async function confirmAttendance(studentId, count, classType) {
             }
         }
     }, 2000);
+    } catch (e) {
+        console.error('Error confirming attendance:', e);
+        resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <p style="color: var(--danger);">${escapeHtml(e.message || t('error_confirming_attendance'))}</p>
+                <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t('close')}</button>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+    } finally {
+        state.scanDeductionLoading = false;
+    }
 }
 
 export function updateStickyFooterVisibility() {
