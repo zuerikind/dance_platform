@@ -1,4 +1,4 @@
-import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES } from './config.js';
+import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate } from './utils.js';
@@ -593,7 +593,26 @@ const DANCE_LOCALES = {
         cancel_confirm: "Cancel your registration for this class?",
         cancel_confirm_full: "You are cancelling this class. If the class gets full, you will not be able to register again.",
         register_success_4h_note: "If you don't cancel at least 4 hours before the class starts, one class will be deducted from your pass automatically.",
+        register_confirm: "Yes, register",
         my_registrations_label: "Class Registrations",
+        registration_status_pending: "Pending approval",
+        registration_status_registered: "Registered",
+        clase_suelta_request: "Request clase suelta",
+        clase_suelta_request_sent: "Request sent",
+        clase_suelta_request_pending: "Your request has been sent. You will receive a confirmation email when it is approved.",
+        aure_level_subtab: "Level",
+        aure_level_principiante: "Principiante",
+        aure_level_avanzada: "Avanzada",
+        aure_level_not_set: "Not set",
+        aure_level_label: "Level",
+        aure_principiantes_no_thursday: "Principiantes cannot register for Thursday classes.",
+        aure_need_4_8_package: "Direct registration requires a 4 or 8 class package. Use \"Request clase suelta\" instead.",
+        aure_monthly_4_8_only: "Monthly registration is only available with a 4 or 8 class package.",
+        aure_approve: "Approve",
+        aure_reject: "Reject",
+        aure_pending_badge: "Pending",
+        my_registrations_pending_section: "Pending approval",
+        withdraw_request: "Withdraw request",
         took_class_label: "Past classes",
         got_it: "Got it",
         cancel_confirm_yes: "Yes, cancel registration",
@@ -1229,7 +1248,26 @@ const DANCE_LOCALES = {
         cancel_confirm: "¿Cancelar tu registro para esta clase?",
         cancel_confirm_full: "Estás cancelando esta clase. Si la clase se llena, no podrás inscribirte de nuevo.",
         register_success_4h_note: "Si no cancelas al menos 4 horas antes del inicio de la clase, se descontará una clase de tu pase automáticamente.",
+        register_confirm: "Sí, registrarme",
         my_registrations_label: "Registros de clases",
+        registration_status_pending: "Pendiente de aprobación",
+        registration_status_registered: "Registrado",
+        clase_suelta_request: "Solicitar clase suelta",
+        clase_suelta_request_sent: "Solicitud enviada",
+        clase_suelta_request_pending: "Tu solicitud ha sido enviada. Recibirás un correo de confirmación cuando sea aprobada.",
+        aure_level_subtab: "Nivel",
+        aure_level_principiante: "Principiante",
+        aure_level_avanzada: "Avanzada",
+        aure_level_not_set: "Sin asignar",
+        aure_level_label: "Nivel",
+        aure_principiantes_no_thursday: "Los principiantes no pueden registrarse en clases de jueves.",
+        aure_need_4_8_package: "El registro directo requiere un paquete de 4 u 8 clases. Usa \"Solicitar clase suelta\" en su lugar.",
+        aure_monthly_4_8_only: "El registro mensual solo está disponible con un paquete de 4 u 8 clases.",
+        aure_approve: "Aprobar",
+        aure_reject: "Rechazar",
+        aure_pending_badge: "Pendiente",
+        my_registrations_pending_section: "Pendientes de aprobación",
+        withdraw_request: "Retirar solicitud",
         took_class_label: "Clases pasadas",
         got_it: "Entendido",
         cancel_confirm_yes: "Sí, cancelar registro",
@@ -1915,7 +1953,26 @@ const DANCE_LOCALES = {
         cancel_confirm: "Anmeldung für diesen Kurs stornieren?",
         cancel_confirm_full: "Du stornierst diesen Kurs. Wenn der Kurs voll wird, kannst du dich nicht erneut anmelden.",
         register_success_4h_note: "Wenn du nicht mindestens 4 Stunden vor Kursbeginn stornierst, wird automatisch eine Klasse von deinem Pass abgezogen.",
+        register_confirm: "Ja, anmelden",
         my_registrations_label: "Kurs-Anmeldungen",
+        registration_status_pending: "Warten auf Genehmigung",
+        registration_status_registered: "Angemeldet",
+        clase_suelta_request: "Clase suelta anfragen",
+        clase_suelta_request_sent: "Anfrage gesendet",
+        clase_suelta_request_pending: "Deine Anfrage wurde gesendet. Du erhältst eine Bestätigungs-E-Mail, wenn sie genehmigt wurde.",
+        aure_level_subtab: "Niveau",
+        aure_level_principiante: "Anfänger",
+        aure_level_avanzada: "Fortgeschritten",
+        aure_level_not_set: "Nicht gesetzt",
+        aure_level_label: "Niveau",
+        aure_principiantes_no_thursday: "Anfänger können sich nicht für Donnerstagskurse anmelden.",
+        aure_need_4_8_package: "Direkte Anmeldung erfordert ein 4- oder 8-Stunden-Paket. Nutze stattdessen „Clase suelta anfragen“.",
+        aure_monthly_4_8_only: "Monatliche Anmeldung ist nur mit einem 4- oder 8-Stunden-Paket möglich.",
+        aure_approve: "Genehmigen",
+        aure_reject: "Ablehnen",
+        aure_pending_badge: "Ausstehend",
+        my_registrations_pending_section: "Warten auf Genehmigung",
+        withdraw_request: "Anfrage zurückziehen",
         took_class_label: "Vergangene Kurse",
         got_it: "Verstanden",
         cancel_confirm_yes: "Ja, Anmeldung stornieren",
@@ -5407,6 +5464,7 @@ function _renderViewImpl() {
                 ? [...(state.studentRegistrations || []), ...(state.studentPastRegistrations || [])]
                 : (state.studentRegistrations || []);
             const myReg = regPool.find(r => r.class_id === classObj.id && r.class_date === dateStr && r.status === 'registered');
+            const myPending = regPool.find(r => r.class_id === classObj.id && r.class_date === dateStr && r.status === 'pending');
             const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
             const nowMs = getVirtualNow().getTime();
             const isOver = classDateTime.getTime() <= nowMs;
@@ -5416,6 +5474,7 @@ function _renderViewImpl() {
                 registeredCount: avail.registered_count || 0,
                 spotsLeft: avail.spots_left,
                 isRegistered: !!myReg,
+                isPending: !!myPending,
                 registrationId: myReg?.id,
                 canCancel: myReg ? (classDateTime.getTime() - nowMs) > 4 * 60 * 60 * 1000 : false,
                 isOver
@@ -5436,6 +5495,15 @@ function _renderViewImpl() {
                         ${info.canCancel ? `<button class="reg-cancel-btn" onclick="event.stopPropagation(); window.cancelRegistrationFromSchedule('${info.registrationId}')">${t.cancel_registration}</button>` : `<div class="reg-deadline-note">${t.cannot_cancel_deadline}</div>`}
                     </div>`;
             }
+            if (info.isPending) {
+                return `<div class="class-reg-status"><div class="reg-badge reg-badge-pending"><i data-lucide="clock" size="14"></i> ${t.registration_status_pending || 'Pending approval'}</div></div>`;
+            }
+            const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
+            const has4or8 = typeof window.has4or8Package === 'function' ? window.has4or8Package(state.currentUser) : true;
+            const isPrincipianteThu = isAure && (state.currentUser?.level || '') === 'principiante' && c.day === 'Thu';
+            if (isPrincipianteThu) {
+                return `<div class="class-reg-status"><div class="reg-badge reg-badge-blocked"><i data-lucide="alert-circle" size="14"></i> ${t.aure_principiantes_no_thursday || 'Principiantes cannot register for Thursday classes.'}</div></div>`;
+            }
             if (info.maxCapacity !== null && info.maxCapacity !== undefined) {
                 if (info.spotsLeft === 0) {
                     return `<div class="class-reg-status"><div class="reg-badge reg-badge-full"><i data-lucide="x-circle" size="14"></i> ${t.class_full}</div></div>`;
@@ -5444,10 +5512,12 @@ function _renderViewImpl() {
                     spotsHtml = `<div class="reg-urgency">${(t.only_n_spots || '').replace('{n}', info.spotsLeft)}</div>`;
                 }
             }
+            const btnLabel = isAure && !has4or8 ? (t.clase_suelta_request || 'Request clase suelta') : (t.register_for_class || 'Register for this class');
+            const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')`;
             return `
                 <div class="class-reg-status">
                     ${spotsHtml}
-                    <button class="reg-register-btn" onclick="event.stopPropagation(); window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}')">${t.register_for_class}</button>
+                    <button class="reg-register-btn" onclick="event.stopPropagation(); ${btnHandler}">${btnLabel}</button>
                     ${info.maxCapacity != null ? `<div class="reg-spots-info">${(t.spots_left || '').replace('{n}', info.spotsLeft)}</div>` : `<div class="reg-spots-info">${t.unlimited_spots}</div>`}
                 </div>`;
         };
@@ -5464,6 +5534,15 @@ function _renderViewImpl() {
                     ${info.canCancel ? `<button type="button" class="tile-cancel-btn" onclick="event.stopPropagation(); window.cancelRegistrationFromSchedule('${info.registrationId}')">${t.cancel_registration}</button>` : `<span class="tile-deadline-note">${t.cannot_cancel_deadline}</span>`}
                 </div>`;
             }
+            if (info.isPending) {
+                return `<div class="tile-reg-pending-pill"><i data-lucide="clock" size="12"></i> ${t.registration_status_pending || 'Pending'}</div>`;
+            }
+            const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
+            const has4or8 = typeof window.has4or8Package === 'function' ? window.has4or8Package(state.currentUser) : true;
+            const isPrincipianteThu = isAure && (state.currentUser?.level || '') === 'principiante' && c.day === 'Thu';
+            if (isPrincipianteThu) {
+                return `<div class="tile-reg-blocked-pill"><i data-lucide="alert-circle" size="12"></i> ${t.aure_principiantes_no_thursday || 'Not available'}</div>`;
+            }
             if (info.maxCapacity !== null && info.maxCapacity !== undefined && info.spotsLeft === 0) {
                 return `<div class="tile-reg-full-pill"><i data-lucide="x-circle" size="12"></i> ${t.full_label || t.class_full}</div>`;
             }
@@ -5471,9 +5550,11 @@ function _renderViewImpl() {
             if (info.maxCapacity != null && info.spotsLeft <= 10) {
                 urgency = `<div class="tile-reg-urgency">${(t.spots_left || '').replace('{n}', info.spotsLeft)}</div>`;
             }
+            const btnLabel = isAure && !has4or8 ? (t.clase_suelta_request || 'Request clase suelta') : (t.join_class || 'Join');
+            const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')`;
             return `<div class="tile-reg-actions">
                 ${urgency}
-                <button type="button" class="tile-join-btn" onclick="event.stopPropagation(); window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}')" title="${t.register_for_class}"><i data-lucide="plus" size="12"></i> ${t.join_class}</button>
+                <button type="button" class="tile-join-btn" onclick="event.stopPropagation(); ${btnHandler}" title="${btnLabel}"><i data-lucide="plus" size="12"></i> ${btnLabel}</button>
             </div>`;
         };
 
@@ -5489,10 +5570,10 @@ function _renderViewImpl() {
 
         // Registered classes summary (above schedule)
         if (regEnabled && state.classRegLoaded) {
-            const upcomingRegs = (state.studentRegistrations || []).filter(r => r.status === 'registered');
+            const upcomingRegs = (state.studentRegistrations || []).filter(r => r.status === 'registered' || r.status === 'pending');
             const locale = state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US';
             const fmtDateShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }) : '';
-            const canCancelReg = (r) => (new Date(r.class_date + 'T' + (r.time || '23:59')).getTime() - getVirtualNow().getTime()) > 4 * 60 * 60 * 1000;
+            const canCancelReg = (r) => r.status === 'registered' && (new Date(r.class_date + 'T' + (r.time || '23:59')).getTime() - getVirtualNow().getTime()) > 4 * 60 * 60 * 1000;
             html += `
             <div class="schedule-my-classes" style="margin-bottom: 1.2rem; border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; background: var(--system-gray6);">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: ${upcomingRegs.length > 0 ? '10px' : '0'};">
@@ -5510,7 +5591,7 @@ function _renderViewImpl() {
                         const canCancel = canCancelReg(r);
                         return `<div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg-body); border-radius: 12px;">
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${(r.class_name || '').replace(/</g, '&lt;')}</div>
+                                <div style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${(r.class_name || '').replace(/</g, '&lt;')}${r.status === 'pending' ? ` <span style="font-size: 10px; font-weight: 600; color: var(--text-secondary); background: var(--system-gray5); padding: 2px 6px; border-radius: 6px;">${t.registration_status_pending || 'Pending'}</span>` : ''}</div>
                                 <div style="font-size: 11px; color: var(--text-secondary);">${dateLabel} • ${r.time || ''}</div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
@@ -5524,15 +5605,20 @@ function _renderViewImpl() {
             </div>`;
         }
 
-        // Week banner: with prev/next carousel when in weekly view
+        // Week banner: with prev/next carousel when in weekly view (optimistic: render immediately, load in background)
+        const weekNavLoading = state.scheduleWeekLoading;
+        const navStyle = weekNavLoading ? 'padding: 6px 10px; flex-shrink: 0; opacity:0.5; pointer-events:none;' : 'padding: 6px 10px; flex-shrink: 0;';
+        const goPrev = weekNavLoading ? '' : `state.scheduleWeekOffset=${scheduleWeekOffset - 1}; state.scheduleWeekLoading=true; renderView(); if(window.lucide) window.lucide.createIcons(); window.loadClassAvailability().then(function(){ state.scheduleWeekLoading=false; renderView(); if(window.lucide) window.lucide.createIcons(); }).catch(function(){ state.scheduleWeekLoading=false; renderView(); });`;
+        const goNext = weekNavLoading ? '' : `state.scheduleWeekOffset=${scheduleWeekOffset + 1}; state.scheduleWeekLoading=true; renderView(); if(window.lucide) window.lucide.createIcons(); window.loadClassAvailability().then(function(){ state.scheduleWeekLoading=false; renderView(); if(window.lucide) window.lucide.createIcons(); }).catch(function(){ state.scheduleWeekLoading=false; renderView(); });`;
         html += state.scheduleView === 'weekly' ? `
             <div class="week-banner week-banner-carousel" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                <button type="button" class="btn-ghost week-nav-btn" style="padding: 6px 10px; flex-shrink: 0;" onclick="state.scheduleWeekOffset=${scheduleWeekOffset - 1}; window.loadClassAvailability().then(function(){ renderView(); if (window.lucide) window.lucide.createIcons(); }).catch(function(){});" aria-label="${t.go_back || 'Previous week'}"><i data-lucide="chevron-left" size="20"></i></button>
+                <button type="button" class="btn-ghost week-nav-btn" style="${navStyle}" ${weekNavLoading ? 'disabled' : ''} onclick="${goPrev}" aria-label="${t.go_back || 'Previous week'}"><i data-lucide="chevron-left" size="20"></i></button>
                 <div style="display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; min-width: 0;">
+                    ${weekNavLoading ? '<i data-lucide="loader-2" class="spin" size="14" style="opacity:0.7;"></i>' : ''}
                     <i data-lucide="calendar-range" size="16" style="opacity: 0.6; flex-shrink: 0;"></i>
                     <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${weekBannerText}</span>
                 </div>
-                <button type="button" class="btn-ghost week-nav-btn" style="padding: 6px 10px; flex-shrink: 0;" onclick="state.scheduleWeekOffset=${scheduleWeekOffset + 1}; window.loadClassAvailability().then(function(){ renderView(); if (window.lucide) window.lucide.createIcons(); }).catch(function(){});" aria-label="${t.week_of_short || 'Next week'}"><i data-lucide="chevron-right" size="20"></i></button>
+                <button type="button" class="btn-ghost week-nav-btn" style="${navStyle}" ${weekNavLoading ? 'disabled' : ''} onclick="${goNext}" aria-label="${t.week_of_short || 'Next week'}"><i data-lucide="chevron-right" size="20"></i></button>
             </div>
         ` : `
             <div class="week-banner">
@@ -6051,7 +6137,7 @@ function _renderViewImpl() {
 
                     ${state.currentSchool?.class_registration_enabled ? (() => {
                         const regExpanded = state.qrRegistrationsExpanded !== false;
-                        const upcoming = (state.studentRegistrations || []).filter(r => r.status === 'registered');
+                        const upcoming = (state.studentRegistrations || []).filter(r => r.status === 'registered' || r.status === 'pending');
                         const pastTook = (state.studentPastRegistrations || []).filter(r => r.status === 'attended' || r.status === 'no_show');
                         const todayTook = (state.studentRegistrations || []).filter(r => (r.status === 'attended' || r.status === 'no_show'));
                         const took = [...todayTook, ...pastTook].sort((a, b) => {
@@ -6098,17 +6184,18 @@ function _renderViewImpl() {
                                     const sameClassCancelableIds = sameClassUpcoming.filter(canCancelReg).map(x => x.id);
                                     const showCancelAll = sameClassCancelableIds.length > 1;
                                     const cancelAllIdsAttr = showCancelAll ? sameClassCancelableIds.join(',') : '';
+                                    const isPending = r.status === 'pending';
                                     return `<div class="card qr-reg-card" style="padding: 10px 14px; border-radius: 12px; font-size: 13px;">
                                         <div style="display: flex; align-items: center; justify-content: space-between;">
-                                            <div style="font-weight: 700;">${(r.class_name || '').replace(/</g, '&lt;')}</div>
+                                            <div style="font-weight: 700;">${(r.class_name || '').replace(/</g, '&lt;')}${isPending ? ` <span style="font-size: 10px; font-weight: 600; background: rgba(255,165,0,0.2); color: #e6a800; padding: 2px 6px; border-radius: 6px;">${t.registration_status_pending || 'Pending'}</span>` : ''}</div>
                                             <button type="button" onclick="window.downloadGroupClassIcsOne('${String(r.id || '').replace(/'/g, "\\'")}');" style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--text-secondary); flex-shrink: 0;" title="${(t.export_to_calendar || 'Export').replace(/"/g, '&quot;')}"><i data-lucide="calendar-plus" size="14"></i></button>
                                         </div>
                                         <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${dateLabel} • ${r.time || ''}</div>
                                         <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
-                                        ${canCancel ? `<button type="button" class="reg-cancel-btn" style="font-size: 11px; padding: 4px 10px;" onclick="event.stopPropagation(); window.showCancelConfirmModal('${r.id}')">${t.cancel_this_class || 'Cancel this class'}</button>` : ''}
+                                        ${!isPending && canCancel ? `<button type="button" class="reg-cancel-btn" style="font-size: 11px; padding: 4px 10px;" onclick="event.stopPropagation(); window.showCancelConfirmModal('${r.id}')">${t.cancel_this_class || 'Cancel this class'}</button>` : ''}
                                         ${showCancelAll ? `<button type="button" class="btn-secondary qr-reg-cancel-all-btn" style="font-size: 11px; padding: 4px 10px;" data-cancel-all-ids="${cancelAllIdsAttr}" onclick="event.stopPropagation(); var ids=this.getAttribute('data-cancel-all-ids'); if(ids) window.showCancelAllConfirmModal(ids.split(','));">${(t.cancel_all_n_classes || 'Cancel all {n} classes').replace('{n}', sameClassCancelableIds.length)}</button>` : ''}
                                         </div>
-                                        ${!canCancel && !showCancelAll && r.class_date ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px;">${t.cannot_cancel_deadline || 'Cancellation deadline passed'}</div>` : ''}
+                                        ${!isPending && !canCancel && !showCancelAll && r.class_date ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px;">${t.cannot_cancel_deadline || 'Cancellation deadline passed'}</div>` : ''}
                                     </div>`;
                                 }).join('')}
                                 `}
@@ -6206,6 +6293,8 @@ function _renderViewImpl() {
         const currentComp = pickedId ? comps.find(c => c.id === pickedId) : defaultComp;
         const hasActiveEvent = comps.some(c => c.is_active);
         const isPrivateTeacher = state.currentSchool?.profile_type === 'private_teacher';
+        const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
+        const adminStudentsSubtab = state.adminStudentsSubtab || 'lista';
         let adminStudentsFilterBlock;
         if (isPrivateTeacher) {
             adminStudentsFilterBlock = `
@@ -6266,7 +6355,25 @@ function _renderViewImpl() {
                         <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
                         <p>${t.loading_students_msg}</p>
                     </div>
-                    ` : (() => { const _f = getFilteredStudents(state.adminStudentsSearch || ''); setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0); return _f.map(s => renderAdminStudentCard(s)).join(''); })()}
+                    ` : (() => {
+                        const _f = getFilteredStudents(state.adminStudentsSearch || '');
+                        setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0);
+                        if (isAure && adminStudentsSubtab === 'nivel') {
+                            return _f.map(s => {
+                                const lev = s.level || '';
+                                return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
+                                    <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || '').charAt(0).toUpperCase()}</div>
+                                    <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${(s.name || s.email || s.id || '').toString().replace(/</g, '&lt;')}</div><div style="font-size: 12px; color: var(--text-secondary);">${(s.email || '').toString().replace(/</g, '&lt;')}</div></div>
+                                    <select style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${String(s.id).replace(/'/g, "\\'")}', this.value)">
+                                        <option value="" ${lev === '' ? 'selected' : ''}>${t.aure_level_not_set || 'Not set'}</option>
+                                        <option value="principiante" ${lev === 'principiante' ? 'selected' : ''}>${t.aure_level_principiante || 'Principiante'}</option>
+                                        <option value="avanzada" ${lev === 'avanzada' ? 'selected' : ''}>${t.aure_level_avanzada || 'Avanzada'}</option>
+                                    </select>
+                                </div>`;
+                            }).join('');
+                        }
+                        return _f.map(s => renderAdminStudentCard(s)).join('');
+                    })()}
                 </div>
                 `;
         }
@@ -6275,6 +6382,12 @@ function _renderViewImpl() {
             <div class="students-page">
                 <div class="students-header">
                     <h1 class="students-title">${t.nav_students}</h1>
+                    ${isAure ? `
+                    <div class="admin-students-tabs" style="display: flex; gap: 4px; margin-top: 10px;">
+                        <button type="button" class="btn-tab ${adminStudentsSubtab === 'lista' ? 'active' : ''}" onclick="state.adminStudentsSubtab='lista'; renderView();" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: ${adminStudentsSubtab === 'lista' ? 'var(--secondary)' : 'transparent'}; color: ${adminStudentsSubtab === 'lista' ? 'white' : 'var(--text-primary)'};">${t.filter_all || 'Lista'}</button>
+                        <button type="button" class="btn-tab ${adminStudentsSubtab === 'nivel' ? 'active' : ''}" onclick="state.adminStudentsSubtab='nivel'; renderView();" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: ${adminStudentsSubtab === 'nivel' ? 'var(--secondary)' : 'transparent'}; color: ${adminStudentsSubtab === 'nivel' ? 'white' : 'var(--text-primary)'};">${t.aure_level_subtab || 'Nivel'}</button>
+                    </div>
+                    ` : ''}
                     <div class="students-actions">
                         ${(comps.length > 0 && (state.currentSchool?.jack_and_jill_enabled === true)) ? `
                         <details class="students-jackblock" ${(typeof window !== 'undefined' && window.innerWidth >= 600) ? 'open' : ''}>
@@ -6411,19 +6524,21 @@ function _renderViewImpl() {
                                 const dateObj = new Date(g.class_date + 'T00:00:00');
                                 const dateLabel = window.formatShortDate(dateObj, state.language);
                                 const maxCap = (state.classes || []).find(cl => cl.id === g.students[0]?.class_id)?.max_capacity;
-                                const registeredCount = g.students.filter(s => s.status === 'registered').length;
+                                const registeredCount = g.students.filter(s => s.status === 'registered' || s.status === 'pending').length;
                                 const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
-                                const registeredStudents = g.students.filter(s => s.status === 'registered' || s.status === 'attended' || s.status === 'no_show');
+                                const registeredStudents = g.students.filter(s => s.status === 'registered' || s.status === 'attended' || s.status === 'no_show' || s.status === 'pending');
                                 const cancelledStudents = g.students.filter(s => s.status === 'cancelled');
                                 const cardKey = (g.students[0]?.class_id || '') + '_' + (g.class_date || '');
                                 const cancelledExpanded = state.adminRegCancelledExpanded && state.adminRegCancelledExpanded[cardKey];
+                                const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
                                 const renderStudentRow = (s) => {
-                                    const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
-                                    const statusLabel = s.status === 'attended' ? t.attended : s.status === 'no_show' ? (t.auto_deducted || 'No show') : s.status === 'cancelled' ? (t.cancelled || 'Cancelled') : t.registered;
+                                    const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : s.status === 'pending' ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
+                                    const statusLabel = s.status === 'attended' ? t.attended : s.status === 'no_show' ? (t.auto_deducted || 'No show') : s.status === 'cancelled' ? (t.cancelled || 'Cancelled') : s.status === 'pending' ? (t.aure_pending_badge || 'Pending') : t.registered;
                                     const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t.monthly_badge || 'Monthly') + '</span>' : '';
                                     const displayName = (state.students || []).find(st => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || '—';
                                     const rowStyle = s.status === 'cancelled' ? ' opacity: 0.7;' : '';
-                                    return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span></div>`;
+                                    const pendingActions = isAure && s.status === 'pending' ? `<span style="margin-left: 6px;"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t.aure_approve || 'Approve'}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t.aure_reject || 'Reject'}</button></span>` : '';
+                                    return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>${pendingActions}</div>`;
                                 };
                                 return `
                                 <div class="admin-reg-card">
@@ -8027,37 +8142,48 @@ window.loadClassAvailability = async () => {
         if (nextDate) dates.add(window.formatClassDate(nextDate));
     });
 
-    for (const dateStr of dates) {
+    // Fetch all availability in parallel (was sequential – major speedup)
+    const dateArr = [...dates];
+    const availabilityPromises = dateArr.map(async (dateStr) => {
         try {
             const { data, error } = await supabaseClient.rpc('get_class_availability', {
                 p_school_id: schoolId,
                 p_class_date: dateStr
             });
-            if (!error && data) {
-                const arr = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
-                arr.forEach(item => {
-                    availability[item.class_id + '_' + dateStr] = item;
-                });
-            }
-        } catch (e) { console.warn('Error loading availability for', dateStr, e); }
-    }
+            return { dateStr, data, error };
+        } catch (e) {
+            console.warn('Error loading availability for', dateStr, e);
+            return { dateStr, error: e };
+        }
+    });
 
-    // Also load student's own registrations (upcoming + past for My QR page)
+    // Run availability fetches + student registrations in parallel
+    const regPromises = state.currentUser?.id
+        ? [
+            supabaseClient.rpc('get_student_upcoming_registrations', { p_student_id: String(state.currentUser.id), p_school_id: schoolId }),
+            supabaseClient.rpc('get_student_past_registrations', { p_student_id: String(state.currentUser.id), p_school_id: schoolId })
+        ]
+        : [Promise.resolve({ data: null }), Promise.resolve({ data: null })];
+
+    const [availResults, [upcomingRes, pastRes]] = await Promise.all([
+        Promise.all(availabilityPromises),
+        Promise.all(regPromises)
+    ]);
+
+    availResults.forEach(({ dateStr, data, error }) => {
+        if (!error && data) {
+            const arr = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+            arr.forEach(item => { availability[item.class_id + '_' + dateStr] = item; });
+        }
+    });
+
     let myRegs = [];
     let pastRegs = [];
-    if (state.currentUser?.id) {
-        try {
-            const [upcomingRes, pastRes] = await Promise.all([
-                supabaseClient.rpc('get_student_upcoming_registrations', { p_student_id: String(state.currentUser.id), p_school_id: schoolId }),
-                supabaseClient.rpc('get_student_past_registrations', { p_student_id: String(state.currentUser.id), p_school_id: schoolId })
-            ]);
-            if (!upcomingRes.error && upcomingRes.data) {
-                myRegs = Array.isArray(upcomingRes.data) ? upcomingRes.data : (typeof upcomingRes.data === 'string' ? JSON.parse(upcomingRes.data) : []);
-            }
-            if (!pastRes.error && pastRes.data) {
-                pastRegs = Array.isArray(pastRes.data) ? pastRes.data : (typeof pastRes.data === 'string' ? JSON.parse(pastRes.data) : []);
-            }
-        } catch (e) { console.warn('Error loading registrations:', e); }
+    if (!upcomingRes?.error && upcomingRes?.data) {
+        myRegs = Array.isArray(upcomingRes.data) ? upcomingRes.data : (typeof upcomingRes.data === 'string' ? JSON.parse(upcomingRes.data) : []);
+    }
+    if (!pastRes?.error && pastRes?.data) {
+        pastRegs = Array.isArray(pastRes.data) ? pastRes.data : (typeof pastRes.data === 'string' ? JSON.parse(pastRes.data) : []);
     }
 
     state.classAvailability = availability;
@@ -8158,14 +8284,13 @@ window.showMessageModal = (opts) => {
 
 window.showRegisterSuccessModal = (registrationId, canCancelFromSuccess) => {
     const t = typeof window.t === 'function' ? window.t : (k) => k;
+    // Single button only – student is already registered; both actions must ONLY close, never register
     window.showMessageModal({
         icon: 'success',
         title: t('registered_title'),
         body: t('register_success_4h_note'),
         primaryLabel: t('got_it'),
-        secondaryLabel: t('close'),
-        onPrimary: (close) => { close(); },
-        onSecondary: (close) => { close(); }
+        onPrimary: (close) => { close(); }
     });
 };
 
@@ -8256,33 +8381,44 @@ function getVirtualNow() {
     return new Date();
 }
 
-window.getMonthlyDates = (dayCode) => {
+window.getMonthlyDates = (dayCode, anchorDateOrStr) => {
     const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
     const dayAliases = { 'Mo': 1, 'Monday': 1, 'Tu': 2, 'Tuesday': 2, 'We': 3, 'Wednesday': 3, 'Th': 4, 'Thursday': 4, 'Fr': 5, 'Friday': 5, 'Sa': 6, 'Saturday': 6, 'Su': 0, 'Sunday': 0 };
     let targetDay = dayMap[dayCode];
     if (targetDay === undefined) targetDay = dayAliases[dayCode];
     if (targetDay === undefined) return [];
-    const now = getTodayForMonthly();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const today = new Date(year, month, now.getDate());
+    const anchor = anchorDateOrStr ? (typeof anchorDateOrStr === 'string' ? new Date(anchorDateOrStr + 'T00:00:00') : anchorDateOrStr) : getTodayForMonthly();
+    const year = anchor.getFullYear();
+    const month = anchor.getMonth();
+    const anchorDay = new Date(year, month, anchor.getDate());
     const lastDay = new Date(year, month + 1, 0).getDate();
     const dates = [];
     for (let d = 1; d <= lastDay; d++) {
         const dt = new Date(year, month, d);
-        if (dt.getDay() === targetDay && dt >= today) {
+        if (dt.getDay() === targetDay && dt >= anchorDay) {
             dates.push(window.formatClassDate(dt));
         }
     }
     return dates;
 };
 
+window.has4or8Package = (user) => {
+    if (!user) return false;
+    const packs = Array.isArray(user.active_packs) ? user.active_packs : [];
+    const now = new Date();
+    return packs.some(p => {
+        const exp = p.expires_at ? new Date(p.expires_at) : null;
+        if (exp && exp <= now) return false;
+        const limit = p.plan_limit != null ? parseInt(p.plan_limit, 10) : null;
+        const count = p.count != null ? parseInt(p.count, 10) : null;
+        return (limit === 4 || limit === 8) || (limit == null && (count === 4 || count === 8));
+    });
+};
+
 window.isMonthlyRegistrationAvailable = () => {
     const school = state.currentSchool;
     if (school?.monthly_registration_enabled === false) return false;
     if (!school?.class_registration_enabled) return false;
-    const dayOfMonth = getTodayForMonthly().getDate();
-    if (dayOfMonth > 14) return false;
     // Show when admin has turned it on, or when platform enabled it and admin has not explicitly turned it off (students may not have adminSettings loaded).
     if (state.adminSettings?.monthly_registration_enabled === 'false') return false;
     const adminOffers = state.adminSettings?.monthly_registration_enabled === 'true';
@@ -8290,16 +8426,16 @@ window.isMonthlyRegistrationAvailable = () => {
     return adminOffers || platformAllows;
 };
 
-window.registerForClassSingle = async (classId, className) => {
+window.registerForClassSingle = async (classId, className, optionalDateStr) => {
     const schoolId = state.currentSchool?.id;
     const studentId = state.currentUser?.id;
     if (!schoolId || !studentId || !supabaseClient) return;
     const t = typeof window.t === 'function' ? window.t : (k) => k;
     const classObj = (state.classes || []).find(c => c.id === classId);
     if (!classObj) return;
-    const nextDate = window.getNextClassDate(classObj.day);
-    if (!nextDate) return;
-    const dateStr = window.formatClassDate(nextDate);
+    const nextDate = optionalDateStr ? new Date(optionalDateStr + 'T00:00:00') : window.getNextClassDate(classObj.day);
+    if (!nextDate || isNaN(nextDate.getTime())) return;
+    const dateStr = optionalDateStr || window.formatClassDate(nextDate);
 
     try {
         const { data, error } = await supabaseClient.rpc('register_for_class', {
@@ -8325,14 +8461,14 @@ window.registerForClassSingle = async (classId, className) => {
     }
 };
 
-window.registerForClassMonthly = async (classId, className) => {
+window.registerForClassMonthly = async (classId, className, optionalAnchorDateStr) => {
     const schoolId = state.currentSchool?.id;
     const studentId = state.currentUser?.id;
     if (!schoolId || !studentId || !supabaseClient) return;
     const t = typeof window.t === 'function' ? window.t : (k) => k;
     const classObj = (state.classes || []).find(c => c.id === classId);
     if (!classObj) return;
-    const dates = window.getMonthlyDates(classObj.day);
+    const dates = window.getMonthlyDates(classObj.day, optionalAnchorDateStr);
     if (dates.length === 0) return;
 
     try {
@@ -8370,7 +8506,7 @@ window.registerForClassMonthly = async (classId, className) => {
     }
 };
 
-window.registerForClass = async (classId, className) => {
+window.registerForClass = async (classId, className, optionalDateStr) => {
     const schoolId = state.currentSchool?.id;
     const studentId = state.currentUser?.id;
     if (!schoolId || !studentId || !supabaseClient) return;
@@ -8379,10 +8515,10 @@ window.registerForClass = async (classId, className) => {
     const classObj = (state.classes || []).find(c => c.id === classId);
     if (!classObj) return;
 
-    const nextDate = window.getNextClassDate(classObj.day);
-    if (!nextDate) return;
-    const dateStr = window.formatClassDate(nextDate);
-    const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
+    const targetDate = optionalDateStr ? new Date(optionalDateStr + 'T00:00:00') : window.getNextClassDate(classObj.day);
+    if (!targetDate || isNaN(targetDate.getTime())) return;
+    const targetDateStr = optionalDateStr || window.formatClassDate(targetDate);
+    const classDateTime = new Date(targetDateStr + 'T' + (classObj.time || '23:59'));
     if (classDateTime.getTime() <= getVirtualNow().getTime()) {
         window.showMessageModal({
             icon: 'warning',
@@ -8394,7 +8530,7 @@ window.registerForClass = async (classId, className) => {
     }
 
     if (window.isMonthlyRegistrationAvailable()) {
-        const monthlyDates = window.getMonthlyDates(classObj.day);
+        const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
         if (monthlyDates.length > 1) {
             const dayNames = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday' };
             const dayName = dayNames[classObj.day] || classObj.day;
@@ -8407,11 +8543,11 @@ window.registerForClass = async (classId, className) => {
                 cancelLabel: t('cancel'),
                 onPrimary: (close) => {
                     close();
-                    window.registerForClassMonthly(classId, className);
+                    window.registerForClassMonthly(classId, className, targetDateStr);
                 },
                 onSecondary: (close) => {
                     close();
-                    window.registerForClassSingle(classId, className);
+                    window.registerForClassSingle(classId, className, targetDateStr);
                 },
                 onCancel: (close) => { close(); }
             });
@@ -8419,12 +8555,119 @@ window.registerForClass = async (classId, className) => {
         }
     }
 
-    window.registerForClassSingle(classId, className);
+    // Pre-registration confirmation: show 4h policy first, then register only if user confirms
+    window.showMessageModal({
+        icon: 'success',
+        title: className || classObj.name,
+        body: t('register_success_4h_note'),
+        primaryLabel: t('register_confirm') || 'Yes, register',
+        cancelLabel: t('cancel'),
+        onPrimary: (close) => {
+            close();
+            window.registerForClassSingle(classId, className, targetDateStr);
+        },
+        onCancel: (close) => { close(); }
+    });
 };
 
 window.cancelRegistrationFromSchedule = (registrationId) => {
     if (!state.currentUser?.id || !supabaseClient) return;
     window.showCancelConfirmModal(registrationId);
+};
+
+window.requestClaseSuelta = async (classId, className, optionalDateStr) => {
+    const schoolId = state.currentSchool?.id;
+    const studentId = state.currentUser?.id;
+    if (!schoolId || !studentId || !supabaseClient) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const classObj = (state.classes || []).find(c => c.id === classId);
+    if (!classObj) return;
+    const nextDate = optionalDateStr ? new Date(optionalDateStr + 'T00:00:00') : window.getNextClassDate(classObj.day);
+    if (!nextDate || isNaN(nextDate.getTime())) return;
+    const dateStr = optionalDateStr || window.formatClassDate(nextDate);
+
+    try {
+        const { data, error } = await supabaseClient.rpc('request_clase_suelta', {
+            p_student_id: String(studentId),
+            p_class_id: classId,
+            p_school_id: schoolId,
+            p_class_date: dateStr
+        });
+        if (error) throw error;
+        window.showMessageModal({
+            icon: 'success',
+            title: t.clase_suelta_request_sent || 'Request sent',
+            body: (t.clase_suelta_request_pending || 'Your request has been sent. You will receive a confirmation email when it is approved.').replace(/"/g, '&quot;'),
+            primaryLabel: t.got_it
+        });
+        window.loadClassAvailability().then(() => {
+            if (shouldDeferRender()) scheduleDeferredRender();
+            else { renderView(); if (window.lucide) window.lucide.createIcons(); }
+        }).catch(() => {});
+    } catch (e) {
+        console.error('Clase suelta request error:', e);
+        const msg = (e && e.message) || '';
+        const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
+        alert(isNoMembership ? t('no_active_membership_register') : (msg || t('register_error')));
+    }
+};
+
+window.approveClaseSuelta = async (registrationId) => {
+    if (!supabaseClient) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    try {
+        const { error } = await supabaseClient.rpc('admin_approve_clase_suelta', { p_registration_id: registrationId });
+        if (error) throw error;
+        const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/send_clase_suelta_confirmation';
+        const { data: sess } = await supabaseClient.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (token) {
+            await fetch(fnUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ registration_id: registrationId })
+            });
+        }
+        await window.loadClassAvailability?.();
+        if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
+    } catch (e) {
+        console.error('Approve error:', e);
+        alert((e && e.message) || t('register_error'));
+    }
+};
+
+window.rejectClaseSuelta = async (registrationId) => {
+    if (!supabaseClient) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    try {
+        const { error } = await supabaseClient.rpc('admin_reject_clase_suelta', { p_registration_id: registrationId });
+        if (error) throw error;
+        await window.loadClassAvailability?.();
+        if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
+    } catch (e) {
+        console.error('Reject error:', e);
+        alert((e && e.message) || t('register_error'));
+    }
+};
+
+window.updateStudentLevel = async (studentId, level) => {
+    if (!supabaseClient || !state.schoolId) return;
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    try {
+        const pLevel = level && level.trim() ? level.trim() : null;
+        const { error } = await supabaseClient.rpc('student_update_level', {
+            p_student_id: String(studentId),
+            p_school_id: state.schoolId,
+            p_level: pLevel
+        });
+        if (error) throw error;
+        const s = state.students?.find(st => String(st.id) === String(studentId));
+        if (s) s.level = pLevel;
+        if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
+    } catch (e) {
+        console.error('Update level error:', e);
+        alert((e && e.message) || t('register_error'));
+    }
 };
 
 // --- LOCATION HELPERS ---

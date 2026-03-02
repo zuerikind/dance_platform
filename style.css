@@ -4004,6 +4004,23 @@ select.filter-control {
   background: rgba(255, 59, 48, 0.15);
   color: #FF6B6B;
 }
+.reg-badge-pending {
+  background: rgba(255, 149, 0, 0.12);
+  color: #FF9500;
+}
+.dark-mode .reg-badge-pending {
+  background: rgba(255, 149, 0, 0.18);
+  color: #FFB340;
+}
+.reg-badge-blocked {
+  background: rgba(142, 142, 147, 0.12);
+  color: var(--text-secondary);
+  justify-content: center;
+}
+.dark-mode .reg-badge-blocked {
+  background: rgba(142, 142, 147, 0.18);
+  color: var(--text-secondary);
+}
 
 /* --- Cancel button (small text style) --- */
 .reg-cancel-btn {
@@ -4133,6 +4150,35 @@ select.filter-control {
 .dark-mode .tile-reg-full {
   background: rgba(255, 59, 48, 0.2);
   color: #FF6B6B;
+}
+.tile-reg-pending-pill,
+.tile-reg-blocked-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.tile-reg-pending-pill {
+  background: rgba(255, 149, 0, 0.2);
+  color: #FF9500;
+}
+.dark-mode .tile-reg-pending-pill {
+  background: rgba(255, 149, 0, 0.25);
+  color: #FFB340;
+}
+.tile-reg-blocked-pill {
+  background: rgba(142, 142, 147, 0.15);
+  color: var(--text-secondary);
+}
+.dark-mode .tile-reg-blocked-pill {
+  background: rgba(142, 142, 147, 0.2);
+  color: var(--text-secondary);
 }
 
 /* Full pill badge (icon + "Full" text) */
