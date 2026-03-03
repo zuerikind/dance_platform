@@ -36,6 +36,44 @@ import './legacy.js';
 
 // --- Event listeners and init (run after legacy has attached handlers to window) ---
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    // When Supabase refresh token is invalid, sign out and show login so the user can re-authenticate.
+    // This prevents red AuthApiError in console and fixes broken session (e.g. group classes "jumping back" after save).
+    window.addEventListener('unhandledrejection', function onAuthRejection(event) {
+        const err = event?.reason;
+        const msg = (err?.message || err?.msg || String(err || '')).toLowerCase();
+        if (!msg) return;
+        const isInvalidRefresh = msg.includes('invalid refresh') || msg.includes('refresh token not found') || msg.includes('refresh token');
+        const isAuthError = (err?.name === 'AuthApiError') || (err?.status === 400 && isInvalidRefresh);
+        if (!isAuthError && !isInvalidRefresh) return;
+        event.preventDefault();
+        if (supabaseClient) {
+            supabaseClient.auth.signOut().catch(() => {});
+        }
+        if (state.currentUser || state.isAdmin || state.isPlatformDev) {
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.isPlatformDev = false;
+            state.currentSchool = null;
+            state.currentView = 'school-selection';
+            saveState();
+            if (typeof window.renderView === 'function') window.renderView();
+        }
+    });
+
+    if (supabaseClient && supabaseClient.auth) {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' && (state.currentUser || state.isAdmin || state.isPlatformDev)) {
+                state.currentUser = null;
+                state.isAdmin = false;
+                state.isPlatformDev = false;
+                state.currentSchool = null;
+                state.currentView = 'school-selection';
+                saveState();
+                if (typeof window.renderView === 'function') window.renderView();
+            }
+        });
+    }
+
     window.addEventListener('scroll', () => { window.updateStickyFooterVisibility(); }, { passive: true });
     window.addEventListener('resize', () => { window.updateStickyFooterVisibility(); });
 

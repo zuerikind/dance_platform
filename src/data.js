@@ -181,6 +181,12 @@ export async function fetchAllData() {
             if (settingsJson && typeof settingsJson === 'object') state.adminSettings = settingsJson;
         }
         if (studentsRes.data && studentsRes.data.length > 0) {
+            if (window._debugBalanceJump && state._lastSavedStudentId) {
+                const prev = state.students.find(s => String(s.id) === String(state._lastSavedStudentId));
+                const next = (studentsRes.data || []).find(s => String(s.id) === String(state._lastSavedStudentId));
+                console.log('[fetchAllData] Overwriting state.students (studentsRes). For saved student', state._lastSavedStudentId, 'prev balance=', prev?.balance, '→ new balance=', next?.balance);
+                delete state._lastSavedStudentId;
+            }
             state.students = studentsRes.data;
             if (state.currentUser && !state.isAdmin) {
                 const updatedMe = state.students.find(s => s.id === state.currentUser.id);
@@ -200,7 +206,15 @@ export async function fetchAllData() {
             }
         } else if (state.isAdmin && supabaseClient) {
             const { data: rpcStudents } = await supabaseClient.rpc('get_school_students', { p_school_id: sid });
-            if (rpcStudents && Array.isArray(rpcStudents)) state.students = rpcStudents;
+            if (rpcStudents && Array.isArray(rpcStudents)) {
+                if (window._debugBalanceJump && state._lastSavedStudentId) {
+                    const prev = state.students.find(s => String(s.id) === String(state._lastSavedStudentId));
+                    const next = (rpcStudents || []).find(s => String(s.id) === String(state._lastSavedStudentId));
+                    console.log('[fetchAllData] Overwriting state.students (rpcStudents). For saved student', state._lastSavedStudentId, 'prev balance=', prev?.balance, '→ new balance=', next?.balance);
+                    delete state._lastSavedStudentId;
+                }
+                state.students = rpcStudents;
+            }
             const { data: activationStatus } = await supabaseClient.rpc('get_school_students_activation_status', { p_school_id: sid });
             state.studentActivationStatus = {};
             if (activationStatus && Array.isArray(activationStatus)) {

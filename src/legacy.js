@@ -8699,16 +8699,22 @@ window.checkExpirations = async () => {
     if (!state.students || state.students.length === 0) return;
     const now = new Date();
     let updatedCount = 0;
+    const justSavedId = state._lastSavedStudentId;
+    const justSavedAt = state._lastSavedStudentAt || 0;
+    const skipRecentlySaved = justSavedId && (now - justSavedAt < 60000); // 60s grace
 
     for (let s of state.students) {
+        if (skipRecentlySaved && String(s.id) === String(justSavedId)) continue;
         let changed = false;
 
-        // Handle Multi-Batch Expiration: keep expired packs for display, but balance only counts active
+        // Handle Multi-Batch Expiration: keep expired packs for display, but balance only counts active.
+        // Only sync balance from packs when there is at least one active pack; when all packs are expired,
+        // leave balance as-is so admin-set manual balances (e.g. trial classes) are not overwritten with 0.
         if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
             const activeOnly = s.active_packs.filter(p => new Date(p.expires_at) > now);
             const hasUnlimited = activeOnly.some(p => p.count == null || p.count === 'null');
             const activeBalance = hasUnlimited ? null : activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
-            if (s.balance !== activeBalance) {
+            if (activeOnly.length > 0 && s.balance !== activeBalance) {
                 s.balance = activeBalance;
                 changed = true;
             }
@@ -8724,8 +8730,9 @@ window.checkExpirations = async () => {
                     changed = true;
                 }
             }
-        } else if (s.package_expires_at && s.balance > 0) {
-            // Legacy/Single Fallback Expiration
+        } else if (s.paid && s.package != null && s.package_expires_at && s.balance > 0) {
+            // Legacy/Single Fallback Expiration: only when they had a paid package with package set.
+            // Do not zero admin-set manual balances (trial classes) when package_expires_at is just stale.
             const expiry = new Date(s.package_expires_at);
             if (now > expiry) {
                 s.balance = 0;
@@ -12713,6 +12720,11 @@ window.saveStudentDetails = async (id) => {
             } else {
                 state.students.push(row);
             }
+            if (window._debugBalanceJump) {
+                console.log('[save] Merged RPC result for student', row.id, 'balance=', row.balance, 'balance_private=', row.balance_private);
+            }
+            state._lastSavedStudentId = id;
+            state._lastSavedStudentAt = Date.now();
         } else {
             await refreshSingleStudent(id, schoolId);
             const updates = {
@@ -12729,6 +12741,11 @@ window.saveStudentDetails = async (id) => {
                 Object.assign(studentInState, updates);
                 if (newPassword) studentInState.password = newPassword;
             }
+            if (window._debugBalanceJump) {
+                console.log('[save] Fallback refresh: no RPC row; merged form values for student', id, 'balance=', updates.balance);
+            }
+            state._lastSavedStudentId = id;
+            state._lastSavedStudentAt = Date.now();
         }
     }
     saveState();

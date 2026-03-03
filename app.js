@@ -617,6 +617,12 @@
         if (settingsJson && typeof settingsJson === "object") state.adminSettings = settingsJson;
       }
       if (studentsRes.data && studentsRes.data.length > 0) {
+        if (window._debugBalanceJump && state._lastSavedStudentId) {
+          const prev = state.students.find((s) => String(s.id) === String(state._lastSavedStudentId));
+          const next = (studentsRes.data || []).find((s) => String(s.id) === String(state._lastSavedStudentId));
+          console.log("[fetchAllData] Overwriting state.students (studentsRes). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
+          delete state._lastSavedStudentId;
+        }
         state.students = studentsRes.data;
         if (state.currentUser && !state.isAdmin) {
           const updatedMe = state.students.find((s) => s.id === state.currentUser.id);
@@ -636,7 +642,15 @@
         }
       } else if (state.isAdmin && supabaseClient) {
         const { data: rpcStudents } = await supabaseClient.rpc("get_school_students", { p_school_id: sid });
-        if (rpcStudents && Array.isArray(rpcStudents)) state.students = rpcStudents;
+        if (rpcStudents && Array.isArray(rpcStudents)) {
+          if (window._debugBalanceJump && state._lastSavedStudentId) {
+            const prev = state.students.find((s) => String(s.id) === String(state._lastSavedStudentId));
+            const next = (rpcStudents || []).find((s) => String(s.id) === String(state._lastSavedStudentId));
+            console.log("[fetchAllData] Overwriting state.students (rpcStudents). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
+            delete state._lastSavedStudentId;
+          }
+          state.students = rpcStudents;
+        }
         const { data: activationStatus } = await supabaseClient.rpc("get_school_students_activation_status", { p_school_id: sid });
         state.studentActivationStatus = {};
         if (activationStatus && Array.isArray(activationStatus)) {
@@ -10454,13 +10468,17 @@
     if (!state.students || state.students.length === 0) return;
     const now = /* @__PURE__ */ new Date();
     let updatedCount = 0;
+    const justSavedId = state._lastSavedStudentId;
+    const justSavedAt = state._lastSavedStudentAt || 0;
+    const skipRecentlySaved = justSavedId && now - justSavedAt < 6e4;
     for (let s of state.students) {
+      if (skipRecentlySaved && String(s.id) === String(justSavedId)) continue;
       let changed = false;
       if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
         const activeOnly = s.active_packs.filter((p) => new Date(p.expires_at) > now);
         const hasUnlimited = activeOnly.some((p) => p.count == null || p.count === "null");
         const activeBalance = hasUnlimited ? null : activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
-        if (s.balance !== activeBalance) {
+        if (activeOnly.length > 0 && s.balance !== activeBalance) {
           s.balance = activeBalance;
           changed = true;
         }
@@ -10476,7 +10494,7 @@
             changed = true;
           }
         }
-      } else if (s.package_expires_at && s.balance > 0) {
+      } else if (s.paid && s.package != null && s.package_expires_at && s.balance > 0) {
         const expiry = new Date(s.package_expires_at);
         if (now > expiry) {
           s.balance = 0;
@@ -14418,6 +14436,11 @@ School: ${schoolName}`)) return;
         } else {
           state.students.push(row);
         }
+        if (window._debugBalanceJump) {
+          console.log("[save] Merged RPC result for student", row.id, "balance=", row.balance, "balance_private=", row.balance_private);
+        }
+        state._lastSavedStudentId = id;
+        state._lastSavedStudentAt = Date.now();
       } else {
         await refreshSingleStudent(id, schoolId);
         const updates = {
@@ -14434,6 +14457,11 @@ School: ${schoolName}`)) return;
           Object.assign(studentInState, updates);
           if (newPassword) studentInState.password = newPassword;
         }
+        if (window._debugBalanceJump) {
+          console.log("[save] Fallback refresh: no RPC row; merged form values for student", id, "balance=", updates.balance);
+        }
+        state._lastSavedStudentId = id;
+        state._lastSavedStudentAt = Date.now();
       }
     }
     saveState();
@@ -14481,6 +14509,41 @@ School: ${schoolName}`)) return;
     window.DISCOVERY_COUNTRIES = DISCOVERY_COUNTRIES;
   }
   if (typeof window !== "undefined" && typeof document !== "undefined") {
+    window.addEventListener("unhandledrejection", function onAuthRejection(event) {
+      const err = event?.reason;
+      const msg = (err?.message || err?.msg || String(err || "")).toLowerCase();
+      if (!msg) return;
+      const isInvalidRefresh = msg.includes("invalid refresh") || msg.includes("refresh token not found") || msg.includes("refresh token");
+      const isAuthError = err?.name === "AuthApiError" || err?.status === 400 && isInvalidRefresh;
+      if (!isAuthError && !isInvalidRefresh) return;
+      event.preventDefault();
+      if (supabaseClient) {
+        supabaseClient.auth.signOut().catch(() => {
+        });
+      }
+      if (state.currentUser || state.isAdmin || state.isPlatformDev) {
+        state.currentUser = null;
+        state.isAdmin = false;
+        state.isPlatformDev = false;
+        state.currentSchool = null;
+        state.currentView = "school-selection";
+        saveState();
+        if (typeof window.renderView === "function") window.renderView();
+      }
+    });
+    if (supabaseClient && supabaseClient.auth) {
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_OUT" && (state.currentUser || state.isAdmin || state.isPlatformDev)) {
+          state.currentUser = null;
+          state.isAdmin = false;
+          state.isPlatformDev = false;
+          state.currentSchool = null;
+          state.currentView = "school-selection";
+          saveState();
+          if (typeof window.renderView === "function") window.renderView();
+        }
+      });
+    }
     window.addEventListener("scroll", () => {
       window.updateStickyFooterVisibility();
     }, { passive: true });
