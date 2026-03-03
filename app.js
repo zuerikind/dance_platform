@@ -475,12 +475,21 @@
   async function refreshSingleStudent(studentId, schoolId) {
     if (!supabaseClient || !studentId || !schoolId) return;
     try {
-      const { data } = await supabaseClient.rpc("get_student_by_id", {
-        p_student_id: String(studentId),
-        p_school_id: schoolId
-      });
-      if (!data || !Array.isArray(data) || data.length === 0) return;
-      const row = data[0];
+      let row = null;
+      if (state.isAdmin || state.isPlatformDev) {
+        const { data: all } = await supabaseClient.rpc("get_school_students", { p_school_id: schoolId });
+        if (all && Array.isArray(all)) {
+          row = all.find((s) => String(s.id) === String(studentId)) || null;
+        }
+      }
+      if (!row) {
+        const { data } = await supabaseClient.rpc("get_student_by_id", {
+          p_student_id: String(studentId),
+          p_school_id: schoolId
+        });
+        if (!data || !Array.isArray(data) || data.length === 0) return;
+        row = data[0];
+      }
       const idx = state.students.findIndex((s) => String(s.id) === String(row.id));
       if (idx >= 0) {
         state.students[idx] = row;
