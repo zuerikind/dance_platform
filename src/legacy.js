@@ -3,8 +3,8 @@ import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIden
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate } from './utils.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
-import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle } from './data.js';
-import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility } from './scanner.js';
+import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent } from './data.js';
+import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances } from './scanner.js';
 
 // --- TRANSLATIONS (DANCE_LOCALES) ---
 const DANCE_LOCALES = {
@@ -5953,24 +5953,17 @@ function _renderViewImpl() {
                     </div>
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
                     ${(() => {
-                        const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                        const packs = state.currentUser.active_packs || [];
                         const now = new Date();
-                        const activePacks = packs.filter(p => new Date(p.expires_at) > now);
-                        const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
-                        const groupVal = hasUnlimitedGroup ? '∞' : (state.currentUser.balance ?? 0);
-                        const privVal = state.currentUser.balance_private ?? 0;
-                        const eventsFromPacks = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-                        const effectiveEvents = Math.max(state.currentUser.balance_events ?? 0, eventsFromPacks);
-                        const hasGroup = hasUnlimitedGroup || (state.currentUser.balance != null && state.currentUser.balance > 0) || activePacks.some(p => (p.count != null && p.count !== 'null' && (parseInt(p.count, 10) || 0) > 0));
-                        const hasPrivate = (privVal > 0) || activePacks.some(p => (p.private_count || 0) > 0);
-                        const hasEvents = effectiveEvents > 0;
-                        const showDual = isPT || hasPrivate;
+                        const eff = getEffectiveBalances(state.currentUser, now);
+                        const isPT = state.currentSchool?.profile_type === 'private_teacher';
+                        const hasDualScanMode = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+                        const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
+                        const groupVal = eff.groupUnlimited ? '∞' : (eff.group ?? 0);
                         const parts = [];
-                        if (hasGroup) parts.push({ label: t.group_classes_remaining || 'Group', value: groupVal });
-                        if (hasPrivate) parts.push({ label: t.private_classes_remaining || 'Private', value: privVal });
-                        if (hasEvents) parts.push({ label: t.events_remaining || 'Events', value: String(effectiveEvents) });
-                        if (parts.length === 0) {
+                        parts.push({ label: t.group_classes_remaining || 'Group', value: String(groupVal) });
+                        if (hasDualScanMode) parts.push({ label: t.private_classes_remaining || 'Private', value: String(eff.private) });
+                        if (hasEventsEnabled) parts.push({ label: t.events_remaining || 'Events', value: String(eff.event) });
+                        if (parts.length === 1 && (eff.groupUnlimited ? 0 : (eff.group ?? 0)) <= 0) {
                             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
                         }
                         if (parts.length === 1) {
@@ -5982,18 +5975,16 @@ function _renderViewImpl() {
                         return parts.map(p => row(p.label, p.value)).join('');
                     })()}
                         ${(() => {
-                            const balance = state.currentUser.balance ?? 0;
-                            const balancePrivate = state.currentUser.balance_private ?? 0;
-                            const packs = state.currentUser.active_packs || [];
                             const now = new Date();
-                            const activePacks = packs.filter(p => new Date(p.expires_at) > now);
-                            const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some(p => p.count == null || p.count === 'null');
+                            const eff = getEffectiveBalances(state.currentUser, now);
                             const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                            const hasPrivate = (state.currentUser.active_packs || []).some(p => (p.private_count || 0) > 0);
-                            const eventsFromPacksExp = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-                            const hasEventsLeft = (state.currentUser.balance_events ?? 0) > 0 || eventsFromPacksExp > 0;
-                            const noClassesLeft = isPT ? (balancePrivate <= 0 && !hasEventsLeft) : (balance <= 0 && !hasUnlimitedGroup && !hasEventsLeft);
+                            const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
+                            const hasGroupLeft = eff.groupUnlimited || (eff.group != null && eff.group > 0);
+                            const hasPrivateLeft = eff.private > 0;
+                            const hasEventsLeft = hasEventsEnabled && eff.event > 0;
+                            const noClassesLeft = isPT ? (!hasPrivateLeft && !hasEventsLeft) : (!hasGroupLeft && !hasEventsLeft);
                             if (noClassesLeft) return ''; // hide next expiry when no classes left
+                            const activePacks = (state.currentUser.active_packs || []).filter(p => new Date(p.expires_at) > now);
                             const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
                             if (nextExpiry) {
                                 const d = new Date(nextExpiry);
@@ -6839,9 +6830,14 @@ function _renderViewImpl() {
             <div class="ios-header" style="background: transparent;">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div class="ios-large-title">${t.nav_revenue}</div>
-                    <button type="button" class="filter-btn" onclick="fetchAllData()" title="${t.refresh_btn}" style="margin-right: 0;">
-                        <i data-lucide="refresh-cw" size="14"></i> ${t.refresh_btn}
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="btn-primary" onclick="window.openManualPaymentModal()" style="padding: 0.5rem 0.75rem; font-size: 13px; font-weight: 600; border-radius: 12px;">
+                            <i data-lucide="plus" size="14" style="margin-right: 4px; vertical-align: middle;"></i> ${t.add_manual_payment || 'Add manual payment'}
+                        </button>
+                        <button type="button" class="filter-btn" onclick="fetchAllData()" title="${t.refresh_btn}" style="margin-right: 0;">
+                            <i data-lucide="refresh-cw" size="14"></i> ${t.refresh_btn}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -10984,6 +10980,97 @@ window.removePaymentRequest = async (id) => {
     }
 };
 
+window.openManualPaymentModal = () => {
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const schoolId = state.currentSchool?.id;
+    const students = (state.students || []).filter(s => String(s.school_id) === String(schoolId));
+    const content = document.getElementById('manual-payment-modal-content');
+    if (!content) return;
+    content.innerHTML = `
+        <h3 style="margin: 0 0 1rem; font-size: 1.1rem;">${t('add_manual_payment') || 'Add manual payment'}</h3>
+        <div class="ios-input-group" style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('student') || 'Student'}</label>
+            <select id="manual-payment-student" class="minimal-input" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
+                <option value="">— ${t('select_student') || 'Select student'} —</option>
+                ${students.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.email || s.id)}</option>`).join('')}
+            </select>
+        </div>
+        <div class="ios-input-group" style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('description_or_plan') || 'Description / Plan name'}</label>
+            <input type="text" id="manual-payment-sub-name" class="minimal-input" placeholder="${t('manual_payment_description_placeholder') || 'e.g. 10 classes pack, Cash payment'}" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
+        </div>
+        <div class="ios-input-group" style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('price') || 'Amount'}</label>
+            <input type="number" id="manual-payment-price" class="minimal-input" min="0" step="0.01" placeholder="0" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
+        </div>
+        <div class="ios-input-group" style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('payment_method') || 'Payment method'}</label>
+            <select id="manual-payment-method" class="minimal-input" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
+                <option value="cash">${t('cash') || 'Cash'}</option>
+                <option value="transfer">${t('transfer') || 'Transfer'}</option>
+            </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('manual-payment-modal').classList.add('hidden')" style="padding: 0.65rem; border-radius: 12px; font-weight: 600;">${t('cancel')}</button>
+            <button type="button" class="btn-primary" id="manual-payment-submit-btn" onclick="window.submitManualPayment()" style="padding: 0.65rem; border-radius: 12px; font-weight: 600;">${t('save_btn') || 'Save'}</button>
+        </div>
+    `;
+    document.getElementById('manual-payment-modal').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.submitManualPayment = async () => {
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) {
+        alert(t('error_confirming_attendance') || 'Not available');
+        return;
+    }
+    const studentId = (document.getElementById('manual-payment-student')?.value || '').trim();
+    const subName = (document.getElementById('manual-payment-sub-name')?.value || '').trim() || 'Manual payment';
+    const priceRaw = document.getElementById('manual-payment-price')?.value;
+    const price = parseFloat(priceRaw);
+    const method = (document.getElementById('manual-payment-method')?.value || 'cash').trim();
+    if (!studentId) {
+        alert(t('select_student') || 'Please select a student.');
+        return;
+    }
+    if (price === undefined || isNaN(price) || price < 0) {
+        alert(t('invalid_price') || 'Please enter a valid amount.');
+        return;
+    }
+    const btn = document.getElementById('manual-payment-submit-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = t('saving_label') || 'Saving…';
+    }
+    const { data, error } = await supabaseClient.rpc('admin_create_manual_payment', {
+        p_school_id: schoolId,
+        p_student_id: studentId,
+        p_sub_name: subName,
+        p_price: price,
+        p_payment_method: method
+    });
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = t('save_btn') || 'Save';
+    }
+    if (error) {
+        alert((t('error_saving') || 'Error saving') + ': ' + (error.message || ''));
+        return;
+    }
+    document.getElementById('manual-payment-modal').classList.add('hidden');
+    if (data && typeof data === 'object') {
+        state.paymentRequests = state.paymentRequests || [];
+        state.paymentRequests.unshift({ ...data, students: data.student_id ? { name: state.students?.find(s => s.id === data.student_id)?.name } : null });
+        saveState();
+    } else {
+        window._fetchAllDataNeeded = true;
+        fetchAllData();
+    }
+    renderView();
+};
+
 window.updateDiscoveryCityDropdown = () => {
     const country = (document.getElementById('discovery-country')?.value || '').trim();
     const cities = DISCOVERY_COUNTRIES_CITIES[country] || [];
@@ -12403,18 +12490,18 @@ window.updateStudentPrompt = async (id) => {
                 </div>
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('total_classes_label')}</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('group_classes_remaining') || t('total_classes_label') || 'Group classes'}</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
-                ${(state.currentSchool?.profile_type === 'private_teacher' || state.adminSettings?.private_classes_offering_enabled === 'true') ? `
+                ${(state.currentSchool?.profile_type === 'private_teacher' || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true')) ? `
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('private_classes_remaining') || 'Private classes'}</label>
                     <input type="number" id="edit-student-balance-private" class="minimal-input" value="${s.balance_private ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
                 ` : ''}
-                ${state.adminSettings?.events_offering_enabled === 'true' ? `
+                ${(state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true') ? `
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('events_remaining') || 'Events'}</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('events_remaining') || 'Event classes'}</label>
                     <input type="number" id="edit-student-balance-events" class="minimal-input" value="${s.balance_events ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
                 ` : ''}
@@ -12561,6 +12648,7 @@ window.saveStudentDetails = async (id) => {
             if (btn) { btn.disabled = false; btn.textContent = originalText; if (window.lucide) window.lucide.createIcons(); }
             return;
         }
+        await refreshSingleStudent(id, schoolId);
     }
 
     const updates = {

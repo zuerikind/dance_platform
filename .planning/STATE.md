@@ -10,11 +10,11 @@
 | Field       | Value |
 |------------|--------|
 | Phase      | 1 – Trial stability & support |
-| Plan       | 02 of 4 |
+| Plan       | 01–02 of 4 complete |
 | Plan status | In progress |
-| Progress   | 25% |
+| Progress   | 50% |
 
-**Progress bar:** `[█░░░░░░░░░] 25%` — Plan 01-02 complete (school documentation).
+**Progress bar:** `[██░░░░░░░░] 50%` — Plan 01-01 complete (trial critical bugs); Plan 01-02 complete (school documentation).
 
 ## Performance metrics
 
@@ -22,7 +22,7 @@
 
 ## Accumulated context
 
-- **Decisions:** Phases derived from requirement clusters (Trial, Growth, Admin, Student). No research folder; depth = standard (config.json). All 8 v1 requirements mapped to exactly one phase each. **01-02:** School docs = SCHOOL_GUIDE.md index + docs/schools/*.md (admin, schedules, students, qr, packages); task-oriented pattern (intro + steps, no RPC/state in copy); schedules links to CALENDLY_SETUP.
+- **Decisions:** Phases derived from requirement clusters (Trial, Growth, Admin, Student). No research folder; depth = standard (config.json). All 8 v1 requirements mapped to exactly one phase each. **01-01:** Critical bug list in CRITICAL_BUGS.md; signup error surfacing (console.warn + sanitized user message); no RPC overloads. **01-02:** School docs = SCHOOL_GUIDE.md index + docs/schools/*.md (admin, schedules, students, qr, packages); task-oriented pattern (intro + steps, no RPC/state in copy); schedules links to CALENDLY_SETUP.
 - **Todos:** (Session-specific; use task list as needed.)
 - **Blockers:** None.
 

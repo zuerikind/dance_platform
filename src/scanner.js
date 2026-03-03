@@ -1,5 +1,6 @@
 /**
  * QR scanner and attendance: startScanner, stopScanner, handleScan, confirmAttendance, updateStickyFooterVisibility.
+ * Effective balance logic mirrors backend deduct_student_classes (effective = max(balance, sum(non-expired pack counts))).
  */
 import { supabaseClient } from './config.js';
 import { escapeHtml } from './config.js';
@@ -7,6 +8,28 @@ import { state, saveState } from './state.js';
 import { refreshSingleStudent } from './data.js';
 
 let html5QrCode;
+
+/**
+ * Compute effective balances for group/private/event to match backend deduct_student_classes.
+ * Returns { group, groupUnlimited, private: number, event: number }.
+ * groupUnlimited: true if balance is null or any non-expired pack has null/undefined count.
+ */
+export function getEffectiveBalances(student, now = new Date()) {
+    const packs = student?.active_packs || [];
+    const activePacks = packs.filter(p => {
+        const exp = p.expires_at ? new Date(p.expires_at) : null;
+        return !exp || exp > now;
+    });
+    const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
+    const groupUnlimited = student?.balance === null || student?.balance === undefined || hasUnlimitedPack;
+    const sumGroup = activePacks.reduce((s, p) => s + (parseInt(p.count, 10) || 0), 0);
+    const group = groupUnlimited ? null : Math.max(student?.balance ?? 0, sumGroup);
+    const sumPrivate = activePacks.reduce((s, p) => s + (p.private_count || 0), 0);
+    const privateBal = Math.max(student?.balance_private ?? 0, sumPrivate);
+    const sumEvents = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
+    const eventBal = Math.max(student?.balance_events ?? 0, sumEvents);
+    return { group, groupUnlimited, private: privateBal, event: eventBal };
+}
 
 export async function startScanner() {
     try {
@@ -88,7 +111,7 @@ export async function stopScanner() {
 
 export async function handleScan(scannedId) {
     const id = (scannedId || '').trim();
-    const student = state.students.find(s => s.id === id || s.user_id === id);
+    let student = state.students.find(s => s.id === id || s.user_id === id);
     const resultEl = document.getElementById('inline-scan-result');
     const scanHint = document.getElementById('scan-align-hint');
     if (scanHint) scanHint.style.display = 'none';
@@ -108,6 +131,10 @@ export async function handleScan(scannedId) {
     }
 
     const schoolId = state.currentSchool?.id;
+    if (schoolId && supabaseClient) {
+        await refreshSingleStudent(student.id, schoolId);
+        student = state.students.find(s => String(s.id) === String(student.id)) || student;
+    }
     const regEnabled = state.currentSchool?.class_registration_enabled;
 
     let todayRegs = [];
@@ -132,19 +159,16 @@ export async function handleScan(scannedId) {
         (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd && (l.status === 'confirmed' || l.status === 'attended')
     );
 
-    const packs = student.active_packs || [];
     const now = new Date();
-    const activePacks = packs.filter(p => new Date(p.expires_at) > now);
-    const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
-    const isUnlimitedGroup = student.balance === null || hasUnlimitedPack;
+    const eff = getEffectiveBalances(student, now);
     const isPT = state.currentSchool?.profile_type === 'private_teacher';
     const hasDualScanMode = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
     const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
-    const effectivePrivate = Math.max(student.balance_private ?? 0, activePacks.reduce((s, p) => s + (p.private_count || 0), 0));
-    const effectiveEvents = Math.max(student.balance_events ?? 0, activePacks.reduce((s, p) => s + (p.event_count || 0), 0));
-    const hasGroupLeft = isUnlimitedGroup || (student.balance != null && student.balance > 0) || activePacks.some(p => (parseInt(p.count, 10) || 0) > 0);
-    const hasPrivateLeft = effectivePrivate > 0;
-    const hasEventsLeft = effectiveEvents > 0;
+    const hasGroupLeft = eff.groupUnlimited || (eff.group != null && eff.group > 0);
+    const hasPrivateLeft = eff.private > 0;
+    const hasEventsLeft = eff.event > 0;
+    const effectivePrivate = eff.private;
+    const effectiveEvents = eff.event;
     if (!state.scanDeductionType || (state.scanDeductionType !== 'group' && state.scanDeductionType !== 'private' && state.scanDeductionType !== 'event')) {
         state.scanDeductionType = isPT ? 'private' : 'group';
     }
@@ -182,8 +206,8 @@ export async function handleScan(scannedId) {
             : '';
 
         const regBalanceLabel = hasDualScanMode
-            ? `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
-            : `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
+            ? `${t('group_classes_remaining') || 'Group'}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
+            : `${t('remaining_classes')}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml(student.name)}</h3>
@@ -213,10 +237,10 @@ export async function handleScan(scannedId) {
             </div>
         `;
     } else if (hasValidPass) {
-        const maxDeductGroup = (student.balance === null || student.balance === undefined) ? 99 : Math.max(1, student.balance);
+        const maxDeductGroup = eff.groupUnlimited ? 99 : Math.max(1, eff.group ?? 0);
         const maxDeductPrivate = Math.max(1, effectivePrivate);
-        const balanceLabelDual = `${t('group_classes_remaining') || 'Group'}: ${student.balance === null ? t('unlimited') : student.balance} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
-        const balanceLabelSingle = `${t('remaining_classes')}: ${student.balance === null ? t('unlimited') : student.balance}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
+        const balanceLabelDual = `${t('group_classes_remaining') || 'Group'}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? 0)} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
+        const balanceLabelSingle = `${t('remaining_classes')}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? 0)}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         const balanceLabel = hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
 
         const groupRow = hasGroupLeft ? `
@@ -416,19 +440,13 @@ export async function confirmAttendance(studentId, count, classType) {
     }
     const resultEl = document.getElementById('inline-scan-result');
 
-    const packs = student.active_packs || [];
     const now = new Date();
-    const activePacks = packs.filter(p => new Date(p.expires_at) > now);
-    const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
-    const isUnlimited = student.balance === null || hasUnlimitedPack;
-    const effectivePrivate = Math.max(student.balance_private ?? 0, activePacks.reduce((s, p) => s + (p.private_count || 0), 0));
-    const effectiveEvents = Math.max(student.balance_events ?? 0, activePacks.reduce((s, p) => s + (p.event_count || 0), 0));
-
+    const eff = getEffectiveBalances(student, now);
     const checkBalance = classType === 'private'
-        ? (effectivePrivate < countNum)
+        ? (eff.private < countNum)
         : classType === 'event'
-        ? (effectiveEvents < countNum)
-        : (!isUnlimited && student.balance !== null && student.balance < countNum);
+        ? (eff.event < countNum)
+        : (!eff.groupUnlimited && (eff.group == null || eff.group < countNum));
     if (checkBalance) {
         alert(t('not_enough_balance'));
         return;
@@ -443,137 +461,57 @@ export async function confirmAttendance(studentId, count, classType) {
     `;
     if (window.lucide) window.lucide.createIcons();
 
+    const schoolId = student.school_id || state.currentSchool?.id;
     try {
-        const shouldDeduct = classType === 'private'
-            ? (effectivePrivate >= countNum)
+        if (!supabaseClient || !schoolId) {
+            throw new Error(t('error_confirming_attendance') || 'Cannot deduct: no connection');
+        }
+        const { error: rpcError } = await supabaseClient.rpc('deduct_student_classes', {
+            p_student_id: String(studentId),
+            p_school_id: schoolId,
+            p_count: countNum,
+            p_class_type: classType
+        });
+        if (rpcError) {
+            throw new Error(rpcError.message || t('error_confirming_attendance'));
+        }
+        await refreshSingleStudent(studentId, schoolId);
+        const updatedStudent = state.students.find(s => String(s.id) === String(studentId)) || student;
+        const effAfter = getEffectiveBalances(updatedStudent, new Date());
+        const newRemaining = classType === 'private'
+            ? effAfter.private
             : classType === 'event'
-            ? (effectiveEvents >= countNum)
-            : (!isUnlimited && student.balance !== null);
-    if (shouldDeduct) {
-        const schoolId = student.school_id || state.currentSchool?.id;
-        let updated = false;
-
-        if (supabaseClient && schoolId) {
-            const { error: rpcError } = await supabaseClient.rpc('deduct_student_classes', {
-                p_student_id: String(studentId),
-                p_school_id: schoolId,
-                p_count: countNum,
-                p_class_type: classType
-            });
-            if (!rpcError) {
-                updated = true;
-                const now = new Date();
-                const packs = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-                let remaining = countNum;
-                for (const pack of packs) {
-                    if (remaining <= 0) break;
-                    if (new Date(pack.expires_at) <= now) continue;
-                    if (classType === 'private') {
-                        const c = pack.private_count ?? 0;
-                        const deduct = Math.min(c, remaining);
-                        pack.private_count = c - deduct;
-                        remaining -= deduct;
-                    } else if (classType === 'event') {
-                        const c = pack.event_count ?? 0;
-                        const deduct = Math.min(c, remaining);
-                        pack.event_count = c - deduct;
-                        remaining -= deduct;
-                    } else {
-                        const c = (pack.count || 0);
-                        const deduct = Math.min(c, remaining);
-                        pack.count = c - deduct;
-                        remaining -= deduct;
-                    }
-                }
-                student.active_packs = packs.filter(p => (classType === 'private' ? (p.private_count || 0) : classType === 'event' ? (p.event_count || 0) : (p.count || 0)) > 0 || new Date(p.expires_at) <= now);
-                if (classType === 'private') {
-                    student.balance_private = Math.max(0, (student.balance_private ?? 0) - countNum);
-                } else if (classType === 'event') {
-                    student.balance_events = student.active_packs.filter(p => new Date(p.expires_at) > now).reduce((s, p) => s + (p.event_count || 0), 0);
-                } else {
-                    student.balance = (student.balance || 0) - countNum;
-                }
-            }
-        }
-
-        if (!updated && classType === 'group') {
-            const now = new Date();
-            const allPacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
-            const activePacks = allPacks.filter(p => new Date(p.expires_at) > now).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-            let remainingToDeduct = countNum;
-
-            if (activePacks.length > 0) {
-                for (let i = 0; i < activePacks.length && remainingToDeduct > 0; i++) {
-                    const pack = activePacks[i];
-                    const c = pack.count || 0;
-                    if (c >= remainingToDeduct) {
-                        pack.count = c - remainingToDeduct;
-                        remainingToDeduct = 0;
-                    } else {
-                        remainingToDeduct -= c;
-                        pack.count = 0;
-                    }
-                }
-                const expiredPacks = allPacks.filter(p => new Date(p.expires_at) <= now);
-                const updatedPacks = [...activePacks.filter(p => (p.count || 0) > 0), ...expiredPacks];
-                const newBalance = updatedPacks.filter(p => new Date(p.expires_at) > now).reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
-                if (supabaseClient) {
-                    const { error } = await supabaseClient.from('students').update({ balance: newBalance, active_packs: updatedPacks }).eq('id', studentId);
-                    if (error) { throw new Error(error.message); }
-                }
-                student.balance = newBalance;
-                student.active_packs = updatedPacks;
-            } else {
-                const newBalance = student.balance - countNum;
-                if (supabaseClient) {
-                    const { error } = await supabaseClient.from('students').update({ balance: newBalance }).eq('id', studentId);
-                    if (error) { throw new Error(error.message); }
-                }
-                student.balance = newBalance;
-            }
-        }
-
-        saveState();
-        if (schoolId) {
-            await refreshSingleStudent(studentId, schoolId);
-        }
-    }
-
-    const newRemaining = classType === 'private'
-        ? (student.balance_private ?? 0)
-        : classType === 'event'
-        ? (student.balance_events ?? 0)
-        : (isUnlimited ? t('unlimited') : (student.balance ?? 0));
-    const unitLabel = classType === 'event'
-        ? (countNum === 1 ? t('event_unit') : t('events_unit'))
-        : (countNum === 1 ? t('class_unit') : t('classes_unit'));
-    const remainingLabel = classType === 'event'
-        ? t('events_remaining')
-        : classType === 'private'
-        ? t('private_classes_remaining')
-        : t('remaining_classes');
-    resultEl.innerHTML = `
+            ? effAfter.event
+            : (effAfter.groupUnlimited ? t('unlimited') : (effAfter.group ?? 0));
+        const unitLabel = classType === 'event'
+            ? (countNum === 1 ? t('event_unit') : t('events_unit'))
+            : (countNum === 1 ? t('class_unit') : t('classes_unit'));
+        const remainingLabel = classType === 'event'
+            ? t('events_remaining')
+            : classType === 'private'
+            ? t('private_classes_remaining')
+            : t('remaining_classes');
+        resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t('attendance_success')}</div>
-             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${countNum} ${unitLabel}</div>
+             <div style="font-size:0.9rem; margin-top:0.25rem">${(updatedStudent && updatedStudent.name) || student.name} &minus;${countNum} ${unitLabel}</div>
              <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${remainingLabel}: ${newRemaining}</div>
         </div>
         `;
-    if (window.lucide) window.lucide.createIcons();
-
-    setTimeout(() => {
-        resultEl.innerHTML = '';
-        const scanHint = document.getElementById('scan-align-hint');
-        if (scanHint) scanHint.style.display = '';
-        if (html5QrCode) {
-            try {
-                html5QrCode.resume();
-            } catch (e) {
-                console.warn("Could not resume scanner:", e);
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+            resultEl.innerHTML = '';
+            const scanHint = document.getElementById('scan-align-hint');
+            if (scanHint) scanHint.style.display = '';
+            if (html5QrCode) {
+                try {
+                    html5QrCode.resume();
+                } catch (e) {
+                    console.warn("Could not resume scanner:", e);
+                }
             }
-        }
-    }, 800);
+        }, 800);
     } catch (e) {
         console.error('Error confirming attendance:', e);
         resultEl.innerHTML = `

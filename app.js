@@ -1123,6 +1123,22 @@
 
   // src/scanner.js
   var html5QrCode;
+  function getEffectiveBalances(student, now = /* @__PURE__ */ new Date()) {
+    const packs = student?.active_packs || [];
+    const activePacks = packs.filter((p) => {
+      const exp = p.expires_at ? new Date(p.expires_at) : null;
+      return !exp || exp > now;
+    });
+    const hasUnlimitedPack = activePacks.some((p) => p.count == null || p.count === "null");
+    const groupUnlimited = student?.balance === null || student?.balance === void 0 || hasUnlimitedPack;
+    const sumGroup = activePacks.reduce((s, p) => s + (parseInt(p.count, 10) || 0), 0);
+    const group = groupUnlimited ? null : Math.max(student?.balance ?? 0, sumGroup);
+    const sumPrivate = activePacks.reduce((s, p) => s + (p.private_count || 0), 0);
+    const privateBal = Math.max(student?.balance_private ?? 0, sumPrivate);
+    const sumEvents = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
+    const eventBal = Math.max(student?.balance_events ?? 0, sumEvents);
+    return { group, groupUnlimited, private: privateBal, event: eventBal };
+  }
   async function startScanner() {
     try {
       const modal = document.getElementById("scanner-modal");
@@ -1197,7 +1213,7 @@
   }
   async function handleScan(scannedId) {
     const id = (scannedId || "").trim();
-    const student = state.students.find((s) => s.id === id || s.user_id === id);
+    let student = state.students.find((s) => s.id === id || s.user_id === id);
     const resultEl = document.getElementById("inline-scan-result");
     const scanHint = document.getElementById("scan-align-hint");
     if (scanHint) scanHint.style.display = "none";
@@ -1215,6 +1231,10 @@
       return;
     }
     const schoolId = state.currentSchool?.id;
+    if (schoolId && supabaseClient) {
+      await refreshSingleStudent(student.id, schoolId);
+      student = state.students.find((s) => String(s.id) === String(student.id)) || student;
+    }
     const regEnabled = state.currentSchool?.class_registration_enabled;
     let todayRegs = [];
     if (regEnabled && supabaseClient && schoolId) {
@@ -1238,19 +1258,16 @@
     const todaysPrivateLessons = (state.privateLessons || []).filter(
       (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd && (l.status === "confirmed" || l.status === "attended")
     );
-    const packs = student.active_packs || [];
     const now = /* @__PURE__ */ new Date();
-    const activePacks = packs.filter((p) => new Date(p.expires_at) > now);
-    const hasUnlimitedPack = activePacks.some((p) => p.count == null || p.count === "null");
-    const isUnlimitedGroup = student.balance === null || hasUnlimitedPack;
+    const eff = getEffectiveBalances(student, now);
     const isPT = state.currentSchool?.profile_type === "private_teacher";
     const hasDualScanMode = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
     const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
-    const effectivePrivate = Math.max(student.balance_private ?? 0, activePacks.reduce((s, p) => s + (p.private_count || 0), 0));
-    const effectiveEvents = Math.max(student.balance_events ?? 0, activePacks.reduce((s, p) => s + (p.event_count || 0), 0));
-    const hasGroupLeft = isUnlimitedGroup || student.balance != null && student.balance > 0 || activePacks.some((p) => (parseInt(p.count, 10) || 0) > 0);
-    const hasPrivateLeft = effectivePrivate > 0;
-    const hasEventsLeft = effectiveEvents > 0;
+    const hasGroupLeft = eff.groupUnlimited || eff.group != null && eff.group > 0;
+    const hasPrivateLeft = eff.private > 0;
+    const hasEventsLeft = eff.event > 0;
+    const effectivePrivate = eff.private;
+    const effectiveEvents = eff.event;
     if (!state.scanDeductionType || state.scanDeductionType !== "group" && state.scanDeductionType !== "private" && state.scanDeductionType !== "event") {
       state.scanDeductionType = isPT ? "private" : "group";
     }
@@ -1277,7 +1294,7 @@
         const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
         return checkInBtn;
       }).join("") : "";
-      const regBalanceLabel = hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${student.balance === null ? t2("unlimited") : student.balance} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${student.balance === null ? t2("unlimited") : student.balance}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
+      const regBalanceLabel = hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml2(student.name)}</h3>
@@ -1307,10 +1324,10 @@
             </div>
         `;
     } else if (hasValidPass) {
-      const maxDeductGroup = student.balance === null || student.balance === void 0 ? 99 : Math.max(1, student.balance);
+      const maxDeductGroup = eff.groupUnlimited ? 99 : Math.max(1, eff.group ?? 0);
       const maxDeductPrivate = Math.max(1, effectivePrivate);
-      const balanceLabelDual = `${t2("group_classes_remaining") || "Group"}: ${student.balance === null ? t2("unlimited") : student.balance} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
-      const balanceLabelSingle = `${t2("remaining_classes")}: ${student.balance === null ? t2("unlimited") : student.balance}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
+      const balanceLabelDual = `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
+      const balanceLabelSingle = `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
       const balanceLabel = hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
       const groupRow = hasGroupLeft ? `
                 <div style="margin-bottom: ${hasDualScanMode ? "0.75rem" : "0"};">
@@ -1489,14 +1506,9 @@
       return;
     }
     const resultEl = document.getElementById("inline-scan-result");
-    const packs = student.active_packs || [];
     const now = /* @__PURE__ */ new Date();
-    const activePacks = packs.filter((p) => new Date(p.expires_at) > now);
-    const hasUnlimitedPack = activePacks.some((p) => p.count == null || p.count === "null");
-    const isUnlimited = student.balance === null || hasUnlimitedPack;
-    const effectivePrivate = Math.max(student.balance_private ?? 0, activePacks.reduce((s, p) => s + (p.private_count || 0), 0));
-    const effectiveEvents = Math.max(student.balance_events ?? 0, activePacks.reduce((s, p) => s + (p.event_count || 0), 0));
-    const checkBalance = classType === "private" ? effectivePrivate < countNum : classType === "event" ? effectiveEvents < countNum : !isUnlimited && student.balance !== null && student.balance < countNum;
+    const eff = getEffectiveBalances(student, now);
+    const checkBalance = classType === "private" ? eff.private < countNum : classType === "event" ? eff.event < countNum : !eff.groupUnlimited && (eff.group == null || eff.group < countNum);
     if (checkBalance) {
       alert(t2("not_enough_balance"));
       return;
@@ -1509,105 +1521,31 @@
         </div>
     `;
     if (window.lucide) window.lucide.createIcons();
+    const schoolId = student.school_id || state.currentSchool?.id;
     try {
-      const shouldDeduct = classType === "private" ? effectivePrivate >= countNum : classType === "event" ? effectiveEvents >= countNum : !isUnlimited && student.balance !== null;
-      if (shouldDeduct) {
-        const schoolId = student.school_id || state.currentSchool?.id;
-        let updated = false;
-        if (supabaseClient && schoolId) {
-          const { error: rpcError } = await supabaseClient.rpc("deduct_student_classes", {
-            p_student_id: String(studentId),
-            p_school_id: schoolId,
-            p_count: countNum,
-            p_class_type: classType
-          });
-          if (!rpcError) {
-            updated = true;
-            const now2 = /* @__PURE__ */ new Date();
-            const packs2 = student.active_packs.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-            let remaining = countNum;
-            for (const pack of packs2) {
-              if (remaining <= 0) break;
-              if (new Date(pack.expires_at) <= now2) continue;
-              if (classType === "private") {
-                const c = pack.private_count ?? 0;
-                const deduct = Math.min(c, remaining);
-                pack.private_count = c - deduct;
-                remaining -= deduct;
-              } else if (classType === "event") {
-                const c = pack.event_count ?? 0;
-                const deduct = Math.min(c, remaining);
-                pack.event_count = c - deduct;
-                remaining -= deduct;
-              } else {
-                const c = pack.count || 0;
-                const deduct = Math.min(c, remaining);
-                pack.count = c - deduct;
-                remaining -= deduct;
-              }
-            }
-            student.active_packs = packs2.filter((p) => (classType === "private" ? p.private_count || 0 : classType === "event" ? p.event_count || 0 : p.count || 0) > 0 || new Date(p.expires_at) <= now2);
-            if (classType === "private") {
-              student.balance_private = Math.max(0, (student.balance_private ?? 0) - countNum);
-            } else if (classType === "event") {
-              student.balance_events = student.active_packs.filter((p) => new Date(p.expires_at) > now2).reduce((s, p) => s + (p.event_count || 0), 0);
-            } else {
-              student.balance = (student.balance || 0) - countNum;
-            }
-          }
-        }
-        if (!updated && classType === "group") {
-          const now2 = /* @__PURE__ */ new Date();
-          const allPacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
-          const activePacks2 = allPacks.filter((p) => new Date(p.expires_at) > now2).sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
-          let remainingToDeduct = countNum;
-          if (activePacks2.length > 0) {
-            for (let i = 0; i < activePacks2.length && remainingToDeduct > 0; i++) {
-              const pack = activePacks2[i];
-              const c = pack.count || 0;
-              if (c >= remainingToDeduct) {
-                pack.count = c - remainingToDeduct;
-                remainingToDeduct = 0;
-              } else {
-                remainingToDeduct -= c;
-                pack.count = 0;
-              }
-            }
-            const expiredPacks = allPacks.filter((p) => new Date(p.expires_at) <= now2);
-            const updatedPacks = [...activePacks2.filter((p) => (p.count || 0) > 0), ...expiredPacks];
-            const newBalance = updatedPacks.filter((p) => new Date(p.expires_at) > now2).reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
-            if (supabaseClient) {
-              const { error } = await supabaseClient.from("students").update({ balance: newBalance, active_packs: updatedPacks }).eq("id", studentId);
-              if (error) {
-                throw new Error(error.message);
-              }
-            }
-            student.balance = newBalance;
-            student.active_packs = updatedPacks;
-          } else {
-            const newBalance = student.balance - countNum;
-            if (supabaseClient) {
-              const { error } = await supabaseClient.from("students").update({ balance: newBalance }).eq("id", studentId);
-              if (error) {
-                throw new Error(error.message);
-              }
-            }
-            student.balance = newBalance;
-          }
-        }
-        saveState();
-        if (schoolId) {
-          await refreshSingleStudent(studentId, schoolId);
-        }
+      if (!supabaseClient || !schoolId) {
+        throw new Error(t2("error_confirming_attendance") || "Cannot deduct: no connection");
       }
-      const newRemaining = classType === "private" ? student.balance_private ?? 0 : classType === "event" ? student.balance_events ?? 0 : isUnlimited ? t2("unlimited") : student.balance ?? 0;
+      const { error: rpcError } = await supabaseClient.rpc("deduct_student_classes", {
+        p_student_id: String(studentId),
+        p_school_id: schoolId,
+        p_count: countNum,
+        p_class_type: classType
+      });
+      if (rpcError) {
+        throw new Error(rpcError.message || t2("error_confirming_attendance"));
+      }
+      await refreshSingleStudent(studentId, schoolId);
+      const updatedStudent = state.students.find((s) => String(s.id) === String(studentId)) || student;
+      const effAfter = getEffectiveBalances(updatedStudent, /* @__PURE__ */ new Date());
+      const newRemaining = classType === "private" ? effAfter.private : classType === "event" ? effAfter.event : effAfter.groupUnlimited ? t2("unlimited") : effAfter.group ?? 0;
       const unitLabel = classType === "event" ? countNum === 1 ? t2("event_unit") : t2("events_unit") : countNum === 1 ? t2("class_unit") : t2("classes_unit");
       const remainingLabel = classType === "event" ? t2("events_remaining") : classType === "private" ? t2("private_classes_remaining") : t2("remaining_classes");
       resultEl.innerHTML = `
         <div class="card" style="border-color: var(--secondary); background: rgba(45, 212, 191, 0.1); padding: 1rem; text-align:center;">
              <i data-lucide="check-circle" size="32" style="color: var(--secondary)"></i>
              <div style="font-weight:700; color:var(--secondary)">${t2("attendance_success")}</div>
-             <div style="font-size:0.9rem; margin-top:0.25rem">${student.name} &minus;${countNum} ${unitLabel}</div>
+             <div style="font-size:0.9rem; margin-top:0.25rem">${updatedStudent && updatedStudent.name || student.name} &minus;${countNum} ${unitLabel}</div>
              <div style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-top:0.5rem">${remainingLabel}: ${newRemaining}</div>
         </div>
         `;
@@ -7801,24 +7739,17 @@
                     </div>
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
                     ${(() => {
-          const isPT = state.currentSchool?.profile_type === "private_teacher";
-          const packs = state.currentUser.active_packs || [];
           const now = /* @__PURE__ */ new Date();
-          const activePacks = packs.filter((p) => new Date(p.expires_at) > now);
-          const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some((p) => p.count == null || p.count === "null");
-          const groupVal = hasUnlimitedGroup ? "\u221E" : state.currentUser.balance ?? 0;
-          const privVal = state.currentUser.balance_private ?? 0;
-          const eventsFromPacks = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-          const effectiveEvents = Math.max(state.currentUser.balance_events ?? 0, eventsFromPacks);
-          const hasGroup = hasUnlimitedGroup || state.currentUser.balance != null && state.currentUser.balance > 0 || activePacks.some((p) => p.count != null && p.count !== "null" && (parseInt(p.count, 10) || 0) > 0);
-          const hasPrivate = privVal > 0 || activePacks.some((p) => (p.private_count || 0) > 0);
-          const hasEvents = effectiveEvents > 0;
-          const showDual = isPT || hasPrivate;
+          const eff = getEffectiveBalances(state.currentUser, now);
+          const isPT = state.currentSchool?.profile_type === "private_teacher";
+          const hasDualScanMode = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+          const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
+          const groupVal = eff.groupUnlimited ? "\u221E" : eff.group ?? 0;
           const parts = [];
-          if (hasGroup) parts.push({ label: t2.group_classes_remaining || "Group", value: groupVal });
-          if (hasPrivate) parts.push({ label: t2.private_classes_remaining || "Private", value: privVal });
-          if (hasEvents) parts.push({ label: t2.events_remaining || "Events", value: String(effectiveEvents) });
-          if (parts.length === 0) {
+          parts.push({ label: t2.group_classes_remaining || "Group", value: String(groupVal) });
+          if (hasDualScanMode) parts.push({ label: t2.private_classes_remaining || "Private", value: String(eff.private) });
+          if (hasEventsEnabled) parts.push({ label: t2.events_remaining || "Events", value: String(eff.event) });
+          if (parts.length === 1 && (eff.groupUnlimited ? 0 : eff.group ?? 0) <= 0) {
             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t2.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
           }
           if (parts.length === 1) {
@@ -7828,18 +7759,16 @@
           return parts.map((p) => row(p.label, p.value)).join("");
         })()}
                         ${(() => {
-          const balance = state.currentUser.balance ?? 0;
-          const balancePrivate = state.currentUser.balance_private ?? 0;
-          const packs = state.currentUser.active_packs || [];
           const now = /* @__PURE__ */ new Date();
-          const activePacks = packs.filter((p) => new Date(p.expires_at) > now);
-          const hasUnlimitedGroup = state.currentUser.balance === null || activePacks.some((p) => p.count == null || p.count === "null");
+          const eff = getEffectiveBalances(state.currentUser, now);
           const isPT = state.currentSchool?.profile_type === "private_teacher";
-          const hasPrivate = (state.currentUser.active_packs || []).some((p) => (p.private_count || 0) > 0);
-          const eventsFromPacksExp = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-          const hasEventsLeft = (state.currentUser.balance_events ?? 0) > 0 || eventsFromPacksExp > 0;
-          const noClassesLeft = isPT ? balancePrivate <= 0 && !hasEventsLeft : balance <= 0 && !hasUnlimitedGroup && !hasEventsLeft;
+          const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
+          const hasGroupLeft = eff.groupUnlimited || eff.group != null && eff.group > 0;
+          const hasPrivateLeft = eff.private > 0;
+          const hasEventsLeft = hasEventsEnabled && eff.event > 0;
+          const noClassesLeft = isPT ? !hasPrivateLeft && !hasEventsLeft : !hasGroupLeft && !hasEventsLeft;
           if (noClassesLeft) return "";
+          const activePacks = (state.currentUser.active_packs || []).filter((p) => new Date(p.expires_at) > now);
           const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
           if (nextExpiry) {
             const d = new Date(nextExpiry);
@@ -8670,9 +8599,14 @@
             <div class="ios-header" style="background: transparent;">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div class="ios-large-title">${t2.nav_revenue}</div>
-                    <button type="button" class="filter-btn" onclick="fetchAllData()" title="${t2.refresh_btn}" style="margin-right: 0;">
-                        <i data-lucide="refresh-cw" size="14"></i> ${t2.refresh_btn}
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="btn-primary" onclick="window.openManualPaymentModal()" style="padding: 0.5rem 0.75rem; font-size: 13px; font-weight: 600; border-radius: 12px;">
+                            <i data-lucide="plus" size="14" style="margin-right: 4px; vertical-align: middle;"></i> ${t2.add_manual_payment || "Add manual payment"}
+                        </button>
+                        <button type="button" class="filter-btn" onclick="fetchAllData()" title="${t2.refresh_btn}" style="margin-right: 0;">
+                            <i data-lucide="refresh-cw" size="14"></i> ${t2.refresh_btn}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -10690,6 +10624,8 @@
           return;
         }
       } catch (e) {
+        let fallbackRpcError = null;
+        let fallbackCatchErr = null;
         try {
           const { data: rpcRow, error: rpcError } = await supabaseClient.rpc("create_student_legacy", {
             p_name: name,
@@ -10698,6 +10634,7 @@
             p_password: pass,
             p_school_id: state.currentSchool.id
           });
+          if (rpcError) fallbackRpcError = rpcError;
           if (!rpcError && rpcRow) {
             const created = typeof rpcRow === "object" ? rpcRow : typeof rpcRow === "string" ? JSON.parse(rpcRow) : null;
             if (created) {
@@ -10706,10 +10643,13 @@
               studentCreated = true;
             }
           }
-        } catch (_) {
+        } catch (err) {
+          console.warn("Signup fallback create_student_legacy failed:", err);
+          fallbackCatchErr = err;
         }
         if (!studentCreated) {
-          alert("Unexpected signup error: " + (e.message || "Try again."));
+          const msg = (fallbackRpcError?.message || fallbackCatchErr?.message || e?.message || "Try again.").replace(/\s+/g, " ").substring(0, 200);
+          alert("Unexpected signup error: " + msg);
           return;
         }
       }
@@ -12772,6 +12712,95 @@ School: ${schoolName}`)) return;
       fetchAllData();
     }
   };
+  window.openManualPaymentModal = () => {
+    const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    const schoolId = state.currentSchool?.id;
+    const students = (state.students || []).filter((s) => String(s.school_id) === String(schoolId));
+    const content = document.getElementById("manual-payment-modal-content");
+    if (!content) return;
+    content.innerHTML = `
+        <h3 style="margin: 0 0 1rem; font-size: 1.1rem;">${t2("add_manual_payment") || "Add manual payment"}</h3>
+        <div class="ios-input-group" style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t2("student") || "Student"}</label>
+            <select id="manual-payment-student" class="minimal-input" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
+                <option value="">\u2014 ${t2("select_student") || "Select student"} \u2014</option>
+                ${students.map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.email || s.id)}</option>`).join("")}
+            </select>
+        </div>
+        <div class="ios-input-group" style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t2("description_or_plan") || "Description / Plan name"}</label>
+            <input type="text" id="manual-payment-sub-name" class="minimal-input" placeholder="${t2("manual_payment_description_placeholder") || "e.g. 10 classes pack, Cash payment"}" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
+        </div>
+        <div class="ios-input-group" style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t2("price") || "Amount"}</label>
+            <input type="number" id="manual-payment-price" class="minimal-input" min="0" step="0.01" placeholder="0" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
+        </div>
+        <div class="ios-input-group" style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t2("payment_method") || "Payment method"}</label>
+            <select id="manual-payment-method" class="minimal-input" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
+                <option value="cash">${t2("cash") || "Cash"}</option>
+                <option value="transfer">${t2("transfer") || "Transfer"}</option>
+            </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('manual-payment-modal').classList.add('hidden')" style="padding: 0.65rem; border-radius: 12px; font-weight: 600;">${t2("cancel")}</button>
+            <button type="button" class="btn-primary" id="manual-payment-submit-btn" onclick="window.submitManualPayment()" style="padding: 0.65rem; border-radius: 12px; font-weight: 600;">${t2("save_btn") || "Save"}</button>
+        </div>
+    `;
+    document.getElementById("manual-payment-modal").classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+  };
+  window.submitManualPayment = async () => {
+    const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) {
+      alert(t2("error_confirming_attendance") || "Not available");
+      return;
+    }
+    const studentId = (document.getElementById("manual-payment-student")?.value || "").trim();
+    const subName = (document.getElementById("manual-payment-sub-name")?.value || "").trim() || "Manual payment";
+    const priceRaw = document.getElementById("manual-payment-price")?.value;
+    const price = parseFloat(priceRaw);
+    const method = (document.getElementById("manual-payment-method")?.value || "cash").trim();
+    if (!studentId) {
+      alert(t2("select_student") || "Please select a student.");
+      return;
+    }
+    if (price === void 0 || isNaN(price) || price < 0) {
+      alert(t2("invalid_price") || "Please enter a valid amount.");
+      return;
+    }
+    const btn = document.getElementById("manual-payment-submit-btn");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = t2("saving_label") || "Saving\u2026";
+    }
+    const { data, error } = await supabaseClient.rpc("admin_create_manual_payment", {
+      p_school_id: schoolId,
+      p_student_id: studentId,
+      p_sub_name: subName,
+      p_price: price,
+      p_payment_method: method
+    });
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = t2("save_btn") || "Save";
+    }
+    if (error) {
+      alert((t2("error_saving") || "Error saving") + ": " + (error.message || ""));
+      return;
+    }
+    document.getElementById("manual-payment-modal").classList.add("hidden");
+    if (data && typeof data === "object") {
+      state.paymentRequests = state.paymentRequests || [];
+      state.paymentRequests.unshift({ ...data, students: data.student_id ? { name: state.students?.find((s) => s.id === data.student_id)?.name } : null });
+      saveState();
+    } else {
+      window._fetchAllDataNeeded = true;
+      fetchAllData();
+    }
+    renderView();
+  };
   window.updateDiscoveryCityDropdown = () => {
     const country = (document.getElementById("discovery-country")?.value || "").trim();
     const cities = DISCOVERY_COUNTRIES_CITIES[country] || [];
@@ -14173,18 +14202,18 @@ School: ${schoolName}`)) return;
                 </div>
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("total_classes_label")}</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("group_classes_remaining") || t2("total_classes_label") || "Group classes"}</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? "" : s.balance}" placeholder="Ilimitado" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
-                ${state.currentSchool?.profile_type === "private_teacher" || state.adminSettings?.private_classes_offering_enabled === "true" ? `
+                ${state.currentSchool?.profile_type === "private_teacher" || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true" ? `
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("private_classes_remaining") || "Private classes"}</label>
                     <input type="number" id="edit-student-balance-private" class="minimal-input" value="${s.balance_private ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
                 ` : ""}
-                ${state.adminSettings?.events_offering_enabled === "true" ? `
+                ${state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true" ? `
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("events_remaining") || "Events"}</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("events_remaining") || "Event classes"}</label>
                     <input type="number" id="edit-student-balance-events" class="minimal-input" value="${s.balance_events ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
                 ` : ""}
@@ -14317,6 +14346,7 @@ School: ${schoolName}`)) return;
         }
         return;
       }
+      await refreshSingleStudent(id, schoolId);
     }
     const updates = {
       name: newName,
