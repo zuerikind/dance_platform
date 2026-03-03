@@ -12722,11 +12722,12 @@ School: ${schoolName}`)) return;
         <h3 style="margin: 0 0 1rem; font-size: 1.1rem;">${t2("add_manual_payment") || "Add manual payment"}</h3>
         <div class="ios-input-group" style="margin-bottom: 1rem;">
             <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t2("student") || "Student"}</label>
-            <select id="manual-payment-student" class="minimal-input" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
+            <select id="manual-payment-student" class="minimal-input" onchange="window.updateManualPaymentStudentInfo()" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
                 <option value="">\u2014 ${t2("select_student") || "Select student"} \u2014</option>
                 ${students.map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.email || s.id)}</option>`).join("")}
             </select>
         </div>
+        <div id="manual-payment-student-info" style="margin: -0.25rem 0 0.75rem; font-size: 11px; color: var(--text-secondary); display: none;"></div>
         <div class="ios-input-group" style="margin-bottom: 1rem;">
             <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t2("description_or_plan") || "Description / Plan name"}</label>
             <input type="text" id="manual-payment-sub-name" class="minimal-input" placeholder="${t2("manual_payment_description_placeholder") || "e.g. 10 classes pack, Cash payment"}" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
@@ -12749,6 +12750,46 @@ School: ${schoolName}`)) return;
     `;
     document.getElementById("manual-payment-modal").classList.remove("hidden");
     if (window.lucide) window.lucide.createIcons();
+  };
+  window.updateManualPaymentStudentInfo = () => {
+    try {
+      const el = document.getElementById("manual-payment-student");
+      const infoEl = document.getElementById("manual-payment-student-info");
+      if (!el || !infoEl) return;
+      const id = (el.value || "").trim();
+      if (!id) {
+        infoEl.style.display = "none";
+        infoEl.textContent = "";
+        return;
+      }
+      const student = (state.students || []).find((s) => String(s.id) === String(id));
+      if (!student) {
+        infoEl.style.display = "none";
+        infoEl.textContent = "";
+        return;
+      }
+      const now = /* @__PURE__ */ new Date();
+      const eff = getEffectiveBalances(student, now);
+      const hasDualScanMode = state.currentSchool?.profile_type === "private_teacher" || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+      const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
+      const t2 = typeof window.t === "function" ? window.t : (k) => k;
+      const parts = [];
+      const groupLabel = t2("group_classes_remaining") || "Group";
+      const groupVal = eff.groupUnlimited ? "\u221E" : String(eff.group ?? 0);
+      parts.push(`${groupLabel}: ${groupVal}`);
+      if (hasDualScanMode) {
+        const privLabel = t2("private_classes_remaining") || "Private";
+        parts.push(`${privLabel}: ${eff.private}`);
+      }
+      if (hasEventsEnabled) {
+        const evLabel = t2("events_remaining") || "Events";
+        parts.push(`${evLabel}: ${eff.event}`);
+      }
+      infoEl.textContent = parts.join(" \u2022 ");
+      infoEl.style.display = "block";
+    } catch (e) {
+      console.error("updateManualPaymentStudentInfo error", e);
+    }
   };
   window.submitManualPayment = async () => {
     const t2 = typeof window.t === "function" ? window.t : (k) => k;
