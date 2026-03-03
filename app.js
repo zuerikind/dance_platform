@@ -14087,9 +14087,21 @@ School: ${schoolName}`)) return;
     const statusClass = s.paid ? "student-card-status-active" : "student-card-status-unpaid";
     const packs = s.active_packs || [];
     const now = /* @__PURE__ */ new Date();
-    const activePacks = packs.filter((p) => new Date(p.expires_at) > now);
-    const hasUnlimited = s.balance === null || activePacks.some((p) => p.count == null || p.count === "null");
-    const balanceStr = hasUnlimited ? "\u221E" : s.balance ?? 0;
+    const eff = getEffectiveBalances(s, now);
+    const hasDualScanMode = state.currentSchool?.profile_type === "private_teacher" || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+    const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
+    const groupLabel = window.t("group_classes_remaining") || window.t("remaining_classes") || "Group";
+    const groupVal = eff.groupUnlimited ? "\u221E" : String(eff.group ?? 0);
+    const parts = [`${groupLabel}: ${groupVal}`];
+    if (hasDualScanMode) {
+      const privLabel = window.t("private_classes_remaining") || "Private";
+      parts.push(`${privLabel}: ${eff.private}`);
+    }
+    if (hasEventsEnabled) {
+      const evLabel = window.t("events_remaining") || "Events";
+      parts.push(`${evLabel}: ${eff.event}`);
+    }
+    const balanceStr = parts.join(" \u2022 ");
     const packsHtml = Array.isArray(s.active_packs) && s.active_packs.length > 0 ? `<span class="packs">${s.active_packs.length} ${s.active_packs.length === 1 ? "Pack" : "Packs"}</span>` : "";
     const act = state.studentActivationStatus && state.studentActivationStatus[s.id];
     const isLinked = act && act.linked;
@@ -14104,7 +14116,7 @@ School: ${schoolName}`)) return;
             <div class="student-card-body" style="flex: 1; min-width: 0;">
                 <div class="student-card-name">${escapeHtml(s.name)}${activationBadge}</div>
                 <div class="student-card-meta">
-                    ${t2("remaining_classes")}: <span class="balance">${balanceStr}</span>${packsHtml}
+                    <span class="balance">${balanceStr}</span>${packsHtml}
                 </div>
                 ${inviteBtn}
             </div>
