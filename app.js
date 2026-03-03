@@ -14399,7 +14399,7 @@ School: ${schoolName}`)) return;
       };
       if (balancePrivateEl) payload.p_balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
       if (balanceEventsEl) payload.p_balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
-      const { error } = await supabaseClient.rpc("update_student_details", payload);
+      const { data: updatedRow, error } = await supabaseClient.rpc("update_student_details", payload);
       if (error) {
         alert("Error saving: " + error.message);
         if (btn) {
@@ -14409,21 +14409,32 @@ School: ${schoolName}`)) return;
         }
         return;
       }
-      await refreshSingleStudent(id, schoolId);
-    }
-    const updates = {
-      name: newName,
-      email: newEmail || null,
-      phone: newPhone,
-      balance: balanceVal === "" ? null : parseInt(balanceVal, 10),
-      package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
-    };
-    if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
-    if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
-    const studentInState = state.students.find((x) => x.id === id);
-    if (studentInState) {
-      Object.assign(studentInState, updates);
-      if (newPassword) studentInState.password = newPassword;
+      const row = Array.isArray(updatedRow) && updatedRow.length > 0 ? updatedRow[0] : updatedRow;
+      if (row && typeof row === "object") {
+        const idx = state.students.findIndex((x) => String(x.id) === String(row.id));
+        if (idx >= 0) {
+          state.students[idx] = { ...state.students[idx], ...row };
+          if (newPassword) state.students[idx].password = newPassword;
+        } else {
+          state.students.push(row);
+        }
+      } else {
+        await refreshSingleStudent(id, schoolId);
+        const updates = {
+          name: newName,
+          email: newEmail || null,
+          phone: newPhone,
+          balance: balanceVal === "" ? null : parseInt(balanceVal, 10),
+          package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
+        };
+        if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
+        if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
+        const studentInState = state.students.find((x) => x.id === id);
+        if (studentInState) {
+          Object.assign(studentInState, updates);
+          if (newPassword) studentInState.password = newPassword;
+        }
+      }
     }
     saveState();
     if (btn) {
