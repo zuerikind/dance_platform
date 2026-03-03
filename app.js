@@ -1280,8 +1280,9 @@
     if (!state.scanDeductionType || state.scanDeductionType !== "group" && state.scanDeductionType !== "private" && state.scanDeductionType !== "event") {
       state.scanDeductionType = isPT ? "private" : "group";
     }
-    const hasValidPass = student.paid && (hasGroupLeft || hasDualScanMode && hasPrivateLeft || hasEventsEnabled && hasEventsLeft);
-    const hasNoClasses = student.paid && !hasGroupLeft && !hasPrivateLeft && !hasEventsLeft;
+    const hasAnyBalance = hasGroupLeft || hasDualScanMode && hasPrivateLeft || hasEventsEnabled && hasEventsLeft;
+    const hasValidPass = hasAnyBalance;
+    const hasNoClasses = !hasAnyBalance;
     if (todayRegs.length > 0 && hasValidPass) {
       const regsHtml = todayRegs.map((r) => `
             <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;">
@@ -14419,8 +14420,11 @@ School: ${schoolName}`)) return;
     };
     if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
     if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
-    Object.assign(s, updates);
-    if (newPassword) s.password = newPassword;
+    const studentInState = state.students.find((x) => x.id === id);
+    if (studentInState) {
+      Object.assign(studentInState, updates);
+      if (newPassword) studentInState.password = newPassword;
+    }
     saveState();
     if (btn) {
       btn.innerHTML = '<i data-lucide="check" size="18" style="margin-right: 6px;"></i> ' + (t2("saved_success_msg") || "Saved!");
@@ -14432,13 +14436,13 @@ School: ${schoolName}`)) return;
           btn.textContent = originalText;
           if (window.lucide) window.lucide.createIcons();
         }
+        renderView();
         if (typeof fetchAllData === "function") fetchAllData().then(() => renderView());
-        else renderView();
       }, 1500);
     } else {
       document.getElementById("student-modal").classList.add("hidden");
+      renderView();
       if (typeof fetchAllData === "function") fetchAllData().then(() => renderView());
-      else renderView();
     }
   };
 

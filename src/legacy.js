@@ -12716,8 +12716,11 @@ window.saveStudentDetails = async (id) => {
     };
     if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
     if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
-    Object.assign(s, updates);
-    if (newPassword) s.password = newPassword;
+    const studentInState = state.students.find(x => x.id === id);
+    if (studentInState) {
+        Object.assign(studentInState, updates);
+        if (newPassword) studentInState.password = newPassword;
+    }
     saveState();
 
     if (btn) {
@@ -12726,13 +12729,13 @@ window.saveStudentDetails = async (id) => {
         setTimeout(() => {
             document.getElementById('student-modal').classList.add('hidden');
             if (btn) { btn.disabled = false; btn.textContent = originalText; if (window.lucide) window.lucide.createIcons(); }
+            renderView();
             if (typeof fetchAllData === 'function') fetchAllData().then(() => renderView());
-            else renderView();
         }, 1500);
     } else {
         document.getElementById('student-modal').classList.add('hidden');
+        renderView();
         if (typeof fetchAllData === 'function') fetchAllData().then(() => renderView());
-        else renderView();
     }
 };
 

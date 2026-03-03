@@ -172,8 +172,9 @@ export async function handleScan(scannedId) {
     if (!state.scanDeductionType || (state.scanDeductionType !== 'group' && state.scanDeductionType !== 'private' && state.scanDeductionType !== 'event')) {
         state.scanDeductionType = isPT ? 'private' : 'group';
     }
-    const hasValidPass = student.paid && (hasGroupLeft || (hasDualScanMode && hasPrivateLeft) || (hasEventsEnabled && hasEventsLeft));
-    const hasNoClasses = student.paid && !hasGroupLeft && !hasPrivateLeft && !hasEventsLeft;
+    const hasAnyBalance = hasGroupLeft || (hasDualScanMode && hasPrivateLeft) || (hasEventsEnabled && hasEventsLeft);
+    const hasValidPass = hasAnyBalance;
+    const hasNoClasses = !hasAnyBalance;
 
     if (todayRegs.length > 0 && hasValidPass) {
         const regsHtml = todayRegs.map(r => `
