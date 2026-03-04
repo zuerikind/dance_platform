@@ -69,6 +69,7 @@ export let state = {
     todayRegistrations: [],
     classRegLoaded: false,
     adminWeekRegistrations: [],
+    adminWeekRegistrationsByMonth: {},
     adminRegExpanded: false,
     adminRegMonth: null,
     teacherAcceptedClassesExpanded: true,

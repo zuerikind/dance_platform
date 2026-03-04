@@ -19,6 +19,21 @@ export function resetFetchThrottle() {
     _lastFetchEndTime = 0;
 }
 
+/** Preserve group/private/event balances from previous state when refetched row is missing them (e.g. old view without balance_events). */
+function mergeStudentBalances(newList, prevList) {
+    if (!Array.isArray(newList)) return newList;
+    if (!prevList || prevList.length === 0) return newList;
+    return newList.map(row => {
+        const old = prevList.find(s => String(s.id) === String(row.id));
+        if (!old) return row;
+        const merged = { ...row };
+        if (merged.balance === undefined && old.balance !== undefined) merged.balance = old.balance;
+        if (merged.balance_private === undefined && old.balance_private !== undefined) merged.balance_private = old.balance_private;
+        if (merged.balance_events === undefined && old.balance_events !== undefined) merged.balance_events = old.balance_events;
+        return merged;
+    });
+}
+
 export async function refreshSingleStudent(studentId, schoolId) {
     if (!supabaseClient || !studentId || !schoolId) return;
     try {
@@ -38,10 +53,11 @@ export async function refreshSingleStudent(studentId, schoolId) {
             row = data[0];
         }
         const idx = state.students.findIndex(s => String(s.id) === String(row.id));
+        const merged = mergeStudentBalances([row], state.students)[0] || row;
         if (idx >= 0) {
-            state.students[idx] = row;
+            state.students[idx] = merged;
         } else {
-            state.students.push(row);
+            state.students.push(merged);
         }
         saveState();
         if (typeof window.renderView === 'function') window.renderView();
@@ -187,7 +203,7 @@ export async function fetchAllData() {
                 console.log('[fetchAllData] Overwriting state.students (studentsRes). For saved student', state._lastSavedStudentId, 'prev balance=', prev?.balance, '→ new balance=', next?.balance);
                 delete state._lastSavedStudentId;
             }
-            state.students = studentsRes.data;
+            state.students = mergeStudentBalances(studentsRes.data, state.students);
             if (state.currentUser && !state.isAdmin) {
                 const updatedMe = state.students.find(s => s.id === state.currentUser.id);
                 if (updatedMe) {
@@ -213,7 +229,7 @@ export async function fetchAllData() {
                     console.log('[fetchAllData] Overwriting state.students (rpcStudents). For saved student', state._lastSavedStudentId, 'prev balance=', prev?.balance, '→ new balance=', next?.balance);
                     delete state._lastSavedStudentId;
                 }
-                state.students = rpcStudents;
+                state.students = mergeStudentBalances(rpcStudents, state.students);
             }
             const { data: activationStatus } = await supabaseClient.rpc('get_school_students_activation_status', { p_school_id: sid });
             state.studentActivationStatus = {};
@@ -454,31 +470,8 @@ export async function fetchAllData() {
                     if (state.currentView === 'admin-memberships' && typeof window.renderView === 'function') window.renderView();
                 }).catch(() => {});
             }
-            if (state.isAdmin) {
-                const allWeekRegs = [];
-                const allDates = new Set();
-                const getToday = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly : () => new Date();
-                const now = getToday();
-                const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                const end = new Date(now.getFullYear(), now.getMonth() + 3, 0);
-                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                    allDates.add(typeof window.formatClassDate === 'function' ? window.formatClassDate(d) : d.toISOString().slice(0, 10));
-                }
-                const dateArr = [...allDates];
-                const BATCH = 10;
-                for (let i = 0; i < dateArr.length; i += BATCH) {
-                    const chunk = dateArr.slice(i, i + BATCH);
-                    const results = await Promise.all(chunk.map(dateStr =>
-                        supabaseClient.rpc('get_class_registrations_for_date', { p_school_id: sid, p_class_date: dateStr })
-                    ));
-                    results.forEach((res) => {
-                        if (res.error || !res.data) return;
-                        const arr = Array.isArray(res.data) ? res.data : (typeof res.data === 'string' ? JSON.parse(res.data) : []);
-                        arr.forEach(r => allWeekRegs.push(r));
-                    });
-                }
-                state.adminWeekRegistrations = allWeekRegs;
-            }
+            // Class registrations per month are now lazy-loaded via fetchAdminRegistrationsForMonth
+            // when the admin opens the schedule section, to avoid 120+ RPC calls on every load.
         }
         if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
             const updated = state.students.find(s => s.id === state.currentUser.id);
@@ -510,6 +503,36 @@ export async function fetchAllData() {
             setTimeout(() => fetchAllData(), 100);
         }
     }
+}
+
+/**
+ * Fetch class registrations for a single month (lazy-loaded). Used by admin schedule section.
+ * Caches result in state.adminWeekRegistrationsByMonth[monthStr].
+ */
+export async function fetchAdminRegistrationsForMonth(schoolId, monthStr) {
+    if (!supabaseClient || !schoolId || !monthStr) return [];
+    const [y, m] = monthStr.split('-').map(Number);
+    if (!y || !m) return [];
+    const start = new Date(y, m - 1, 1);
+    const end = new Date(y, m, 0);
+    const dateArr = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dateArr.push(typeof window.formatClassDate === 'function' ? window.formatClassDate(d) : d.toISOString().slice(0, 10));
+    }
+    const BATCH = 10;
+    const allWeekRegs = [];
+    for (let i = 0; i < dateArr.length; i += BATCH) {
+        const chunk = dateArr.slice(i, i + BATCH);
+        const results = await Promise.all(chunk.map(dateStr =>
+            supabaseClient.rpc('get_class_registrations_for_date', { p_school_id: schoolId, p_class_date: dateStr })
+        ));
+        results.forEach((res) => {
+            if (res.error || !res.data) return;
+            const arr = Array.isArray(res.data) ? res.data : (typeof res.data === 'string' ? JSON.parse(res.data) : []);
+            arr.forEach(r => allWeekRegs.push(r));
+        });
+    }
+    return allWeekRegs;
 }
 
 export async function fetchPlatformData() {

@@ -100,6 +100,7 @@
     todayRegistrations: [],
     classRegLoaded: false,
     adminWeekRegistrations: [],
+    adminWeekRegistrationsByMonth: {},
     adminRegExpanded: false,
     adminRegMonth: null,
     teacherAcceptedClassesExpanded: true,
@@ -472,6 +473,19 @@
   function resetFetchThrottle() {
     _lastFetchEndTime = 0;
   }
+  function mergeStudentBalances(newList, prevList) {
+    if (!Array.isArray(newList)) return newList;
+    if (!prevList || prevList.length === 0) return newList;
+    return newList.map((row) => {
+      const old = prevList.find((s) => String(s.id) === String(row.id));
+      if (!old) return row;
+      const merged = { ...row };
+      if (merged.balance === void 0 && old.balance !== void 0) merged.balance = old.balance;
+      if (merged.balance_private === void 0 && old.balance_private !== void 0) merged.balance_private = old.balance_private;
+      if (merged.balance_events === void 0 && old.balance_events !== void 0) merged.balance_events = old.balance_events;
+      return merged;
+    });
+  }
   async function refreshSingleStudent(studentId, schoolId) {
     if (!supabaseClient || !studentId || !schoolId) return;
     try {
@@ -491,10 +505,11 @@
         row = data[0];
       }
       const idx = state.students.findIndex((s) => String(s.id) === String(row.id));
+      const merged = mergeStudentBalances([row], state.students)[0] || row;
       if (idx >= 0) {
-        state.students[idx] = row;
+        state.students[idx] = merged;
       } else {
-        state.students.push(row);
+        state.students.push(merged);
       }
       saveState();
       if (typeof window.renderView === "function") window.renderView();
@@ -623,7 +638,7 @@
           console.log("[fetchAllData] Overwriting state.students (studentsRes). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
           delete state._lastSavedStudentId;
         }
-        state.students = studentsRes.data;
+        state.students = mergeStudentBalances(studentsRes.data, state.students);
         if (state.currentUser && !state.isAdmin) {
           const updatedMe = state.students.find((s) => s.id === state.currentUser.id);
           if (updatedMe) {
@@ -649,7 +664,7 @@
             console.log("[fetchAllData] Overwriting state.students (rpcStudents). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
             delete state._lastSavedStudentId;
           }
-          state.students = rpcStudents;
+          state.students = mergeStudentBalances(rpcStudents, state.students);
         }
         const { data: activationStatus } = await supabaseClient.rpc("get_school_students_activation_status", { p_school_id: sid });
         state.studentActivationStatus = {};
@@ -920,31 +935,6 @@
           }).catch(() => {
           });
         }
-        if (state.isAdmin) {
-          const allWeekRegs = [];
-          const allDates = /* @__PURE__ */ new Set();
-          const getToday = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly : () => /* @__PURE__ */ new Date();
-          const now2 = getToday();
-          const start = new Date(now2.getFullYear(), now2.getMonth() - 1, 1);
-          const end = new Date(now2.getFullYear(), now2.getMonth() + 3, 0);
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            allDates.add(typeof window.formatClassDate === "function" ? window.formatClassDate(d) : d.toISOString().slice(0, 10));
-          }
-          const dateArr = [...allDates];
-          const BATCH = 10;
-          for (let i = 0; i < dateArr.length; i += BATCH) {
-            const chunk = dateArr.slice(i, i + BATCH);
-            const results = await Promise.all(chunk.map(
-              (dateStr) => supabaseClient.rpc("get_class_registrations_for_date", { p_school_id: sid, p_class_date: dateStr })
-            ));
-            results.forEach((res) => {
-              if (res.error || !res.data) return;
-              const arr = Array.isArray(res.data) ? res.data : typeof res.data === "string" ? JSON.parse(res.data) : [];
-              arr.forEach((r) => allWeekRegs.push(r));
-            });
-          }
-          state.adminWeekRegistrations = allWeekRegs;
-        }
       }
       if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
         const updated = state.students.find((s) => s.id === state.currentUser.id);
@@ -975,6 +965,31 @@
         setTimeout(() => fetchAllData(), 100);
       }
     }
+  }
+  async function fetchAdminRegistrationsForMonth(schoolId, monthStr) {
+    if (!supabaseClient || !schoolId || !monthStr) return [];
+    const [y, m] = monthStr.split("-").map(Number);
+    if (!y || !m) return [];
+    const start = new Date(y, m - 1, 1);
+    const end = new Date(y, m, 0);
+    const dateArr = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dateArr.push(typeof window.formatClassDate === "function" ? window.formatClassDate(d) : d.toISOString().slice(0, 10));
+    }
+    const BATCH = 10;
+    const allWeekRegs = [];
+    for (let i = 0; i < dateArr.length; i += BATCH) {
+      const chunk = dateArr.slice(i, i + BATCH);
+      const results = await Promise.all(chunk.map(
+        (dateStr) => supabaseClient.rpc("get_class_registrations_for_date", { p_school_id: schoolId, p_class_date: dateStr })
+      ));
+      results.forEach((res) => {
+        if (res.error || !res.data) return;
+        const arr = Array.isArray(res.data) ? res.data : typeof res.data === "string" ? JSON.parse(res.data) : [];
+        arr.forEach((r) => allWeekRegs.push(r));
+      });
+    }
+    return allWeekRegs;
   }
   async function fetchPlatformData() {
     if (!supabaseClient) return;
@@ -1690,6 +1705,13 @@
       request_sent_msg: "Your access will be activated once the payment is verified by our staff.",
       close: "Close",
       nav_revenue: "Revenue",
+      add_manual_payment: "Add manual payment",
+      select_student: "Select student",
+      student: "Student",
+      description_or_plan: "Description / Plan name",
+      manual_payment_description_placeholder: "e.g. 10 classes pack, Cash payment",
+      price: "Amount",
+      payment_method: "Payment method",
       monthly_total: "This Month Total",
       all_payments: "Payment History",
       approved: "Approved",
@@ -2450,13 +2472,20 @@
       approve: "Aprobar",
       reject: "Rechazar",
       nav_revenue: "Ganancias",
+      add_manual_payment: "Agregar pago manual",
+      select_student: "Seleccionar alumno",
+      student: "Alumno",
+      description_or_plan: "Descripci\xF3n / Plan",
+      manual_payment_description_placeholder: "ej. Paquete 10 clases, Pago en efectivo",
+      price: "Monto",
+      payment_method: "Forma de pago",
+      cash: "Efectivo",
+      transfer: "Transferencia",
       monthly_total: "Total este mes",
       all_payments: "Historial de pagos",
       approved: "Aprobado",
       rejected: "No Aprobado",
       pending: "Pendiente",
-      transfer: "Transferencia",
-      cash: "Efectivo",
       payment_instructions: "Instrucciones de Pago",
       i_have_paid: "Ya transfer\xED",
       pay_cash: "Pagar\xE9 en efectivo",
@@ -3186,13 +3215,20 @@
       approve: "Best\xE4tigen",
       reject: "Ablehnen",
       nav_revenue: "Einnahmen",
+      add_manual_payment: "Manuelle Zahlung erfassen",
+      select_student: "Sch\xFCler/in w\xE4hlen",
+      student: "Sch\xFCler/in",
+      description_or_plan: "Beschreibung / Plan",
+      manual_payment_description_placeholder: "z. B. 10er-Karte, Barzahlung",
+      price: "Betrag",
+      payment_method: "Zahlungsart",
+      cash: "Bar",
+      transfer: "\xDCberweisung",
       monthly_total: "Gesamt diesen Monat",
       all_payments: "Zahlungsverlauf",
       approved: "Best\xE4tigt",
       rejected: "Abgelehnt",
       pending: "Ausstehend",
-      transfer: "\xDCberweisung",
-      cash: "Barzahlung",
       payment_instructions: "Zahlungsanweisungen",
       i_have_paid: "Ich habe \xFCberwiesen",
       pay_cash: "Ich zahle bar",
@@ -8243,17 +8279,30 @@
                 </div>
                 ` : ""}
                 ${state.currentSchool?.class_registration_enabled ? (() => {
-          const weekRegs = state.adminWeekRegistrations || [];
+          const getToday = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly : () => /* @__PURE__ */ new Date();
+          const now = getToday();
+          const currentMonthStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+          const viewMonth = state.adminRegMonth || currentMonthStr;
+          if (state.adminWeekRegistrationsByMonth[viewMonth] === void 0) {
+            state.adminWeekRegistrationsByMonth[viewMonth] = null;
+            const sid = state.currentSchool?.id;
+            if (sid && typeof fetchAdminRegistrationsForMonth === "function") {
+              fetchAdminRegistrationsForMonth(sid, viewMonth).then((data) => {
+                state.adminWeekRegistrationsByMonth[viewMonth] = data;
+                if (typeof renderView === "function") renderView();
+              }).catch(() => {
+                state.adminWeekRegistrationsByMonth[viewMonth] = [];
+                if (typeof renderView === "function") renderView();
+              });
+            }
+          }
+          const weekRegs = state.adminWeekRegistrationsByMonth[viewMonth] != null ? state.adminWeekRegistrationsByMonth[viewMonth] : [];
           const scheduleDayToDow = (dayStr) => {
             if (!dayStr) return null;
             const s = String(dayStr).trim();
             const map = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6, Su: 0 };
             return map[s] != null ? map[s] : null;
           };
-          const getToday = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly : () => /* @__PURE__ */ new Date();
-          const now = getToday();
-          const currentMonthStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
-          const viewMonth = state.adminRegMonth || currentMonthStr;
           const [viewYear, viewMonthNum] = viewMonth.split("-").map(Number);
           const firstDay = viewMonth + "-01";
           const lastDayOfMonth = new Date(viewYear, viewMonthNum, 0);
@@ -8621,16 +8670,17 @@
         const isCurrentMonth = !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
         html += `
             <div class="ios-header" style="background: transparent;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <div class="ios-large-title">${t2.nav_revenue}</div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <button type="button" class="btn-primary" onclick="window.openManualPaymentModal()" style="padding: 0.5rem 0.75rem; font-size: 13px; font-weight: 600; border-radius: 12px;">
-                            <i data-lucide="plus" size="14" style="margin-right: 4px; vertical-align: middle;"></i> ${t2.add_manual_payment || "Add manual payment"}
-                        </button>
-                        <button type="button" class="filter-btn" onclick="fetchAllData()" title="${t2.refresh_btn}" style="margin-right: 0;">
-                            <i data-lucide="refresh-cw" size="14"></i> ${t2.refresh_btn}
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        onclick="window.openManualPaymentModal()"
+                        style="padding: 0.55rem 1.1rem; font-size: 13px; font-weight: 650; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); white-space: nowrap;"
+                    >
+                        <i data-lucide="plus" size="16"></i>
+                        <span>${t2.add_manual_payment || "Add manual payment"}</span>
+                    </button>
                 </div>
             </div>
 
@@ -10479,8 +10529,11 @@
         const hasUnlimited = activeOnly.some((p) => p.count == null || p.count === "null");
         const activeBalance = hasUnlimited ? null : activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
         if (activeOnly.length > 0 && s.balance !== activeBalance) {
-          s.balance = activeBalance;
-          changed = true;
+          const wouldOverwriteWithZero = activeBalance === 0 && (s.balance > 0 || s.balance === null || s.balance === void 0);
+          if (!wouldOverwriteWithZero) {
+            s.balance = activeBalance;
+            changed = true;
+          }
         }
         if (activeOnly.length === 0 && s.paid) {
           s.package = null;

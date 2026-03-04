@@ -3,7 +3,7 @@ import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIden
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate } from './utils.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
-import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent } from './data.js';
+import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth } from './data.js';
 import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances } from './scanner.js';
 
 // --- TRANSLATIONS (DANCE_LOCALES) ---
@@ -81,6 +81,13 @@ const DANCE_LOCALES = {
         request_sent_msg: "Your access will be activated once the payment is verified by our staff.",
         close: "Close",
         nav_revenue: 'Revenue',
+        add_manual_payment: 'Add manual payment',
+        select_student: 'Select student',
+        student: 'Student',
+        description_or_plan: 'Description / Plan name',
+        manual_payment_description_placeholder: 'e.g. 10 classes pack, Cash payment',
+        price: 'Amount',
+        payment_method: 'Payment method',
         monthly_total: 'This Month Total',
         all_payments: 'Payment History',
         approved: 'Approved',
@@ -826,13 +833,20 @@ const DANCE_LOCALES = {
         approve: "Aprobar",
         reject: "Rechazar",
         nav_revenue: 'Ganancias',
+        add_manual_payment: 'Agregar pago manual',
+        select_student: 'Seleccionar alumno',
+        student: 'Alumno',
+        description_or_plan: 'Descripción / Plan',
+        manual_payment_description_placeholder: 'ej. Paquete 10 clases, Pago en efectivo',
+        price: 'Monto',
+        payment_method: 'Forma de pago',
+        cash: 'Efectivo',
+        transfer: 'Transferencia',
         monthly_total: 'Total este mes',
         all_payments: 'Historial de pagos',
         approved: 'Aprobado',
         rejected: 'No Aprobado',
         pending: 'Pendiente',
-        transfer: "Transferencia",
-        cash: "Efectivo",
         payment_instructions: "Instrucciones de Pago",
         i_have_paid: "Ya transferí",
         pay_cash: "Pagaré en efectivo",
@@ -1556,13 +1570,20 @@ const DANCE_LOCALES = {
         approve: "Bestätigen",
         reject: "Ablehnen",
         nav_revenue: 'Einnahmen',
+        add_manual_payment: 'Manuelle Zahlung erfassen',
+        select_student: 'Schüler/in wählen',
+        student: 'Schüler/in',
+        description_or_plan: 'Beschreibung / Plan',
+        manual_payment_description_placeholder: 'z. B. 10er-Karte, Barzahlung',
+        price: 'Betrag',
+        payment_method: 'Zahlungsart',
+        cash: 'Bar',
+        transfer: 'Überweisung',
         monthly_total: 'Gesamt diesen Monat',
         all_payments: 'Zahlungsverlauf',
         approved: 'Bestätigt',
         rejected: 'Abgelehnt',
         pending: 'Ausstehend',
-        transfer: "Überweisung",
-        cash: "Barzahlung",
         payment_instructions: "Zahlungsanweisungen",
         i_have_paid: "Ich habe überwiesen",
         pay_cash: "Ich zahle bar",
@@ -6452,17 +6473,27 @@ function _renderViewImpl() {
                 </div>
                 ` : ''}
                 ${state.currentSchool?.class_registration_enabled ? (() => {
-                    const weekRegs = state.adminWeekRegistrations || [];
+                    const getToday = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly : () => new Date();
+                    const now = getToday();
+                    const currentMonthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+                    const viewMonth = state.adminRegMonth || currentMonthStr;
+                    if (state.adminWeekRegistrationsByMonth[viewMonth] === undefined) {
+                        state.adminWeekRegistrationsByMonth[viewMonth] = null;
+                        const sid = state.currentSchool?.id;
+                        if (sid && typeof fetchAdminRegistrationsForMonth === 'function') {
+                            fetchAdminRegistrationsForMonth(sid, viewMonth).then(data => {
+                                state.adminWeekRegistrationsByMonth[viewMonth] = data;
+                                if (typeof renderView === 'function') renderView();
+                            }).catch(() => { state.adminWeekRegistrationsByMonth[viewMonth] = []; if (typeof renderView === 'function') renderView(); });
+                        }
+                    }
+                    const weekRegs = state.adminWeekRegistrationsByMonth[viewMonth] != null ? state.adminWeekRegistrationsByMonth[viewMonth] : [];
                     const scheduleDayToDow = (dayStr) => {
                         if (!dayStr) return null;
                         const s = String(dayStr).trim();
                         const map = { Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:0, Monday:1,Tuesday:2,Wednesday:3,Thursday:4,Friday:5,Saturday:6,Sunday:0, Mo:1,Tu:2,We:3,Th:4,Fr:5,Sa:6,Su:0 };
                         return map[s] != null ? map[s] : null;
                     };
-                    const getToday = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly : () => new Date();
-                    const now = getToday();
-                    const currentMonthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-                    const viewMonth = state.adminRegMonth || currentMonthStr;
                     const [viewYear, viewMonthNum] = viewMonth.split('-').map(Number);
                     const firstDay = viewMonth + '-01';
                     const lastDayOfMonth = new Date(viewYear, viewMonthNum, 0);
@@ -6828,16 +6859,17 @@ function _renderViewImpl() {
 
         html += `
             <div class="ios-header" style="background: transparent;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <div class="ios-large-title">${t.nav_revenue}</div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <button type="button" class="btn-primary" onclick="window.openManualPaymentModal()" style="padding: 0.5rem 0.75rem; font-size: 13px; font-weight: 600; border-radius: 12px;">
-                            <i data-lucide="plus" size="14" style="margin-right: 4px; vertical-align: middle;"></i> ${t.add_manual_payment || 'Add manual payment'}
-                        </button>
-                        <button type="button" class="filter-btn" onclick="fetchAllData()" title="${t.refresh_btn}" style="margin-right: 0;">
-                            <i data-lucide="refresh-cw" size="14"></i> ${t.refresh_btn}
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        onclick="window.openManualPaymentModal()"
+                        style="padding: 0.55rem 1.1rem; font-size: 13px; font-weight: 650; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); white-space: nowrap;"
+                    >
+                        <i data-lucide="plus" size="16"></i>
+                        <span>${t.add_manual_payment || 'Add manual payment'}</span>
+                    </button>
                 </div>
             </div>
 
@@ -8710,13 +8742,17 @@ window.checkExpirations = async () => {
         // Handle Multi-Batch Expiration: keep expired packs for display, but balance only counts active.
         // Only sync balance from packs when there is at least one active pack; when all packs are expired,
         // leave balance as-is so admin-set manual balances (e.g. trial classes) are not overwritten with 0.
+        // Never overwrite a positive or unlimited balance with 0 from packs (admin may have set trial classes).
         if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
             const activeOnly = s.active_packs.filter(p => new Date(p.expires_at) > now);
             const hasUnlimited = activeOnly.some(p => p.count == null || p.count === 'null');
             const activeBalance = hasUnlimited ? null : activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
             if (activeOnly.length > 0 && s.balance !== activeBalance) {
-                s.balance = activeBalance;
-                changed = true;
+                const wouldOverwriteWithZero = activeBalance === 0 && (s.balance > 0 || s.balance === null || s.balance === undefined);
+                if (!wouldOverwriteWithZero) {
+                    s.balance = activeBalance;
+                    changed = true;
+                }
             }
             if (activeOnly.length === 0 && s.paid) {
                 s.package = null;
