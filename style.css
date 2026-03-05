@@ -310,6 +310,12 @@ main#app-root {
     flex: 1;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    min-width: 0;
+}
+main#app-root > .container {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 /* Global Background - Pure Neutral */
@@ -479,6 +485,13 @@ h1 {
 .container.container-dev {
     max-width: 100%;
     padding: 1.5rem 2rem;
+}
+/* Settings (Ajustes): allow wider layout so Notifications 3-column grid uses space on large screens (big space on right fix) */
+body .container.container-settings,
+body .container:has(.settings-notifications-expandable) {
+    max-width: 1320px !important;
+    width: 100% !important;
+    box-sizing: border-box;
 }
 
 /* Fix for standard select inside card/list */
@@ -5853,4 +5866,192 @@ details .scan-private-summary::marker {
 }
 details[open] .scan-private-arrow {
   transform: rotate(90deg);
+}
+
+/* --- Settings Notifications: layout, visible buttons, preview, Apple/Tesla polish --- */
+/* Notifications section must match Discovery profile width exactly: same .ios-list margin (1.5rem 1rem), no extra wrapper constraints */
+#settings-notifications-content,
+.settings-notifications-content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Same .ios-list as Discovery; transparent so inner column cards show */
+.ios-list.notifications-ios-list {
+  background: transparent;
+}
+/* Settings: single column so message section has same full width as Discovery profile */
+.container.container-settings .notifications-grid,
+.container:has(.settings-notifications-expandable) .notifications-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.notifications-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.notifications-col-recipients,
+.notifications-col-composer,
+.notifications-col-preview {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-m, 12px);
+  padding: 1.25rem;
+  min-width: 0;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.notifications-col-recipients:focus-within,
+.notifications-col-composer:focus-within,
+.notifications-col-preview:focus-within {
+  border-color: var(--system-blue, #007AFF);
+  box-shadow: 0 0 0 1px var(--system-blue, #007AFF);
+}
+.notifications-col-recipients > div:first-child,
+.notifications-col-composer > div:first-child,
+.notifications-col-preview > div:first-child {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.notifications-col-composer input[type="text"],
+.notifications-col-composer textarea {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.notifications-col-composer input[type="text"]:focus,
+.notifications-col-composer textarea:focus {
+  outline: none;
+  border-color: var(--system-blue, #007AFF);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
+}
+.notifications-toolbar-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+.notifications-toolbar-btn:hover {
+  background: var(--system-gray6);
+  border-color: var(--text-secondary);
+}
+.notifications-toolbar-btn:active {
+  transform: scale(0.98);
+}
+body.dark-mode .notifications-toolbar-btn {
+  border-color: var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+body.dark-mode .notifications-toolbar-btn:hover {
+  background: var(--system-gray6);
+  border-color: var(--system-gray3);
+}
+.notifications-send-test-btn {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+.notifications-send-test-btn:hover {
+  background: var(--system-gray6);
+  border-color: var(--text-secondary);
+}
+.notifications-send-test-btn:active {
+  transform: scale(0.98);
+}
+body.dark-mode .notifications-send-test-btn {
+  border-color: var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+.notifications-send-btn {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  background: var(--text);
+  color: var(--background);
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+.notifications-send-btn:hover:not(:disabled) {
+  opacity: 0.92;
+}
+.notifications-send-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.notifications-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+#notifications-preview-body {
+  min-height: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+#notifications-preview-body .notifications-preview-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+/* Tablet: 2 columns for non-settings only; settings stays single column */
+@media (max-width: 1023px) {
+  .notifications-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+}
+/* Small viewports: single column, full width so layout isn't broken */
+@media (max-width: 639px) {
+  .notifications-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+    min-width: 0;
+  }
+  .settings-notifications-content {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .settings-notifications-expandable {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .notifications-col-recipients,
+  .notifications-col-composer,
+  .notifications-col-preview {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
 }

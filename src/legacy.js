@@ -83,6 +83,10 @@ const DANCE_LOCALES = {
         nav_revenue: 'Revenue',
         add_manual_payment: 'Add manual payment',
         select_student: 'Select student',
+        external_student: 'External student',
+        external_student_name: 'External student name',
+        external_student_name_placeholder: 'Enter name',
+        external_student_name_required: 'Please enter the external student name.',
         student: 'Student',
         description_or_plan: 'Description / Plan name',
         manual_payment_description_placeholder: 'e.g. 10 classes pack, Cash payment',
@@ -505,6 +509,35 @@ const DANCE_LOCALES = {
         error_removing_admin: "Error removing administrator:",
         additional_features: "Additional features",
         settings_account_admin_label: "Profile, password, admins & more",
+        notifications_section: "Notifications",
+        notifications_recipients_label: "Recipients",
+        all_students: "All students",
+        select_students: "Select students",
+        search_students_placeholder: "Search by name or email",
+        selected: "selected",
+        no_students_match: "No students match",
+        notifications_composer_label: "Compose",
+        notifications_subject_placeholder: "Subject",
+        composer_bold_btn: "Bold",
+        composer_link_btn: "Link",
+        link_url_prompt: "URL:",
+        notifications_body_placeholder: "Message body (use Bold/Link for formatting)",
+        notifications_using_discovery_logo: "Using your discovery page logo.",
+        notifications_upload_logo: "Upload logo",
+        notifications_preview_label: "Preview",
+        notifications_preview_message_label: "Message preview",
+        notifications_preview_empty: "Your message will appear here.",
+        from_label: "From",
+        reply_to_label: "Reply-To",
+        sent_by_label: "Sent by",
+        send_test: "Send test email to myself",
+        send_to_recipients: "Send to recipients",
+        notifications_subject_required: "Subject is required",
+        notifications_select_at_least_one: "Select at least one student",
+        notifications_test_sent: "Test sent",
+        notifications_sent: "sent",
+        notifications_logo_too_big: "Logo must be under 1MB",
+        remove: "Remove",
         create_new_competition: "Create new competition",
         jack_and_jill: "Jack and Jill",
         competition_date: "Date",
@@ -835,6 +868,10 @@ const DANCE_LOCALES = {
         nav_revenue: 'Ganancias',
         add_manual_payment: 'Agregar pago manual',
         select_student: 'Seleccionar alumno',
+        external_student: 'Alumno externo',
+        external_student_name: 'Nombre del alumno externo',
+        external_student_name_placeholder: 'Ingresa el nombre',
+        external_student_name_required: 'Ingresa el nombre del alumno externo.',
         student: 'Alumno',
         description_or_plan: 'Descripción / Plan',
         manual_payment_description_placeholder: 'ej. Paquete 10 clases, Pago en efectivo',
@@ -1168,6 +1205,35 @@ const DANCE_LOCALES = {
         error_removing_admin: "Error al eliminar administrador:",
         additional_features: "Funciones adicionales",
         settings_account_admin_label: "Perfil, contraseña, administradores y más",
+        notifications_section: "Notificaciones",
+        notifications_recipients_label: "Destinatarios",
+        all_students: "Todos los alumnos",
+        select_students: "Seleccionar alumnos",
+        search_students_placeholder: "Buscar por nombre o correo",
+        selected: "seleccionados",
+        no_students_match: "Ningún alumno coincide",
+        notifications_composer_label: "Redactar",
+        notifications_subject_placeholder: "Asunto",
+        composer_bold_btn: "Negrita",
+        composer_link_btn: "Enlace",
+        link_url_prompt: "URL:",
+        notifications_body_placeholder: "Cuerpo del mensaje (usa Negrita/Enlace para formatear)",
+        notifications_using_discovery_logo: "Usando el logo de tu página de descubrimiento.",
+        notifications_upload_logo: "Subir logo",
+        notifications_preview_label: "Vista previa",
+        notifications_preview_message_label: "Vista previa del mensaje",
+        notifications_preview_empty: "Tu mensaje aparecerá aquí.",
+        from_label: "De",
+        reply_to_label: "Responder a",
+        sent_by_label: "Enviado por",
+        send_test: "Enviar correo de prueba a mí",
+        send_to_recipients: "Enviar a destinatarios",
+        notifications_subject_required: "El asunto es obligatorio",
+        notifications_select_at_least_one: "Selecciona al menos un alumno",
+        notifications_test_sent: "Prueba enviada",
+        notifications_sent: "enviados",
+        notifications_logo_too_big: "El logo debe pesar menos de 1 MB",
+        remove: "Quitar",
         create_new_competition: "Crear nueva competencia",
         jack_and_jill: "Jack and Jill",
         competition_date: "Fecha",
@@ -1572,6 +1638,10 @@ const DANCE_LOCALES = {
         nav_revenue: 'Einnahmen',
         add_manual_payment: 'Manuelle Zahlung erfassen',
         select_student: 'Schüler/in wählen',
+        external_student: 'Externer Schüler / Externe Schülerin',
+        external_student_name: 'Name (extern)',
+        external_student_name_placeholder: 'Name eingeben',
+        external_student_name_required: 'Bitte Namen des externen Schülers eingeben.',
         student: 'Schüler/in',
         description_or_plan: 'Beschreibung / Plan',
         manual_payment_description_placeholder: 'z. B. 10er-Karte, Barzahlung',
@@ -1873,6 +1943,35 @@ const DANCE_LOCALES = {
         mgmt_admins_title: "Administratoren",
         additional_features: "Zusätzliche Funktionen",
         settings_account_admin_label: "Profil, Passwort, Administratoren und mehr",
+        notifications_section: "Benachrichtigungen",
+        notifications_recipients_label: "Empfänger",
+        all_students: "Alle Schüler",
+        select_students: "Schüler auswählen",
+        search_students_placeholder: "Nach Name oder E-Mail suchen",
+        selected: "ausgewählt",
+        no_students_match: "Keine Schüler gefunden",
+        notifications_composer_label: "Verfassen",
+        notifications_subject_placeholder: "Betreff",
+        composer_bold_btn: "Fett",
+        composer_link_btn: "Link",
+        link_url_prompt: "URL:",
+        notifications_body_placeholder: "Nachrichtentext (Fett/Link für Formatierung)",
+        notifications_using_discovery_logo: "Logo deiner Discovery-Seite wird verwendet.",
+        notifications_upload_logo: "Logo hochladen",
+        notifications_preview_label: "Vorschau",
+        notifications_preview_message_label: "Nachrichtenvorschau",
+        notifications_preview_empty: "Deine Nachricht erscheint hier.",
+        from_label: "Von",
+        reply_to_label: "Antwort an",
+        sent_by_label: "Gesendet von",
+        send_test: "Test-E-Mail an mich senden",
+        send_to_recipients: "An Empfänger senden",
+        notifications_subject_required: "Betreff ist erforderlich",
+        notifications_select_at_least_one: "Mindestens einen Schüler auswählen",
+        notifications_test_sent: "Test gesendet",
+        notifications_sent: "gesendet",
+        notifications_logo_too_big: "Logo darf maximal 1 MB groß sein",
+        remove: "Entfernen",
         day_label: "Tag",
         hour_label: "Uhrzeit",
         start_time_label: "Start",
@@ -3739,6 +3838,7 @@ window.toggleExpandableNoRender = (key) => {
         'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section'],
         'revenueFilters': ['adminRevenueFiltersExpanded', 'revenue-filters-content', 'revenue-filters-expandable'],
         'settingsAdvanced': ['settingsAdvancedExpanded', 'settings-advanced-content', 'settings-advanced-expandable'],
+        'settingsNotifications': ['settingsNotificationsExpanded', 'settings-notifications-content', 'settings-notifications-expandable'],
         'studentPrivateClasses': ['studentPrivateClassesExpanded', 'student-private-classes-content', 'student-private-classes-expandable'],
         'teacherAcceptedClasses': ['teacherAcceptedClassesExpanded', 'teacher-accepted-classes-content', 'teacher-accepted-classes-expandable']
     };
@@ -4182,7 +4282,8 @@ function _renderViewImpl() {
     });
 
     const isDevDashboardView = ['platform-dev-dashboard', 'platform-school-details', 'platform-dev-edit-discovery', 'platform-dev-edit-school', 'super-admin-dashboard', 'reviews-admin', 'listing-suggestions-admin'].includes(view);
-    let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${isDevDashboardView ? 'container-dev' : ''} ${viewChanged ? 'slide-in' : ''}">`;
+    const isAdminSettingsView = view === 'admin-settings';
+    let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${isDevDashboardView ? 'container-dev' : ''} ${isAdminSettingsView ? 'container-settings' : ''} ${viewChanged ? 'slide-in' : ''}">`;
 
     // Dispatcher: one render function per view (can be moved to views.js later)
     function renderSchoolSelection() {
@@ -6797,7 +6898,7 @@ function _renderViewImpl() {
             </div>
             <div class="ios-list">
                 ${pending.length > 0 ? pending.map(req => {
-            const studentName = (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
+            const studentName = req.external_student_name || (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
             return `
                         <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
                             <div style="display: flex; gap: 12px; align-items: center;">
@@ -6939,7 +7040,7 @@ function _renderViewImpl() {
                         <p style="font-size: 15px; font-weight: 500;">${t.loading || 'Loading...'}</p>
                     </div>
                 ` : (filteredPayments.length > 0 ? filteredPayments.map(req => {
-            const studentName = (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
+            const studentName = req.external_student_name || (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
             const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
             const statusLabel = t[req.status] || req.status;
             return `
@@ -7612,6 +7713,59 @@ function _renderViewImpl() {
                 <div id="discovery-preview-inner" style="font-size: 13px; color: var(--text-primary); max-height: 70vh; overflow-y: auto; padding: 1rem; background: var(--bg-body);">${discoveryPreviewInnerHtml}</div>
             </div>
             ` : ''}
+            ` : ''}
+
+            <!-- Notifications: same structure and behaviour as Discovery profile (section header + re-render; .ios-list gets same margin = same width) -->
+            <div class="settings-section-header" onclick="state.settingsNotificationsExpanded = !state.settingsNotificationsExpanded; saveState(); renderView();" style="padding: 0 1.2rem; margin-top: 2.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                <span>${t.notifications_section || 'Notifications'}</span>
+                <i data-lucide="chevron-${state.settingsNotificationsExpanded ? 'up' : 'down'}" size="18" style="opacity: 0.6;"></i>
+            </div>
+            ${state.settingsNotificationsExpanded ? `
+            <div class="ios-list notifications-ios-list" id="settings-notifications-content" style="margin-bottom: 1rem;">
+                <div class="notifications-grid">
+                        <div class="notifications-col-recipients">
+                            <div>${t.notifications_recipients_label || 'Recipients'}</div>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary);"><input type="radio" name="notifications_recipient_mode" value="all" ${state.notificationsRecipientMode === 'all' ? 'checked' : ''} onchange="state.notificationsRecipientMode='all'; saveState(); renderView();"> ${t.all_students || 'All students'}</label>
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary);"><input type="radio" name="notifications_recipient_mode" value="selected" ${state.notificationsRecipientMode === 'selected' ? 'checked' : ''} onchange="state.notificationsRecipientMode='selected'; saveState(); renderView();"> ${t.select_students || 'Select students'}</label>
+                                ${state.notificationsRecipientMode === 'selected' ? `
+                                <input type="text" id="notifications-student-search" placeholder="${t.search_students_placeholder || 'Search by name or email'}" value="${(state.notificationsStudentSearch || '').replace(/"/g, '&quot;')}" oninput="state.notificationsStudentSearch=this.value; renderView();" style="padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary); font-size: 14px; width: 100%;">
+                                <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; background: var(--bg-body);">
+                                    ${(() => { const search = (state.notificationsStudentSearch || '').toLowerCase().trim(); const list = (state.students || []).filter(s => !search || (s.name || '').toLowerCase().includes(search) || (s.email || '').toLowerCase().includes(search)); return list.slice(0, 100).map(s => `<label style="display: flex; align-items: center; gap: 8px; padding: 8px 0; cursor: pointer; font-size: 13px; color: var(--text-primary);"><input type="checkbox" ${(state.notificationsSelectedIds || []).includes(s.id) ? 'checked' : ''} onchange="window.toggleNotificationsStudent('${s.id}')"> <span>${(s.name || s.email || s.id).replace(/</g, '&lt;').slice(0, 40)}</span></label>`).join('') || '<span style="font-size: 12px; color: var(--text-secondary);">' + (list.length > 100 ? (t.students_count || 'Many students') : (t.no_students_match || 'No students match')) + '</span>'; })()}
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">${((state.notificationsSelectedIds || []).length) + ' ' + (t.selected || 'selected')}</div>
+                                ` : ''}
+                        </div>
+                        <div class="notifications-col-composer">
+                            <div>${t.notifications_composer_label || 'Compose'}</div>
+                            <input type="text" id="notifications-subject" placeholder="${t.notifications_subject_placeholder || 'Subject'}" value="${(state.notificationsSubject || '').replace(/"/g, '&quot;')}" oninput="state.notificationsSubject=this.value; saveState(); window.updateNotificationsPreview();" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                                <button type="button" class="notifications-toolbar-btn" onclick="window.applyNotificationsBold()">${t.composer_bold_btn || 'Bold'}</button>
+                                <button type="button" class="notifications-toolbar-btn" onclick="window.applyNotificationsLink()"><i data-lucide="link" size="16" style="vertical-align: middle;"></i> ${t.composer_link_btn || 'Link'}</button>
+                            </div>
+                            <textarea id="notifications-body" rows="16" placeholder="${t.notifications_body_placeholder || 'Message body (use Bold/Link for formatting)'}" style="width: 100%; min-height: 280px; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary); font-size: 14px; resize: vertical; box-sizing: border-box;" oninput="state.notificationsBody=this.value; saveState(); window.updateNotificationsPreview();">${(state.notificationsBody || '').replace(/</g, '&lt;')}</textarea>
+                            <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+                                ${(state.currentSchool?.logo_url || '').trim() ? `<span>${t.notifications_using_discovery_logo || 'Using your discovery page logo.'}</span>` : ''}
+                                ${!(state.currentSchool?.logo_url || '').trim() ? `<div><input type="file" id="notifications-logo-file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="window.uploadNotificationsLogo(this)"><button type="button" class="notifications-toolbar-btn" onclick="document.getElementById('notifications-logo-file').click();" style="padding: 8px 12px; font-size: 13px;">${t.notifications_upload_logo || 'Upload logo'}</button> ${(state.adminSettings?.email_logo_url || '').trim() ? '<button type="button" class="notifications-toolbar-btn" style="margin-left: 8px; padding: 8px 12px; font-size: 13px;" onclick="window.clearNotificationsLogo()">' + (t.remove || 'Remove') + '</button>' : ''}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="notifications-col-preview">
+                            <div>${t.notifications_preview_label || 'Preview'}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">
+                                <div>${t.from_label || 'From'}: Bailadmin &lt;noreply@bailadmin.lat&gt;</div>
+                                <div>${t.reply_to_label || 'Reply-To'}: ${(state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes('@admins.bailadmin.local') && !state.currentAdmin.email.includes('@temp.bailadmin.local') ? state.currentAdmin.email : null) || '—').replace(/</g, '&lt;')}</div>
+                                <div>${t.sent_by_label || 'Sent by'}: ${(state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes('@admins.bailadmin.local') && !state.currentAdmin.email.includes('@temp.bailadmin.local') ? state.currentAdmin.email : null) || '—').replace(/</g, '&lt;')}</div>
+                                <div id="notifications-preview-subject-line">${t.notifications_subject_placeholder || 'Subject'}: ${(state.notificationsSubject || '—').replace(/</g, '&lt;')}</div>
+                            </div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${t.notifications_preview_message_label || 'Message preview'}</div>
+                            <div id="notifications-preview-body" style="border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; background: var(--bg-body); font-size: 14px; color: var(--text-primary);">${(() => { const logoUrl = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || '').trim(); const logoHtml = logoUrl ? '<img src="' + String(logoUrl).replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" alt="" style="max-width:200px;max-height:80px;display:block;margin-bottom:12px;" />' : ''; const bodyRaw = state.notificationsBody || ''; const bodyHtml = bodyRaw.trim() ? (window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, '&lt;')) : '<span class="notifications-preview-empty">' + (t.notifications_preview_empty || 'Your message will appear here.') + '</span>'; return logoHtml + bodyHtml; })()}</div>
+                            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
+                                <button type="button" id="notifications-send-test-btn" class="notifications-send-test-btn" onclick="window.sendNotificationsTest()">${t.send_test || 'Send test email to myself'}</button>
+                                <button type="button" id="notifications-send-btn" class="notifications-send-btn" onclick="window.sendNotificationsToRecipients()" ${(!state.notificationsSubject || (state.notificationsRecipientMode === 'selected' && (state.notificationsSelectedIds || []).length === 0)) ? 'disabled' : ''}>${t.send_to_recipients || 'Send to recipients'}</button>
+                                <span id="notifications-send-msg" style="font-size: 12px; color: var(--text-secondary); min-height: 1.2em;"></span>
+                            </div>
+                        </div>
+                    </div>
             ` : ''}
 
             <!-- Profile, password, admins, additional features, private contact (expandable at bottom) -->
@@ -11035,8 +11189,13 @@ window.openManualPaymentModal = () => {
             <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('student') || 'Student'}</label>
             <select id="manual-payment-student" class="minimal-input" onchange="window.updateManualPaymentStudentInfo()" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
                 <option value="">— ${t('select_student') || 'Select student'} —</option>
+                <option value="__external__">${t('external_student') || 'External student'}</option>
                 ${students.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.email || s.id)}</option>`).join('')}
             </select>
+        </div>
+        <div id="manual-payment-external-name-wrap" style="display: none; margin-bottom: 1rem;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('external_student_name') || 'External student name'}</label>
+            <input type="text" id="manual-payment-external-name" class="minimal-input" placeholder="${t('external_student_name_placeholder') || 'Enter name'}" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
         </div>
         <div id="manual-payment-student-info" style="margin: -0.25rem 0 0.75rem; font-size: 11px; color: var(--text-secondary); display: none;"></div>
         <div class="ios-input-group" style="margin-bottom: 1rem;">
@@ -11067,9 +11226,12 @@ window.updateManualPaymentStudentInfo = () => {
     try {
         const el = document.getElementById('manual-payment-student');
         const infoEl = document.getElementById('manual-payment-student-info');
+        const externalWrap = document.getElementById('manual-payment-external-name-wrap');
         if (!el || !infoEl) return;
         const id = (el.value || '').trim();
-        if (!id) {
+        const isExternal = id === '__external__';
+        if (externalWrap) externalWrap.style.display = isExternal ? 'block' : 'none';
+        if (!id || isExternal) {
             infoEl.style.display = 'none';
             infoEl.textContent = '';
             return;
@@ -11113,12 +11275,18 @@ window.submitManualPayment = async () => {
         return;
     }
     const studentId = (document.getElementById('manual-payment-student')?.value || '').trim();
+    const isExternal = studentId === '__external__';
+    const externalName = (document.getElementById('manual-payment-external-name')?.value || '').trim();
     const subName = (document.getElementById('manual-payment-sub-name')?.value || '').trim() || 'Manual payment';
     const priceRaw = document.getElementById('manual-payment-price')?.value;
     const price = parseFloat(priceRaw);
     const method = (document.getElementById('manual-payment-method')?.value || 'cash').trim();
     if (!studentId) {
         alert(t('select_student') || 'Please select a student.');
+        return;
+    }
+    if (isExternal && !externalName) {
+        alert(t('external_student_name_required') || 'Please enter the external student name.');
         return;
     }
     if (price === undefined || isNaN(price) || price < 0) {
@@ -11132,10 +11300,11 @@ window.submitManualPayment = async () => {
     }
     const { data, error } = await supabaseClient.rpc('admin_create_manual_payment', {
         p_school_id: schoolId,
-        p_student_id: studentId,
+        p_student_id: isExternal ? null : studentId,
         p_sub_name: subName,
         p_price: price,
-        p_payment_method: method
+        p_payment_method: method,
+        p_external_student_name: isExternal ? externalName : null
     });
     if (btn) {
         btn.disabled = false;
@@ -11148,7 +11317,8 @@ window.submitManualPayment = async () => {
     document.getElementById('manual-payment-modal').classList.add('hidden');
     if (data && typeof data === 'object') {
         state.paymentRequests = state.paymentRequests || [];
-        state.paymentRequests.unshift({ ...data, students: data.student_id ? { name: state.students?.find(s => s.id === data.student_id)?.name } : null });
+        const displayName = data.external_student_name || (data.student_id ? state.students?.find(s => s.id === data.student_id)?.name : null);
+        state.paymentRequests.unshift({ ...data, students: displayName ? { name: displayName } : null });
         saveState();
     } else {
         window._fetchAllDataNeeded = true;
@@ -11723,6 +11893,191 @@ window.updateAdminSetting = async (key, value) => {
     if (!state.adminSettings || typeof state.adminSettings !== 'object') state.adminSettings = {};
     state.adminSettings[key] = value;
     saveState();
+};
+
+// Notifications: body → HTML (same rules as Edge Function)
+window.markdownLikeToHtml = (body) => {
+    if (!body || typeof body !== 'string') return '';
+    const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const sanitizeUrl = (url) => { const t = String(url).trim(); return (t.startsWith('https://') || t.startsWith('http://')) ? t : null; };
+    let out = '';
+    let i = 0;
+    const len = body.length;
+    while (i < len) {
+        if (body.slice(i, i + 2) === '**') {
+            const end = body.indexOf('**', i + 2);
+            if (end !== -1) {
+                out += '<strong>' + escapeHtml(body.slice(i + 2, end)) + '</strong>';
+                i = end + 2;
+                continue;
+            }
+        }
+        if (body[i] === '[') {
+            const closeB = body.indexOf(']', i + 1);
+            if (closeB !== -1 && body.slice(closeB, closeB + 2) === '](') {
+                const closeP = body.indexOf(')', closeB + 2);
+                if (closeP !== -1) {
+                    const label = body.slice(i + 1, closeB);
+                    const url = sanitizeUrl(body.slice(closeB + 2, closeP));
+                    if (url) {
+                        out += '<a href="' + escapeHtml(url) + '">' + escapeHtml(label) + '</a>';
+                        i = closeP + 1;
+                        continue;
+                    }
+                }
+            }
+        }
+        if (body[i] === '\n') { out += '<br>\n'; i++; continue; }
+        out += escapeHtml(body[i]);
+        i++;
+    }
+    return out;
+};
+
+window.applyNotificationsBold = () => {
+    const ta = document.getElementById('notifications-body');
+    if (!ta) return;
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const val = ta.value;
+    if (start === end) {
+        const before = val.slice(0, start);
+        const after = val.slice(start);
+        ta.value = before + '**' + '**' + after;
+        state.notificationsBody = ta.value;
+        ta.selectionStart = ta.selectionEnd = start + 2;
+    } else {
+        const sel = val.slice(start, end);
+        ta.value = val.slice(0, start) + '**' + sel + '**' + val.slice(end);
+        state.notificationsBody = ta.value;
+        ta.selectionStart = start;
+        ta.selectionEnd = end + 4;
+    }
+    saveState();
+    window.updateNotificationsPreview();
+};
+
+window.applyNotificationsLink = () => {
+    const ta = document.getElementById('notifications-body');
+    if (!ta) return;
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const val = ta.value;
+    const sel = val.slice(start, end);
+    let url = sel.trim();
+    const isUrl = /^https?:\/\//i.test(url);
+    if (!isUrl) url = '';
+    const promptUrl = window.t ? window.t('link_url_prompt') || 'URL:' : 'URL:';
+    const entered = prompt(promptUrl, url);
+    if (entered == null) return;
+    const href = (entered && (entered.startsWith('https://') || entered.startsWith('http://'))) ? entered.trim() : null;
+    const label = sel.trim() || (href ? href : 'link');
+    if (!href) return;
+    const replacement = '[' + label + '](' + href + ')';
+    ta.value = val.slice(0, start) + replacement + val.slice(end);
+    state.notificationsBody = ta.value;
+    saveState();
+    window.updateNotificationsPreview();
+};
+
+window.toggleNotificationsStudent = (id) => {
+    const ids = state.notificationsSelectedIds || [];
+    const idx = ids.indexOf(id);
+    if (idx === -1) state.notificationsSelectedIds = [...ids, id];
+    else state.notificationsSelectedIds = ids.filter((_, i) => i !== idx);
+    saveState();
+    renderView();
+};
+
+window.sendNotificationsTest = async () => {
+    const btn = document.getElementById('notifications-send-test-btn');
+    const msgEl = document.getElementById('notifications-send-msg');
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const subject = (document.getElementById('notifications-subject') || {}).value || state.notificationsSubject || '';
+    const body = (document.getElementById('notifications-body') || {}).value || state.notificationsBody || '';
+    if (!subject.trim()) { if (msgEl) msgEl.textContent = t('notifications_subject_required') || 'Subject is required'; return; }
+    if (btn) { btn.disabled = true; btn.textContent = (t('sending_label') || 'Sending…'); }
+    if (msgEl) msgEl.textContent = '';
+    try {
+        const { data, error } = await supabaseClient.functions.invoke('notifications_send', {
+            body: { mode: 'test', subject: subject.trim(), body }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        if (msgEl) msgEl.textContent = data?.message || (t('notifications_test_sent') || 'Test sent');
+    } catch (e) {
+        if (msgEl) msgEl.textContent = (e?.message || String(e)).slice(0, 200);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = t('send_test') || 'Send test email to myself'; }
+    }
+};
+
+window.sendNotificationsToRecipients = async () => {
+    const btn = document.getElementById('notifications-send-btn');
+    const msgEl = document.getElementById('notifications-send-msg');
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const subject = (document.getElementById('notifications-subject') || {}).value || state.notificationsSubject || '';
+    const body = (document.getElementById('notifications-body') || {}).value || state.notificationsBody || '';
+    if (!subject.trim()) { if (msgEl) msgEl.textContent = t('notifications_subject_required') || 'Subject is required'; return; }
+    if (state.notificationsRecipientMode === 'selected' && (state.notificationsSelectedIds || []).length === 0) {
+        if (msgEl) msgEl.textContent = t('notifications_select_at_least_one') || 'Select at least one student'; return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = (t('sending_label') || 'Sending…'); }
+    if (msgEl) msgEl.textContent = '';
+    try {
+        const payload = { mode: state.notificationsRecipientMode, subject: subject.trim(), body };
+        if (state.notificationsRecipientMode === 'selected') payload.selected_student_ids = state.notificationsSelectedIds || [];
+        const { data, error } = await supabaseClient.functions.invoke('notifications_send', { body: payload });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        if (msgEl) msgEl.textContent = (data?.recipient_count != null ? data.recipient_count + ' ' : '') + (t('notifications_sent') || 'sent');
+    } catch (e) {
+        if (msgEl) msgEl.textContent = (e?.message || String(e)).slice(0, 200);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = t('send_to_recipients') || 'Send to recipients'; }
+    }
+};
+
+window.uploadNotificationsLogo = async (input) => {
+    if (!input?.files?.length || !supabaseClient || !state.currentSchool?.id) return;
+    const file = input.files[0];
+    if (!file || file.size > 1048576) { alert(typeof window.t === 'function' ? window.t('notifications_logo_too_big') || 'Logo must be under 1MB' : 'Logo must be under 1MB'); return; }
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z]/g, '') || 'png';
+    const path = state.currentSchool.id + '/logo.' + (['jpg','jpeg','png','webp'].includes(ext) ? ext : 'png');
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    try {
+        const { error: upErr } = await supabaseClient.storage.from('school-email-assets').upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabaseClient.storage.from('school-email-assets').getPublicUrl(path);
+        const publicUrl = urlData?.publicUrl || '';
+        await window.updateAdminSetting('email_logo_url', publicUrl);
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        alert((e?.message || String(e)).slice(0, 200));
+    }
+    input.value = '';
+};
+
+window.clearNotificationsLogo = async () => {
+    if (!state.currentSchool?.id) return;
+    await window.updateAdminSetting('email_logo_url', '');
+    renderView();
+};
+
+window.updateNotificationsPreview = () => {
+    const subjEl = document.getElementById('notifications-preview-subject-line');
+    const bodyEl = document.getElementById('notifications-preview-body');
+    const sendBtn = document.getElementById('notifications-send-btn');
+    const t = typeof window.t === 'function' ? window.t : (k) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[k] || k;
+    const subject = state.notificationsSubject || '';
+    const bodyRaw = state.notificationsBody || '';
+    if (subjEl) subjEl.textContent = (t('notifications_subject_placeholder') || 'Subject') + ': ' + (subject.trim() || '—');
+    if (bodyEl) {
+        const logoUrl = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || '').trim();
+        const logoHtml = logoUrl ? '<img src="' + String(logoUrl).replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" alt="" style="max-width:200px;max-height:80px;display:block;margin-bottom:12px;" />' : '';
+        const bodyHtml = bodyRaw.trim() ? (window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, '&lt;')) : '<span class="notifications-preview-empty">' + (t('notifications_preview_empty') || 'Your message will appear here.') + '</span>';
+        bodyEl.innerHTML = logoHtml + bodyHtml;
+    }
+    if (sendBtn) sendBtn.disabled = !subject.trim() || (state.notificationsRecipientMode === 'selected' && (state.notificationsSelectedIds || []).length === 0);
 };
 
 window.savePrivateContactAdmin = async (adminId) => {

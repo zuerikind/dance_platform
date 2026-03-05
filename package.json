@@ -2,6 +2,9 @@
   "name": "dance-school-management",
   "version": "1.6.0",
   "description": "Premium Dance School Management Platform",
+  "overrides": {
+    "tar": ">=7.5.10"
+  },
   "scripts": {
     "start": "serve . -s",
     "build:js": "node build-js.js",
@@ -9,6 +12,6 @@
   },
   "devDependencies": {
     "esbuild": "^0.27.3",
-    "supabase": "^2.0.0"
+    "supabase": "^2.76.16"
   }
 }
