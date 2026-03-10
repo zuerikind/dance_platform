@@ -530,6 +530,7 @@ const DANCE_LOCALES = {
         from_label: "From",
         reply_to_label: "Reply-To",
         sent_by_label: "Sent by",
+        sending_label: "Sending…",
         send_test: "Send test email to myself",
         send_to_recipients: "Send to recipients",
         notifications_subject_required: "Subject is required",
@@ -628,6 +629,8 @@ const DANCE_LOCALES = {
         register_success: "Successfully registered!",
         register_error: "Could not register. Please try again.",
         no_active_membership_register: "No active membership. Please purchase a plan first.",
+        not_enough_classes_message: "You don't have enough classes in your package. You have {effective} left and are already registered for {registered} classes, so you only have {available} classes left.",
+        not_enough_classes_monthly_message: "You don't have enough classes in your package to sign up for {need_new} more classes. You have {effective} left and are already registered for {registered} classes, so you only have {available} classes left.",
         cancel_success: "Registration cancelled.",
         cancel_error: "Could not cancel. Please try again.",
         cancel_too_late_error: "Cannot cancel less than 4 hours before the class.",
@@ -668,6 +671,14 @@ const DANCE_LOCALES = {
         class_registrations_title: "Class Registrations",
         no_registrations_yet: "No registrations this week",
         no_registrations_this_month: "No registrations this month",
+        admin_reg_tab_registered: "Registered",
+        admin_reg_tab_requested: "Requested",
+        no_pending_requests: "No pending requests",
+        no_pending_requests_subtitle: "Clase suelta requests will appear here.",
+        aure_request_accepted: "Request accepted.",
+        aure_request_denied: "Request denied.",
+        aure_accepting: "Accepting…",
+        aure_rejecting: "Rejecting…",
         spots_left_format: "{left}/{max} spots left",
         no_students_yet: "No students yet",
         registered_count: "{n} registered",
@@ -763,6 +774,7 @@ const DANCE_LOCALES = {
         confirm_request_title: "Confirm class request",
         teacher_label: "Teacher",
         date_label: "Date",
+        dates_label: "dates",
         time_label: "Time",
         location_label: "Location",
         price_label: "Price",
@@ -1184,6 +1196,7 @@ const DANCE_LOCALES = {
         total_classes_label: "Clases Restantes (Total)",
         pack_details_title: "Paquetes Detalles",
         reg_date_label: "Fecha de Registro",
+        dates_label: "fechas",
         next_expiry_label: "Próximo Vencimiento",
         delete_perm_label: "Eliminar Alumno permanentemente",
         admin_pass_req: "Password Admin Requerido:",
@@ -1226,6 +1239,7 @@ const DANCE_LOCALES = {
         from_label: "De",
         reply_to_label: "Responder a",
         sent_by_label: "Enviado por",
+        sending_label: "Enviando…",
         send_test: "Enviar correo de prueba a mí",
         send_to_recipients: "Enviar a destinatarios",
         notifications_subject_required: "El asunto es obligatorio",
@@ -1324,6 +1338,8 @@ const DANCE_LOCALES = {
         register_success: "Registro exitoso!",
         register_error: "No se pudo registrar. Intenta de nuevo.",
         no_active_membership_register: "No tienes membresía activa. Compra un plan primero.",
+        not_enough_classes_message: "No tienes suficientes clases en tu paquete. Te quedan {effective} y ya estás inscrito en {registered} clases, así que solo te quedan {available} clases.",
+        not_enough_classes_monthly_message: "No tienes suficientes clases en tu paquete para inscribirte a {need_new} clases más. Te quedan {effective} y ya estás inscrito en {registered} clases, así que solo te quedan {available} clases.",
         cancel_success: "Registro cancelado.",
         cancel_error: "No se pudo cancelar. Intenta de nuevo.",
         cancel_too_late_error: "No se puede cancelar con menos de 4 horas antes del inicio de la clase.",
@@ -1364,6 +1380,14 @@ const DANCE_LOCALES = {
         class_registrations_title: "Registros de clases",
         no_registrations_yet: "Sin registros esta semana",
         no_registrations_this_month: "Sin registros este mes",
+        admin_reg_tab_registered: "Registrados",
+        admin_reg_tab_requested: "Solicitados",
+        no_pending_requests: "Sin solicitudes pendientes",
+        no_pending_requests_subtitle: "Las solicitudes de clase suelta aparecerán aquí.",
+        aure_request_accepted: "Solicitud aceptada.",
+        aure_request_denied: "Solicitud rechazada.",
+        aure_accepting: "Aceptando…",
+        aure_rejecting: "Rechazando…",
         spots_left_format: "{left}/{max} plazas libres",
         no_students_yet: "Ningún alumno",
         registered_count: "{n} registrados",
@@ -1964,6 +1988,7 @@ const DANCE_LOCALES = {
         from_label: "Von",
         reply_to_label: "Antwort an",
         sent_by_label: "Gesendet von",
+        sending_label: "Wird gesendet…",
         send_test: "Test-E-Mail an mich senden",
         send_to_recipients: "An Empfänger senden",
         notifications_subject_required: "Betreff ist erforderlich",
@@ -1985,6 +2010,7 @@ const DANCE_LOCALES = {
         total_classes_label: "Stunden insgesamt",
         pack_details_title: "Paket-Details",
         reg_date_label: "Registriert am",
+        dates_label: "Termine",
         next_expiry_label: "Nächster Ablauf",
         delete_perm_label: "Schüler dauerhaft löschen",
         admin_pass_req: "Admin-Passwort erforderlich:",
@@ -2070,6 +2096,8 @@ const DANCE_LOCALES = {
         register_success: "Erfolgreich angemeldet!",
         register_error: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
         no_active_membership_register: "Keine aktive Mitgliedschaft. Bitte zuerst ein Paket kaufen.",
+        not_enough_classes_message: "Du hast nicht genug Kurse in deinem Paket. Du hast noch {effective} übrig und bist bereits für {registered} Kurse angemeldet, also hast du nur noch {available} Kurse übrig.",
+        not_enough_classes_monthly_message: "Du hast nicht genug Kurse in deinem Paket, um dich für {need_new} weitere Kurse anzumelden. Du hast noch {effective} übrig und bist bereits für {registered} Kurse angemeldet, also hast du nur noch {available} Kurse übrig.",
         cancel_success: "Anmeldung storniert.",
         cancel_error: "Stornierung fehlgeschlagen. Bitte erneut versuchen.",
         cancel_too_late_error: "Stornierung weniger als 4 Stunden vor Kursbeginn nicht möglich.",
@@ -2110,6 +2138,14 @@ const DANCE_LOCALES = {
         class_registrations_title: "Kursanmeldungen",
         no_registrations_yet: "Noch keine Anmeldungen diese Woche",
         no_registrations_this_month: "Noch keine Anmeldungen in diesem Monat",
+        admin_reg_tab_registered: "Angemeldet",
+        admin_reg_tab_requested: "Anfragen",
+        no_pending_requests: "Keine ausstehenden Anfragen",
+        no_pending_requests_subtitle: "Anfragen für Einzelstunden erscheinen hier.",
+        aure_request_accepted: "Anfrage angenommen.",
+        aure_request_denied: "Anfrage abgelehnt.",
+        aure_accepting: "Wird angenommen…",
+        aure_rejecting: "Wird abgelehnt…",
         spots_left_format: "{left}/{max} Plätze frei",
         no_students_yet: "Noch keine Schüler",
         registered_count: "{n} angemeldet",
@@ -2721,6 +2757,13 @@ window.renderDashboardProfileView = () => {
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('country') || 'Country'}</span><input type="text" id="profile-country" value="${(p.country || '').replace(/"/g, '&quot;')}" placeholder="${t('country') || 'Country'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('instagram') || 'Instagram'}</span><input type="text" id="profile-instagram" value="${(p.instagram || '').replace(/"/g, '&quot;')}" placeholder="${t('instagram_placeholder') || '@handle'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
     html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t('save') || 'Save'}</button>`;
+    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('change_password_section') || 'Change password'}</h3>`;
+    html += `<div class="ios-list" style="margin-bottom: 0.75rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('new_password_label') || 'New password'}</span><input type="password" id="student-new-password" autocomplete="new-password" placeholder="••••••••" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('confirm_new_password_label') || 'Confirm password'}</span><input type="password" id="student-confirm-password" autocomplete="new-password" placeholder="••••••••" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `</div>`;
+    html += `<div id="student-password-feedback" style="font-size: 13px; margin-bottom: 0.75rem; display: none;"></div>`;
+    html += `<button type="button" class="btn-secondary" onclick="window.changeStudentPassword()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t('change_password_btn') || 'Change password'}</button>`;
     html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('linked_schools') || 'Linked schools'}</h3>`;
     html += linkedSchools.length ? `<ul style="margin: 0; padding-left: 1.2rem; color: var(--text-primary);">${linkedSchools.map(s => `<li>${(s.name || s.id || '').replace(/</g, '&lt;')}</li>`).join('')}</ul>` : `<p class="text-muted" style="font-size: 0.9rem;">${t('no_schools_linked') || 'No schools linked yet.'}</p>`;
     const isVerified = !p.origin || p.origin !== 'discovery' || p.email_confirmed;
@@ -2733,6 +2776,52 @@ window.renderDashboardProfileView = () => {
     html += `<div id="profile-my-reviews" class="profile-my-reviews" style="min-height: 24px;">${(t('loading') || 'Loading…')}</div>`;
     html += `</div>`;
     return html;
+};
+
+window.changeStudentPassword = async () => {
+    const t = (k) => (window.t ? window.t(k) : k);
+    const feedback = document.getElementById('student-password-feedback');
+    const newPass = (document.getElementById('student-new-password')?.value || '').trim();
+    const confirmPass = (document.getElementById('student-confirm-password')?.value || '').trim();
+
+    const showMsg = (msg, color) => {
+        if (!feedback) return;
+        feedback.textContent = msg;
+        feedback.style.color = color;
+        feedback.style.display = 'block';
+    };
+
+    if (!newPass || !confirmPass) {
+        showMsg(t('signup_require_fields') || 'Please fill in both fields.', 'var(--system-red)');
+        return;
+    }
+    if (newPass.length < 6) {
+        showMsg(t('password_too_short') || 'Password must be at least 6 characters.', 'var(--system-red)');
+        return;
+    }
+    if (newPass !== confirmPass) {
+        showMsg(t('signup_passwords_dont_match') || 'Passwords do not match.', 'var(--system-red)');
+        return;
+    }
+    if (!supabaseClient) {
+        showMsg('Not connected.', 'var(--system-red)');
+        return;
+    }
+
+    const btn = document.querySelector('[onclick="window.changeStudentPassword()"]');
+    if (btn) { btn.disabled = true; btn.textContent = t('saving_label') || 'Saving…'; }
+
+    const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+
+    if (btn) { btn.disabled = false; btn.textContent = t('change_password_btn') || 'Change password'; }
+
+    if (error) {
+        showMsg((error.message || t('error_generic') || 'Error. Try again.'), 'var(--system-red)');
+    } else {
+        document.getElementById('student-new-password').value = '';
+        document.getElementById('student-confirm-password').value = '';
+        showMsg(t('password_changed_success') || 'Password updated successfully.', 'var(--system-green)');
+    }
 };
 
 window.fetchProfileMyReviews = async () => {
@@ -6080,12 +6169,15 @@ function _renderViewImpl() {
                         const isPT = state.currentSchool?.profile_type === 'private_teacher';
                         const hasDualScanMode = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
                         const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
-                        const groupVal = eff.groupUnlimited ? '∞' : (eff.group ?? 0);
+                        // Clases restantes = package balance until QR scan or class expiry (no deduction at registration).
+                        const groupEffective = eff.group ?? 0;
+                        const groupVal = eff.groupUnlimited ? '∞' : String(Math.max(0, groupEffective));
                         const parts = [];
-                        parts.push({ label: t.group_classes_remaining || 'Group', value: String(groupVal) });
+                        parts.push({ label: t.group_classes_remaining || 'Group', value: groupVal });
                         if (hasDualScanMode) parts.push({ label: t.private_classes_remaining || 'Private', value: String(eff.private) });
                         if (hasEventsEnabled) parts.push({ label: t.events_remaining || 'Events', value: String(eff.event) });
-                        if (parts.length === 1 && (eff.groupUnlimited ? 0 : (eff.group ?? 0)) <= 0) {
+                        const groupNum = eff.groupUnlimited ? 1 : Math.max(0, groupEffective);
+                        if (parts.length === 1 && groupNum <= 0) {
                             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
                         }
                         if (parts.length === 1) {
@@ -6101,7 +6193,10 @@ function _renderViewImpl() {
                             const eff = getEffectiveBalances(state.currentUser, now);
                             const isPT = state.currentSchool?.profile_type === 'private_teacher';
                             const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
-                            const hasGroupLeft = eff.groupUnlimited || (eff.group != null && eff.group > 0);
+                            const classRegEnabled = state.currentSchool?.class_registration_enabled === true;
+                            const futureRegCount = (classRegEnabled && Array.isArray(state.studentRegistrations)) ? state.studentRegistrations.length : 0;
+                            const groupAvailable = eff.groupUnlimited ? 1 : (eff.group != null ? Math.max(0, (eff.group ?? 0) - futureRegCount) : 0);
+                            const hasGroupLeft = eff.groupUnlimited || groupAvailable > 0;
                             const hasPrivateLeft = eff.private > 0;
                             const hasEventsLeft = hasEventsEnabled && eff.event > 0;
                             const noClassesLeft = isPT ? (!hasPrivateLeft && !hasEventsLeft) : (!hasGroupLeft && !hasEventsLeft);
@@ -6622,6 +6717,29 @@ function _renderViewImpl() {
                     const prevMonth = viewMonthNum === 1 ? (viewYear - 1) + '-12' : viewYear + '-' + String(viewMonthNum - 1).padStart(2, '0');
                     const nextMonth = viewMonthNum === 12 ? (viewYear + 1) + '-01' : viewYear + '-' + String(viewMonthNum + 1).padStart(2, '0');
                     const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.length, 0);
+                    const locale = state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US';
+                    const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+                    const getWeekdayName = (dow) => new Date(2024, 0, dow === 0 ? 7 : dow).toLocaleDateString(locale, { weekday: 'long' });
+                    const dayGroups = {};
+                    groupedArr.forEach(g => {
+                        const dow = new Date(g.class_date + 'T00:00:00').getDay();
+                        if (!dayGroups[dow]) dayGroups[dow] = [];
+                        dayGroups[dow].push(g);
+                    });
+                    state.adminRegSegmentExpanded = state.adminRegSegmentExpanded || {};
+                    const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
+                    state.adminRegTab = state.adminRegTab || 'registered';
+                    const pendingList = (weekRegs || []).filter(r => r.status === 'pending').sort((a, b) => (a.class_date || '').localeCompare(b.class_date || '') || (a.class_time || '').localeCompare(b.class_time || '') || ((a.student_name || '').localeCompare(b.student_name || '')));
+                    const getLevelLabel = (lev) => !lev || lev === '' ? (t.aure_level_not_set || 'Not set') : lev === 'principiante' ? (t.aure_level_principiante || 'Principiante') : lev === 'avanzada' ? (t.aure_level_avanzada || 'Avanzada') : lev;
+                    const renderStudentRow = (s) => {
+                        const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : s.status === 'pending' ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
+                        const statusLabel = s.status === 'attended' ? t.attended : s.status === 'no_show' ? (t.auto_deducted || 'No show') : s.status === 'cancelled' ? (t.cancelled || 'Cancelled') : s.status === 'pending' ? (t.aure_pending_badge || 'Pending') : t.registered;
+                        const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t.monthly_badge || 'Monthly') + '</span>' : '';
+                        const displayName = (state.students || []).find(st => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || '—';
+                        const rowStyle = s.status === 'cancelled' ? ' opacity: 0.7;' : '';
+                        const pendingActions = isAure && s.status === 'pending' ? `<span style="margin-left: 6px;"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t.aure_approve || 'Approve'}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t.aure_reject || 'Reject'}</button></span>` : '';
+                        return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>${pendingActions}</div>`;
+                    };
 
                     return `
                     <div class="admin-reg-section ${state.adminRegExpanded ? 'expanded' : ''}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
@@ -6642,51 +6760,105 @@ function _renderViewImpl() {
                                 <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-transform: capitalize;">${monthLabel}</span>
                                 <button type="button" onclick="event.stopPropagation(); state.adminRegMonth='${nextMonth}'; renderView();" style="background: var(--system-gray6); border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);" aria-label="${t.next || 'Next'}"><i data-lucide="chevron-right" size="20"></i></button>
                             </div>
-                            ${groupedArr.length === 0 ? `
-                                <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">
-                                    <i data-lucide="inbox" size="24" style="opacity: 0.2; margin-bottom: 0.3rem;"></i>
-                                    <div>${t.no_registrations_this_month || t.no_registrations_yet}</div>
+                            ${isAure ? `
+                            <div class="admin-reg-tabs">
+                                <button type="button" class="admin-reg-tab ${state.adminRegTab === 'registered' ? 'active' : ''}" onclick="state.adminRegTab='registered'; renderView();">${t.admin_reg_tab_registered || 'Registered'}</button>
+                                <button type="button" class="admin-reg-tab ${state.adminRegTab === 'requested' ? 'active' : ''}" onclick="state.adminRegTab='requested'; renderView();">${t.admin_reg_tab_requested || 'Requested'}</button>
+                            </div>
+                            ` : ''}
+                            ${(isAure && state.adminRegTab === 'requested') ? `
+                            <div class="admin-reg-requested-wrap">
+                                ${state.adminRegFeedback ? `<div class="admin-reg-feedback admin-reg-feedback-${state.adminRegFeedback.type}"><i data-lucide="${state.adminRegFeedback.type === 'accepted' ? 'check-circle' : 'x-circle'}" size="18"></i><span>${state.adminRegFeedback.type === 'accepted' ? (t.aure_request_accepted || 'Request accepted.') : (t.aure_request_denied || 'Request denied.')}</span></div>` : ''}
+                            <div class="admin-reg-requested-list">
+                                ${pendingList.length === 0 ? `
+                                <div class="admin-reg-empty">
+                                    <i data-lucide="inbox" size="24" class="admin-reg-empty-icon"></i>
+                                    <div class="admin-reg-empty-text">${t.no_pending_requests || 'No pending requests'}</div>
+                                    <div class="admin-reg-empty-subtitle">${t.no_pending_requests_subtitle || ''}</div>
                                 </div>
-                            ` : groupedArr.map(g => {
-                                const dateObj = new Date(g.class_date + 'T00:00:00');
-                                const dateLabel = window.formatShortDate(dateObj, state.language);
-                                const maxCap = (state.classes || []).find(cl => cl.id === g.students[0]?.class_id)?.max_capacity;
-                                const registeredCount = g.students.filter(s => s.status === 'registered' || s.status === 'pending').length;
-                                const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
-                                const registeredStudents = g.students.filter(s => s.status === 'registered' || s.status === 'attended' || s.status === 'no_show' || s.status === 'pending');
-                                const cancelledStudents = g.students.filter(s => s.status === 'cancelled');
-                                const cardKey = (g.students[0]?.class_id || '') + '_' + (g.class_date || '');
-                                const cancelledExpanded = state.adminRegCancelledExpanded && state.adminRegCancelledExpanded[cardKey];
-                                const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
-                                const renderStudentRow = (s) => {
-                                    const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : s.status === 'pending' ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
-                                    const statusLabel = s.status === 'attended' ? t.attended : s.status === 'no_show' ? (t.auto_deducted || 'No show') : s.status === 'cancelled' ? (t.cancelled || 'Cancelled') : s.status === 'pending' ? (t.aure_pending_badge || 'Pending') : t.registered;
-                                    const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t.monthly_badge || 'Monthly') + '</span>' : '';
-                                    const displayName = (state.students || []).find(st => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || '—';
-                                    const rowStyle = s.status === 'cancelled' ? ' opacity: 0.7;' : '';
-                                    const pendingActions = isAure && s.status === 'pending' ? `<span style="margin-left: 6px;"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t.aure_approve || 'Approve'}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t.aure_reject || 'Reject'}</button></span>` : '';
-                                    return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>${pendingActions}</div>`;
-                                };
+                                ` : pendingList.map(r => {
+                                    const student = (state.students || []).find(st => String(st.id) === String(r.student_id));
+                                    const level = student?.level;
+                                    const levelLabel = getLevelLabel(level);
+                                    const displayName = student?.name || r.student_name || r.student_id || '—';
+                                    const dateLabel = r.class_date ? window.formatShortDate ? window.formatShortDate(new Date(r.class_date + 'T00:00:00'), state.language) : r.class_date : '—';
+                                    const actionId = state.adminRegActionId;
+                                    const isApproving = actionId === r.id && state.adminRegActionType === 'approving';
+                                    const isRejecting = actionId === r.id && state.adminRegActionType === 'rejecting';
+                                    const isLoading = isApproving || isRejecting;
+                                    return `
+                                    <div class="admin-reg-request-card ${isLoading ? 'admin-reg-request-card-loading' : ''}">
+                                        <div class="admin-reg-request-main">
+                                            <div class="admin-reg-request-name">${(displayName || '').replace(/</g, '&lt;')}</div>
+                                            <div class="admin-reg-request-meta"><span class="admin-reg-request-level">${(t.aure_level_label || 'Level')}: ${(levelLabel || '').replace(/</g, '&lt;')}</span></div>
+                                            <div class="admin-reg-request-class">${(r.class_name || '').replace(/</g, '&lt;')} · ${dateLabel} · ${r.class_time || ''}</div>
+                                        </div>
+                                        <div class="admin-reg-request-actions">
+                                            ${isLoading ? `<span class="admin-reg-request-loading"><i data-lucide="loader-2" size="16" class="spin"></i> ${isApproving ? (t.aure_accepting || 'Accepting…') : (t.aure_rejecting || 'Rejecting…')}</span>` : `<button type="button" class="admin-reg-request-btn accept" onclick="event.stopPropagation(); window.approveClaseSuelta('${r.id}')">${t.aure_approve || 'Approve'}</button>
+                                            <button type="button" class="admin-reg-request-btn decline" onclick="event.stopPropagation(); window.rejectClaseSuelta('${r.id}')">${t.aure_reject || 'Reject'}</button>`}
+                                        </div>
+                                    </div>`;
+                                }).join('')}
+                            </div>
+                            </div>
+                            ` : groupedArr.length === 0 ? `
+                                <div class="admin-reg-empty">
+                                    <i data-lucide="inbox" size="24" class="admin-reg-empty-icon"></i>
+                                    <div class="admin-reg-empty-text">${t.no_registrations_this_month || t.no_registrations_yet}</div>
+                                </div>
+                            ` : WEEKDAY_ORDER.map(dow => {
+                                const dayOccurrences = dayGroups[dow] || [];
+                                if (dayOccurrences.length === 0) return '';
+                                const dayName = getWeekdayName(dow);
+                                const dayTotal = dayOccurrences.reduce((sum, g) => sum + g.students.length, 0);
                                 return `
-                                <div class="admin-reg-card">
-                                    <div class="admin-reg-card-header">
-                                        <div>
-                                            <div style="font-size: 0.9rem; font-weight: 700;">${g.class_name}</div>
-                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${dateLabel} • ${g.class_time}</div>
-                                        </div>
-                                        <div class="admin-reg-count">${capLabel}</div>
-                                    </div>
-                                    <div class="admin-reg-students">
-                                        ${registeredStudents.map(s => renderStudentRow(s)).join('')}
-                                        ${cancelledStudents.length > 0 ? `
-                                        <div class="admin-reg-cancelled-section" style="margin-top: 8px;">
-                                            <button type="button" class="admin-reg-cancelled-toggle" onclick="state.adminRegCancelledExpanded=state.adminRegCancelledExpanded||{}; state.adminRegCancelledExpanded['${cardKey}']=!state.adminRegCancelledExpanded['${cardKey}']; renderView();" style="display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 0; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); background: none; border: none; cursor: pointer; text-align: left;">
-                                                <i data-lucide="chevron-${cancelledExpanded ? 'up' : 'down'}" size="14"></i>
-                                                ${(t.cancelled || 'Cancelled')} (${cancelledStudents.length})
-                                            </button>
-                                            ${cancelledExpanded ? `<div class="admin-reg-cancelled-list" style="padding-left: 4px;">${cancelledStudents.map(s => renderStudentRow(s)).join('')}</div>` : ''}
-                                        </div>
-                                        ` : ''}
+                                <div class="admin-reg-day-box">
+                                    <div class="admin-reg-day-title">${dayName}</div>
+                                    <div class="admin-reg-day-summary">${dayOccurrences.length} ${dayOccurrences.length === 1 ? (t.date_label || 'date') : (t.dates_label || 'dates')}, ${(t.registered_count || '{n} registered').replace('{n}', dayTotal)}</div>
+                                    <div class="admin-reg-segments">
+                                        ${dayOccurrences.map(g => {
+                                            const dateObj = new Date(g.class_date + 'T00:00:00');
+                                            const dateShort = dateObj.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+                                            const dateLabel = window.formatShortDate(dateObj, state.language);
+                                            const maxCap = (state.classes || []).find(cl => cl.id === g.students[0]?.class_id)?.max_capacity;
+                                            const registeredCount = g.students.filter(s => s.status === 'registered' || s.status === 'pending').length;
+                                            const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
+                                            const spotsLeft = maxCap != null ? Math.max(0, maxCap - registeredCount) : null;
+                                            const registeredStudents = g.students.filter(s => s.status === 'registered' || s.status === 'attended' || s.status === 'no_show' || s.status === 'pending');
+                                            const cancelledStudents = g.students.filter(s => s.status === 'cancelled');
+                                            const cardKey = (g.students[0]?.class_id || '') + '_' + (g.class_date || '');
+                                            const segmentExpanded = state.adminRegSegmentExpanded[cardKey];
+                                            const cancelledExpanded = state.adminRegCancelledExpanded && state.adminRegCancelledExpanded[cardKey];
+                                            return `
+                                            <div class="admin-reg-segment ${segmentExpanded ? 'expanded' : ''}">
+                                                <button type="button" class="admin-reg-segment-header" onclick="state.adminRegSegmentExpanded=state.adminRegSegmentExpanded||{}; state.adminRegSegmentExpanded['${cardKey}']=!state.adminRegSegmentExpanded['${cardKey}']; renderView();">
+                                                    <div class="admin-reg-segment-left">
+                                                        <span class="admin-reg-segment-date">${dateShort}</span>
+                                                        <span class="admin-reg-segment-name">${(g.class_name || '').replace(/</g, '&lt;')}</span>
+                                                        <span class="admin-reg-segment-time">${g.class_time || ''}</span>
+                                                    </div>
+                                                    <div class="admin-reg-segment-right">
+                                                        <span class="admin-reg-segment-count">${capLabel}</span>
+                                                        ${spotsLeft !== null ? `<span class="admin-reg-segment-spots">${(t.spots_left || '{n} spots left').replace('{n}', spotsLeft)}</span>` : ''}
+                                                        <i data-lucide="chevron-${segmentExpanded ? 'down' : 'right'}" size="18" class="admin-reg-segment-chevron"></i>
+                                                    </div>
+                                                </button>
+                                                <div class="admin-reg-segment-body" style="display: ${segmentExpanded ? '' : 'none'};">
+                                                    <div class="admin-reg-students">
+                                                        ${registeredStudents.map(s => renderStudentRow(s)).join('')}
+                                                        ${cancelledStudents.length > 0 ? `
+                                                        <div class="admin-reg-cancelled-section">
+                                                            <button type="button" class="admin-reg-cancelled-toggle" onclick="event.stopPropagation(); state.adminRegCancelledExpanded=state.adminRegCancelledExpanded||{}; state.adminRegCancelledExpanded['${cardKey}']=!state.adminRegCancelledExpanded['${cardKey}']; renderView();">
+                                                                <i data-lucide="chevron-${cancelledExpanded ? 'up' : 'down'}" size="14"></i>
+                                                                ${(t.cancelled || 'Cancelled')} (${cancelledStudents.length})
+                                                            </button>
+                                                            ${cancelledExpanded ? `<div class="admin-reg-cancelled-list">${cancelledStudents.map(s => renderStudentRow(s)).join('')}</div>` : ''}
+                                                        </div>
+                                                        ` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>`;
+                                        }).join('')}
                                     </div>
                                 </div>`;
                             }).join('')}
@@ -6899,8 +7071,14 @@ function _renderViewImpl() {
             <div class="ios-list">
                 ${pending.length > 0 ? pending.map(req => {
             const studentName = req.external_student_name || (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
+            const payActionId = state.paymentRequestActionId;
+            const payActionStatus = state.paymentRequestActionStatus;
+            const isThisProcessing = payActionId === req.id;
+            const isApproving = isThisProcessing && payActionStatus === 'approved';
+            const isRejecting = isThisProcessing && payActionStatus === 'rejected';
+            const payLoading = isApproving || isRejecting;
             return `
-                        <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
+                        <div class="ios-list-item ${payLoading ? 'admin-reg-request-card-loading' : ''}" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
                             <div style="display: flex; gap: 12px; align-items: center;">
                                 <div style="width: 40px; height: 40px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-secondary);">
                                     ${studentName.charAt(0).toUpperCase()}
@@ -6916,12 +7094,13 @@ function _renderViewImpl() {
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                ${payLoading ? `<span class="admin-reg-request-loading" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px;"><i data-lucide="loader-2" size="16" class="spin"></i> ${isApproving ? (t.aure_accepting || 'Accepting…') : (t.aure_rejecting || 'Rejecting…')}</span>` : `
                                 <button class="btn-secondary" onclick="processPaymentRequest(${req.id}, 'rejected')" style="background: rgba(255, 59, 48, 0.1); color: var(--system-red); border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
                                     ${t.reject}
                                 </button>
                                 <button class="btn-primary" onclick="processPaymentRequest(${req.id}, 'approved')" style="background: var(--system-green); color: white; border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
                                     ${t.approve}
-                                </button>
+                                </button>`}
                             </div>
                         </div>
                     `;
@@ -7751,18 +7930,29 @@ function _renderViewImpl() {
                         </div>
                         <div class="notifications-col-preview">
                             <div>${t.notifications_preview_label || 'Preview'}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">
-                                <div>${t.from_label || 'From'}: Bailadmin &lt;noreply@bailadmin.lat&gt;</div>
-                                <div>${t.reply_to_label || 'Reply-To'}: ${(state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes('@admins.bailadmin.local') && !state.currentAdmin.email.includes('@temp.bailadmin.local') ? state.currentAdmin.email : null) || '—').replace(/</g, '&lt;')}</div>
-                                <div>${t.sent_by_label || 'Sent by'}: ${(state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes('@admins.bailadmin.local') && !state.currentAdmin.email.includes('@temp.bailadmin.local') ? state.currentAdmin.email : null) || '—').replace(/</g, '&lt;')}</div>
-                                <div id="notifications-preview-subject-line">${t.notifications_subject_placeholder || 'Subject'}: ${(state.notificationsSubject || '—').replace(/</g, '&lt;')}</div>
+                            <div class="notif-email-frame">
+                                <div class="notif-email-envelope">
+                                    <div class="notif-sender-row">
+                                        <div class="notif-sender-avatar">B</div>
+                                        <div class="notif-sender-info">
+                                            <div class="notif-sender-name">Bailadmin</div>
+                                            <div class="notif-sender-addr">noreply@bailadmin.lat</div>
+                                        </div>
+                                    </div>
+                                    <div class="notif-meta-row">
+                                        <span class="notif-meta-label">${t.reply_to_label || 'Reply-To'}</span>
+                                        <span class="notif-meta-value">${(state._adminEmail || state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes('@admins.bailadmin.local') && !state.currentAdmin.email.includes('@temp.bailadmin.local') ? state.currentAdmin.email : null) || '—').replace(/</g, '&lt;')}</span>
+                                    </div>
+                                </div>
+                                <div class="notif-subject-bar">
+                                    <span id="notifications-preview-subject-line" class="notif-subject-text">${(state.notificationsSubject || '—').replace(/</g, '&lt;')}</span>
+                                </div>
+                                <div id="notifications-preview-body" class="notif-email-body">${(() => { const lu = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || '').trim(); const lh = lu ? '<img src="' + String(lu).replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" alt="" class="notif-preview-logo" />' : ''; const subj = (state.notificationsSubject || '').trim(); const sh = subj ? '<div class="notif-preview-subject">' + subj.replace(/</g, '&lt;') + '</div>' : ''; const bodyRaw = state.notificationsBody || ''; const bh = bodyRaw.trim() ? (window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, '&lt;')) : '<span class="notifications-preview-empty">' + (t.notifications_preview_empty || 'Your message will appear here.') + '</span>'; return lh + sh + '<div class="notif-preview-body-text">' + bh + '</div>'; })()}</div>
                             </div>
-                            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${t.notifications_preview_message_label || 'Message preview'}</div>
-                            <div id="notifications-preview-body" style="border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; background: var(--bg-body); font-size: 14px; color: var(--text-primary);">${(() => { const logoUrl = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || '').trim(); const logoHtml = logoUrl ? '<img src="' + String(logoUrl).replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" alt="" style="max-width:200px;max-height:80px;display:block;margin-bottom:12px;" />' : ''; const bodyRaw = state.notificationsBody || ''; const bodyHtml = bodyRaw.trim() ? (window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, '&lt;')) : '<span class="notifications-preview-empty">' + (t.notifications_preview_empty || 'Your message will appear here.') + '</span>'; return logoHtml + bodyHtml; })()}</div>
-                            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
+                            <div class="notif-actions">
                                 <button type="button" id="notifications-send-test-btn" class="notifications-send-test-btn" onclick="window.sendNotificationsTest()">${t.send_test || 'Send test email to myself'}</button>
                                 <button type="button" id="notifications-send-btn" class="notifications-send-btn" onclick="window.sendNotificationsToRecipients()" ${(!state.notificationsSubject || (state.notificationsRecipientMode === 'selected' && (state.notificationsSelectedIds || []).length === 0)) ? 'disabled' : ''}>${t.send_to_recipients || 'Send to recipients'}</button>
-                                <span id="notifications-send-msg" style="font-size: 12px; color: var(--text-secondary); min-height: 1.2em;"></span>
+                                <span id="notifications-send-msg"></span>
                             </div>
                         </div>
                     </div>
@@ -8643,7 +8833,20 @@ window.registerForClassSingle = async (classId, className, optionalDateStr) => {
         console.error('Registration error:', e);
         const msg = (e && e.message) || '';
         const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
-        alert(isNoMembership ? t('no_active_membership_register') : (msg || t('register_error')));
+        if (isNoMembership) {
+            alert(t('no_active_membership_register'));
+            return;
+        }
+        const singleMatch = msg.match(/You don['']t have enough classes in your package\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
+        if (singleMatch) {
+            const [, effective, registered, available] = singleMatch;
+            alert((t('not_enough_classes_message') || msg)
+                .replace(/{effective}/g, effective)
+                .replace(/{registered}/g, registered)
+                .replace(/{available}/g, available));
+            return;
+        }
+        alert(msg || t('register_error'));
     }
 };
 
@@ -8688,7 +8891,30 @@ window.registerForClassMonthly = async (classId, className, optionalAnchorDateSt
         console.error('Monthly registration error:', e);
         const msg = (e && e.message) || '';
         const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
-        alert(isNoMembership ? t('no_active_membership_register') : (msg || t('register_error')));
+        if (isNoMembership) {
+            alert(t('no_active_membership_register'));
+            return;
+        }
+        const monthlyMatch = msg.match(/You don['']t have enough classes in your package to sign up for (\d+) more classes\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
+        if (monthlyMatch) {
+            const [, needNew, effective, registered, available] = monthlyMatch;
+            alert((t('not_enough_classes_monthly_message') || msg)
+                .replace(/{need_new}/g, needNew)
+                .replace(/{effective}/g, effective)
+                .replace(/{registered}/g, registered)
+                .replace(/{available}/g, available));
+            return;
+        }
+        const singleMatch = msg.match(/You don['']t have enough classes in your package\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
+        if (singleMatch) {
+            const [, effective, registered, available] = singleMatch;
+            alert((t('not_enough_classes_message') || msg)
+                .replace(/{effective}/g, effective)
+                .replace(/{registered}/g, registered)
+                .replace(/{available}/g, available));
+            return;
+        }
+        alert(msg || t('register_error'));
     }
 };
 
@@ -8715,6 +8941,12 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
         return;
     }
 
+    const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
+    // Aure: single-class registration goes through request (pending, teacher approves). Monthly stays direct.
+    const singleClassHandler = isAure
+        ? () => window.requestClaseSuelta(classId, className, targetDateStr)
+        : () => window.registerForClassSingle(classId, className, targetDateStr);
+
     if (window.isMonthlyRegistrationAvailable()) {
         const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
         if (monthlyDates.length > 1) {
@@ -8733,7 +8965,7 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
                 },
                 onSecondary: (close) => {
                     close();
-                    window.registerForClassSingle(classId, className, targetDateStr);
+                    singleClassHandler();
                 },
                 onCancel: (close) => { close(); }
             });
@@ -8741,7 +8973,7 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
         }
     }
 
-    // Pre-registration confirmation: show 4h policy first, then register only if user confirms
+    // Pre-registration confirmation: show 4h policy first, then register (or request at Aure) only if user confirms
     window.showMessageModal({
         icon: 'success',
         title: className || classObj.name,
@@ -8750,7 +8982,7 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
         cancelLabel: t('cancel'),
         onPrimary: (close) => {
             close();
-            window.registerForClassSingle(classId, className, targetDateStr);
+            singleClassHandler();
         },
         onCancel: (close) => { close(); }
     });
@@ -8800,7 +9032,11 @@ window.requestClaseSuelta = async (classId, className, optionalDateStr) => {
 
 window.approveClaseSuelta = async (registrationId) => {
     if (!supabaseClient) return;
+    if (state.adminRegActionId) return;
     const t = typeof window.t === 'function' ? window.t : (k) => k;
+    state.adminRegActionId = registrationId;
+    state.adminRegActionType = 'approving';
+    if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
     try {
         const { error } = await supabaseClient.rpc('admin_approve_clase_suelta', { p_registration_id: registrationId });
         if (error) throw error;
@@ -8815,23 +9051,45 @@ window.approveClaseSuelta = async (registrationId) => {
             });
         }
         await window.loadClassAvailability?.();
+        state.adminRegActionId = null;
+        state.adminRegActionType = null;
+        const viewMonth = state.adminRegMonth || (() => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); })();
+        state.adminWeekRegistrationsByMonth[viewMonth] = undefined;
+        state.adminRegFeedback = { type: 'accepted' };
         if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
+        setTimeout(() => { state.adminRegFeedback = null; if (typeof renderView === 'function') renderView(); }, 3000);
     } catch (e) {
         console.error('Approve error:', e);
+        state.adminRegActionId = null;
+        state.adminRegActionType = null;
+        if (typeof renderView === 'function') renderView();
         alert((e && e.message) || t('register_error'));
     }
 };
 
 window.rejectClaseSuelta = async (registrationId) => {
     if (!supabaseClient) return;
+    if (state.adminRegActionId) return;
     const t = typeof window.t === 'function' ? window.t : (k) => k;
+    state.adminRegActionId = registrationId;
+    state.adminRegActionType = 'rejecting';
+    if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
     try {
         const { error } = await supabaseClient.rpc('admin_reject_clase_suelta', { p_registration_id: registrationId });
         if (error) throw error;
         await window.loadClassAvailability?.();
+        state.adminRegActionId = null;
+        state.adminRegActionType = null;
+        const viewMonth = state.adminRegMonth || (() => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); })();
+        state.adminWeekRegistrationsByMonth[viewMonth] = undefined;
+        state.adminRegFeedback = { type: 'denied' };
         if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
+        setTimeout(() => { state.adminRegFeedback = null; if (typeof renderView === 'function') renderView(); }, 3000);
     } catch (e) {
         console.error('Reject error:', e);
+        state.adminRegActionId = null;
+        state.adminRegActionType = null;
+        if (typeof renderView === 'function') renderView();
         alert((e && e.message) || t('register_error'));
     }
 };
@@ -9037,8 +9295,9 @@ window.signUpStudent = async () => {
                 alert("Error creating account: " + (signUpError.message || "Try again."));
                 return;
             }
+            let authUser = null;
             if (signUpData?.user) {
-                const authUser = signUpData.user;
+                authUser = signUpData.user;
                 if (signUpData.session) {
                     await supabaseClient.auth.setSession({
                         access_token: signUpData.session.access_token,
@@ -9066,7 +9325,7 @@ window.signUpStudent = async () => {
                     }
                 }
                 if (!studentCreated) {
-                    const studentToInsert = { ...newStudent, user_id: authUser.id };
+                    const studentToInsert = { ...newStudent, user_id: authUser.id, ...(state.currentSchool?.id === AURE_SCHOOL_ID ? { level: 'principiante' } : {}) };
                     const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
                     if (!insertError) studentCreated = true;
                 }
@@ -9085,6 +9344,15 @@ window.signUpStudent = async () => {
                         newStudent.id = created.id;
                         newStudent.email = created.email ?? email;
                         studentCreated = true;
+                        // Link the auth user to the legacy row so the student can log in.
+                        // Only possible when auth signup succeeded and a session is active.
+                        if (authUser) {
+                            await supabaseClient.rpc('link_student_auth', {
+                                p_student_id: created.id,
+                                p_school_id: state.currentSchool.id
+                            });
+                            newStudent.user_id = authUser.id;
+                        }
                     }
                 }
             }
@@ -9248,6 +9516,10 @@ window.loginAdminWithCreds = async () => {
             });
 
             if (!authError && authData?.user) {
+                // Store auth user so previews (e.g. notifications) can show the admin email
+                if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                state.auth.user = authData.user;
+                state.auth.session = authData.session;
                 // Get admin by user_id or by email+school_id
                 const { data: rowByUser, error: errUser } = await supabaseClient
                     .from('admins')
@@ -9256,6 +9528,7 @@ window.loginAdminWithCreds = async () => {
                     .eq('school_id', schoolId)
                     .maybeSingle();
                 if (!errUser && rowByUser) adminRow = rowByUser;
+                let foundByEmail = false;
                 if (!adminRow) {
                     const { data: rowByEmail, error: errEmail } = await supabaseClient
                         .from('admins')
@@ -9263,9 +9536,12 @@ window.loginAdminWithCreds = async () => {
                         .eq('school_id', schoolId)
                         .ilike('email', email)
                         .maybeSingle();
-                    if (!errEmail && rowByEmail) adminRow = rowByEmail;
+                    if (!errEmail && rowByEmail) { adminRow = rowByEmail; foundByEmail = true; }
                 }
-                if (adminRow && !adminRow.user_id) {
+                if (adminRow && foundByEmail) {
+                    await supabaseClient.rpc('link_admin_auth_force', { p_school_id: schoolId });
+                    adminRow = { ...adminRow, user_id: authData.user.id };
+                } else if (adminRow && !adminRow.user_id) {
                     await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
                     adminRow = { ...adminRow, user_id: authData.user.id };
                 }
@@ -9294,11 +9570,23 @@ window.loginAdminWithCreds = async () => {
                     if (!signUpErr && signUpData?.user) {
                         const hasIdentity = Array.isArray(signUpData.user.identities) && signUpData.user.identities.length > 0;
                         if (hasIdentity) {
+                            // New user just created. If signUp returned no session (email confirmation required),
+                            // try signInWithPassword immediately to get a session before linking.
+                            if (!signUpData.session) {
+                                const { error: siErr } = await supabaseClient.auth.signInWithPassword({ email: email, password: pass });
+                                if (siErr) console.warn('Admin Auth: signUp ok but signIn failed (email confirmation may be required):', siErr?.message);
+                            }
                             await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
+                            const { data: reSession } = await supabaseClient.auth.getSession();
+                            if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                            if (reSession?.session?.user) { state.auth.user = reSession.session.user; state.auth.session = reSession.session; }
                         } else {
                             const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: email, password: pass });
                             if (!signInAgain) {
                                 await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
+                                const { data: reSession } = await supabaseClient.auth.getSession();
+                                if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                                if (reSession?.session?.user) { state.auth.user = reSession.session.user; state.auth.session = reSession.session; }
                             } else {
                                 console.warn('Admin Auth: credentials valid but Auth sign-in failed:', signInAgain?.message);
                             }
@@ -9307,8 +9595,32 @@ window.loginAdminWithCreds = async () => {
                         const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email: email, password: pass });
                         if (!signInAgain) {
                             await supabaseClient.rpc('link_admin_auth', { p_school_id: schoolId });
+                            const { data: reSession } = await supabaseClient.auth.getSession();
+                            if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                            if (reSession?.session?.user) { state.auth.user = reSession.session.user; state.auth.session = reSession.session; }
                         } else {
-                            console.warn('Admin Auth: credentials valid but Auth sign-in failed:', signInAgain?.message);
+                            // signIn failed: Supabase Auth password differs from legacy password.
+                            // Sync them via edge function — updates the Supabase Auth password to match.
+                            console.warn('Admin Auth: credentials valid but Auth sign-in failed, attempting auth sync:', signInAgain?.message);
+                            try {
+                                const { data: syncData, error: syncInvokeErr } = await supabaseClient.functions.invoke('admin-auth-sync', {
+                                    body: { email, password: pass, school_id: schoolId }
+                                });
+                                if (syncInvokeErr) {
+                                    let syncDetail = syncInvokeErr.message;
+                                    try { const b = await syncInvokeErr.context?.json?.(); if (b?.error) syncDetail = b.error; } catch (_) {}
+                                    console.warn('Admin Auth sync invoke error:', syncDetail);
+                                } else if (syncData?.access_token) {
+                                    await supabaseClient.auth.setSession({ access_token: syncData.access_token, refresh_token: syncData.refresh_token });
+                                    const { data: syncSession } = await supabaseClient.auth.getSession();
+                                    if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                                    if (syncSession?.session?.user) { state.auth.user = syncSession.session.user; state.auth.session = syncSession.session; }
+                                } else {
+                                    console.warn('Admin Auth sync: unexpected response', syncData);
+                                }
+                            } catch (syncErr) {
+                                console.warn('Admin Auth sync failed:', syncErr?.message);
+                            }
                         }
                     } else if (signUpErr) {
                         console.warn('Admin Auth signUp failed:', signUpErr?.message);
@@ -9327,6 +9639,7 @@ window.loginAdminWithCreds = async () => {
             role: "admin"
         };
         state.isAdmin = true;
+        state._adminEmail = email; // email the admin typed — always their real email if login passed
         const cameFromDiscovery = !!state._discoveryOnlyEdit;
         if (state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
             const { data: schoolRow } = await supabaseClient.from('schools').select('active').eq('id', state.currentSchool.id).maybeSingle();
@@ -11121,35 +11434,45 @@ window.submitPaymentRequest = async (subId, method) => {
 };
 
 window.processPaymentRequest = async (id, status) => {
+    if (state.paymentRequestActionId) return;
     const req = state.paymentRequests.find(r => r.id === id);
     if (!req) return;
 
-    if (supabaseClient) {
-        const { error: rpcError } = await supabaseClient.rpc('update_payment_request_status', { p_request_id: id, p_status: status });
-        if (rpcError) {
-            const { error: tableError } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
-            if (tableError) {
-                alert("Error processing: " + (tableError.message || rpcError.message));
-                return;
-            }
-        }
-        req.status = status;
-        saveState();
-        renderView();
+    state.paymentRequestActionId = id;
+    state.paymentRequestActionStatus = status;
+    if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
 
-        if (status === 'approved' && req.student_id && req.sub_name && req.school_id) {
-            const { error: activateError } = await supabaseClient.rpc('activate_package_for_student', {
-                p_student_id: String(req.student_id),
-                p_sub_name: String(req.sub_name),
-                p_school_id: req.school_id
-            });
-            if (activateError) {
-                await window.activatePackage(req.student_id, req.sub_name);
+    try {
+        if (supabaseClient) {
+            const { error: rpcError } = await supabaseClient.rpc('update_payment_request_status', { p_request_id: id, p_status: status });
+            if (rpcError) {
+                const { error: tableError } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
+                if (tableError) {
+                    alert("Error processing: " + (tableError.message || rpcError.message));
+                    return;
+                }
+            }
+            req.status = status;
+            saveState();
+            renderView();
+
+            if (status === 'approved' && req.student_id && req.sub_name && req.school_id) {
+                const { error: activateError } = await supabaseClient.rpc('activate_package_for_student', {
+                    p_student_id: String(req.student_id),
+                    p_sub_name: String(req.sub_name),
+                    p_school_id: req.school_id
+                });
+                if (activateError) {
+                    await window.activatePackage(req.student_id, req.sub_name);
+                }
             }
         }
+        await fetchAllData();
+    } finally {
+        state.paymentRequestActionId = null;
+        state.paymentRequestActionStatus = null;
+        if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
     }
-
-    await fetchAllData();
 };
 
 window.removePaymentRequest = async (id) => {
@@ -11190,7 +11513,11 @@ window.openManualPaymentModal = () => {
             <select id="manual-payment-student" class="minimal-input" onchange="window.updateManualPaymentStudentInfo()" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
                 <option value="">— ${t('select_student') || 'Select student'} —</option>
                 <option value="__external__">${t('external_student') || 'External student'}</option>
-                ${students.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.email || s.id)}</option>`).join('')}
+                ${students.map(s => {
+                    const label = escapeHtml(s.name || s.email || s.id);
+                    const suffix = s.email && s.name ? ` — ${escapeHtml(s.email)}` : '';
+                    return `<option value="${escapeHtml(s.id)}">${label}${suffix}</option>`;
+                }).join('')}
             </select>
         </div>
         <div id="manual-payment-external-name-wrap" style="display: none; margin-bottom: 1rem;">
@@ -11998,9 +12325,13 @@ window.sendNotificationsTest = async () => {
     if (msgEl) msgEl.textContent = '';
     try {
         const { data, error } = await supabaseClient.functions.invoke('notifications_send', {
-            body: { mode: 'test', subject: subject.trim(), body }
+            body: { mode: 'test', subject: subject.trim(), body, school_id: state.currentSchool?.id }
         });
-        if (error) throw error;
+        if (error) {
+            let detail = error.message || String(error);
+            try { const body = await error.context?.json?.(); if (body?.error) detail = body.error; } catch (_) {}
+            throw new Error(detail);
+        }
         if (data?.error) throw new Error(data.error);
         if (msgEl) msgEl.textContent = data?.message || (t('notifications_test_sent') || 'Test sent');
     } catch (e) {
@@ -12023,7 +12354,7 @@ window.sendNotificationsToRecipients = async () => {
     if (btn) { btn.disabled = true; btn.textContent = (t('sending_label') || 'Sending…'); }
     if (msgEl) msgEl.textContent = '';
     try {
-        const payload = { mode: state.notificationsRecipientMode, subject: subject.trim(), body };
+        const payload = { mode: state.notificationsRecipientMode, subject: subject.trim(), body, school_id: state.currentSchool?.id };
         if (state.notificationsRecipientMode === 'selected') payload.selected_student_ids = state.notificationsSelectedIds || [];
         const { data, error } = await supabaseClient.functions.invoke('notifications_send', { body: payload });
         if (error) throw error;
@@ -12070,12 +12401,13 @@ window.updateNotificationsPreview = () => {
     const t = typeof window.t === 'function' ? window.t : (k) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[k] || k;
     const subject = state.notificationsSubject || '';
     const bodyRaw = state.notificationsBody || '';
-    if (subjEl) subjEl.textContent = (t('notifications_subject_placeholder') || 'Subject') + ': ' + (subject.trim() || '—');
+    if (subjEl) subjEl.textContent = subject.trim() || '—';
     if (bodyEl) {
-        const logoUrl = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || '').trim();
-        const logoHtml = logoUrl ? '<img src="' + String(logoUrl).replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" alt="" style="max-width:200px;max-height:80px;display:block;margin-bottom:12px;" />' : '';
-        const bodyHtml = bodyRaw.trim() ? (window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, '&lt;')) : '<span class="notifications-preview-empty">' + (t('notifications_preview_empty') || 'Your message will appear here.') + '</span>';
-        bodyEl.innerHTML = logoHtml + bodyHtml;
+        const lu = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || '').trim();
+        const lh = lu ? '<img src="' + String(lu).replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" alt="" class="notif-preview-logo" />' : '';
+        const sh = subject.trim() ? '<div class="notif-preview-subject">' + subject.replace(/</g, '&lt;') + '</div>' : '';
+        const bh = bodyRaw.trim() ? (window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, '&lt;')) : '<span class="notifications-preview-empty">' + (t('notifications_preview_empty') || 'Your message will appear here.') + '</span>';
+        bodyEl.innerHTML = lh + sh + '<div class="notif-preview-body-text">' + bh + '</div>';
     }
     if (sendBtn) sendBtn.disabled = !subject.trim() || (state.notificationsRecipientMode === 'selected' && (state.notificationsSelectedIds || []).length === 0);
 };
