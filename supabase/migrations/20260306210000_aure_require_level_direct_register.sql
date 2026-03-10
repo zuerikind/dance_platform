@@ -1,11 +1,7 @@
--- Gate registration by "available" balance: effective balance minus classes already registered for (not yet deducted).
--- Display "classes left" stays as real balance; no deduction at registration. This only blocks over-registration
--- and returns a clear message: e.g. "You have 7 left and are already registered for 4 classes, so you only have 3 classes left."
---
--- IMPORTANT: You must apply this migration to your database (e.g. run: npx supabase db push).
--- Until applied, the old RPCs without this check will run and over-registration will still be possible.
+-- Aure only: require student level (nivel) for direct registration.
+-- When level is NULL, student must use "Request clase suelta" (pending); non-Aure schools unchanged.
 
--- 1) register_for_class: require available (effective - registered_count) >= 1
+-- 1) register_for_class: Aure - reject if level is not set
 CREATE OR REPLACE FUNCTION public.register_for_class(
   p_student_id text,
   p_class_id bigint,
@@ -26,8 +22,6 @@ DECLARE
   v_pack jsonb;
   v_pack_count int;
   v_has_4_8_package boolean := false;
-  v_registered_count int;
-  v_available int;
 BEGIN
   IF NOT (
     public.is_school_admin(p_school_id)
@@ -79,38 +73,27 @@ BEGIN
     END IF;
   END IF;
 
-  -- Effective balance: use pack sum when any non-expired packs exist (avoid double-count with balance).
+  -- Effective balance check (non-Aure logic unchanged)
   v_effective_balance := NULL;
-  IF v_student.active_packs IS NOT NULL AND jsonb_array_length(v_student.active_packs) > 0 THEN
-    v_effective_balance := 0;
-    FOR v_pack IN SELECT elem FROM jsonb_array_elements(v_student.active_packs) AS elem
-    LOOP
-      IF (v_pack->>'expires_at') IS NULL OR (v_pack->>'expires_at')::timestamptz > now() THEN
-        IF v_pack->>'count' IS NULL OR v_pack->>'count' = 'null' OR (v_pack->>'count')::int IS NULL THEN
-          v_effective_balance := NULL;
-          EXIT;
-        END IF;
-        v_pack_count := COALESCE((v_pack->>'count')::int, 0);
-        v_effective_balance := COALESCE(v_effective_balance, 0) + v_pack_count;
-      END IF;
-    END LOOP;
-  END IF;
-  IF v_effective_balance IS NULL THEN
+  IF v_student.balance IS NULL THEN
+    NULL;
+  ELSIF v_student.balance IS NOT NULL THEN
     v_effective_balance := COALESCE(v_student.balance::int, 0);
-  END IF;
-  -- Gate by available (effective minus already registered). Skip only when truly unlimited (effective_balance NULL).
-  IF v_effective_balance IS NOT NULL THEN
-    v_registered_count := 0;
-    SELECT count(*) INTO v_registered_count
-    FROM public.class_registrations
-    WHERE student_id = p_student_id
-      AND school_id = p_school_id
-      AND class_date >= CURRENT_DATE
-      AND status IN ('registered', 'pending')
-      AND (deducted = false OR deducted IS NULL);
-    v_available := v_effective_balance - v_registered_count;
-    IF v_available < 1 THEN
-      RAISE EXCEPTION 'You don''t have enough classes in your package. You have % left and are already registered for % classes, so you only have % classes left.', v_effective_balance, v_registered_count, GREATEST(0, v_available);
+    IF v_student.active_packs IS NOT NULL AND jsonb_array_length(v_student.active_packs) > 0 THEN
+      FOR v_pack IN SELECT elem FROM jsonb_array_elements(v_student.active_packs) AS elem
+      LOOP
+        IF (v_pack->>'expires_at') IS NOT NULL AND (v_pack->>'expires_at')::timestamptz > now() THEN
+          IF v_pack->>'count' IS NULL OR v_pack->>'count' = 'null' OR (v_pack->>'count')::int IS NULL THEN
+            v_effective_balance := NULL;
+            EXIT;
+          END IF;
+          v_pack_count := COALESCE((v_pack->>'count')::int, 0);
+          v_effective_balance := v_effective_balance + v_pack_count;
+        END IF;
+      END LOOP;
+    END IF;
+    IF v_effective_balance IS NOT NULL AND v_effective_balance < 1 THEN
+      RAISE EXCEPTION 'No classes left in your package. Please purchase or top up to register for classes.';
     END IF;
   END IF;
 
@@ -148,7 +131,7 @@ BEGIN
 END;
 $$;
 
--- 2) register_for_class_monthly: require available >= need_new (new slots only)
+-- 2) register_for_class_monthly: Aure - reject if level is not set
 CREATE OR REPLACE FUNCTION public.register_for_class_monthly(
   p_student_id text,
   p_class_id bigint,
@@ -172,10 +155,6 @@ DECLARE
   v_pack jsonb;
   v_pack_count int;
   v_has_4_8_package boolean := false;
-  v_registered_count int;
-  v_available int;
-  v_need_new int;
-  v_already_registered int;
 BEGIN
   v_num_dates := array_length(p_dates, 1);
   IF v_num_dates IS NULL OR v_num_dates = 0 THEN
@@ -214,46 +193,23 @@ BEGIN
     END IF;
   END IF;
 
-  -- Effective balance: use pack sum when any non-expired packs exist (avoid double-count with balance).
-  v_effective_balance := NULL;
-  IF v_student.active_packs IS NOT NULL AND jsonb_array_length(v_student.active_packs) > 0 THEN
-    v_effective_balance := 0;
-    FOR v_pack IN SELECT * FROM jsonb_array_elements(v_student.active_packs)
-    LOOP
-      IF (v_pack->>'expires_at') IS NULL OR (v_pack->>'expires_at')::timestamptz > now() THEN
-        IF v_pack->>'count' IS NULL OR v_pack->>'count' = 'null' THEN
-          v_effective_balance := NULL;
-          EXIT;
+  IF v_student.balance IS NOT NULL THEN
+    v_effective_balance := COALESCE(v_student.balance, 0);
+    IF v_student.active_packs IS NOT NULL THEN
+      FOR v_pack IN SELECT * FROM jsonb_array_elements(v_student.active_packs)
+      LOOP
+        IF (v_pack->>'expires_at')::timestamptz > now() THEN
+          IF v_pack->>'count' IS NULL OR v_pack->>'count' = 'null' THEN
+            v_effective_balance := NULL;
+            EXIT;
+          END IF;
+          v_pack_count := COALESCE((v_pack->>'count')::int, 0);
+          v_effective_balance := v_effective_balance + v_pack_count;
         END IF;
-        v_pack_count := COALESCE((v_pack->>'count')::int, 0);
-        v_effective_balance := COALESCE(v_effective_balance, 0) + v_pack_count;
-      END IF;
-    END LOOP;
-  END IF;
-  IF v_effective_balance IS NULL THEN
-    v_effective_balance := COALESCE(v_student.balance::int, 0);
-  END IF;
-  -- Gate by available (effective minus already registered). Skip only when truly unlimited.
-  IF v_effective_balance IS NOT NULL THEN
-    v_registered_count := 0;
-    SELECT count(*) INTO v_registered_count
-    FROM public.class_registrations
-    WHERE student_id = p_student_id
-      AND school_id = p_school_id
-      AND class_date >= CURRENT_DATE
-      AND status IN ('registered', 'pending')
-      AND (deducted = false OR deducted IS NULL);
-    v_available := v_effective_balance - v_registered_count;
-    v_already_registered := 0;
-    SELECT count(*) INTO v_already_registered
-    FROM public.class_registrations
-    WHERE student_id = p_student_id
-      AND school_id = p_school_id
-      AND class_date = ANY(p_dates)
-      AND status = 'registered';
-    v_need_new := v_num_dates - v_already_registered;
-    IF v_need_new > 0 AND v_available < v_need_new THEN
-      RAISE EXCEPTION 'You don''t have enough classes in your package to sign up for % more classes. You have % left and are already registered for % classes, so you only have % classes left.', v_need_new, v_effective_balance, v_registered_count, GREATEST(0, v_available);
+      END LOOP;
+    END IF;
+    IF v_effective_balance IS NOT NULL AND v_effective_balance < v_num_dates THEN
+      RAISE EXCEPTION 'Insufficient classes. You need % but only have %.', v_num_dates, v_effective_balance;
     END IF;
   END IF;
 

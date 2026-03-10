@@ -77,8 +77,10 @@ BEGIN
     END IF;
   END IF;
 
-  v_effective_balance := COALESCE(v_student.balance::int, 0);
+  -- Effective balance: use pack sum when any non-expired packs exist (avoid double-count with balance).
+  v_effective_balance := NULL;
   IF v_student.active_packs IS NOT NULL AND jsonb_array_length(v_student.active_packs) > 0 THEN
+    v_effective_balance := 0;
     FOR v_pack IN SELECT elem FROM jsonb_array_elements(v_student.active_packs) AS elem
     LOOP
       IF (v_pack->>'expires_at') IS NULL OR (v_pack->>'expires_at')::timestamptz > now() THEN
@@ -89,6 +91,9 @@ BEGIN
         v_effective_balance := COALESCE(v_effective_balance, 0) + v_pack_count;
       END IF;
     END LOOP;
+  END IF;
+  IF v_effective_balance IS NULL THEN
+    v_effective_balance := COALESCE(v_student.balance::int, 0);
   END IF;
   IF v_effective_balance IS NOT NULL THEN
     v_registered_count := 0;
@@ -179,8 +184,10 @@ BEGIN
     IF NOT v_has_4_8_package THEN RAISE EXCEPTION 'Monthly registration requires a 4 or 8 class package.'; END IF;
   END IF;
 
-  v_effective_balance := COALESCE(v_student.balance::int, 0);
+  -- Effective balance: use pack sum when any non-expired packs exist (avoid double-count with balance).
+  v_effective_balance := NULL;
   IF v_student.active_packs IS NOT NULL AND jsonb_array_length(v_student.active_packs) > 0 THEN
+    v_effective_balance := 0;
     FOR v_pack IN SELECT * FROM jsonb_array_elements(v_student.active_packs)
     LOOP
       IF (v_pack->>'expires_at') IS NULL OR (v_pack->>'expires_at')::timestamptz > now() THEN
@@ -189,6 +196,9 @@ BEGIN
         v_effective_balance := COALESCE(v_effective_balance, 0) + v_pack_count;
       END IF;
     END LOOP;
+  END IF;
+  IF v_effective_balance IS NULL THEN
+    v_effective_balance := COALESCE(v_student.balance::int, 0);
   END IF;
   IF v_effective_balance IS NOT NULL THEN
     v_registered_count := 0;

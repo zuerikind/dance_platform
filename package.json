@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.27.3",
+    "pg": "^8.20.0",
     "supabase": "^2.76.16"
   }
 }

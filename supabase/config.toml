@@ -14,3 +14,22 @@ verify_jwt = false
 verify_jwt = false
 [functions.calendly-list-event-types]
 verify_jwt = false
+
+# notifications_send validates the user JWT itself via serviceClient.auth.getUser(token).
+# verify_jwt = false prevents the gateway from rejecting valid tokens before the function runs.
+[functions.notifications_send]
+verify_jwt = false
+
+# admin-auth-sync verifies legacy credentials internally; no JWT needed from the gateway.
+[functions.admin-auth-sync]
+verify_jwt = false
+
+# stripe-create-checkout validates the user JWT itself via serviceClient.auth.getUser(token).
+# verify_jwt = false prevents the gateway from rejecting valid tokens before the function runs.
+[functions.stripe-create-checkout]
+verify_jwt = false
+
+# stripe-webhook is called by Stripe (no Supabase JWT). Auth is via STRIPE_WEBHOOK_SECRET
+# signature verification inside the function.
+[functions.stripe-webhook]
+verify_jwt = false

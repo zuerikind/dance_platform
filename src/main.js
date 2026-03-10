@@ -62,6 +62,13 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
     if (supabaseClient && supabaseClient.auth) {
         supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+                if (session?.user && state.isAdmin) {
+                    if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                    state.auth.user = session.user;
+                    state.auth.session = session;
+                }
+            }
             if (event === 'SIGNED_OUT' && (state.currentUser || state.isAdmin || state.isPlatformDev)) {
                 state.currentUser = null;
                 state.isAdmin = false;

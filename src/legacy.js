@@ -813,6 +813,33 @@ const DANCE_LOCALES = {
         month_jan: "Jan", month_feb: "Feb", month_mar: "Mar", month_apr: "Apr",
         month_may: "May", month_jun: "Jun", month_jul: "Jul", month_aug: "Aug",
         month_sep: "Sep", month_oct: "Oct", month_nov: "Nov", month_dec: "Dec",
+        paywall_title: "Simple, transparent pricing",
+        paywall_subtitle: "Everything you need to run your academy.",
+        paywall_status_label: "Billing status",
+        paywall_no_subscription: "No active subscription",
+        paywall_cta: "Get started",
+        paywall_most_popular: "Most popular",
+        paywall_redirecting: "Redirecting to checkout…",
+        paywall_price_period: "/ month",
+        paywall_plan_basico: "Básico", paywall_plan_basico_tier: "Starter", paywall_price_basico: "MX$799",
+        paywall_plan_basico_desc: "Ideal for small academies or studios just getting started.",
+        paywall_plan_intermedio: "Intermedio", paywall_plan_intermedio_tier: "Professional", paywall_price_intermedio: "MX$1,099",
+        paywall_plan_intermedio_desc: "For growing academies with fewer than 100 active students.",
+        paywall_plan_avanzado: "Avanzado", paywall_plan_avanzado_tier: "Advanced", paywall_price_avanzado: "MX$1,499",
+        paywall_price_avanzado_from: "from",
+        paywall_plan_avanzado_desc: "For large academies with more than 100 active students.",
+        paywall_feat_setup: "Initial setup included",
+        paywall_feat_qr_checkin: "QR code check-in system",
+        paywall_feat_packages: "Class package management",
+        paywall_feat_auto_deduct: "Automatic class deduction on scan",
+        paywall_feat_in_discovery: "Listed on the Discovery site",
+        paywall_feat_whatsapp: "WhatsApp support",
+        paywall_feat_admins_1: "1 admin user",
+        paywall_feat_admins_3: "3 admin users",
+        paywall_feat_admins_10: "10 admin users",
+        paywall_feat_students_20: "Up to 20 active students",
+        paywall_feat_students_100: "Up to 100 active students",
+        paywall_feat_students_unlimited: "100+ active students",
     },
     es: {
         nav_schedule: "Horario",
@@ -1594,6 +1621,33 @@ const DANCE_LOCALES = {
         calendly_mode_weekly: "Calendario semanal",
         calendly_need_credits: "Necesitas créditos para completar una reserva.",
         calendly_book: "Reservar sesión",
+        paywall_title: "Precios simples y transparentes",
+        paywall_subtitle: "Todo lo que necesitas para gestionar tu academia.",
+        paywall_status_label: "Estado de facturación",
+        paywall_no_subscription: "Sin suscripción activa",
+        paywall_cta: "Comenzar",
+        paywall_most_popular: "Más popular",
+        paywall_redirecting: "Redirigiendo al pago…",
+        paywall_price_period: "/ mes",
+        paywall_plan_basico: "Básico", paywall_plan_basico_tier: "Inicial", paywall_price_basico: "MX$799",
+        paywall_plan_basico_desc: "Ideal para academias pequeñas o que están comenzando.",
+        paywall_plan_intermedio: "Intermedio", paywall_plan_intermedio_tier: "Profesional", paywall_price_intermedio: "MX$1,099",
+        paywall_plan_intermedio_desc: "Para academias en expansión con menos de 100 alumnos activos.",
+        paywall_plan_avanzado: "Avanzado", paywall_plan_avanzado_tier: "Avanzado", paywall_price_avanzado: "MX$1,499",
+        paywall_price_avanzado_from: "desde",
+        paywall_plan_avanzado_desc: "Para academias grandes con más de 100 alumnos activos.",
+        paywall_feat_setup: "Configuración inicial incluida",
+        paywall_feat_qr_checkin: "Sistema de check-in con código QR",
+        paywall_feat_packages: "Gestión de paquetes de clases",
+        paywall_feat_auto_deduct: "Descuento automático de clases al escanear",
+        paywall_feat_in_discovery: "La academia aparece en el sitio discovery",
+        paywall_feat_whatsapp: "Soporte por WhatsApp",
+        paywall_feat_admins_1: "1 usuario administrador",
+        paywall_feat_admins_3: "3 usuarios administradores",
+        paywall_feat_admins_10: "10 usuarios administradores",
+        paywall_feat_students_20: "Hasta 20 alumnos activos",
+        paywall_feat_students_100: "Hasta 100 alumnos activos",
+        paywall_feat_students_unlimited: "Más de 100 alumnos activos",
     },
     de: {
         nav_schedule: "Stundenplan",
@@ -2350,6 +2404,33 @@ const DANCE_LOCALES = {
         calendly_mode_weekly: "Wochenkalender",
         calendly_need_credits: "Du brauchst Credits, um eine Buchung abzuschließen.",
         calendly_book: "Sitzung buchen",
+        paywall_title: "Einfache, transparente Preise",
+        paywall_subtitle: "Alles, was du für deine Akademie brauchst.",
+        paywall_status_label: "Abrechnungsstatus",
+        paywall_no_subscription: "Kein Abonnement",
+        paywall_cta: "Loslegen",
+        paywall_most_popular: "Beliebteste",
+        paywall_redirecting: "Weiterleitung zur Zahlung…",
+        paywall_price_period: "/ Monat",
+        paywall_plan_basico: "Básico", paywall_plan_basico_tier: "Starter", paywall_price_basico: "MX$799",
+        paywall_plan_basico_desc: "Ideal für kleine Studios, die mit der digitalen Verwaltung beginnen.",
+        paywall_plan_intermedio: "Intermedio", paywall_plan_intermedio_tier: "Professionell", paywall_price_intermedio: "MX$1,099",
+        paywall_plan_intermedio_desc: "Für wachsende Akademien mit weniger als 100 aktiven Schülern.",
+        paywall_plan_avanzado: "Avanzado", paywall_plan_avanzado_tier: "Erweitert", paywall_price_avanzado: "MX$1,499",
+        paywall_price_avanzado_from: "ab",
+        paywall_plan_avanzado_desc: "Für große Akademien mit mehr als 100 aktiven Schülern.",
+        paywall_feat_setup: "Ersteinrichtung inklusive",
+        paywall_feat_qr_checkin: "QR-Code Check-in System",
+        paywall_feat_packages: "Klassenpaketverwaltung",
+        paywall_feat_auto_deduct: "Automatischer Klassenabzug beim Scannen",
+        paywall_feat_in_discovery: "Akademie auf Discovery gelistet",
+        paywall_feat_whatsapp: "WhatsApp-Support",
+        paywall_feat_admins_1: "1 Adminbenutzer",
+        paywall_feat_admins_3: "3 Adminbenutzer",
+        paywall_feat_admins_10: "10 Adminbenutzer",
+        paywall_feat_students_20: "Bis zu 20 aktive Schüler",
+        paywall_feat_students_100: "Bis zu 100 aktive Schüler",
+        paywall_feat_students_unlimited: "Über 100 aktive Schüler",
     }
 };
 setLocalesDict(DANCE_LOCALES);
@@ -4370,6 +4451,167 @@ function _renderViewImpl() {
         get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
     });
 
+    // ---------------------------------------------------------------------------
+    // Paywall guard — pure function, no side effects
+    // ---------------------------------------------------------------------------
+    function isAcademyAllowed(school) {
+        if (!school || !school.paywall_enabled) return true;
+        return school.billing_status === 'active' || school.billing_status === 'trialing';
+    }
+
+    function renderPaywallCard(school) {
+        const statusColorMap = { past_due: 'var(--system-orange,#ff9500)', payment_failed: 'var(--system-red)', canceled: 'var(--system-red)', unpaid: 'var(--system-orange,#ff9500)' };
+        const statusColor = statusColorMap[school?.billing_status] || 'var(--system-gray3)';
+        const statusLabel = school?.billing_status
+            ? school.billing_status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+            : (t.paywall_no_subscription || 'No active subscription');
+
+        const commonFeatures = [
+            t.paywall_feat_setup       || 'Initial setup included',
+            t.paywall_feat_qr_checkin  || 'QR code check-in system',
+            t.paywall_feat_packages    || 'Class package management',
+            t.paywall_feat_auto_deduct || 'Automatic class deduction on scan',
+            t.paywall_feat_in_discovery|| 'Listed on the Discovery site',
+            t.paywall_feat_whatsapp    || 'WhatsApp support',
+        ];
+
+        const plans = [
+            {
+                key: 'basico',
+                name:  t.paywall_plan_basico      || 'Básico',
+                tier:  t.paywall_plan_basico_tier  || 'Starter',
+                price: t.paywall_price_basico      || 'MX$799',
+                desc:  t.paywall_plan_basico_desc  || 'Ideal for small academies just getting started.',
+                extra: [t.paywall_feat_admins_1 || '1 admin user', t.paywall_feat_students_20 || 'Up to 20 active students'],
+                featured: false,
+            },
+            {
+                key: 'intermedio',
+                name:  t.paywall_plan_intermedio      || 'Intermedio',
+                tier:  t.paywall_plan_intermedio_tier  || 'Professional',
+                price: t.paywall_price_intermedio      || 'MX$1,099',
+                desc:  t.paywall_plan_intermedio_desc  || 'For growing academies with fewer than 100 active students.',
+                extra: [t.paywall_feat_admins_3 || '3 admin users', t.paywall_feat_students_100 || 'Up to 100 active students'],
+                featured: true,
+            },
+            {
+                key: 'avanzado',
+                name:  t.paywall_plan_avanzado      || 'Avanzado',
+                tier:  t.paywall_plan_avanzado_tier  || 'Advanced',
+                price: t.paywall_price_avanzado      || 'MX$1,499',
+                desc:  t.paywall_plan_avanzado_desc  || 'For large academies with more than 100 active students.',
+                extra: [t.paywall_feat_admins_10 || '10 admin users', t.paywall_feat_students_unlimited || '100+ active students'],
+                featured: false,
+            },
+        ];
+
+        const period = t.paywall_price_period || '/ month';
+        const fromLabel = t.paywall_price_avanzado_from || 'from';
+        const popularLabel = t.paywall_most_popular || 'Most popular';
+        const ctaLabel = t.paywall_cta || 'Get started';
+
+        const renderPlan = (plan) => {
+            const isFeatured = plan.featured;
+            // Featured card: hardcoded blue gradient — always has white text in both light AND dark mode.
+            // Avoids the var(--text-primary) inversion trap where dark-mode flips bg to white.
+            const cardBg       = isFeatured ? 'linear-gradient(155deg,#0071e3 0%,#5e5ce6 100%)' : 'var(--bg-card)';
+            const cardText     = isFeatured ? '#ffffff'                : 'var(--text-primary)';
+            const cardMuted    = isFeatured ? 'rgba(255,255,255,0.62)' : 'var(--text-secondary)';
+            const cardBorder   = isFeatured ? 'transparent'            : 'var(--border)';
+            const dividerColor = isFeatured ? 'rgba(255,255,255,0.15)' : 'var(--border)';
+            const checkBg      = isFeatured ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.05)';
+            const checkColor   = isFeatured ? '#ffffff'                : 'var(--text-primary)';
+            const btnBg        = isFeatured ? 'rgba(255,255,255,0.18)' : 'var(--text-primary)';
+            const btnText      = isFeatured ? '#ffffff'                : 'var(--bg-body)';
+            const btnHoverBg   = isFeatured ? 'rgba(255,255,255,0.26)' : 'var(--text-primary)';
+            const shadow       = isFeatured ? '0 20px 60px rgba(0,113,227,0.35)' : '0 2px 12px rgba(0,0,0,0.04)';
+
+            const allFeatures = [...commonFeatures, ...plan.extra];
+
+            return `<div style="
+                    background:${cardBg};color:${cardText};
+                    border-radius:22px;border:1px solid ${cardBorder};
+                    padding:2rem 1.75rem 1.75rem;
+                    display:flex;flex-direction:column;
+                    box-shadow:${shadow};
+                    position:relative;
+                    transition:box-shadow 0.25s;
+                " onmouseover="this.style.boxShadow='${isFeatured ? '0 28px 80px rgba(0,0,0,0.28)' : '0 8px 30px rgba(0,0,0,0.09)'}'"
+                   onmouseout="this.style.boxShadow='${shadow}'">
+
+                ${isFeatured ? `
+                <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--system-blue,#007aff);color:white;font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 14px;border-radius:0 0 12px 12px;white-space:nowrap;">
+                    ${popularLabel}
+                </div>` : ''}
+
+                <!-- Tier + Name -->
+                <div style="margin-bottom:0.2rem;margin-top:${isFeatured ? '1rem' : '0'};">
+                    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${cardMuted};margin-bottom:6px;">${plan.tier}</div>
+                    <div style="font-size:26px;font-weight:800;letter-spacing:-1px;color:${cardText};line-height:1;">${plan.name}</div>
+                </div>
+
+                <!-- Price -->
+                <div style="display:flex;align-items:baseline;gap:5px;margin:1.1rem 0 0.2rem;">
+                    ${plan.key === 'avanzado' ? `<span style="font-size:13px;font-weight:500;color:${cardMuted};margin-right:2px;">${fromLabel}</span>` : ''}
+                    <span style="font-size:42px;font-weight:800;letter-spacing:-2px;color:${cardText};line-height:1;">${plan.price}</span>
+                    <span style="font-size:13px;font-weight:500;color:${cardMuted};margin-bottom:2px;">${period}</span>
+                </div>
+
+                <!-- Desc -->
+                <div style="font-size:13px;color:${cardMuted};line-height:1.55;margin:0.9rem 0 1.2rem;padding-bottom:1.2rem;border-bottom:1px solid ${dividerColor};">
+                    ${plan.desc}
+                </div>
+
+                <!-- Features -->
+                <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:1.6rem;">
+                    ${allFeatures.map(f => `
+                    <div style="display:flex;align-items:center;gap:11px;">
+                        <div style="width:19px;height:19px;border-radius:50%;background:${checkBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i data-lucide="check" size="10" style="color:${checkColor};stroke-width:3;"></i>
+                        </div>
+                        <span style="font-size:13.5px;color:${cardMuted};font-weight:500;line-height:1.3;">${f}</span>
+                    </div>`).join('')}
+                </div>
+
+                <!-- CTA -->
+                <button type="button" onclick="window.startCheckout('${plan.key}')" id="paywall-btn-${plan.key}"
+                    style="width:100%;height:50px;border-radius:14px;border:none;cursor:pointer;
+                        background:${btnBg};color:${btnText};
+                        font-size:15px;font-weight:700;letter-spacing:-0.2px;
+                        transition:background 0.2s,opacity 0.2s;"
+                    onmouseover="this.style.background='${btnHoverBg}'"
+                    onmouseout="this.style.background='${btnBg}'">
+                    ${ctaLabel}
+                </button>
+            </div>`;
+        };
+
+        return `
+        <div style="min-height:calc(100dvh - 80px);display:flex;flex-direction:column;align-items:center;padding:3rem 1.25rem 5rem;box-sizing:border-box;">
+
+            <!-- Header -->
+            <div style="text-align:center;margin-bottom:2.8rem;">
+                <img src="logo.png" alt="Bailadmin" style="width:68px;height:68px;border-radius:20px;box-shadow:0 6px 24px rgba(0,0,0,0.12);margin-bottom:1.25rem;display:block;margin-left:auto;margin-right:auto;">
+                <div style="font-size:30px;font-weight:800;letter-spacing:-1.2px;color:var(--text-primary);line-height:1.1;margin-bottom:0.5rem;">${t.paywall_title || 'Simple, transparent pricing'}</div>
+                <div style="font-size:16px;color:var(--text-secondary);font-weight:400;line-height:1.5;max-width:400px;margin:0 auto;">
+                    ${school?.name ? escapeHtml(school.name) + ' — ' : ''}${t.paywall_subtitle || 'Everything you need to run your academy.'}
+                </div>
+                ${school?.billing_status ? `
+                <div style="display:inline-flex;align-items:center;gap:7px;background:var(--system-gray6);border:1px solid var(--border);padding:6px 16px;border-radius:20px;margin-top:1.2rem;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
+                    <span style="font-size:12.5px;font-weight:600;color:var(--text-secondary);">${t.paywall_status_label || 'Billing status'}: <span style="color:${statusColor};">${statusLabel}</span></span>
+                </div>` : ''}
+            </div>
+
+            <!-- Plan grid — 3 columns on desktop, stacks on mobile -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;width:100%;max-width:920px;align-items:start;">
+                ${plans.map(renderPlan).join('')}
+            </div>
+
+            <div id="paywall-msg" style="margin-top:1.8rem;font-size:13px;color:var(--text-secondary);min-height:20px;text-align:center;"></div>
+        </div>`;
+    }
+
     const isDevDashboardView = ['platform-dev-dashboard', 'platform-school-details', 'platform-dev-edit-discovery', 'platform-dev-edit-school', 'super-admin-dashboard', 'reviews-admin', 'listing-suggestions-admin'].includes(view);
     const isAdminSettingsView = view === 'admin-settings';
     let html = `<div class="container ${view === 'auth' ? 'auth-view' : ''} ${isDevDashboardView ? 'container-dev' : ''} ${isAdminSettingsView ? 'container-settings' : ''} ${viewChanged ? 'slide-in' : ''}">`;
@@ -4572,6 +4814,10 @@ function _renderViewImpl() {
                                             <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${t.school_on_discovery || 'On discovery'}</span>
                                             <button type="button" onclick="window.toggleSchoolDiscoveryVisible('${escapeHtml(s.id)}', ${s.discovery_visible !== false})" title="${(t.school_on_discovery || 'On discovery').replace(/"/g, '&quot;')}" style="width: 48px; height: 28px; border-radius: 14px; border: none; cursor: pointer; background: ${s.discovery_visible !== false ? 'var(--system-blue)' : 'var(--system-gray5)'}; transition: background 0.2s; position: relative; flex-shrink: 0;"><span style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: white; top: 3px; left: ${s.discovery_visible !== false ? '23px' : '3px'}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
                                         </div>
+                                        <div class="dev-school-toggle-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; background: var(--system-gray6); border-radius: 12px; min-width: 140px;">
+                                            <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">Paywall</span>
+                                            <button type="button" onclick="window.toggleSchoolPaywall('${escapeHtml(s.id)}', ${s.paywall_enabled === true})" title="Toggle paywall enforcement" style="width: 48px; height: 28px; border-radius: 14px; border: none; cursor: pointer; background: ${s.paywall_enabled === true ? 'var(--system-orange, #ff9500)' : 'var(--system-gray5)'}; transition: background 0.2s; position: relative; flex-shrink: 0;"><span style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: white; top: 3px; left: ${s.paywall_enabled === true ? '23px' : '3px'}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
+                                        </div>
                                         ` : ''}
                                         <div style="font-size: 11px; font-weight: 800; color: var(--system-blue); background: rgba(0, 122, 255, 0.08); padding: 5px 12px; border-radius: 14px; letter-spacing: 0.02em; border: 1px solid rgba(0, 122, 255, 0.1);">
                                             ${schoolStudents} ${t.dev_students_label.toUpperCase()}
@@ -4588,6 +4834,16 @@ function _renderViewImpl() {
                                     <i data-lucide="shield" size="14" style="color: var(--system-blue); opacity: 0.8;"></i>
                                     <div style="font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
                                         <span style="font-weight: 700; color: var(--text-primary); opacity: 0.7;">${t.dev_admins_label}:</span> ${schoolAdmins || 'N/A'}
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--system-gray6); border-radius: 16px; border: 1px solid rgba(0,0,0,0.02);">
+                                    <i data-lucide="credit-card" size="14" style="color: ${s.billing_status === 'active' || s.billing_status === 'trialing' ? 'var(--system-green)' : s.billing_status ? 'var(--system-orange, #ff9500)' : 'var(--text-secondary)'}; opacity: 0.8; flex-shrink: 0;"></i>
+                                    <div style="font-size: 13px; color: var(--text-secondary); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="font-weight: 700; color: var(--text-primary); opacity: 0.7;">Billing:</span>
+                                        ${s.billing_status ? `<span style="font-weight: 600; margin-left: 4px; color: ${s.billing_status === 'active' || s.billing_status === 'trialing' ? 'var(--system-green)' : 'var(--system-orange, #ff9500)'};">${s.billing_status}</span>` : '<span style="opacity: 0.4; margin-left: 4px;">no subscription</span>'}
+                                        ${s.billing_plan_key ? `<span style="margin-left: 8px; font-weight: 600; opacity: 0.8;">${s.billing_plan_key}</span>` : ''}
+                                        ${s.billing_currency ? `<span style="margin-left: 4px; opacity: 0.5;">${s.billing_currency}</span>` : ''}
+                                        ${s.paywall_enabled ? `<span style="margin-left: 8px; font-size: 10px; font-weight: 700; color: var(--system-orange, #ff9500); background: rgba(255,149,0,0.12); padding: 1px 6px; border-radius: 6px;">PAYWALL ON</span>` : ''}
                                     </div>
                                 </div>
                                 <div class="dev-school-card-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
@@ -6498,6 +6754,10 @@ function _renderViewImpl() {
             </div>
             <div style="height: 80px;"></div>
         `;
+    } else if (view.startsWith('admin-') && !state.isPlatformDev && !isAcademyAllowed(state.currentSchool)) {
+        // Paywall: school has paywall_enabled=true but no active/trialing subscription.
+        // Platform devs always bypass so they can still manage the school.
+        html += renderPaywallCard(state.currentSchool);
     } else if (view === 'admin-students') {
         const comps = Array.isArray(state.competitions) ? state.competitions : [];
         const defaultComp = comps.find(c => c.is_active) || comps.sort((a, b) => new Date(b.starts_at || 0) - new Date(a.starts_at || 0))[0] || null;
@@ -9926,6 +10186,42 @@ window.toggleSchoolDiscoveryVisible = async (schoolId, currentlyVisible) => {
     }
     await fetchPlatformData();
     renderView();
+};
+
+window.toggleSchoolPaywall = async (schoolId, currentlyEnabled) => {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.rpc('school_set_paywall_enabled', { p_school_id: schoolId, p_enabled: !currentlyEnabled });
+    if (error) {
+        alert('Error: ' + (error.message || 'Could not update paywall setting.'));
+        return;
+    }
+    await fetchPlatformData();
+    renderView();
+};
+
+// Called from the paywall card when the academy admin picks a plan to subscribe.
+window.startCheckout = async (planKey) => {
+    const school = state.currentSchool;
+    if (!school) return;
+    const msgEl = document.getElementById('paywall-msg');
+    const _t = typeof window.t === 'function' ? window.t : (k) => k;
+    if (msgEl) msgEl.textContent = _t('paywall_redirecting') || 'Redirecting to checkout…';
+    try {
+        const { data: { session }, error: sessionErr } = await supabaseClient.auth.getSession();
+        if (sessionErr || !session?.access_token) throw new Error('Not authenticated');
+        const currency = school.currency || 'MXN';
+        const { data, error } = await supabaseClient.functions.invoke('stripe-create-checkout', {
+            body: { academyId: school.id, planKey, currency },
+        });
+        if (error) throw new Error(error.message || 'Checkout failed');
+        if (data?.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error(data?.error || 'No checkout URL returned');
+        }
+    } catch (e) {
+        if (msgEl) msgEl.textContent = e?.message || 'Could not start checkout.';
+    }
 };
 
 window.saveSchoolInfoByPlatform = async (schoolId, btn) => {

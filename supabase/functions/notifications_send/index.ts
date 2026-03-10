@@ -98,11 +98,13 @@ Deno.serve(async (req) => {
       subject?: string;
       body?: string;
       selected_student_ids?: string[];
+      school_id?: string;
     };
     const mode = body.mode === 'test' ? 'test' : body.mode === 'selected' ? 'selected' : 'all';
     const subject = typeof body.subject === 'string' ? body.subject.trim() : '';
     const bodyRaw = typeof body.body === 'string' ? body.body : '';
     const selectedIds = Array.isArray(body.selected_student_ids) ? body.selected_student_ids : [];
+    const providedSchoolId = typeof body.school_id === 'string' ? body.school_id : null;
 
     if (!subject) {
       return json({ error: 'Subject is required' }, 400);
@@ -115,12 +117,79 @@ Deno.serve(async (req) => {
     });
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
 
-    const { data: adminData, error: adminError } = await userClient.rpc('get_current_admin_school');
-    if (adminError || !adminData?.school_id) {
+    let schoolId: string | null = null;
+    let adminEmail = '';
+
+    // Primary: if frontend provided school_id, verify admin membership via service client (bypasses RPC issues)
+    if (providedSchoolId) {
+      const { data: { user: jwtUser } } = await serviceClient.auth.getUser(token);
+      if (jwtUser?.id || jwtUser?.email) {
+        const byUid = jwtUser?.id
+          ? await serviceClient.from('admins').select('school_id, email').eq('school_id', providedSchoolId).eq('user_id', jwtUser.id).maybeSingle()
+          : { data: null };
+        let found = byUid.data;
+        if (!found && jwtUser?.email && !jwtUser.email.includes('@admins.bailadmin.local')) {
+          const byEmail = await serviceClient.from('admins').select('school_id, email')
+            .eq('school_id', providedSchoolId).ilike('email', jwtUser.email).maybeSingle();
+          found = byEmail.data;
+        }
+        if (found?.school_id) {
+          schoolId = found.school_id as string;
+          adminEmail = (jwtUser?.email && !jwtUser.email.includes('@admins.bailadmin.local'))
+            ? jwtUser.email : (found.email as string) || '';
+        }
+      }
+    }
+
+    // Fallback A: if Path 1 failed, try to link user_id via email match then recheck.
+    // Handles the case where the admin has a valid Supabase session but user_id was never
+    // written to their admin row (e.g. first login via legacy credentials + new Supabase signUp).
+    if (!schoolId && providedSchoolId) {
+      const { data: { user: jwtUser2 } } = await serviceClient.auth.getUser(token);
+      if (jwtUser2?.id) {
+        // Attempt to link user_id → admin row by email match (no-op if already linked or email mismatch)
+        await userClient.rpc('link_admin_auth_force', { p_school_id: providedSchoolId });
+        // Retry lookup by user_id now that linking may have happened
+        const { data: recheck } = await serviceClient.from('admins')
+          .select('school_id, email').eq('school_id', providedSchoolId).eq('user_id', jwtUser2.id).maybeSingle();
+        if (recheck?.school_id) {
+          schoolId = recheck.school_id as string;
+          adminEmail = (jwtUser2.email && !jwtUser2.email.includes('@admins.bailadmin.local'))
+            ? jwtUser2.email : (recheck.email as string) || '';
+        }
+      }
+    }
+
+    // Fallback B: derive school from JWT via RPC
+    if (!schoolId) {
+      const { data: adminData, error: adminError } = await userClient.rpc('get_current_admin_school');
+      if (!adminError && adminData?.school_id) {
+        schoolId = adminData.school_id as string;
+        adminEmail = (adminData.email as string) || '';
+      }
+    }
+
+    // Fallback: look up via service client using JWT uid and/or email
+    if (!schoolId) {
+      const { data: { user: jwtUser } } = await serviceClient.auth.getUser(token);
+      if (jwtUser?.id) {
+        const { data: byUid } = await serviceClient.from('admins').select('school_id, email').eq('user_id', jwtUser.id).maybeSingle();
+        if (byUid?.school_id) {
+          schoolId = byUid.school_id as string;
+          adminEmail = (jwtUser.email && !jwtUser.email.includes('@admins.bailadmin.local')) ? jwtUser.email : (byUid.email as string) || '';
+        }
+        if (!schoolId && jwtUser.email && !jwtUser.email.includes('@admins.bailadmin.local')) {
+          const { data: byEmail } = await serviceClient.from('admins').select('school_id, email').ilike('email', jwtUser.email).maybeSingle();
+          if (byEmail?.school_id) { schoolId = byEmail.school_id as string; adminEmail = jwtUser.email; }
+        }
+      }
+    }
+
+    if (!schoolId) {
       return json({ error: 'Admin school not found' }, 403);
     }
-    const schoolId = adminData.school_id as string;
-    let adminEmail = (adminData.email as string) || '';
+
+    // Ensure adminEmail is real (not a placeholder)
     if (!adminEmail || adminEmail.includes('@admins.bailadmin.local')) {
       const { data: { user } } = await serviceClient.auth.getUser(token);
       adminEmail = (user?.email && !user.email.includes('@admins.bailadmin.local')) ? user.email : adminEmail;
@@ -172,48 +241,78 @@ Deno.serve(async (req) => {
 
     const bodyHtml = markdownLikeToHtml(bodyRaw);
     const sentBy = adminEmail ? escapeHtml(adminEmail) : '';
-    const logoImg = logoUrl
-      ? `<img src="${escapeHtml(logoUrl)}" alt="" style="max-width:200px;max-height:80px;display:block;margin-bottom:16px;" />`
+    const logoSection = logoUrl
+      ? `<tr><td style="padding:40px 48px 0;"><img src="${escapeHtml(logoUrl)}" alt="" style="max-width:160px;max-height:60px;object-fit:contain;display:block;border:0;" /></td></tr>`
       : '';
-    const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:560px;">${logoImg}<h2 style="margin-top:0;">${escapeHtml(subject)}</h2><div>${bodyHtml}</div>${sentBy ? `<p style="margin-top:24px;font-size:12px;color:#666;">Sent by: ${sentBy}</p>` : ''}</body></html>`;
+    const topPad = logoUrl ? '28px' : '48px';
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f7;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f7;">
+<tr><td align="center" style="padding:48px 16px 64px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:18px;overflow:hidden;">
+${logoSection}
+<tr><td style="padding:${topPad} 48px 12px;"><h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.3px;line-height:1.3;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(subject)}</h1></td></tr>
+<tr><td style="padding:12px 48px 44px;font-size:16px;line-height:1.65;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">${bodyHtml}</td></tr>
+${sentBy ? `<tr><td style="border-top:1px solid #f0f0f2;padding:20px 48px 32px;"><p style="margin:0;font-size:13px;color:#86868b;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Sent by ${sentBy}</p></td></tr>` : ''}
+</table>
+<p style="margin:24px 0 0;font-size:12px;color:#86868b;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Bailadmin &bull; noreply@bailadmin.lat</p>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+    if (emails.length === 0) {
+      return json({ error: mode === 'test' ? 'No admin email address found to send test to' : 'No student emails found' }, 400);
+    }
+
+    if (!resendApiKey) {
+      return json({ error: 'Email sending is not configured (RESEND_API_KEY missing)' }, 500);
+    }
 
     let status: string = 'ok';
     let resendBatchId: string | null = null;
+    let firstResendError: string | null = null;
 
-    if (emails.length === 0) {
-      status = 'error';
-    } else if (resendApiKey) {
-      const BATCH_SIZE = 50;
-      for (let i = 0; i < emails.length; i += BATCH_SIZE) {
-        const to = emails.slice(i, i + BATCH_SIZE);
-        const res = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${resendApiKey}`,
-          },
-          body: JSON.stringify({
-            from: emailFrom,
-            to,
-            reply_to: adminEmail || undefined,
-            subject,
-            html,
-          }),
-        });
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error('Resend error:', errText);
-          status = emails.length > BATCH_SIZE ? 'partial' : 'error';
-          if (!resendBatchId) {
-            try {
-              const errJson = JSON.parse(errText);
-              if (errJson?.id) resendBatchId = errJson.id;
-            } catch (_) {}
-          }
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < emails.length; i += BATCH_SIZE) {
+      const to = emails.slice(i, i + BATCH_SIZE);
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: emailFrom,
+          to,
+          reply_to: adminEmail || undefined,
+          subject,
+          html,
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('Resend error:', errText);
+        if (!firstResendError) firstResendError = errText;
+        status = emails.length > BATCH_SIZE ? 'partial' : 'error';
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson?.id && !resendBatchId) resendBatchId = errJson.id;
+        } catch (_) {}
+        // For test mode, surface the error immediately
+        if (mode === 'test') {
+          let detail = errText;
+          try { const j = JSON.parse(errText); detail = j?.message || j?.error || errText; } catch (_) {}
+          return json({ error: `Email delivery failed: ${detail}` }, 502);
         }
+      } else {
+        try {
+          const okJson = await res.json();
+          if (okJson?.id && !resendBatchId) resendBatchId = okJson.id;
+        } catch (_) {}
       }
-    } else {
-      status = 'error';
     }
 
     await serviceClient.from('notifications_log').insert({
@@ -228,7 +327,7 @@ Deno.serve(async (req) => {
       resend_batch_id: resendBatchId,
     });
 
-    if (mode === 'test' && emails.length > 0) {
+    if (mode === 'test') {
       return json({ ok: true, message: 'Test email sent' }, 200);
     }
     return json({ ok: true, recipient_count: emails.length }, 200);

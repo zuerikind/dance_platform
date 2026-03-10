@@ -602,8 +602,11 @@
       let studentsQuery;
       if (state.isAdmin || state.isPlatformDev) {
         studentsQuery = supabaseClient.rpc("get_school_students", { p_school_id: sid }).then((r) => ({ data: r.data || [], error: r.error }));
-      } else if (state.currentUser && state.currentUser.id) {
-        studentsQuery = supabaseClient.from("students_with_profile").select("*").eq("id", state.currentUser.id);
+      } else if (state.currentUser && state.currentUser.user_id) {
+        studentsQuery = supabaseClient.rpc("get_student_by_user_id", {
+          p_user_id: state.currentUser.user_id,
+          p_school_id: state.currentUser.school_id
+        }).then((r) => ({ data: r.data || [], error: r.error }));
       } else {
         studentsQuery = Promise.resolve({ data: [], error: null });
       }
@@ -742,10 +745,17 @@
       if (state.isAdmin && supabaseClient) {
         const { data: sessionData } = await supabaseClient.auth.getSession();
         const uid = sessionData?.session?.user?.id;
+        const sessionEmail = sessionData?.session?.user?.email || state.auth?.user?.email || state._adminEmail || "";
         const admins = state.admins || [];
         state.schoolAdminLinked = !!(uid && admins.some((a) => a.user_id === uid));
         state.currentAdmin = admins.find((a) => a.user_id === uid) || null;
-        if (!state.currentAdmin && uid && sid) {
+        if (!state.currentAdmin && sessionEmail) {
+          const isFake = (e) => e.includes("@admins.bailadmin.local") || e.includes("@temp.bailadmin.local");
+          if (!isFake(sessionEmail)) {
+            state.currentAdmin = admins.find((a) => a.email && a.email.toLowerCase() === sessionEmail.toLowerCase()) || null;
+          }
+        }
+        if (!state.currentAdmin && sid) {
           try {
             const { data: curAdmin } = await supabaseClient.rpc("get_current_admin", { p_school_id: sid });
             const row = Array.isArray(curAdmin) && curAdmin.length > 0 ? curAdmin[0] : curAdmin;
@@ -753,6 +763,9 @@
           } catch (_) {
           }
         }
+        const isFakeEmail = (e) => !e || e.includes("@admins.bailadmin.local") || e.includes("@temp.bailadmin.local");
+        const adminRowEmail = state.currentAdmin?.email || "";
+        state._adminEmail = !isFakeEmail(sessionEmail) ? sessionEmail : !isFakeEmail(adminRowEmail) ? adminRowEmail : "";
       }
       const currentSchoolObj = state.schools.find((s) => s.id === sid) || state.currentSchool;
       if (currentSchoolObj?.profile_type === "private_teacher" && supabaseClient) {
@@ -1000,41 +1013,23 @@
     state.loading = true;
     if (typeof window.renderView === "function") window.renderView();
     try {
-      const [schools, students, admins, classes, subs] = await Promise.all([
-        supabaseClient.from("schools").select("*").order("name"),
-        supabaseClient.from("students_with_profile").select("*"),
-        supabaseClient.from("admins").select("*"),
-        supabaseClient.from("classes").select("*"),
-        supabaseClient.from("subscriptions").select("*")
-      ]);
+      const { data: rpcData } = await supabaseClient.rpc("get_platform_all_data");
+      const pd = rpcData || {};
       state.platformData = {
-        schools: schools.data || [],
-        students: students.data || [],
-        admins: admins.data || [],
-        classes: classes.data || [],
-        subscriptions: subs.data || [],
-        payment_requests: [],
-        admin_settings: [],
-        platform_admins: []
+        schools: pd.schools || [],
+        students: pd.students || [],
+        admins: pd.admins || [],
+        classes: pd.classes || [],
+        subscriptions: pd.subscriptions || [],
+        payment_requests: pd.payment_requests || [],
+        admin_settings: pd.admin_settings || [],
+        platform_admins: pd.platform_admins || []
       };
       if (state.isPlatformDev) {
-        const { data: rpcData } = await supabaseClient.rpc("get_platform_all_data");
-        if (rpcData && typeof rpcData === "object") {
-          state.platformData = {
-            schools: Array.isArray(rpcData.schools) ? rpcData.schools : state.platformData.schools || [],
-            students: Array.isArray(rpcData.students) ? rpcData.students : state.platformData.students || [],
-            admins: Array.isArray(rpcData.admins) ? rpcData.admins : state.platformData.admins || [],
-            classes: Array.isArray(rpcData.classes) ? rpcData.classes : state.platformData.classes || [],
-            subscriptions: Array.isArray(rpcData.subscriptions) ? rpcData.subscriptions : state.platformData.subscriptions || [],
-            payment_requests: Array.isArray(rpcData.payment_requests) ? rpcData.payment_requests : [],
-            admin_settings: Array.isArray(rpcData.admin_settings) ? rpcData.admin_settings : [],
-            platform_admins: Array.isArray(rpcData.platform_admins) ? rpcData.platform_admins : []
-          };
-        }
         const { data: sessionData } = await supabaseClient.auth.getSession();
         const uid = sessionData?.session?.user?.id;
-        const admins2 = state.platformData?.platform_admins || [];
-        state.platformAdminLinked = !!(uid && admins2.some((pa) => pa.user_id === uid));
+        const admins = state.platformData?.platform_admins || [];
+        state.platformAdminLinked = !!(uid && admins.some((pa) => pa.user_id === uid));
         const { data: discEnabled } = await supabaseClient.rpc("discovery_is_enabled");
         state.platformData.discoveryEnabled = !!discEnabled;
       }
@@ -2158,6 +2153,7 @@
       from_label: "From",
       reply_to_label: "Reply-To",
       sent_by_label: "Sent by",
+      sending_label: "Sending\u2026",
       send_test: "Send test email to myself",
       send_to_recipients: "Send to recipients",
       notifications_subject_required: "Subject is required",
@@ -2256,6 +2252,8 @@
       register_success: "Successfully registered!",
       register_error: "Could not register. Please try again.",
       no_active_membership_register: "No active membership. Please purchase a plan first.",
+      not_enough_classes_message: "You don't have enough classes in your package. You have {effective} left and are already registered for {registered} classes, so you only have {available} classes left.",
+      not_enough_classes_monthly_message: "You don't have enough classes in your package to sign up for {need_new} more classes. You have {effective} left and are already registered for {registered} classes, so you only have {available} classes left.",
       cancel_success: "Registration cancelled.",
       cancel_error: "Could not cancel. Please try again.",
       cancel_too_late_error: "Cannot cancel less than 4 hours before the class.",
@@ -2296,6 +2294,14 @@
       class_registrations_title: "Class Registrations",
       no_registrations_yet: "No registrations this week",
       no_registrations_this_month: "No registrations this month",
+      admin_reg_tab_registered: "Registered",
+      admin_reg_tab_requested: "Requested",
+      no_pending_requests: "No pending requests",
+      no_pending_requests_subtitle: "Clase suelta requests will appear here.",
+      aure_request_accepted: "Request accepted.",
+      aure_request_denied: "Request denied.",
+      aure_accepting: "Accepting\u2026",
+      aure_rejecting: "Rejecting\u2026",
       spots_left_format: "{left}/{max} spots left",
       no_students_yet: "No students yet",
       registered_count: "{n} registered",
@@ -2391,6 +2397,7 @@
       confirm_request_title: "Confirm class request",
       teacher_label: "Teacher",
       date_label: "Date",
+      dates_label: "dates",
       time_label: "Time",
       location_label: "Location",
       price_label: "Price",
@@ -2437,7 +2444,40 @@
       month_sep: "Sep",
       month_oct: "Oct",
       month_nov: "Nov",
-      month_dec: "Dec"
+      month_dec: "Dec",
+      paywall_title: "Simple, transparent pricing",
+      paywall_subtitle: "Everything you need to run your academy.",
+      paywall_status_label: "Billing status",
+      paywall_no_subscription: "No active subscription",
+      paywall_cta: "Get started",
+      paywall_most_popular: "Most popular",
+      paywall_redirecting: "Redirecting to checkout\u2026",
+      paywall_price_period: "/ month",
+      paywall_plan_basico: "B\xE1sico",
+      paywall_plan_basico_tier: "Starter",
+      paywall_price_basico: "MX$799",
+      paywall_plan_basico_desc: "Ideal for small academies or studios just getting started.",
+      paywall_plan_intermedio: "Intermedio",
+      paywall_plan_intermedio_tier: "Professional",
+      paywall_price_intermedio: "MX$1,099",
+      paywall_plan_intermedio_desc: "For growing academies with fewer than 100 active students.",
+      paywall_plan_avanzado: "Avanzado",
+      paywall_plan_avanzado_tier: "Advanced",
+      paywall_price_avanzado: "MX$1,499",
+      paywall_price_avanzado_from: "from",
+      paywall_plan_avanzado_desc: "For large academies with more than 100 active students.",
+      paywall_feat_setup: "Initial setup included",
+      paywall_feat_qr_checkin: "QR code check-in system",
+      paywall_feat_packages: "Class package management",
+      paywall_feat_auto_deduct: "Automatic class deduction on scan",
+      paywall_feat_in_discovery: "Listed on the Discovery site",
+      paywall_feat_whatsapp: "WhatsApp support",
+      paywall_feat_admins_1: "1 admin user",
+      paywall_feat_admins_3: "3 admin users",
+      paywall_feat_admins_10: "10 admin users",
+      paywall_feat_students_20: "Up to 20 active students",
+      paywall_feat_students_100: "Up to 100 active students",
+      paywall_feat_students_unlimited: "100+ active students"
     },
     es: {
       nav_schedule: "Horario",
@@ -2827,6 +2867,7 @@
       total_classes_label: "Clases Restantes (Total)",
       pack_details_title: "Paquetes Detalles",
       reg_date_label: "Fecha de Registro",
+      dates_label: "fechas",
       next_expiry_label: "Pr\xF3ximo Vencimiento",
       delete_perm_label: "Eliminar Alumno permanentemente",
       admin_pass_req: "Password Admin Requerido:",
@@ -2869,6 +2910,7 @@
       from_label: "De",
       reply_to_label: "Responder a",
       sent_by_label: "Enviado por",
+      sending_label: "Enviando\u2026",
       send_test: "Enviar correo de prueba a m\xED",
       send_to_recipients: "Enviar a destinatarios",
       notifications_subject_required: "El asunto es obligatorio",
@@ -2967,6 +3009,8 @@
       register_success: "Registro exitoso!",
       register_error: "No se pudo registrar. Intenta de nuevo.",
       no_active_membership_register: "No tienes membres\xEDa activa. Compra un plan primero.",
+      not_enough_classes_message: "No tienes suficientes clases en tu paquete. Te quedan {effective} y ya est\xE1s inscrito en {registered} clases, as\xED que solo te quedan {available} clases.",
+      not_enough_classes_monthly_message: "No tienes suficientes clases en tu paquete para inscribirte a {need_new} clases m\xE1s. Te quedan {effective} y ya est\xE1s inscrito en {registered} clases, as\xED que solo te quedan {available} clases.",
       cancel_success: "Registro cancelado.",
       cancel_error: "No se pudo cancelar. Intenta de nuevo.",
       cancel_too_late_error: "No se puede cancelar con menos de 4 horas antes del inicio de la clase.",
@@ -3007,6 +3051,14 @@
       class_registrations_title: "Registros de clases",
       no_registrations_yet: "Sin registros esta semana",
       no_registrations_this_month: "Sin registros este mes",
+      admin_reg_tab_registered: "Registrados",
+      admin_reg_tab_requested: "Solicitados",
+      no_pending_requests: "Sin solicitudes pendientes",
+      no_pending_requests_subtitle: "Las solicitudes de clase suelta aparecer\xE1n aqu\xED.",
+      aure_request_accepted: "Solicitud aceptada.",
+      aure_request_denied: "Solicitud rechazada.",
+      aure_accepting: "Aceptando\u2026",
+      aure_rejecting: "Rechazando\u2026",
       spots_left_format: "{left}/{max} plazas libres",
       no_students_yet: "Ning\xFAn alumno",
       registered_count: "{n} registrados",
@@ -3212,7 +3264,40 @@
       calendly_mode_calendly: "Calendly",
       calendly_mode_weekly: "Calendario semanal",
       calendly_need_credits: "Necesitas cr\xE9ditos para completar una reserva.",
-      calendly_book: "Reservar sesi\xF3n"
+      calendly_book: "Reservar sesi\xF3n",
+      paywall_title: "Precios simples y transparentes",
+      paywall_subtitle: "Todo lo que necesitas para gestionar tu academia.",
+      paywall_status_label: "Estado de facturaci\xF3n",
+      paywall_no_subscription: "Sin suscripci\xF3n activa",
+      paywall_cta: "Comenzar",
+      paywall_most_popular: "M\xE1s popular",
+      paywall_redirecting: "Redirigiendo al pago\u2026",
+      paywall_price_period: "/ mes",
+      paywall_plan_basico: "B\xE1sico",
+      paywall_plan_basico_tier: "Inicial",
+      paywall_price_basico: "MX$799",
+      paywall_plan_basico_desc: "Ideal para academias peque\xF1as o que est\xE1n comenzando.",
+      paywall_plan_intermedio: "Intermedio",
+      paywall_plan_intermedio_tier: "Profesional",
+      paywall_price_intermedio: "MX$1,099",
+      paywall_plan_intermedio_desc: "Para academias en expansi\xF3n con menos de 100 alumnos activos.",
+      paywall_plan_avanzado: "Avanzado",
+      paywall_plan_avanzado_tier: "Avanzado",
+      paywall_price_avanzado: "MX$1,499",
+      paywall_price_avanzado_from: "desde",
+      paywall_plan_avanzado_desc: "Para academias grandes con m\xE1s de 100 alumnos activos.",
+      paywall_feat_setup: "Configuraci\xF3n inicial incluida",
+      paywall_feat_qr_checkin: "Sistema de check-in con c\xF3digo QR",
+      paywall_feat_packages: "Gesti\xF3n de paquetes de clases",
+      paywall_feat_auto_deduct: "Descuento autom\xE1tico de clases al escanear",
+      paywall_feat_in_discovery: "La academia aparece en el sitio discovery",
+      paywall_feat_whatsapp: "Soporte por WhatsApp",
+      paywall_feat_admins_1: "1 usuario administrador",
+      paywall_feat_admins_3: "3 usuarios administradores",
+      paywall_feat_admins_10: "10 usuarios administradores",
+      paywall_feat_students_20: "Hasta 20 alumnos activos",
+      paywall_feat_students_100: "Hasta 100 alumnos activos",
+      paywall_feat_students_unlimited: "M\xE1s de 100 alumnos activos"
     },
     de: {
       nav_schedule: "Stundenplan",
@@ -3613,6 +3698,7 @@
       from_label: "Von",
       reply_to_label: "Antwort an",
       sent_by_label: "Gesendet von",
+      sending_label: "Wird gesendet\u2026",
       send_test: "Test-E-Mail an mich senden",
       send_to_recipients: "An Empf\xE4nger senden",
       notifications_subject_required: "Betreff ist erforderlich",
@@ -3634,6 +3720,7 @@
       total_classes_label: "Stunden insgesamt",
       pack_details_title: "Paket-Details",
       reg_date_label: "Registriert am",
+      dates_label: "Termine",
       next_expiry_label: "N\xE4chster Ablauf",
       delete_perm_label: "Sch\xFCler dauerhaft l\xF6schen",
       admin_pass_req: "Admin-Passwort erforderlich:",
@@ -3719,6 +3806,8 @@
       register_success: "Erfolgreich angemeldet!",
       register_error: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
       no_active_membership_register: "Keine aktive Mitgliedschaft. Bitte zuerst ein Paket kaufen.",
+      not_enough_classes_message: "Du hast nicht genug Kurse in deinem Paket. Du hast noch {effective} \xFCbrig und bist bereits f\xFCr {registered} Kurse angemeldet, also hast du nur noch {available} Kurse \xFCbrig.",
+      not_enough_classes_monthly_message: "Du hast nicht genug Kurse in deinem Paket, um dich f\xFCr {need_new} weitere Kurse anzumelden. Du hast noch {effective} \xFCbrig und bist bereits f\xFCr {registered} Kurse angemeldet, also hast du nur noch {available} Kurse \xFCbrig.",
       cancel_success: "Anmeldung storniert.",
       cancel_error: "Stornierung fehlgeschlagen. Bitte erneut versuchen.",
       cancel_too_late_error: "Stornierung weniger als 4 Stunden vor Kursbeginn nicht m\xF6glich.",
@@ -3759,6 +3848,14 @@
       class_registrations_title: "Kursanmeldungen",
       no_registrations_yet: "Noch keine Anmeldungen diese Woche",
       no_registrations_this_month: "Noch keine Anmeldungen in diesem Monat",
+      admin_reg_tab_registered: "Angemeldet",
+      admin_reg_tab_requested: "Anfragen",
+      no_pending_requests: "Keine ausstehenden Anfragen",
+      no_pending_requests_subtitle: "Anfragen f\xFCr Einzelstunden erscheinen hier.",
+      aure_request_accepted: "Anfrage angenommen.",
+      aure_request_denied: "Anfrage abgelehnt.",
+      aure_accepting: "Wird angenommen\u2026",
+      aure_rejecting: "Wird abgelehnt\u2026",
       spots_left_format: "{left}/{max} Pl\xE4tze frei",
       no_students_yet: "Noch keine Sch\xFCler",
       registered_count: "{n} angemeldet",
@@ -3962,7 +4059,40 @@
       calendly_mode_calendly: "Calendly",
       calendly_mode_weekly: "Wochenkalender",
       calendly_need_credits: "Du brauchst Credits, um eine Buchung abzuschlie\xDFen.",
-      calendly_book: "Sitzung buchen"
+      calendly_book: "Sitzung buchen",
+      paywall_title: "Einfache, transparente Preise",
+      paywall_subtitle: "Alles, was du f\xFCr deine Akademie brauchst.",
+      paywall_status_label: "Abrechnungsstatus",
+      paywall_no_subscription: "Kein Abonnement",
+      paywall_cta: "Loslegen",
+      paywall_most_popular: "Beliebteste",
+      paywall_redirecting: "Weiterleitung zur Zahlung\u2026",
+      paywall_price_period: "/ Monat",
+      paywall_plan_basico: "B\xE1sico",
+      paywall_plan_basico_tier: "Starter",
+      paywall_price_basico: "MX$799",
+      paywall_plan_basico_desc: "Ideal f\xFCr kleine Studios, die mit der digitalen Verwaltung beginnen.",
+      paywall_plan_intermedio: "Intermedio",
+      paywall_plan_intermedio_tier: "Professionell",
+      paywall_price_intermedio: "MX$1,099",
+      paywall_plan_intermedio_desc: "F\xFCr wachsende Akademien mit weniger als 100 aktiven Sch\xFClern.",
+      paywall_plan_avanzado: "Avanzado",
+      paywall_plan_avanzado_tier: "Erweitert",
+      paywall_price_avanzado: "MX$1,499",
+      paywall_price_avanzado_from: "ab",
+      paywall_plan_avanzado_desc: "F\xFCr gro\xDFe Akademien mit mehr als 100 aktiven Sch\xFClern.",
+      paywall_feat_setup: "Ersteinrichtung inklusive",
+      paywall_feat_qr_checkin: "QR-Code Check-in System",
+      paywall_feat_packages: "Klassenpaketverwaltung",
+      paywall_feat_auto_deduct: "Automatischer Klassenabzug beim Scannen",
+      paywall_feat_in_discovery: "Akademie auf Discovery gelistet",
+      paywall_feat_whatsapp: "WhatsApp-Support",
+      paywall_feat_admins_1: "1 Adminbenutzer",
+      paywall_feat_admins_3: "3 Adminbenutzer",
+      paywall_feat_admins_10: "10 Adminbenutzer",
+      paywall_feat_students_20: "Bis zu 20 aktive Sch\xFCler",
+      paywall_feat_students_100: "Bis zu 100 aktive Sch\xFCler",
+      paywall_feat_students_unlimited: "\xDCber 100 aktive Sch\xFCler"
     }
   };
   setLocalesDict(DANCE_LOCALES);
@@ -4388,6 +4518,13 @@
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("country") || "Country"}</span><input type="text" id="profile-country" value="${(p.country || "").replace(/"/g, "&quot;")}" placeholder="${t2("country") || "Country"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("instagram") || "Instagram"}</span><input type="text" id="profile-instagram" value="${(p.instagram || "").replace(/"/g, "&quot;")}" placeholder="${t2("instagram_placeholder") || "@handle"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
     html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t2("save") || "Save"}</button>`;
+    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t2("change_password_section") || "Change password"}</h3>`;
+    html += `<div class="ios-list" style="margin-bottom: 0.75rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t2("new_password_label") || "New password"}</span><input type="password" id="student-new-password" autocomplete="new-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t2("confirm_new_password_label") || "Confirm password"}</span><input type="password" id="student-confirm-password" autocomplete="new-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `</div>`;
+    html += `<div id="student-password-feedback" style="font-size: 13px; margin-bottom: 0.75rem; display: none;"></div>`;
+    html += `<button type="button" class="btn-secondary" onclick="window.changeStudentPassword()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t2("change_password_btn") || "Change password"}</button>`;
     html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t2("linked_schools") || "Linked schools"}</h3>`;
     html += linkedSchools.length ? `<ul style="margin: 0; padding-left: 1.2rem; color: var(--text-primary);">${linkedSchools.map((s) => `<li>${(s.name || s.id || "").replace(/</g, "&lt;")}</li>`).join("")}</ul>` : `<p class="text-muted" style="font-size: 0.9rem;">${t2("no_schools_linked") || "No schools linked yet."}</p>`;
     const isVerified = !p.origin || p.origin !== "discovery" || p.email_confirmed;
@@ -4400,6 +4537,51 @@
     html += `<div id="profile-my-reviews" class="profile-my-reviews" style="min-height: 24px;">${t2("loading") || "Loading\u2026"}</div>`;
     html += `</div>`;
     return html;
+  };
+  window.changeStudentPassword = async () => {
+    const t2 = (k) => window.t ? window.t(k) : k;
+    const feedback = document.getElementById("student-password-feedback");
+    const newPass = (document.getElementById("student-new-password")?.value || "").trim();
+    const confirmPass = (document.getElementById("student-confirm-password")?.value || "").trim();
+    const showMsg = (msg, color) => {
+      if (!feedback) return;
+      feedback.textContent = msg;
+      feedback.style.color = color;
+      feedback.style.display = "block";
+    };
+    if (!newPass || !confirmPass) {
+      showMsg(t2("signup_require_fields") || "Please fill in both fields.", "var(--system-red)");
+      return;
+    }
+    if (newPass.length < 6) {
+      showMsg(t2("password_too_short") || "Password must be at least 6 characters.", "var(--system-red)");
+      return;
+    }
+    if (newPass !== confirmPass) {
+      showMsg(t2("signup_passwords_dont_match") || "Passwords do not match.", "var(--system-red)");
+      return;
+    }
+    if (!supabaseClient) {
+      showMsg("Not connected.", "var(--system-red)");
+      return;
+    }
+    const btn = document.querySelector('[onclick="window.changeStudentPassword()"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = t2("saving_label") || "Saving\u2026";
+    }
+    const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = t2("change_password_btn") || "Change password";
+    }
+    if (error) {
+      showMsg(error.message || t2("error_generic") || "Error. Try again.", "var(--system-red)");
+    } else {
+      document.getElementById("student-new-password").value = "";
+      document.getElementById("student-confirm-password").value = "";
+      showMsg(t2("password_changed_success") || "Password updated successfully.", "var(--system-green)");
+    }
   };
   window.fetchProfileMyReviews = async () => {
     const el = document.getElementById("profile-my-reviews");
@@ -6080,7 +6262,150 @@
     }
     if (!root) return;
     try {
-      let renderSchoolSelection = function() {
+      let isAcademyAllowed = function(school) {
+        if (!school || !school.paywall_enabled) return true;
+        return school.billing_status === "active" || school.billing_status === "trialing";
+      }, renderPaywallCard = function(school) {
+        const statusColorMap = { past_due: "var(--system-orange,#ff9500)", payment_failed: "var(--system-red)", canceled: "var(--system-red)", unpaid: "var(--system-orange,#ff9500)" };
+        const statusColor = statusColorMap[school?.billing_status] || "var(--system-gray3)";
+        const statusLabel = school?.billing_status ? school.billing_status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : t2.paywall_no_subscription || "No active subscription";
+        const commonFeatures = [
+          t2.paywall_feat_setup || "Initial setup included",
+          t2.paywall_feat_qr_checkin || "QR code check-in system",
+          t2.paywall_feat_packages || "Class package management",
+          t2.paywall_feat_auto_deduct || "Automatic class deduction on scan",
+          t2.paywall_feat_in_discovery || "Listed on the Discovery site",
+          t2.paywall_feat_whatsapp || "WhatsApp support"
+        ];
+        const plans = [
+          {
+            key: "basico",
+            name: t2.paywall_plan_basico || "B\xE1sico",
+            tier: t2.paywall_plan_basico_tier || "Starter",
+            price: t2.paywall_price_basico || "MX$799",
+            desc: t2.paywall_plan_basico_desc || "Ideal for small academies just getting started.",
+            extra: [t2.paywall_feat_admins_1 || "1 admin user", t2.paywall_feat_students_20 || "Up to 20 active students"],
+            featured: false
+          },
+          {
+            key: "intermedio",
+            name: t2.paywall_plan_intermedio || "Intermedio",
+            tier: t2.paywall_plan_intermedio_tier || "Professional",
+            price: t2.paywall_price_intermedio || "MX$1,099",
+            desc: t2.paywall_plan_intermedio_desc || "For growing academies with fewer than 100 active students.",
+            extra: [t2.paywall_feat_admins_3 || "3 admin users", t2.paywall_feat_students_100 || "Up to 100 active students"],
+            featured: true
+          },
+          {
+            key: "avanzado",
+            name: t2.paywall_plan_avanzado || "Avanzado",
+            tier: t2.paywall_plan_avanzado_tier || "Advanced",
+            price: t2.paywall_price_avanzado || "MX$1,499",
+            desc: t2.paywall_plan_avanzado_desc || "For large academies with more than 100 active students.",
+            extra: [t2.paywall_feat_admins_10 || "10 admin users", t2.paywall_feat_students_unlimited || "100+ active students"],
+            featured: false
+          }
+        ];
+        const period = t2.paywall_price_period || "/ month";
+        const fromLabel = t2.paywall_price_avanzado_from || "from";
+        const popularLabel = t2.paywall_most_popular || "Most popular";
+        const ctaLabel = t2.paywall_cta || "Get started";
+        const renderPlan = (plan) => {
+          const isFeatured = plan.featured;
+          const cardBg = isFeatured ? "linear-gradient(155deg,#0071e3 0%,#5e5ce6 100%)" : "var(--bg-card)";
+          const cardText = isFeatured ? "#ffffff" : "var(--text-primary)";
+          const cardMuted = isFeatured ? "rgba(255,255,255,0.62)" : "var(--text-secondary)";
+          const cardBorder = isFeatured ? "transparent" : "var(--border)";
+          const dividerColor = isFeatured ? "rgba(255,255,255,0.15)" : "var(--border)";
+          const checkBg = isFeatured ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.05)";
+          const checkColor = isFeatured ? "#ffffff" : "var(--text-primary)";
+          const btnBg = isFeatured ? "rgba(255,255,255,0.18)" : "var(--text-primary)";
+          const btnText = isFeatured ? "#ffffff" : "var(--bg-body)";
+          const btnHoverBg = isFeatured ? "rgba(255,255,255,0.26)" : "var(--text-primary)";
+          const shadow = isFeatured ? "0 20px 60px rgba(0,113,227,0.35)" : "0 2px 12px rgba(0,0,0,0.04)";
+          const allFeatures = [...commonFeatures, ...plan.extra];
+          return `<div style="
+                    background:${cardBg};color:${cardText};
+                    border-radius:22px;border:1px solid ${cardBorder};
+                    padding:2rem 1.75rem 1.75rem;
+                    display:flex;flex-direction:column;
+                    box-shadow:${shadow};
+                    position:relative;
+                    transition:box-shadow 0.25s;
+                " onmouseover="this.style.boxShadow='${isFeatured ? "0 28px 80px rgba(0,0,0,0.28)" : "0 8px 30px rgba(0,0,0,0.09)"}'"
+                   onmouseout="this.style.boxShadow='${shadow}'">
+
+                ${isFeatured ? `
+                <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--system-blue,#007aff);color:white;font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 14px;border-radius:0 0 12px 12px;white-space:nowrap;">
+                    ${popularLabel}
+                </div>` : ""}
+
+                <!-- Tier + Name -->
+                <div style="margin-bottom:0.2rem;margin-top:${isFeatured ? "1rem" : "0"};">
+                    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${cardMuted};margin-bottom:6px;">${plan.tier}</div>
+                    <div style="font-size:26px;font-weight:800;letter-spacing:-1px;color:${cardText};line-height:1;">${plan.name}</div>
+                </div>
+
+                <!-- Price -->
+                <div style="display:flex;align-items:baseline;gap:5px;margin:1.1rem 0 0.2rem;">
+                    ${plan.key === "avanzado" ? `<span style="font-size:13px;font-weight:500;color:${cardMuted};margin-right:2px;">${fromLabel}</span>` : ""}
+                    <span style="font-size:42px;font-weight:800;letter-spacing:-2px;color:${cardText};line-height:1;">${plan.price}</span>
+                    <span style="font-size:13px;font-weight:500;color:${cardMuted};margin-bottom:2px;">${period}</span>
+                </div>
+
+                <!-- Desc -->
+                <div style="font-size:13px;color:${cardMuted};line-height:1.55;margin:0.9rem 0 1.2rem;padding-bottom:1.2rem;border-bottom:1px solid ${dividerColor};">
+                    ${plan.desc}
+                </div>
+
+                <!-- Features -->
+                <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:1.6rem;">
+                    ${allFeatures.map((f) => `
+                    <div style="display:flex;align-items:center;gap:11px;">
+                        <div style="width:19px;height:19px;border-radius:50%;background:${checkBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i data-lucide="check" size="10" style="color:${checkColor};stroke-width:3;"></i>
+                        </div>
+                        <span style="font-size:13.5px;color:${cardMuted};font-weight:500;line-height:1.3;">${f}</span>
+                    </div>`).join("")}
+                </div>
+
+                <!-- CTA -->
+                <button type="button" onclick="window.startCheckout('${plan.key}')" id="paywall-btn-${plan.key}"
+                    style="width:100%;height:50px;border-radius:14px;border:none;cursor:pointer;
+                        background:${btnBg};color:${btnText};
+                        font-size:15px;font-weight:700;letter-spacing:-0.2px;
+                        transition:background 0.2s,opacity 0.2s;"
+                    onmouseover="this.style.background='${btnHoverBg}'"
+                    onmouseout="this.style.background='${btnBg}'">
+                    ${ctaLabel}
+                </button>
+            </div>`;
+        };
+        return `
+        <div style="min-height:calc(100dvh - 80px);display:flex;flex-direction:column;align-items:center;padding:3rem 1.25rem 5rem;box-sizing:border-box;">
+
+            <!-- Header -->
+            <div style="text-align:center;margin-bottom:2.8rem;">
+                <img src="logo.png" alt="Bailadmin" style="width:68px;height:68px;border-radius:20px;box-shadow:0 6px 24px rgba(0,0,0,0.12);margin-bottom:1.25rem;display:block;margin-left:auto;margin-right:auto;">
+                <div style="font-size:30px;font-weight:800;letter-spacing:-1.2px;color:var(--text-primary);line-height:1.1;margin-bottom:0.5rem;">${t2.paywall_title || "Simple, transparent pricing"}</div>
+                <div style="font-size:16px;color:var(--text-secondary);font-weight:400;line-height:1.5;max-width:400px;margin:0 auto;">
+                    ${school?.name ? escapeHtml(school.name) + " \u2014 " : ""}${t2.paywall_subtitle || "Everything you need to run your academy."}
+                </div>
+                ${school?.billing_status ? `
+                <div style="display:inline-flex;align-items:center;gap:7px;background:var(--system-gray6);border:1px solid var(--border);padding:6px 16px;border-radius:20px;margin-top:1.2rem;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
+                    <span style="font-size:12.5px;font-weight:600;color:var(--text-secondary);">${t2.paywall_status_label || "Billing status"}: <span style="color:${statusColor};">${statusLabel}</span></span>
+                </div>` : ""}
+            </div>
+
+            <!-- Plan grid \u2014 3 columns on desktop, stacks on mobile -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;width:100%;max-width:920px;align-items:start;">
+                ${plans.map(renderPlan).join("")}
+            </div>
+
+            <div id="paywall-msg" style="margin-top:1.8rem;font-size:13px;color:var(--text-secondary);min-height:20px;text-align:center;"></div>
+        </div>`;
+      }, renderSchoolSelection = function() {
         const schools = state.schools || [];
         const hasSchools = schools.length > 0;
         const triggerLabel = state.currentSchool?.name || (state.loading ? t2.loading_schools : t2.search_school_placeholder || t2.select_school_placeholder);
@@ -6281,6 +6606,10 @@
                                             <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${t2.school_on_discovery || "On discovery"}</span>
                                             <button type="button" onclick="window.toggleSchoolDiscoveryVisible('${escapeHtml(s.id)}', ${s.discovery_visible !== false})" title="${(t2.school_on_discovery || "On discovery").replace(/"/g, "&quot;")}" style="width: 48px; height: 28px; border-radius: 14px; border: none; cursor: pointer; background: ${s.discovery_visible !== false ? "var(--system-blue)" : "var(--system-gray5)"}; transition: background 0.2s; position: relative; flex-shrink: 0;"><span style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: white; top: 3px; left: ${s.discovery_visible !== false ? "23px" : "3px"}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
                                         </div>
+                                        <div class="dev-school-toggle-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; background: var(--system-gray6); border-radius: 12px; min-width: 140px;">
+                                            <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">Paywall</span>
+                                            <button type="button" onclick="window.toggleSchoolPaywall('${escapeHtml(s.id)}', ${s.paywall_enabled === true})" title="Toggle paywall enforcement" style="width: 48px; height: 28px; border-radius: 14px; border: none; cursor: pointer; background: ${s.paywall_enabled === true ? "var(--system-orange, #ff9500)" : "var(--system-gray5)"}; transition: background 0.2s; position: relative; flex-shrink: 0;"><span style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: white; top: 3px; left: ${s.paywall_enabled === true ? "23px" : "3px"}; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span></button>
+                                        </div>
                                         ` : ""}
                                         <div style="font-size: 11px; font-weight: 800; color: var(--system-blue); background: rgba(0, 122, 255, 0.08); padding: 5px 12px; border-radius: 14px; letter-spacing: 0.02em; border: 1px solid rgba(0, 122, 255, 0.1);">
                                             ${schoolStudents} ${t2.dev_students_label.toUpperCase()}
@@ -6297,6 +6626,16 @@
                                     <i data-lucide="shield" size="14" style="color: var(--system-blue); opacity: 0.8;"></i>
                                     <div style="font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
                                         <span style="font-weight: 700; color: var(--text-primary); opacity: 0.7;">${t2.dev_admins_label}:</span> ${schoolAdmins || "N/A"}
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--system-gray6); border-radius: 16px; border: 1px solid rgba(0,0,0,0.02);">
+                                    <i data-lucide="credit-card" size="14" style="color: ${s.billing_status === "active" || s.billing_status === "trialing" ? "var(--system-green)" : s.billing_status ? "var(--system-orange, #ff9500)" : "var(--text-secondary)"}; opacity: 0.8; flex-shrink: 0;"></i>
+                                    <div style="font-size: 13px; color: var(--text-secondary); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="font-weight: 700; color: var(--text-primary); opacity: 0.7;">Billing:</span>
+                                        ${s.billing_status ? `<span style="font-weight: 600; margin-left: 4px; color: ${s.billing_status === "active" || s.billing_status === "trialing" ? "var(--system-green)" : "var(--system-orange, #ff9500)"};">${s.billing_status}</span>` : '<span style="opacity: 0.4; margin-left: 4px;">no subscription</span>'}
+                                        ${s.billing_plan_key ? `<span style="margin-left: 8px; font-weight: 600; opacity: 0.8;">${s.billing_plan_key}</span>` : ""}
+                                        ${s.billing_currency ? `<span style="margin-left: 4px; opacity: 0.5;">${s.billing_currency}</span>` : ""}
+                                        ${s.paywall_enabled ? `<span style="margin-left: 8px; font-size: 10px; font-weight: 700; color: var(--system-orange, #ff9500); background: rgba(255,149,0,0.12); padding: 1px 6px; border-radius: 6px;">PAYWALL ON</span>` : ""}
                                     </div>
                                 </div>
                                 <div class="dev-school-card-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
@@ -7909,12 +8248,14 @@
           const isPT = state.currentSchool?.profile_type === "private_teacher";
           const hasDualScanMode = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
           const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
-          const groupVal = eff.groupUnlimited ? "\u221E" : eff.group ?? 0;
+          const groupEffective = eff.group ?? 0;
+          const groupVal = eff.groupUnlimited ? "\u221E" : String(Math.max(0, groupEffective));
           const parts = [];
-          parts.push({ label: t2.group_classes_remaining || "Group", value: String(groupVal) });
+          parts.push({ label: t2.group_classes_remaining || "Group", value: groupVal });
           if (hasDualScanMode) parts.push({ label: t2.private_classes_remaining || "Private", value: String(eff.private) });
           if (hasEventsEnabled) parts.push({ label: t2.events_remaining || "Events", value: String(eff.event) });
-          if (parts.length === 1 && (eff.groupUnlimited ? 0 : eff.group ?? 0) <= 0) {
+          const groupNum = eff.groupUnlimited ? 1 : Math.max(0, groupEffective);
+          if (parts.length === 1 && groupNum <= 0) {
             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t2.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
           }
           if (parts.length === 1) {
@@ -7928,7 +8269,10 @@
           const eff = getEffectiveBalances(state.currentUser, now);
           const isPT = state.currentSchool?.profile_type === "private_teacher";
           const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
-          const hasGroupLeft = eff.groupUnlimited || eff.group != null && eff.group > 0;
+          const classRegEnabled = state.currentSchool?.class_registration_enabled === true;
+          const futureRegCount = classRegEnabled && Array.isArray(state.studentRegistrations) ? state.studentRegistrations.length : 0;
+          const groupAvailable = eff.groupUnlimited ? 1 : eff.group != null ? Math.max(0, (eff.group ?? 0) - futureRegCount) : 0;
+          const hasGroupLeft = eff.groupUnlimited || groupAvailable > 0;
           const hasPrivateLeft = eff.private > 0;
           const hasEventsLeft = hasEventsEnabled && eff.event > 0;
           const noClassesLeft = isPT ? !hasPrivateLeft && !hasEventsLeft : !hasGroupLeft && !hasEventsLeft;
@@ -8210,6 +8554,8 @@
             </div>
             <div style="height: 80px;"></div>
         `;
+      } else if (view.startsWith("admin-") && !state.isPlatformDev && !isAcademyAllowed(state.currentSchool)) {
+        html += renderPaywallCard(state.currentSchool);
       } else if (view === "admin-students") {
         const comps = Array.isArray(state.competitions) ? state.competitions : [];
         const defaultComp = comps.find((c) => c.is_active) || comps.sort((a, b) => new Date(b.starts_at || 0) - new Date(a.starts_at || 0))[0] || null;
@@ -8432,6 +8778,29 @@
           const prevMonth = viewMonthNum === 1 ? viewYear - 1 + "-12" : viewYear + "-" + String(viewMonthNum - 1).padStart(2, "0");
           const nextMonth = viewMonthNum === 12 ? viewYear + 1 + "-01" : viewYear + "-" + String(viewMonthNum + 1).padStart(2, "0");
           const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.length, 0);
+          const locale = state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US";
+          const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+          const getWeekdayName = (dow) => new Date(2024, 0, dow === 0 ? 7 : dow).toLocaleDateString(locale, { weekday: "long" });
+          const dayGroups = {};
+          groupedArr.forEach((g) => {
+            const dow = (/* @__PURE__ */ new Date(g.class_date + "T00:00:00")).getDay();
+            if (!dayGroups[dow]) dayGroups[dow] = [];
+            dayGroups[dow].push(g);
+          });
+          state.adminRegSegmentExpanded = state.adminRegSegmentExpanded || {};
+          const isAure2 = state.currentSchool?.id === AURE_SCHOOL_ID;
+          state.adminRegTab = state.adminRegTab || "registered";
+          const pendingList = (weekRegs || []).filter((r) => r.status === "pending").sort((a, b) => (a.class_date || "").localeCompare(b.class_date || "") || (a.class_time || "").localeCompare(b.class_time || "") || (a.student_name || "").localeCompare(b.student_name || ""));
+          const getLevelLabel = (lev) => !lev || lev === "" ? t2.aure_level_not_set || "Not set" : lev === "principiante" ? t2.aure_level_principiante || "Principiante" : lev === "avanzada" ? t2.aure_level_avanzada || "Avanzada" : lev;
+          const renderStudentRow = (s) => {
+            const statusIcon = s.status === "attended" ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === "no_show" ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === "cancelled" ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : s.status === "pending" ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
+            const statusLabel = s.status === "attended" ? t2.attended : s.status === "no_show" ? t2.auto_deducted || "No show" : s.status === "cancelled" ? t2.cancelled || "Cancelled" : s.status === "pending" ? t2.aure_pending_badge || "Pending" : t2.registered;
+            const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t2.monthly_badge || "Monthly") + "</span>" : "";
+            const displayName = (state.students || []).find((st) => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || "\u2014";
+            const rowStyle = s.status === "cancelled" ? " opacity: 0.7;" : "";
+            const pendingActions = isAure2 && s.status === "pending" ? `<span style="margin-left: 6px;"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t2.aure_approve || "Approve"}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t2.aure_reject || "Reject"}</button></span>` : "";
+            return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>${pendingActions}</div>`;
+          };
           return `
                     <div class="admin-reg-section ${state.adminRegExpanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
                         <div class="admin-reg-header" onclick="toggleExpandableNoRender('adminReg')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border);">
@@ -8451,51 +8820,105 @@
                                 <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-transform: capitalize;">${monthLabel}</span>
                                 <button type="button" onclick="event.stopPropagation(); state.adminRegMonth='${nextMonth}'; renderView();" style="background: var(--system-gray6); border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);" aria-label="${t2.next || "Next"}"><i data-lucide="chevron-right" size="20"></i></button>
                             </div>
-                            ${groupedArr.length === 0 ? `
-                                <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 0.85rem;">
-                                    <i data-lucide="inbox" size="24" style="opacity: 0.2; margin-bottom: 0.3rem;"></i>
-                                    <div>${t2.no_registrations_this_month || t2.no_registrations_yet}</div>
+                            ${isAure2 ? `
+                            <div class="admin-reg-tabs">
+                                <button type="button" class="admin-reg-tab ${state.adminRegTab === "registered" ? "active" : ""}" onclick="state.adminRegTab='registered'; renderView();">${t2.admin_reg_tab_registered || "Registered"}</button>
+                                <button type="button" class="admin-reg-tab ${state.adminRegTab === "requested" ? "active" : ""}" onclick="state.adminRegTab='requested'; renderView();">${t2.admin_reg_tab_requested || "Requested"}</button>
+                            </div>
+                            ` : ""}
+                            ${isAure2 && state.adminRegTab === "requested" ? `
+                            <div class="admin-reg-requested-wrap">
+                                ${state.adminRegFeedback ? `<div class="admin-reg-feedback admin-reg-feedback-${state.adminRegFeedback.type}"><i data-lucide="${state.adminRegFeedback.type === "accepted" ? "check-circle" : "x-circle"}" size="18"></i><span>${state.adminRegFeedback.type === "accepted" ? t2.aure_request_accepted || "Request accepted." : t2.aure_request_denied || "Request denied."}</span></div>` : ""}
+                            <div class="admin-reg-requested-list">
+                                ${pendingList.length === 0 ? `
+                                <div class="admin-reg-empty">
+                                    <i data-lucide="inbox" size="24" class="admin-reg-empty-icon"></i>
+                                    <div class="admin-reg-empty-text">${t2.no_pending_requests || "No pending requests"}</div>
+                                    <div class="admin-reg-empty-subtitle">${t2.no_pending_requests_subtitle || ""}</div>
                                 </div>
-                            ` : groupedArr.map((g) => {
-            const dateObj = /* @__PURE__ */ new Date(g.class_date + "T00:00:00");
-            const dateLabel = window.formatShortDate(dateObj, state.language);
-            const maxCap = (state.classes || []).find((cl) => cl.id === g.students[0]?.class_id)?.max_capacity;
-            const registeredCount = g.students.filter((s) => s.status === "registered" || s.status === "pending").length;
-            const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
-            const registeredStudents = g.students.filter((s) => s.status === "registered" || s.status === "attended" || s.status === "no_show" || s.status === "pending");
-            const cancelledStudents = g.students.filter((s) => s.status === "cancelled");
-            const cardKey = (g.students[0]?.class_id || "") + "_" + (g.class_date || "");
-            const cancelledExpanded = state.adminRegCancelledExpanded && state.adminRegCancelledExpanded[cardKey];
-            const isAure2 = state.currentSchool?.id === AURE_SCHOOL_ID;
-            const renderStudentRow = (s) => {
-              const statusIcon = s.status === "attended" ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === "no_show" ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === "cancelled" ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : s.status === "pending" ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
-              const statusLabel = s.status === "attended" ? t2.attended : s.status === "no_show" ? t2.auto_deducted || "No show" : s.status === "cancelled" ? t2.cancelled || "Cancelled" : s.status === "pending" ? t2.aure_pending_badge || "Pending" : t2.registered;
-              const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t2.monthly_badge || "Monthly") + "</span>" : "";
-              const displayName = (state.students || []).find((st) => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || "\u2014";
-              const rowStyle = s.status === "cancelled" ? " opacity: 0.7;" : "";
-              const pendingActions = isAure2 && s.status === "pending" ? `<span style="margin-left: 6px;"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t2.aure_approve || "Approve"}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t2.aure_reject || "Reject"}</button></span>` : "";
-              return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>${pendingActions}</div>`;
-            };
+                                ` : pendingList.map((r) => {
+            const student = (state.students || []).find((st) => String(st.id) === String(r.student_id));
+            const level = student?.level;
+            const levelLabel = getLevelLabel(level);
+            const displayName = student?.name || r.student_name || r.student_id || "\u2014";
+            const dateLabel = r.class_date ? window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(r.class_date + "T00:00:00"), state.language) : r.class_date : "\u2014";
+            const actionId = state.adminRegActionId;
+            const isApproving = actionId === r.id && state.adminRegActionType === "approving";
+            const isRejecting = actionId === r.id && state.adminRegActionType === "rejecting";
+            const isLoading = isApproving || isRejecting;
             return `
-                                <div class="admin-reg-card">
-                                    <div class="admin-reg-card-header">
-                                        <div>
-                                            <div style="font-size: 0.9rem; font-weight: 700;">${g.class_name}</div>
-                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${dateLabel} \u2022 ${g.class_time}</div>
+                                    <div class="admin-reg-request-card ${isLoading ? "admin-reg-request-card-loading" : ""}">
+                                        <div class="admin-reg-request-main">
+                                            <div class="admin-reg-request-name">${(displayName || "").replace(/</g, "&lt;")}</div>
+                                            <div class="admin-reg-request-meta"><span class="admin-reg-request-level">${t2.aure_level_label || "Level"}: ${(levelLabel || "").replace(/</g, "&lt;")}</span></div>
+                                            <div class="admin-reg-request-class">${(r.class_name || "").replace(/</g, "&lt;")} \xB7 ${dateLabel} \xB7 ${r.class_time || ""}</div>
                                         </div>
-                                        <div class="admin-reg-count">${capLabel}</div>
-                                    </div>
-                                    <div class="admin-reg-students">
-                                        ${registeredStudents.map((s) => renderStudentRow(s)).join("")}
-                                        ${cancelledStudents.length > 0 ? `
-                                        <div class="admin-reg-cancelled-section" style="margin-top: 8px;">
-                                            <button type="button" class="admin-reg-cancelled-toggle" onclick="state.adminRegCancelledExpanded=state.adminRegCancelledExpanded||{}; state.adminRegCancelledExpanded['${cardKey}']=!state.adminRegCancelledExpanded['${cardKey}']; renderView();" style="display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 0; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); background: none; border: none; cursor: pointer; text-align: left;">
-                                                <i data-lucide="chevron-${cancelledExpanded ? "up" : "down"}" size="14"></i>
-                                                ${t2.cancelled || "Cancelled"} (${cancelledStudents.length})
-                                            </button>
-                                            ${cancelledExpanded ? `<div class="admin-reg-cancelled-list" style="padding-left: 4px;">${cancelledStudents.map((s) => renderStudentRow(s)).join("")}</div>` : ""}
+                                        <div class="admin-reg-request-actions">
+                                            ${isLoading ? `<span class="admin-reg-request-loading"><i data-lucide="loader-2" size="16" class="spin"></i> ${isApproving ? t2.aure_accepting || "Accepting\u2026" : t2.aure_rejecting || "Rejecting\u2026"}</span>` : `<button type="button" class="admin-reg-request-btn accept" onclick="event.stopPropagation(); window.approveClaseSuelta('${r.id}')">${t2.aure_approve || "Approve"}</button>
+                                            <button type="button" class="admin-reg-request-btn decline" onclick="event.stopPropagation(); window.rejectClaseSuelta('${r.id}')">${t2.aure_reject || "Reject"}</button>`}
                                         </div>
-                                        ` : ""}
+                                    </div>`;
+          }).join("")}
+                            </div>
+                            </div>
+                            ` : groupedArr.length === 0 ? `
+                                <div class="admin-reg-empty">
+                                    <i data-lucide="inbox" size="24" class="admin-reg-empty-icon"></i>
+                                    <div class="admin-reg-empty-text">${t2.no_registrations_this_month || t2.no_registrations_yet}</div>
+                                </div>
+                            ` : WEEKDAY_ORDER.map((dow) => {
+            const dayOccurrences = dayGroups[dow] || [];
+            if (dayOccurrences.length === 0) return "";
+            const dayName = getWeekdayName(dow);
+            const dayTotal = dayOccurrences.reduce((sum, g) => sum + g.students.length, 0);
+            return `
+                                <div class="admin-reg-day-box">
+                                    <div class="admin-reg-day-title">${dayName}</div>
+                                    <div class="admin-reg-day-summary">${dayOccurrences.length} ${dayOccurrences.length === 1 ? t2.date_label || "date" : t2.dates_label || "dates"}, ${(t2.registered_count || "{n} registered").replace("{n}", dayTotal)}</div>
+                                    <div class="admin-reg-segments">
+                                        ${dayOccurrences.map((g) => {
+              const dateObj = /* @__PURE__ */ new Date(g.class_date + "T00:00:00");
+              const dateShort = dateObj.toLocaleDateString(locale, { day: "numeric", month: "short" });
+              const dateLabel = window.formatShortDate(dateObj, state.language);
+              const maxCap = (state.classes || []).find((cl) => cl.id === g.students[0]?.class_id)?.max_capacity;
+              const registeredCount = g.students.filter((s) => s.status === "registered" || s.status === "pending").length;
+              const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
+              const spotsLeft = maxCap != null ? Math.max(0, maxCap - registeredCount) : null;
+              const registeredStudents = g.students.filter((s) => s.status === "registered" || s.status === "attended" || s.status === "no_show" || s.status === "pending");
+              const cancelledStudents = g.students.filter((s) => s.status === "cancelled");
+              const cardKey = (g.students[0]?.class_id || "") + "_" + (g.class_date || "");
+              const segmentExpanded = state.adminRegSegmentExpanded[cardKey];
+              const cancelledExpanded = state.adminRegCancelledExpanded && state.adminRegCancelledExpanded[cardKey];
+              return `
+                                            <div class="admin-reg-segment ${segmentExpanded ? "expanded" : ""}">
+                                                <button type="button" class="admin-reg-segment-header" onclick="state.adminRegSegmentExpanded=state.adminRegSegmentExpanded||{}; state.adminRegSegmentExpanded['${cardKey}']=!state.adminRegSegmentExpanded['${cardKey}']; renderView();">
+                                                    <div class="admin-reg-segment-left">
+                                                        <span class="admin-reg-segment-date">${dateShort}</span>
+                                                        <span class="admin-reg-segment-name">${(g.class_name || "").replace(/</g, "&lt;")}</span>
+                                                        <span class="admin-reg-segment-time">${g.class_time || ""}</span>
+                                                    </div>
+                                                    <div class="admin-reg-segment-right">
+                                                        <span class="admin-reg-segment-count">${capLabel}</span>
+                                                        ${spotsLeft !== null ? `<span class="admin-reg-segment-spots">${(t2.spots_left || "{n} spots left").replace("{n}", spotsLeft)}</span>` : ""}
+                                                        <i data-lucide="chevron-${segmentExpanded ? "down" : "right"}" size="18" class="admin-reg-segment-chevron"></i>
+                                                    </div>
+                                                </button>
+                                                <div class="admin-reg-segment-body" style="display: ${segmentExpanded ? "" : "none"};">
+                                                    <div class="admin-reg-students">
+                                                        ${registeredStudents.map((s) => renderStudentRow(s)).join("")}
+                                                        ${cancelledStudents.length > 0 ? `
+                                                        <div class="admin-reg-cancelled-section">
+                                                            <button type="button" class="admin-reg-cancelled-toggle" onclick="event.stopPropagation(); state.adminRegCancelledExpanded=state.adminRegCancelledExpanded||{}; state.adminRegCancelledExpanded['${cardKey}']=!state.adminRegCancelledExpanded['${cardKey}']; renderView();">
+                                                                <i data-lucide="chevron-${cancelledExpanded ? "up" : "down"}" size="14"></i>
+                                                                ${t2.cancelled || "Cancelled"} (${cancelledStudents.length})
+                                                            </button>
+                                                            ${cancelledExpanded ? `<div class="admin-reg-cancelled-list">${cancelledStudents.map((s) => renderStudentRow(s)).join("")}</div>` : ""}
+                                                        </div>
+                                                        ` : ""}
+                                                    </div>
+                                                </div>
+                                            </div>`;
+            }).join("")}
                                     </div>
                                 </div>`;
           }).join("")}
@@ -8719,8 +9142,14 @@
             <div class="ios-list">
                 ${pending.length > 0 ? pending.map((req) => {
           const studentName = req.external_student_name || req.students && req.students.name || state.students.find((s) => s.id === req.student_id)?.name || t2.unknown_student;
+          const payActionId = state.paymentRequestActionId;
+          const payActionStatus = state.paymentRequestActionStatus;
+          const isThisProcessing = payActionId === req.id;
+          const isApproving = isThisProcessing && payActionStatus === "approved";
+          const isRejecting = isThisProcessing && payActionStatus === "rejected";
+          const payLoading = isApproving || isRejecting;
           return `
-                        <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
+                        <div class="ios-list-item ${payLoading ? "admin-reg-request-card-loading" : ""}" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
                             <div style="display: flex; gap: 12px; align-items: center;">
                                 <div style="width: 40px; height: 40px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-secondary);">
                                     ${studentName.charAt(0).toUpperCase()}
@@ -8736,12 +9165,13 @@
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                ${payLoading ? `<span class="admin-reg-request-loading" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px;"><i data-lucide="loader-2" size="16" class="spin"></i> ${isApproving ? t2.aure_accepting || "Accepting\u2026" : t2.aure_rejecting || "Rejecting\u2026"}</span>` : `
                                 <button class="btn-secondary" onclick="processPaymentRequest(${req.id}, 'rejected')" style="background: rgba(255, 59, 48, 0.1); color: var(--system-red); border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
                                     ${t2.reject}
                                 </button>
                                 <button class="btn-primary" onclick="processPaymentRequest(${req.id}, 'approved')" style="background: var(--system-green); color: white; border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
                                     ${t2.approve}
-                                </button>
+                                </button>`}
                             </div>
                         </div>
                     `;
@@ -9587,24 +10017,37 @@
                         </div>
                         <div class="notifications-col-preview">
                             <div>${t2.notifications_preview_label || "Preview"}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">
-                                <div>${t2.from_label || "From"}: Bailadmin &lt;noreply@bailadmin.lat&gt;</div>
-                                <div>${t2.reply_to_label || "Reply-To"}: ${(state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes("@admins.bailadmin.local") && !state.currentAdmin.email.includes("@temp.bailadmin.local") ? state.currentAdmin.email : null) || "\u2014").replace(/</g, "&lt;")}</div>
-                                <div>${t2.sent_by_label || "Sent by"}: ${(state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes("@admins.bailadmin.local") && !state.currentAdmin.email.includes("@temp.bailadmin.local") ? state.currentAdmin.email : null) || "\u2014").replace(/</g, "&lt;")}</div>
-                                <div id="notifications-preview-subject-line">${t2.notifications_subject_placeholder || "Subject"}: ${(state.notificationsSubject || "\u2014").replace(/</g, "&lt;")}</div>
-                            </div>
-                            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">${t2.notifications_preview_message_label || "Message preview"}</div>
-                            <div id="notifications-preview-body" style="border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; background: var(--bg-body); font-size: 14px; color: var(--text-primary);">${(() => {
-          const logoUrl = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || "").trim();
-          const logoHtml = logoUrl ? '<img src="' + String(logoUrl).replace(/"/g, "&quot;").replace(/</g, "&lt;") + '" alt="" style="max-width:200px;max-height:80px;display:block;margin-bottom:12px;" />' : "";
+                            <div class="notif-email-frame">
+                                <div class="notif-email-envelope">
+                                    <div class="notif-sender-row">
+                                        <div class="notif-sender-avatar">B</div>
+                                        <div class="notif-sender-info">
+                                            <div class="notif-sender-name">Bailadmin</div>
+                                            <div class="notif-sender-addr">noreply@bailadmin.lat</div>
+                                        </div>
+                                    </div>
+                                    <div class="notif-meta-row">
+                                        <span class="notif-meta-label">${t2.reply_to_label || "Reply-To"}</span>
+                                        <span class="notif-meta-value">${(state._adminEmail || state.auth?.user?.email || (state.currentAdmin?.email && !state.currentAdmin.email.includes("@admins.bailadmin.local") && !state.currentAdmin.email.includes("@temp.bailadmin.local") ? state.currentAdmin.email : null) || "\u2014").replace(/</g, "&lt;")}</span>
+                                    </div>
+                                </div>
+                                <div class="notif-subject-bar">
+                                    <span id="notifications-preview-subject-line" class="notif-subject-text">${(state.notificationsSubject || "\u2014").replace(/</g, "&lt;")}</span>
+                                </div>
+                                <div id="notifications-preview-body" class="notif-email-body">${(() => {
+          const lu = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || "").trim();
+          const lh = lu ? '<img src="' + String(lu).replace(/"/g, "&quot;").replace(/</g, "&lt;") + '" alt="" class="notif-preview-logo" />' : "";
+          const subj = (state.notificationsSubject || "").trim();
+          const sh = subj ? '<div class="notif-preview-subject">' + subj.replace(/</g, "&lt;") + "</div>" : "";
           const bodyRaw = state.notificationsBody || "";
-          const bodyHtml = bodyRaw.trim() ? window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, "&lt;") : '<span class="notifications-preview-empty">' + (t2.notifications_preview_empty || "Your message will appear here.") + "</span>";
-          return logoHtml + bodyHtml;
+          const bh = bodyRaw.trim() ? window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, "&lt;") : '<span class="notifications-preview-empty">' + (t2.notifications_preview_empty || "Your message will appear here.") + "</span>";
+          return lh + sh + '<div class="notif-preview-body-text">' + bh + "</div>";
         })()}</div>
-                            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
+                            </div>
+                            <div class="notif-actions">
                                 <button type="button" id="notifications-send-test-btn" class="notifications-send-test-btn" onclick="window.sendNotificationsTest()">${t2.send_test || "Send test email to myself"}</button>
                                 <button type="button" id="notifications-send-btn" class="notifications-send-btn" onclick="window.sendNotificationsToRecipients()" ${!state.notificationsSubject || state.notificationsRecipientMode === "selected" && (state.notificationsSelectedIds || []).length === 0 ? "disabled" : ""}>${t2.send_to_recipients || "Send to recipients"}</button>
-                                <span id="notifications-send-msg" style="font-size: 12px; color: var(--text-secondary); min-height: 1.2em;"></span>
+                                <span id="notifications-send-msg"></span>
                             </div>
                         </div>
                     </div>
@@ -10442,7 +10885,17 @@
       console.error("Registration error:", e);
       const msg = e && e.message || "";
       const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
-      alert(isNoMembership ? t2("no_active_membership_register") : msg || t2("register_error"));
+      if (isNoMembership) {
+        alert(t2("no_active_membership_register"));
+        return;
+      }
+      const singleMatch = msg.match(/You don['']t have enough classes in your package\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
+      if (singleMatch) {
+        const [, effective, registered, available] = singleMatch;
+        alert((t2("not_enough_classes_message") || msg).replace(/{effective}/g, effective).replace(/{registered}/g, registered).replace(/{available}/g, available));
+        return;
+      }
+      alert(msg || t2("register_error"));
     }
   };
   window.registerForClassMonthly = async (classId, className, optionalAnchorDateStr) => {
@@ -10492,7 +10945,23 @@
       console.error("Monthly registration error:", e);
       const msg = e && e.message || "";
       const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
-      alert(isNoMembership ? t2("no_active_membership_register") : msg || t2("register_error"));
+      if (isNoMembership) {
+        alert(t2("no_active_membership_register"));
+        return;
+      }
+      const monthlyMatch = msg.match(/You don['']t have enough classes in your package to sign up for (\d+) more classes\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
+      if (monthlyMatch) {
+        const [, needNew, effective, registered, available] = monthlyMatch;
+        alert((t2("not_enough_classes_monthly_message") || msg).replace(/{need_new}/g, needNew).replace(/{effective}/g, effective).replace(/{registered}/g, registered).replace(/{available}/g, available));
+        return;
+      }
+      const singleMatch = msg.match(/You don['']t have enough classes in your package\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
+      if (singleMatch) {
+        const [, effective, registered, available] = singleMatch;
+        alert((t2("not_enough_classes_message") || msg).replace(/{effective}/g, effective).replace(/{registered}/g, registered).replace(/{available}/g, available));
+        return;
+      }
+      alert(msg || t2("register_error"));
     }
   };
   window.registerForClass = async (classId, className, optionalDateStr) => {
@@ -10515,6 +10984,8 @@
       });
       return;
     }
+    const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
+    const singleClassHandler = isAure ? () => window.requestClaseSuelta(classId, className, targetDateStr) : () => window.registerForClassSingle(classId, className, targetDateStr);
     if (window.isMonthlyRegistrationAvailable()) {
       const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
       if (monthlyDates.length > 1) {
@@ -10533,7 +11004,7 @@
           },
           onSecondary: (close) => {
             close();
-            window.registerForClassSingle(classId, className, targetDateStr);
+            singleClassHandler();
           },
           onCancel: (close) => {
             close();
@@ -10550,7 +11021,7 @@
       cancelLabel: t2("cancel"),
       onPrimary: (close) => {
         close();
-        window.registerForClassSingle(classId, className, targetDateStr);
+        singleClassHandler();
       },
       onCancel: (close) => {
         close();
@@ -10602,7 +11073,14 @@
   };
   window.approveClaseSuelta = async (registrationId) => {
     if (!supabaseClient) return;
+    if (state.adminRegActionId) return;
     const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    state.adminRegActionId = registrationId;
+    state.adminRegActionType = "approving";
+    if (typeof renderView === "function") {
+      renderView();
+      if (window.lucide) window.lucide.createIcons();
+    }
     try {
       const { error } = await supabaseClient.rpc("admin_approve_clase_suelta", { p_registration_id: registrationId });
       if (error) throw error;
@@ -10617,28 +11095,65 @@
         });
       }
       await window.loadClassAvailability?.();
+      state.adminRegActionId = null;
+      state.adminRegActionType = null;
+      const viewMonth = state.adminRegMonth || (() => {
+        const n = /* @__PURE__ */ new Date();
+        return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0");
+      })();
+      state.adminWeekRegistrationsByMonth[viewMonth] = void 0;
+      state.adminRegFeedback = { type: "accepted" };
       if (typeof renderView === "function") {
         renderView();
         if (window.lucide) window.lucide.createIcons();
       }
+      setTimeout(() => {
+        state.adminRegFeedback = null;
+        if (typeof renderView === "function") renderView();
+      }, 3e3);
     } catch (e) {
       console.error("Approve error:", e);
+      state.adminRegActionId = null;
+      state.adminRegActionType = null;
+      if (typeof renderView === "function") renderView();
       alert(e && e.message || t2("register_error"));
     }
   };
   window.rejectClaseSuelta = async (registrationId) => {
     if (!supabaseClient) return;
+    if (state.adminRegActionId) return;
     const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    state.adminRegActionId = registrationId;
+    state.adminRegActionType = "rejecting";
+    if (typeof renderView === "function") {
+      renderView();
+      if (window.lucide) window.lucide.createIcons();
+    }
     try {
       const { error } = await supabaseClient.rpc("admin_reject_clase_suelta", { p_registration_id: registrationId });
       if (error) throw error;
       await window.loadClassAvailability?.();
+      state.adminRegActionId = null;
+      state.adminRegActionType = null;
+      const viewMonth = state.adminRegMonth || (() => {
+        const n = /* @__PURE__ */ new Date();
+        return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0");
+      })();
+      state.adminWeekRegistrationsByMonth[viewMonth] = void 0;
+      state.adminRegFeedback = { type: "denied" };
       if (typeof renderView === "function") {
         renderView();
         if (window.lucide) window.lucide.createIcons();
       }
+      setTimeout(() => {
+        state.adminRegFeedback = null;
+        if (typeof renderView === "function") renderView();
+      }, 3e3);
     } catch (e) {
       console.error("Reject error:", e);
+      state.adminRegActionId = null;
+      state.adminRegActionType = null;
+      if (typeof renderView === "function") renderView();
       alert(e && e.message || t2("register_error"));
     }
   };
@@ -10817,8 +11332,9 @@
           alert("Error creating account: " + (signUpError.message || "Try again."));
           return;
         }
+        let authUser = null;
         if (signUpData?.user) {
-          const authUser = signUpData.user;
+          authUser = signUpData.user;
           if (signUpData.session) {
             await supabaseClient.auth.setSession({
               access_token: signUpData.session.access_token,
@@ -10846,7 +11362,7 @@
             }
           }
           if (!studentCreated) {
-            const studentToInsert = { ...newStudent, user_id: authUser.id };
+            const studentToInsert = { ...newStudent, user_id: authUser.id, ...state.currentSchool?.id === AURE_SCHOOL_ID ? { level: "principiante" } : {} };
             const { error: insertError } = await supabaseClient.from("students").insert([studentToInsert]);
             if (!insertError) studentCreated = true;
           }
@@ -10865,6 +11381,13 @@
               newStudent.id = created.id;
               newStudent.email = created.email ?? email;
               studentCreated = true;
+              if (authUser) {
+                await supabaseClient.rpc("link_student_auth", {
+                  p_student_id: created.id,
+                  p_school_id: state.currentSchool.id
+                });
+                newStudent.user_id = authUser.id;
+              }
             }
           }
         }
@@ -11028,13 +11551,23 @@
           password: pass
         });
         if (!authError && authData?.user) {
+          if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+          state.auth.user = authData.user;
+          state.auth.session = authData.session;
           const { data: rowByUser, error: errUser } = await supabaseClient.from("admins").select("*").eq("user_id", authData.user.id).eq("school_id", schoolId).maybeSingle();
           if (!errUser && rowByUser) adminRow = rowByUser;
+          let foundByEmail = false;
           if (!adminRow) {
             const { data: rowByEmail, error: errEmail } = await supabaseClient.from("admins").select("*").eq("school_id", schoolId).ilike("email", email).maybeSingle();
-            if (!errEmail && rowByEmail) adminRow = rowByEmail;
+            if (!errEmail && rowByEmail) {
+              adminRow = rowByEmail;
+              foundByEmail = true;
+            }
           }
-          if (adminRow && !adminRow.user_id) {
+          if (adminRow && foundByEmail) {
+            await supabaseClient.rpc("link_admin_auth_force", { p_school_id: schoolId });
+            adminRow = { ...adminRow, user_id: authData.user.id };
+          } else if (adminRow && !adminRow.user_id) {
             await supabaseClient.rpc("link_admin_auth", { p_school_id: schoolId });
             adminRow = { ...adminRow, user_id: authData.user.id };
           }
@@ -11061,11 +11594,27 @@
             if (!signUpErr && signUpData?.user) {
               const hasIdentity = Array.isArray(signUpData.user.identities) && signUpData.user.identities.length > 0;
               if (hasIdentity) {
+                if (!signUpData.session) {
+                  const { error: siErr } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+                  if (siErr) console.warn("Admin Auth: signUp ok but signIn failed (email confirmation may be required):", siErr?.message);
+                }
                 await supabaseClient.rpc("link_admin_auth", { p_school_id: schoolId });
+                const { data: reSession } = await supabaseClient.auth.getSession();
+                if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                if (reSession?.session?.user) {
+                  state.auth.user = reSession.session.user;
+                  state.auth.session = reSession.session;
+                }
               } else {
                 const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
                 if (!signInAgain) {
                   await supabaseClient.rpc("link_admin_auth", { p_school_id: schoolId });
+                  const { data: reSession } = await supabaseClient.auth.getSession();
+                  if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                  if (reSession?.session?.user) {
+                    state.auth.user = reSession.session.user;
+                    state.auth.session = reSession.session;
+                  }
                 } else {
                   console.warn("Admin Auth: credentials valid but Auth sign-in failed:", signInAgain?.message);
                 }
@@ -11074,8 +11623,40 @@
               const { error: signInAgain } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
               if (!signInAgain) {
                 await supabaseClient.rpc("link_admin_auth", { p_school_id: schoolId });
+                const { data: reSession } = await supabaseClient.auth.getSession();
+                if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                if (reSession?.session?.user) {
+                  state.auth.user = reSession.session.user;
+                  state.auth.session = reSession.session;
+                }
               } else {
-                console.warn("Admin Auth: credentials valid but Auth sign-in failed:", signInAgain?.message);
+                console.warn("Admin Auth: credentials valid but Auth sign-in failed, attempting auth sync:", signInAgain?.message);
+                try {
+                  const { data: syncData, error: syncInvokeErr } = await supabaseClient.functions.invoke("admin-auth-sync", {
+                    body: { email, password: pass, school_id: schoolId }
+                  });
+                  if (syncInvokeErr) {
+                    let syncDetail = syncInvokeErr.message;
+                    try {
+                      const b = await syncInvokeErr.context?.json?.();
+                      if (b?.error) syncDetail = b.error;
+                    } catch (_) {
+                    }
+                    console.warn("Admin Auth sync invoke error:", syncDetail);
+                  } else if (syncData?.access_token) {
+                    await supabaseClient.auth.setSession({ access_token: syncData.access_token, refresh_token: syncData.refresh_token });
+                    const { data: syncSession } = await supabaseClient.auth.getSession();
+                    if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+                    if (syncSession?.session?.user) {
+                      state.auth.user = syncSession.session.user;
+                      state.auth.session = syncSession.session;
+                    }
+                  } else {
+                    console.warn("Admin Auth sync: unexpected response", syncData);
+                  }
+                } catch (syncErr) {
+                  console.warn("Admin Auth sync failed:", syncErr?.message);
+                }
               }
             } else if (signUpErr) {
               console.warn("Admin Auth signUp failed:", signUpErr?.message);
@@ -11093,6 +11674,7 @@
         role: "admin"
       };
       state.isAdmin = true;
+      state._adminEmail = email;
       const cameFromDiscovery = !!state._discoveryOnlyEdit;
       if (state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
         const { data: schoolRow } = await supabaseClient.from("schools").select("active").eq("id", state.currentSchool.id).maybeSingle();
@@ -11389,6 +11971,39 @@ Use one of these:
     }
     await fetchPlatformData();
     renderView();
+  };
+  window.toggleSchoolPaywall = async (schoolId, currentlyEnabled) => {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.rpc("school_set_paywall_enabled", { p_school_id: schoolId, p_enabled: !currentlyEnabled });
+    if (error) {
+      alert("Error: " + (error.message || "Could not update paywall setting."));
+      return;
+    }
+    await fetchPlatformData();
+    renderView();
+  };
+  window.startCheckout = async (planKey) => {
+    const school = state.currentSchool;
+    if (!school) return;
+    const msgEl = document.getElementById("paywall-msg");
+    const _t = typeof window.t === "function" ? window.t : (k) => k;
+    if (msgEl) msgEl.textContent = _t("paywall_redirecting") || "Redirecting to checkout\u2026";
+    try {
+      const { data: { session }, error: sessionErr } = await supabaseClient.auth.getSession();
+      if (sessionErr || !session?.access_token) throw new Error("Not authenticated");
+      const currency = school.currency || "MXN";
+      const { data, error } = await supabaseClient.functions.invoke("stripe-create-checkout", {
+        body: { academyId: school.id, planKey, currency }
+      });
+      if (error) throw new Error(error.message || "Checkout failed");
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data?.error || "No checkout URL returned");
+      }
+    } catch (e) {
+      if (msgEl) msgEl.textContent = e?.message || "Could not start checkout.";
+    }
   };
   window.saveSchoolInfoByPlatform = async (schoolId, btn) => {
     const t2 = typeof window.t === "function" ? window.t : (key) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[key] || key;
@@ -12911,32 +13526,48 @@ School: ${schoolName}`)) return;
     fetchAllData();
   };
   window.processPaymentRequest = async (id, status) => {
+    if (state.paymentRequestActionId) return;
     const req = state.paymentRequests.find((r) => r.id === id);
     if (!req) return;
-    if (supabaseClient) {
-      const { error: rpcError } = await supabaseClient.rpc("update_payment_request_status", { p_request_id: id, p_status: status });
-      if (rpcError) {
-        const { error: tableError } = await supabaseClient.from("payment_requests").update({ status }).eq("id", id);
-        if (tableError) {
-          alert("Error processing: " + (tableError.message || rpcError.message));
-          return;
+    state.paymentRequestActionId = id;
+    state.paymentRequestActionStatus = status;
+    if (typeof renderView === "function") {
+      renderView();
+      if (window.lucide) window.lucide.createIcons();
+    }
+    try {
+      if (supabaseClient) {
+        const { error: rpcError } = await supabaseClient.rpc("update_payment_request_status", { p_request_id: id, p_status: status });
+        if (rpcError) {
+          const { error: tableError } = await supabaseClient.from("payment_requests").update({ status }).eq("id", id);
+          if (tableError) {
+            alert("Error processing: " + (tableError.message || rpcError.message));
+            return;
+          }
+        }
+        req.status = status;
+        saveState();
+        renderView();
+        if (status === "approved" && req.student_id && req.sub_name && req.school_id) {
+          const { error: activateError } = await supabaseClient.rpc("activate_package_for_student", {
+            p_student_id: String(req.student_id),
+            p_sub_name: String(req.sub_name),
+            p_school_id: req.school_id
+          });
+          if (activateError) {
+            await window.activatePackage(req.student_id, req.sub_name);
+          }
         }
       }
-      req.status = status;
-      saveState();
-      renderView();
-      if (status === "approved" && req.student_id && req.sub_name && req.school_id) {
-        const { error: activateError } = await supabaseClient.rpc("activate_package_for_student", {
-          p_student_id: String(req.student_id),
-          p_sub_name: String(req.sub_name),
-          p_school_id: req.school_id
-        });
-        if (activateError) {
-          await window.activatePackage(req.student_id, req.sub_name);
-        }
+      await fetchAllData();
+    } finally {
+      state.paymentRequestActionId = null;
+      state.paymentRequestActionStatus = null;
+      if (typeof renderView === "function") {
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
       }
     }
-    await fetchAllData();
   };
   window.removePaymentRequest = async (id) => {
     const t2 = new Proxy(window.t, {
@@ -12974,7 +13605,11 @@ School: ${schoolName}`)) return;
             <select id="manual-payment-student" class="minimal-input" onchange="window.updateManualPaymentStudentInfo()" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary);">
                 <option value="">\u2014 ${t2("select_student") || "Select student"} \u2014</option>
                 <option value="__external__">${t2("external_student") || "External student"}</option>
-                ${students.map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.email || s.id)}</option>`).join("")}
+                ${students.map((s) => {
+      const label = escapeHtml(s.name || s.email || s.id);
+      const suffix = s.email && s.name ? ` \u2014 ${escapeHtml(s.email)}` : "";
+      return `<option value="${escapeHtml(s.id)}">${label}${suffix}</option>`;
+    }).join("")}
             </select>
         </div>
         <div id="manual-payment-external-name-wrap" style="display: none; margin-bottom: 1rem;">
@@ -13789,9 +14424,17 @@ School: ${schoolName}`)) return;
     if (msgEl) msgEl.textContent = "";
     try {
       const { data, error } = await supabaseClient.functions.invoke("notifications_send", {
-        body: { mode: "test", subject: subject.trim(), body }
+        body: { mode: "test", subject: subject.trim(), body, school_id: state.currentSchool?.id }
       });
-      if (error) throw error;
+      if (error) {
+        let detail = error.message || String(error);
+        try {
+          const body2 = await error.context?.json?.();
+          if (body2?.error) detail = body2.error;
+        } catch (_) {
+        }
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
       if (msgEl) msgEl.textContent = data?.message || (t2("notifications_test_sent") || "Test sent");
     } catch (e) {
@@ -13823,7 +14466,7 @@ School: ${schoolName}`)) return;
     }
     if (msgEl) msgEl.textContent = "";
     try {
-      const payload = { mode: state.notificationsRecipientMode, subject: subject.trim(), body };
+      const payload = { mode: state.notificationsRecipientMode, subject: subject.trim(), body, school_id: state.currentSchool?.id };
       if (state.notificationsRecipientMode === "selected") payload.selected_student_ids = state.notificationsSelectedIds || [];
       const { data, error } = await supabaseClient.functions.invoke("notifications_send", { body: payload });
       if (error) throw error;
@@ -13873,12 +14516,13 @@ School: ${schoolName}`)) return;
     const t2 = typeof window.t === "function" ? window.t : (k) => (DANCE_LOCALES[state.language] || DANCE_LOCALES.en)[k] || k;
     const subject = state.notificationsSubject || "";
     const bodyRaw = state.notificationsBody || "";
-    if (subjEl) subjEl.textContent = (t2("notifications_subject_placeholder") || "Subject") + ": " + (subject.trim() || "\u2014");
+    if (subjEl) subjEl.textContent = subject.trim() || "\u2014";
     if (bodyEl) {
-      const logoUrl = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || "").trim();
-      const logoHtml = logoUrl ? '<img src="' + String(logoUrl).replace(/"/g, "&quot;").replace(/</g, "&lt;") + '" alt="" style="max-width:200px;max-height:80px;display:block;margin-bottom:12px;" />' : "";
-      const bodyHtml = bodyRaw.trim() ? window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, "&lt;") : '<span class="notifications-preview-empty">' + (t2("notifications_preview_empty") || "Your message will appear here.") + "</span>";
-      bodyEl.innerHTML = logoHtml + bodyHtml;
+      const lu = (state.currentSchool?.logo_url || state.adminSettings?.email_logo_url || "").trim();
+      const lh = lu ? '<img src="' + String(lu).replace(/"/g, "&quot;").replace(/</g, "&lt;") + '" alt="" class="notif-preview-logo" />' : "";
+      const sh = subject.trim() ? '<div class="notif-preview-subject">' + subject.replace(/</g, "&lt;") + "</div>" : "";
+      const bh = bodyRaw.trim() ? window.markdownLikeToHtml ? window.markdownLikeToHtml(bodyRaw) : bodyRaw.replace(/</g, "&lt;") : '<span class="notifications-preview-empty">' + (t2("notifications_preview_empty") || "Your message will appear here.") + "</span>";
+      bodyEl.innerHTML = lh + sh + '<div class="notif-preview-body-text">' + bh + "</div>";
     }
     if (sendBtn) sendBtn.disabled = !subject.trim() || state.notificationsRecipientMode === "selected" && (state.notificationsSelectedIds || []).length === 0;
   };
@@ -14974,6 +15618,13 @@ School: ${schoolName}`)) return;
     });
     if (supabaseClient && supabaseClient.auth) {
       supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+          if (session?.user && state.isAdmin) {
+            if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
+            state.auth.user = session.user;
+            state.auth.session = session;
+          }
+        }
         if (event === "SIGNED_OUT" && (state.currentUser || state.isAdmin || state.isPlatformDev)) {
           state.currentUser = null;
           state.isAdmin = false;

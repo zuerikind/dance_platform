@@ -154,8 +154,11 @@ export async function fetchAllData() {
         let studentsQuery;
         if (state.isAdmin || state.isPlatformDev) {
             studentsQuery = supabaseClient.rpc('get_school_students', { p_school_id: sid }).then(r => ({ data: r.data || [], error: r.error }));
-        } else if (state.currentUser && state.currentUser.id) {
-            studentsQuery = supabaseClient.from('students_with_profile').select('*').eq('id', state.currentUser.id);
+        } else if (state.currentUser && state.currentUser.user_id) {
+            studentsQuery = supabaseClient.rpc('get_student_by_user_id', {
+                p_user_id: state.currentUser.user_id,
+                p_school_id: state.currentUser.school_id
+            }).then(r => ({ data: r.data || [], error: r.error }));
         } else {
             studentsQuery = Promise.resolve({ data: [], error: null });
         }
@@ -301,16 +304,32 @@ export async function fetchAllData() {
         if (state.isAdmin && supabaseClient) {
             const { data: sessionData } = await supabaseClient.auth.getSession();
             const uid = sessionData?.session?.user?.id;
+            const sessionEmail = sessionData?.session?.user?.email || state.auth?.user?.email || state._adminEmail || '';
             const admins = state.admins || [];
             state.schoolAdminLinked = !!(uid && admins.some(a => a.user_id === uid));
             state.currentAdmin = admins.find(a => a.user_id === uid) || null;
-            if (!state.currentAdmin && uid && sid) {
+            // Also try matching by session email in case user_id is not yet linked or is stale
+            if (!state.currentAdmin && sessionEmail) {
+                const isFake = e => e.includes('@admins.bailadmin.local') || e.includes('@temp.bailadmin.local');
+                if (!isFake(sessionEmail)) {
+                    state.currentAdmin = admins.find(a => a.email && a.email.toLowerCase() === sessionEmail.toLowerCase()) || null;
+                }
+            }
+            if (!state.currentAdmin && sid) {
                 try {
                     const { data: curAdmin } = await supabaseClient.rpc('get_current_admin', { p_school_id: sid });
                     const row = Array.isArray(curAdmin) && curAdmin.length > 0 ? curAdmin[0] : curAdmin;
                     if (row && typeof row === 'object') state.currentAdmin = row;
                 } catch (_) { /* ignore */ }
             }
+            // Store admin email reliably from all available sources for notifications preview.
+            // Priority: authenticated session email > login-typed email (already in _adminEmail) > DB row email.
+            // Never let a stale DB row email overwrite the real identity of the logged-in admin.
+            const isFakeEmail = e => !e || e.includes('@admins.bailadmin.local') || e.includes('@temp.bailadmin.local');
+            const adminRowEmail = state.currentAdmin?.email || '';
+            state._adminEmail = !isFakeEmail(sessionEmail) ? sessionEmail
+                : !isFakeEmail(adminRowEmail) ? adminRowEmail
+                : '';
         }
         const currentSchoolObj = state.schools.find(s => s.id === sid) || state.currentSchool;
         if (currentSchoolObj?.profile_type === 'private_teacher' && supabaseClient) {
@@ -540,37 +559,19 @@ export async function fetchPlatformData() {
     state.loading = true;
     if (typeof window.renderView === 'function') window.renderView();
     try {
-        const [schools, students, admins, classes, subs] = await Promise.all([
-            supabaseClient.from('schools').select('*').order('name'),
-            supabaseClient.from('students_with_profile').select('*'),
-            supabaseClient.from('admins').select('*'),
-            supabaseClient.from('classes').select('*'),
-            supabaseClient.from('subscriptions').select('*')
-        ]);
+        const { data: rpcData } = await supabaseClient.rpc('get_platform_all_data');
+        const pd = rpcData || {};
         state.platformData = {
-            schools: schools.data || [],
-            students: students.data || [],
-            admins: admins.data || [],
-            classes: classes.data || [],
-            subscriptions: subs.data || [],
-            payment_requests: [],
-            admin_settings: [],
-            platform_admins: []
+            schools:          pd.schools          || [],
+            students:         pd.students         || [],
+            admins:           pd.admins           || [],
+            classes:          pd.classes          || [],
+            subscriptions:    pd.subscriptions    || [],
+            payment_requests: pd.payment_requests || [],
+            admin_settings:   pd.admin_settings   || [],
+            platform_admins:  pd.platform_admins  || []
         };
         if (state.isPlatformDev) {
-            const { data: rpcData } = await supabaseClient.rpc('get_platform_all_data');
-            if (rpcData && typeof rpcData === 'object') {
-                state.platformData = {
-                    schools: Array.isArray(rpcData.schools) ? rpcData.schools : (state.platformData.schools || []),
-                    students: Array.isArray(rpcData.students) ? rpcData.students : (state.platformData.students || []),
-                    admins: Array.isArray(rpcData.admins) ? rpcData.admins : (state.platformData.admins || []),
-                    classes: Array.isArray(rpcData.classes) ? rpcData.classes : (state.platformData.classes || []),
-                    subscriptions: Array.isArray(rpcData.subscriptions) ? rpcData.subscriptions : (state.platformData.subscriptions || []),
-                    payment_requests: Array.isArray(rpcData.payment_requests) ? rpcData.payment_requests : [],
-                    admin_settings: Array.isArray(rpcData.admin_settings) ? rpcData.admin_settings : [],
-                    platform_admins: Array.isArray(rpcData.platform_admins) ? rpcData.platform_admins : []
-                };
-            }
             const { data: sessionData } = await supabaseClient.auth.getSession();
             const uid = sessionData?.session?.user?.id;
             const admins = state.platformData?.platform_admins || [];
