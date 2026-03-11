@@ -9,6 +9,8 @@ import { formatPrice, formatClassTime, getPlanExpiryUseFixedDate } from './utils
 import { parseHashRoute, parseQueryAndHashForView, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
 import { getCapabilities, bootstrapAuth } from './auth.js';
 
+const CALENDLY_FEATURE_ENABLED = false;
+
 if (typeof window !== 'undefined') {
     window.getCapabilities = getCapabilities;
     window.parseHashRoute = parseHashRoute;
@@ -246,6 +248,21 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
         if (isAureSubdomain && !state.currentUser && !state.isAdmin && !state.isPlatformDev) state.currentView = 'auth';
 
+        // Billing return: Stripe redirects to /?billing=cancel or ?billing=success — land back on the platform (admin-settings/paywall)
+        const searchParams = new URLSearchParams(window.location.search);
+        const billingReturn = searchParams.get('billing');
+        if (billingReturn === 'cancel' || billingReturn === 'success') {
+            const academyId = searchParams.get('academy');
+            if (academyId) state.currentSchool = { id: decodeURIComponent(academyId), name: state.currentSchool?.name || 'School' };
+            state.currentView = 'admin-settings';
+            searchParams.delete('billing');
+            searchParams.delete('academy');
+            searchParams.delete('session_id');
+            const cleanSearch = searchParams.toString();
+            const cleanUrl = (window.location.pathname || '/') + (cleanSearch ? '?' + cleanSearch : '') + (window.location.hash || '');
+            window.history.replaceState(null, '', cleanUrl);
+        }
+
         updateI18n();
         document.body.setAttribute('data-theme', state.theme);
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
@@ -340,7 +357,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             window.fetchAllData().then(() => {
                 window.renderView();
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-                if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+                if (CALENDLY_FEATURE_ENABLED && state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
             });
         }
         if (saved.currentView && saved.currentView.startsWith('admin-competition') && !window.location.hash) {
@@ -386,7 +403,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
         window.renderView();
         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-        if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+        if (CALENDLY_FEATURE_ENABLED && state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
 
         window.addEventListener('popstate', () => {
             const path = (window.location.pathname || '').replace(/\/$/, '') || '/';
@@ -406,11 +423,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
                 if (state.currentView === 'admin-settings' && (window.location.hash || '').includes('calendly=connected') && typeof window.fetchAllData === 'function') {
                     window.fetchAllData().then(() => {
                         window.renderView();
-                        if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+                        if (CALENDLY_FEATURE_ENABLED && state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
                     });
                 } else {
                     window.renderView();
-                    if (state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
+                    if (CALENDLY_FEATURE_ENABLED && state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
                 }
                 if (state.currentView === 'admin-competition-jack-and-jill' && state.competitionTab === 'registrations' && state.competitionId && supabaseClient) {
                     state.currentCompetition = (state.competitions || []).find(c => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;

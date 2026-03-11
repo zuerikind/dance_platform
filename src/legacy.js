@@ -6,6 +6,8 @@ import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJil
 import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth } from './data.js';
 import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances } from './scanner.js';
 
+const CALENDLY_FEATURE_ENABLED = false;
+
 // --- TRANSLATIONS (DANCE_LOCALES) ---
 const DANCE_LOCALES = {
     en: {
@@ -701,6 +703,17 @@ const DANCE_LOCALES = {
         save_profile_btn: "Save Profile",
         change_password_btn: "Change Password",
         password_changed_success: "Password updated successfully.",
+        change_email_section: "Change email",
+        new_email_label: "New email",
+        confirm_new_email_label: "Confirm new email",
+        new_email_placeholder: "new@example.com",
+        confirm_new_email_placeholder: "new@example.com",
+        change_email_btn: "Change email",
+        change_email_success: "Email updated. If we sent a confirmation link to your new email, open it first. You can then sign in with your new email.",
+        change_email_fill_both: "Please enter and confirm your new email.",
+        change_email_mismatch: "Emails do not match.",
+        change_email_invalid: "Please enter a valid email address.",
+        change_email_same: "New email is the same as your current email.",
         auth_password_sync_failed: "Warning: the login service could not be updated. Use your OLD password to log in once, then change the password again in Settings.",
         admin_password_sync_hint: "Your password is correct for this school, but the login service could not accept it. If you recently changed your password in Settings, try logging in with your previous (old) password, then change it again.",
         admin_account_needs_activation: "Your admin account was just created but the login service requires email confirmation. Ask your platform administrator to turn off \"Confirm email\" in Supabase: Authentication > Providers > Email. Then try logging in again.",
@@ -1460,6 +1473,17 @@ const DANCE_LOCALES = {
         save_profile_btn: "Guardar Perfil",
         change_password_btn: "Cambiar Contraseña",
         password_changed_success: "Contraseña actualizada.",
+        change_email_section: "Cambiar correo",
+        new_email_label: "Nuevo correo",
+        confirm_new_email_label: "Confirmar nuevo correo",
+        new_email_placeholder: "nuevo@ejemplo.com",
+        confirm_new_email_placeholder: "nuevo@ejemplo.com",
+        change_email_btn: "Cambiar correo",
+        change_email_success: "Correo actualizado. Si enviamos un enlace de confirmación a tu nuevo correo, ábrelo primero. Luego podrás iniciar sesión con tu nuevo correo.",
+        change_email_fill_both: "Ingresa y confirma tu nuevo correo.",
+        change_email_mismatch: "Los correos no coinciden.",
+        change_email_invalid: "Ingresa un correo electrónico válido.",
+        change_email_same: "El nuevo correo es igual al actual.",
         auth_password_sync_failed: "Aviso: el servicio de inicio de sesión no pudo actualizarse. Usa tu contraseña ANTERIOR para entrar una vez, luego cámbiala de nuevo en Ajustes.",
         admin_password_sync_hint: "Tu contraseña es correcta para esta escuela, pero el servicio de inicio de sesión no la aceptó. Si cambiaste la contraseña en Ajustes, intenta entrar con tu contraseña anterior y cámbiala de nuevo.",
         admin_account_needs_activation: "Tu cuenta de administrador acaba de crearse, pero el servicio de inicio de sesión exige confirmar el correo. Pide al administrador de la plataforma que desactive \"Confirmar email\" en Supabase: Autenticación > Proveedores > Email. Luego intenta entrar de nuevo.",
@@ -2268,6 +2292,17 @@ const DANCE_LOCALES = {
         save_profile_btn: "Profil speichern",
         change_password_btn: "Passwort ändern",
         password_changed_success: "Passwort aktualisiert.",
+        change_email_section: "E-Mail ändern",
+        new_email_label: "Neue E-Mail",
+        confirm_new_email_label: "Neue E-Mail bestätigen",
+        new_email_placeholder: "neu@beispiel.de",
+        confirm_new_email_placeholder: "neu@beispiel.de",
+        change_email_btn: "E-Mail ändern",
+        change_email_success: "E-Mail aktualisiert. Falls wir einen Bestätigungslink an deine neue E-Mail geschickt haben, öffne ihn zuerst. Danach kannst du dich mit der neuen E-Mail anmelden.",
+        change_email_fill_both: "Bitte gib deine neue E-Mail ein und bestätige sie.",
+        change_email_mismatch: "Die E-Mail-Adressen stimmen nicht überein.",
+        change_email_invalid: "Bitte gib eine gültige E-Mail-Adresse ein.",
+        change_email_same: "Die neue E-Mail ist dieselbe wie die aktuelle.",
         auth_password_sync_failed: "Hinweis: Der Anmeldedienst konnte nicht aktualisiert werden. Melde dich einmal mit deinem ALTEN Passwort an und ändere es danach unter Einstellungen erneut.",
         admin_password_sync_hint: "Dein Passwort ist für diese Schule korrekt, wurde aber vom Anmeldedienst nicht akzeptiert. Wenn du kürzlich das Passwort in den Einstellungen geändert hast, melde dich mit dem vorherigen Passwort an und ändere es danach erneut.",
         admin_account_needs_activation: "Dein Admin-Konto wurde gerade erstellt, aber der Anmeldedienst verlangt E-Mail-Bestätigung. Bitte den Plattform-Administrator, in Supabase \"E-Mail bestätigen\" zu deaktivieren: Authentifizierung > Anbieter > E-Mail. Dann erneut anmelden.",
@@ -2900,6 +2935,13 @@ window.renderDashboardProfileView = () => {
         html += `<div class="ios-list-item" style="padding: 12px 16px;"><button type="button" class="resend-verification-btn btn-secondary" ${canResend && !_resendVerificationSending ? '' : 'disabled'} onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="width: 100%; min-height: 44px; cursor: ${canResend && !_resendVerificationSending ? 'pointer' : 'default'}; -webkit-tap-highlight-color: transparent;">${resendLabel}</button>${_resendVerificationFeedback === 'sent' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-green);">${t('resend_success') || 'Check your inbox'}</p>` : ''}${_resendVerificationFeedback === 'error' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-red);">${(_resendVerificationErrorMsg || t('resend_error')).replace(/</g, '&lt;')}</p>` : ''}</div>`;
     }
     html += `</div>`;
+    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin: 1.25rem 0 0.5rem;">${t('change_email_section') || 'Change email'}</h3>`;
+    html += `<div class="ios-list" style="margin-bottom: 0.75rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('new_email_label') || 'New email'}</span><input type="email" id="profile-new-email" autocomplete="email" placeholder="${(t('new_email_placeholder') || 'new@example.com').replace(/"/g, '&quot;')}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('confirm_new_email_label') || 'Confirm new email'}</span><input type="email" id="profile-confirm-email" autocomplete="email" placeholder="${(t('confirm_new_email_placeholder') || 'new@example.com').replace(/"/g, '&quot;')}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `</div>`;
+    html += `<div id="profile-email-change-feedback" style="font-size: 13px; margin-bottom: 0.75rem; display: none;"></div>`;
+    html += `<button type="button" class="btn-secondary" onclick="window.changeProfileEmail()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.25rem;">${t('change_email_btn') || 'Change email'}</button>`;
     html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('first_name') || 'First name'}</span><input type="text" id="profile-first-name" value="${(firstName || '').replace(/"/g, '&quot;')}" placeholder="${t('first_name') || 'First name'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('last_name') || 'Last name'}</span><input type="text" id="profile-last-name" value="${(lastName || '').replace(/"/g, '&quot;')}" placeholder="${t('last_name') || 'Last name'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('phone') || 'Phone'}</span><input type="text" id="profile-phone" value="${(p.phone || '').replace(/"/g, '&quot;')}" placeholder="${t('phone') || 'Phone'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
@@ -2972,6 +3014,75 @@ window.changeStudentPassword = async () => {
         document.getElementById('student-confirm-password').value = '';
         showMsg(t('password_changed_success') || 'Password updated successfully.', 'var(--system-green)');
     }
+};
+
+window.changeProfileEmail = async () => {
+    const t = (k) => (window.t ? window.t(k) : k);
+    const feedback = document.getElementById('profile-email-change-feedback');
+    const newEmailRaw = (document.getElementById('profile-new-email')?.value || '').trim().toLowerCase();
+    const confirmEmailRaw = (document.getElementById('profile-confirm-email')?.value || '').trim().toLowerCase();
+
+    const showMsg = (msg, color) => {
+        if (!feedback) return;
+        feedback.textContent = msg;
+        feedback.style.color = color;
+        feedback.style.display = 'block';
+    };
+
+    if (!newEmailRaw || !confirmEmailRaw) {
+        showMsg(t('change_email_fill_both') || 'Please enter and confirm your new email.', 'var(--system-red)');
+        return;
+    }
+    if (newEmailRaw !== confirmEmailRaw) {
+        showMsg(t('change_email_mismatch') || 'Emails do not match.', 'var(--system-red)');
+        return;
+    }
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(newEmailRaw)) {
+        showMsg(t('change_email_invalid') || 'Please enter a valid email address.', 'var(--system-red)');
+        return;
+    }
+    const currentEmail = (state.userProfile?.email || '').toLowerCase().trim();
+    if (newEmailRaw === currentEmail) {
+        showMsg(t('change_email_same') || 'New email is the same as your current email.', 'var(--system-red)');
+        return;
+    }
+    if (!supabaseClient) {
+        showMsg(t('error_generic') || 'Not connected.', 'var(--system-red)');
+        return;
+    }
+
+    const { data: sess } = await supabaseClient.auth.getSession();
+    if (!sess?.session?.user?.id) {
+        showMsg(t('profile_sign_in_required') || 'Sign in required.', 'var(--system-red)');
+        return;
+    }
+
+    const btn = document.querySelector('[onclick="window.changeProfileEmail()"]');
+    if (btn) { btn.disabled = true; btn.textContent = t('saving_label') || 'Saving…'; }
+
+    const { data: authData, error: authError } = await supabaseClient.auth.updateUser({ email: newEmailRaw });
+
+    if (authError) {
+        if (btn) { btn.disabled = false; btn.textContent = t('change_email_btn') || 'Change email'; }
+        showMsg((authError.message || t('error_generic') || 'Error. Try again.').replace(/</g, '&lt;'), 'var(--system-red)');
+        return;
+    }
+
+    const { error: profileError } = await supabaseClient.from('profiles').update({ email: newEmailRaw }).eq('id', sess.session.user.id);
+    if (profileError) {
+        if (btn) { btn.disabled = false; btn.textContent = t('change_email_btn') || 'Change email'; }
+        showMsg((profileError.message || t('error_generic') || 'Could not update profile.').replace(/</g, '&lt;'), 'var(--system-red)');
+        return;
+    }
+
+    state.userProfile = { ...state.userProfile, email: newEmailRaw };
+    if (document.getElementById('profile-new-email')) document.getElementById('profile-new-email').value = '';
+    if (document.getElementById('profile-confirm-email')) document.getElementById('profile-confirm-email').value = '';
+    if (btn) { btn.disabled = false; btn.textContent = t('change_email_btn') || 'Change email'; }
+    showMsg(t('change_email_success') || 'Email updated. If we sent a confirmation link to your new email, open it first. You can then sign in with your new email.', 'var(--system-green)');
+    saveState();
+    if (typeof window.renderView === 'function') window.renderView();
 };
 
 window.fetchProfileMyReviews = async () => {
@@ -5733,7 +5844,7 @@ function _renderViewImpl() {
             const daySchedules = state._teacherBookingSlots || [];
             const t2 = DANCE_LOCALES[state.language || 'en'];
             const hasPackage = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(school.id) : true;
-            const useCalendlyForBooking = state.adminSettings?.use_calendly_for_booking === 'true' || (state.adminSettings?.use_calendly_for_booking !== 'false' && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url));
+            const useCalendlyForBooking = !CALENDLY_FEATURE_ENABLED ? false : (state.adminSettings?.use_calendly_for_booking === 'true' || (state.adminSettings?.use_calendly_for_booking !== 'false' && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url)));
             const myLessons = (state.studentPrivateLessons || []).filter(l => l.status === 'confirmed' || l.status === 'attended').sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
             const myClassesFallback = (state.studentPrivateClassRequests || []).filter(r => r.status === 'accepted');
             const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
@@ -5938,7 +6049,7 @@ function _renderViewImpl() {
             </div>
             `;
             // Trigger async load of slots only when needed and not using Calendly embed (derive from state to avoid second reference to useCalendlyForBooking after bundler rename)
-            const useCalendlyEmbed = (state.adminSettings?.use_calendly_for_booking === 'true' || (state.adminSettings?.use_calendly_for_booking !== 'false' && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url))) && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
+            const useCalendlyEmbed = !CALENDLY_FEATURE_ENABLED ? false : ((state.adminSettings?.use_calendly_for_booking === 'true' || (state.adminSettings?.use_calendly_for_booking !== 'false' && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url))) && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url));
             const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || '');
             const hasPkg = typeof window.studentHasPackageWithSchool === 'function' ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
             if (state.currentSchool?.id && state.currentSchool?.profile_type === 'private_teacher' && supabaseClient && needsLoad && hasPkg && !useCalendlyEmbed) {
@@ -6947,7 +7058,7 @@ function _renderViewImpl() {
                         ` : ''}
                     </div>
                 </div>
-                ${state.currentSchool?.profile_type === 'private_teacher' && state.adminSettings?.use_calendly_for_booking === 'false' ? (() => {
+                ${state.currentSchool?.profile_type === 'private_teacher' && (!CALENDLY_FEATURE_ENABLED || state.adminSettings?.use_calendly_for_booking === 'false') ? (() => {
                     const allRequests = state.privateClassRequests || [];
                     const pendingRequests = allRequests.filter(r => r.status === 'pending');
                     const renderPcrCard = (r) => {
@@ -7705,6 +7816,7 @@ function _renderViewImpl() {
                     </div>
                 </div>
             </div>
+            ${CALENDLY_FEATURE_ENABLED ? `
             <!-- CALENDLY -->
             <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.calendly_title || 'Calendly'}
@@ -7748,6 +7860,7 @@ function _renderViewImpl() {
                     </div>
                 </div>
             </div>
+            ` : ''}
             ` : `
             <div class="settings-section-header" onclick="state.settingsClassesExpanded = !state.settingsClassesExpanded; saveState(); renderView();" style="padding: 0 1.2rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 <span>${t.mgmt_classes_title}</span>
@@ -8242,33 +8355,33 @@ function _renderViewImpl() {
             <div class="ios-list notifications-ios-list" id="settings-notifications-content" style="margin-bottom: 1rem;">
                 <div class="notifications-grid">
                         <div class="notifications-col-recipients">
-                            <div>${t.notifications_recipients_label || 'Recipients'}</div>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary);"><input type="radio" name="notifications_recipient_mode" value="all" ${state.notificationsRecipientMode === 'all' ? 'checked' : ''} onchange="state.notificationsRecipientMode='all'; saveState(); renderView();"> ${t.all_students || 'All students'}</label>
-                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary);"><input type="radio" name="notifications_recipient_mode" value="selected" ${state.notificationsRecipientMode === 'selected' ? 'checked' : ''} onchange="state.notificationsRecipientMode='selected'; saveState(); renderView();"> ${t.select_students || 'Select students'}</label>
+                            <h3 class="notifications-section-title">${t.notifications_recipients_label || 'Recipients'}</h3>
+                            <div class="notifications-recipients-options">
+                                <label class="notifications-radio-label"><input type="radio" name="notifications_recipient_mode" value="all" ${state.notificationsRecipientMode === 'all' ? 'checked' : ''} onchange="state.notificationsRecipientMode='all'; saveState(); renderView();"> <span>${t.all_students || 'All students'}</span></label>
+                                <label class="notifications-radio-label"><input type="radio" name="notifications_recipient_mode" value="selected" ${state.notificationsRecipientMode === 'selected' ? 'checked' : ''} onchange="state.notificationsRecipientMode='selected'; saveState(); renderView();"> <span>${t.select_students || 'Select students'}</span></label>
                                 ${state.notificationsRecipientMode === 'selected' ? `
-                                <input type="text" id="notifications-student-search" placeholder="${t.search_students_placeholder || 'Search by name or email'}" value="${(state.notificationsStudentSearch || '').replace(/"/g, '&quot;')}" oninput="state.notificationsStudentSearch=this.value; renderView();" style="padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary); font-size: 14px; width: 100%;">
-                                <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; background: var(--bg-body);">
-                                    ${(() => { const search = (state.notificationsStudentSearch || '').toLowerCase().trim(); const list = (state.students || []).filter(s => !search || (s.name || '').toLowerCase().includes(search) || (s.email || '').toLowerCase().includes(search)); return list.slice(0, 100).map(s => `<label style="display: flex; align-items: center; gap: 8px; padding: 8px 0; cursor: pointer; font-size: 13px; color: var(--text-primary);"><input type="checkbox" ${(state.notificationsSelectedIds || []).includes(s.id) ? 'checked' : ''} onchange="window.toggleNotificationsStudent('${s.id}')"> <span>${(s.name || s.email || s.id).replace(/</g, '&lt;').slice(0, 40)}</span></label>`).join('') || '<span style="font-size: 12px; color: var(--text-secondary);">' + (list.length > 100 ? (t.students_count || 'Many students') : (t.no_students_match || 'No students match')) + '</span>'; })()}
+                                <input type="text" id="notifications-student-search" class="notifications-search-input" placeholder="${t.search_students_placeholder || 'Search by name or email'}" value="${(state.notificationsStudentSearch || '').replace(/"/g, '&quot;')}" oninput="state.notificationsStudentSearch=this.value; renderView();">
+                                <div class="notifications-student-list">
+                                    ${(() => { const search = (state.notificationsStudentSearch || '').toLowerCase().trim(); const list = (state.students || []).filter(s => !search || (s.name || '').toLowerCase().includes(search) || (s.email || '').toLowerCase().includes(search)); return list.slice(0, 100).map(s => `<label class="notifications-student-item"><input type="checkbox" ${(state.notificationsSelectedIds || []).includes(s.id) ? 'checked' : ''} onchange="window.toggleNotificationsStudent('${s.id}')"> <span>${(s.name || s.email || s.id).replace(/</g, '&lt;').slice(0, 40)}</span></label>`).join('') || '<span class="notifications-list-empty">' + (list.length > 100 ? (t.students_count || 'Many students') : (t.no_students_match || 'No students match')) + '</span>'; })()}
                                 </div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">${((state.notificationsSelectedIds || []).length) + ' ' + (t.selected || 'selected')}</div>
+                                <div class="notifications-selected-count">${((state.notificationsSelectedIds || []).length) + ' ' + (t.selected || 'selected')}</div>
                                 ` : ''}
                         </div>
                         <div class="notifications-col-composer">
-                            <div>${t.notifications_composer_label || 'Compose'}</div>
-                            <input type="text" id="notifications-subject" placeholder="${t.notifications_subject_placeholder || 'Subject'}" value="${(state.notificationsSubject || '').replace(/"/g, '&quot;')}" oninput="state.notificationsSubject=this.value; saveState(); window.updateNotificationsPreview();" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary); font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
-                            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                            <h3 class="notifications-section-title">${t.notifications_composer_label || 'Compose'}</h3>
+                            <input type="text" id="notifications-subject" class="notifications-subject-input" placeholder="${t.notifications_subject_placeholder || 'Subject'}" value="${(state.notificationsSubject || '').replace(/"/g, '&quot;')}" oninput="state.notificationsSubject=this.value; saveState(); window.updateNotificationsPreview();">
+                            <div class="notifications-toolbar">
                                 <button type="button" class="notifications-toolbar-btn" onclick="window.applyNotificationsBold()">${t.composer_bold_btn || 'Bold'}</button>
                                 <button type="button" class="notifications-toolbar-btn" onclick="window.applyNotificationsLink()"><i data-lucide="link" size="16" style="vertical-align: middle;"></i> ${t.composer_link_btn || 'Link'}</button>
                             </div>
-                            <textarea id="notifications-body" rows="16" placeholder="${t.notifications_body_placeholder || 'Message body (use Bold/Link for formatting)'}" style="width: 100%; min-height: 280px; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-primary); font-size: 14px; resize: vertical; box-sizing: border-box;" oninput="state.notificationsBody=this.value; saveState(); window.updateNotificationsPreview();">${(state.notificationsBody || '').replace(/</g, '&lt;')}</textarea>
-                            <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+                            <textarea id="notifications-body" class="notifications-body-input" rows="16" placeholder="${t.notifications_body_placeholder || 'Message body (use Bold/Link for formatting)'}" oninput="state.notificationsBody=this.value; saveState(); window.updateNotificationsPreview();">${(state.notificationsBody || '').replace(/</g, '&lt;')}</textarea>
+                            <div class="notifications-composer-footer">
                                 ${(state.currentSchool?.logo_url || '').trim() ? `<span>${t.notifications_using_discovery_logo || 'Using your discovery page logo.'}</span>` : ''}
-                                ${!(state.currentSchool?.logo_url || '').trim() ? `<div><input type="file" id="notifications-logo-file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="window.uploadNotificationsLogo(this)"><button type="button" class="notifications-toolbar-btn" onclick="document.getElementById('notifications-logo-file').click();" style="padding: 8px 12px; font-size: 13px;">${t.notifications_upload_logo || 'Upload logo'}</button> ${(state.adminSettings?.email_logo_url || '').trim() ? '<button type="button" class="notifications-toolbar-btn" style="margin-left: 8px; padding: 8px 12px; font-size: 13px;" onclick="window.clearNotificationsLogo()">' + (t.remove || 'Remove') + '</button>' : ''}</div>` : ''}
+                                ${!(state.currentSchool?.logo_url || '').trim() ? `<div><input type="file" id="notifications-logo-file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="window.uploadNotificationsLogo(this)"><button type="button" class="notifications-toolbar-btn" onclick="document.getElementById('notifications-logo-file').click();">${t.notifications_upload_logo || 'Upload logo'}</button> ${(state.adminSettings?.email_logo_url || '').trim() ? '<button type="button" class="notifications-toolbar-btn notifications-toolbar-btn-remove" onclick="window.clearNotificationsLogo()">' + (t.remove || 'Remove') + '</button>' : ''}</div>` : ''}
                             </div>
                         </div>
                         <div class="notifications-col-preview">
-                            <div>${t.notifications_preview_label || 'Preview'}</div>
+                            <h3 class="notifications-section-title">${t.notifications_preview_label || 'Preview'}</h3>
                             <div class="notif-email-frame">
                                 <div class="notif-email-envelope">
                                     <div class="notif-sender-row">

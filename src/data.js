@@ -11,6 +11,7 @@ function isAureSubdomain() {
 }
 import { state, saveState } from './state.js';
 
+const CALENDLY_FEATURE_ENABLED = false;
 const FETCH_THROTTLE_MS = 1500;
 let _lastFetchEndTime = 0;
 let _fetchScheduledTimer = null;
@@ -358,16 +359,23 @@ export async function fetchAllData() {
                     const { data: blockedData } = await supabaseClient.rpc('get_teacher_blocked_times', { p_school_id: sid, p_start_utc: fromUtc, p_end_utc: toUtc });
                     state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
                 } catch (_) { state.teacherBlockedTimes = []; }
-                try {
-                    const { data: connData } = await supabaseClient.from('calendly_connections').select('id').eq('school_id', sid).maybeSingle();
-                    state.calendlyConnected = !!(connData && connData.id);
+                if (CALENDLY_FEATURE_ENABLED) {
+                    try {
+                        const { data: connData } = await supabaseClient.from('calendly_connections').select('id').eq('school_id', sid).maybeSingle();
+                        state.calendlyConnected = !!(connData && connData.id);
+                        state.calendlyEventTypesLoaded = false;
+                        state.calendlyEventTypesError = null;
+                    } catch (_) { state.calendlyConnected = false; }
+                    try {
+                        const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
+                        state.calendlyEventTypeSelection = selData && typeof selData === 'object' ? selData : null;
+                    } catch (_) { state.calendlyEventTypeSelection = null; }
+                } else {
+                    state.calendlyConnected = false;
                     state.calendlyEventTypesLoaded = false;
                     state.calendlyEventTypesError = null;
-                } catch (_) { state.calendlyConnected = false; }
-                try {
-                    const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
-                    state.calendlyEventTypeSelection = selData && typeof selData === 'object' ? selData : null;
-                } catch (_) { state.calendlyEventTypeSelection = null; }
+                    state.calendlyEventTypeSelection = null;
+                }
             }
         } else {
             state.teacherAvailability = [];
@@ -401,10 +409,14 @@ export async function fetchAllData() {
                 state.teacherBookingReviewsSummary = null;
                 state.teacherBookingReviews = [];
             }
-            try {
-                const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
-                state.teacherCalendlySelectionForBooking = selData && typeof selData === 'object' ? selData : null;
-            } catch (_) { state.teacherCalendlySelectionForBooking = null; }
+            if (CALENDLY_FEATURE_ENABLED) {
+                try {
+                    const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
+                    state.teacherCalendlySelectionForBooking = selData && typeof selData === 'object' ? selData : null;
+                } catch (_) { state.teacherCalendlySelectionForBooking = null; }
+            } else {
+                state.teacherCalendlySelectionForBooking = null;
+            }
             try {
                 const { data: settingsData } = await supabaseClient.rpc('get_teacher_availability_settings', { p_school_id: sid });
                 state.teacherAvailabilitySettings = settingsData && typeof settingsData === 'object' ? settingsData : null;

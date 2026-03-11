@@ -6687,6 +6687,7 @@ details[open] .scan-private-arrow {
   min-width: 0;
   box-sizing: border-box;
 }
+/* --- Notifications: modern, professional layout --- */
 .notifications-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -6700,84 +6701,290 @@ details[open] .scan-private-arrow {
 .notifications-col-composer,
 .notifications-col-preview {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-m, 12px);
-  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l, 18px);
+  padding: 1.5rem;
   min-width: 0;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
-.notifications-col-recipients > div:first-child,
-.notifications-col-composer > div:first-child,
-.notifications-col-preview > div:first-child {
-  font-size: 13px;
+.notifications-col-recipients:hover,
+.notifications-col-composer:hover,
+.notifications-col-preview:hover {
+  border-color: var(--border-color, var(--border));
+}
+.notifications-section-title {
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border);
+  font-family: var(--system-font);
 }
-.notifications-col-composer input[type="text"],
-.notifications-col-composer textarea {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.notifications-recipients-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
-.notifications-col-composer input[type="text"]:focus,
-.notifications-col-composer textarea:focus {
+.notifications-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 0.5rem 0;
+}
+.notifications-radio-label input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.notifications-student-picker {
+  margin-top: 12px;
+  padding: 1.25rem;
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m, 12px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.notifications-search-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-m, 12px);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--system-font);
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.notifications-search-input::placeholder {
+  color: var(--text-secondary);
+}
+.notifications-search-input:focus {
   outline: none;
-  border-color: var(--system-blue, #007AFF);
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+.dark-mode .notifications-search-input:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+.notifications-student-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border-radius: var(--radius-s, 10px);
+  padding: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+.notifications-student-list::-webkit-scrollbar {
+  width: 6px;
+}
+.notifications-student-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.notifications-student-list::-webkit-scrollbar-thumb {
+  background: var(--text-secondary);
+  border-radius: 3px;
+  opacity: 0.4;
+}
+.notifications-student-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+}
+.notifications-student-item:hover {
+  background: var(--system-gray6, rgba(0, 0, 0, 0.05));
+}
+.notifications-student-item:has(input:checked) {
+  background: var(--system-gray6, rgba(0, 0, 0, 0.06));
+  border-color: var(--border);
+}
+.dark-mode .notifications-student-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.dark-mode .notifications-student-item:has(input:checked) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.notifications-student-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.notifications-student-name {
+  flex: 1;
+  min-width: 0;
+}
+.notifications-list-empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 16px 14px;
+  display: block;
+}
+.notifications-selected-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  background: var(--system-gray6, rgba(0, 0, 0, 0.05));
+  border-radius: 20px;
+  display: inline-block;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.dark-mode .notifications-selected-count {
+  background: rgba(255, 255, 255, 0.08);
+}
+.notifications-subject-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-m, 12px);
+  border: 1px solid var(--border);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: var(--system-font);
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.notifications-subject-input::placeholder {
+  color: var(--text-secondary);
+}
+.notifications-subject-input:focus {
+  outline: none;
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+.dark-mode .notifications-subject-input:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+.notifications-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 .notifications-toolbar-btn {
   padding: 8px 14px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border-color);
-  background: var(--bg-card);
-  color: #007AFF;
+  border-radius: var(--radius-m, 12px);
+  border: 1px solid var(--border);
+  background: var(--system-gray6, rgba(0, 0, 0, 0.04));
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
 .notifications-toolbar-btn:hover {
-  background: rgba(0,122,255,0.06);
-  border-color: #007AFF;
+  background: var(--border);
+  border-color: var(--text-secondary);
 }
 .notifications-toolbar-btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
+}
+.notifications-toolbar-btn-remove {
+  margin-left: 0;
+}
+.dark-mode .notifications-toolbar-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.dark-mode .notifications-toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.notifications-body-input {
+  width: 100%;
+  min-height: 280px;
+  padding: 14px;
+  border-radius: var(--radius-m, 12px);
+  border: 1px solid var(--border);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: var(--system-font);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.notifications-body-input::placeholder {
+  color: var(--text-secondary);
+}
+.notifications-body-input:focus {
+  outline: none;
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+.dark-mode .notifications-body-input:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+.notifications-composer-footer {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.notifications-composer-footer button {
+  margin-right: 8px;
 }
 .notifications-send-test-btn {
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1.5px solid #007AFF;
+  padding: 12px 18px;
+  border-radius: var(--radius-m, 12px);
+  border: 1px solid var(--border);
   background: transparent;
-  color: #007AFF;
+  color: var(--text-primary);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
   width: 100%;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
 .notifications-send-test-btn:hover {
-  background: rgba(0,122,255,0.06);
+  background: var(--system-gray6, rgba(0, 0, 0, 0.04));
+  border-color: var(--text-secondary);
 }
 .notifications-send-test-btn:active {
   transform: scale(0.98);
 }
+.dark-mode .notifications-send-test-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
 .notifications-send-btn {
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 12px 18px;
+  border-radius: var(--radius-m, 12px);
   border: none;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
   width: 100%;
-  background: #007AFF;
-  color: #ffffff;
-  transition: opacity 0.15s ease, transform 0.1s ease;
+  background: var(--text-primary);
+  color: var(--bg-body);
+  transition: opacity 0.15s, transform 0.1s;
 }
 .notifications-send-btn:hover:not(:disabled) {
-  opacity: 0.88;
+  opacity: 0.9;
 }
 .notifications-send-btn:active:not(:disabled) {
   transform: scale(0.98);
@@ -6788,16 +6995,16 @@ details[open] .scan-private-arrow {
 }
 /* Email preview frame */
 .notif-email-frame {
-  border-radius: 16px;
+  border-radius: var(--radius-l, 18px);
   overflow: hidden;
   margin-bottom: 16px;
   flex: 1;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .notif-email-envelope {
   background: var(--system-gray6, #f5f5f7);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border);
   padding: 14px 16px 12px;
 }
 /* Sender row: avatar + name/address */
@@ -6811,13 +7018,13 @@ details[open] .scan-private-arrow {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #007AFF 0%, #5856D6 100%);
+  background: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: var(--bg-body);
   flex-shrink: 0;
   user-select: none;
   letter-spacing: -0.3px;

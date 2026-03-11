@@ -189,8 +189,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         planKey: planKey as string,
         currency: currency as string,
       },
-      success_url: `${appBaseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}&academy=${encodeURIComponent(safeAcademyId)}`,
-      cancel_url: `${appBaseUrl}/billing/cancel?academy=${encodeURIComponent(safeAcademyId)}`,
+      success_url: `${appBaseUrl}/?billing=success&session_id={CHECKOUT_SESSION_ID}&academy=${encodeURIComponent(safeAcademyId)}`,
+      cancel_url: `${appBaseUrl}/?billing=cancel&academy=${encodeURIComponent(safeAcademyId)}`,
     });
 
     if (!session.url) {
