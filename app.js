@@ -6312,98 +6312,46 @@
         const ctaLabel = t2.paywall_cta || "Get started";
         const renderPlan = (plan) => {
           const isFeatured = plan.featured;
-          const cardBg = isFeatured ? "linear-gradient(155deg,#0071e3 0%,#5e5ce6 100%)" : "var(--bg-card)";
-          const cardText = isFeatured ? "#ffffff" : "var(--text-primary)";
-          const cardMuted = isFeatured ? "rgba(255,255,255,0.62)" : "var(--text-secondary)";
-          const cardBorder = isFeatured ? "transparent" : "var(--border)";
-          const dividerColor = isFeatured ? "rgba(255,255,255,0.15)" : "var(--border)";
-          const checkBg = isFeatured ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.05)";
-          const checkColor = isFeatured ? "#ffffff" : "var(--text-primary)";
-          const btnBg = isFeatured ? "rgba(255,255,255,0.18)" : "var(--text-primary)";
-          const btnText = isFeatured ? "#ffffff" : "var(--bg-body)";
-          const btnHoverBg = isFeatured ? "rgba(255,255,255,0.26)" : "var(--text-primary)";
-          const shadow = isFeatured ? "0 20px 60px rgba(0,113,227,0.35)" : "0 2px 12px rgba(0,0,0,0.04)";
           const allFeatures = [...commonFeatures, ...plan.extra];
-          return `<div style="
-                    background:${cardBg};color:${cardText};
-                    border-radius:22px;border:1px solid ${cardBorder};
-                    padding:2rem 1.75rem 1.75rem;
-                    display:flex;flex-direction:column;
-                    box-shadow:${shadow};
-                    position:relative;
-                    transition:box-shadow 0.25s;
-                " onmouseover="this.style.boxShadow='${isFeatured ? "0 28px 80px rgba(0,0,0,0.28)" : "0 8px 30px rgba(0,0,0,0.09)"}'"
-                   onmouseout="this.style.boxShadow='${shadow}'">
-
-                ${isFeatured ? `
-                <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--system-blue,#007aff);color:white;font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 14px;border-radius:0 0 12px 12px;white-space:nowrap;">
-                    ${popularLabel}
-                </div>` : ""}
-
-                <!-- Tier + Name -->
-                <div style="margin-bottom:0.2rem;margin-top:${isFeatured ? "1rem" : "0"};">
-                    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${cardMuted};margin-bottom:6px;">${plan.tier}</div>
-                    <div style="font-size:26px;font-weight:800;letter-spacing:-1px;color:${cardText};line-height:1;">${plan.name}</div>
+          const cardClass = "paywall-card" + (isFeatured ? " paywall-card--featured" : "");
+          return `<div class="${cardClass}">
+                ${isFeatured ? `<div class="paywall-badge">${popularLabel}</div>` : ""}
+                <div class="paywall-card__tier-wrap">
+                    <div class="paywall-card__tier">${plan.tier}</div>
+                    <div class="paywall-card__name">${plan.name}</div>
                 </div>
-
-                <!-- Price -->
-                <div style="display:flex;align-items:baseline;gap:5px;margin:1.1rem 0 0.2rem;">
-                    ${plan.key === "avanzado" ? `<span style="font-size:13px;font-weight:500;color:${cardMuted};margin-right:2px;">${fromLabel}</span>` : ""}
-                    <span style="font-size:42px;font-weight:800;letter-spacing:-2px;color:${cardText};line-height:1;">${plan.price}</span>
-                    <span style="font-size:13px;font-weight:500;color:${cardMuted};margin-bottom:2px;">${period}</span>
+                <div class="paywall-card__price-row">
+                    ${plan.key === "avanzado" ? `<span class="paywall-card__from">${fromLabel}</span>` : ""}
+                    <span class="paywall-card__price">${plan.price}</span>
+                    <span class="paywall-card__period">${period}</span>
                 </div>
-
-                <!-- Desc -->
-                <div style="font-size:13px;color:${cardMuted};line-height:1.55;margin:0.9rem 0 1.2rem;padding-bottom:1.2rem;border-bottom:1px solid ${dividerColor};">
-                    ${plan.desc}
-                </div>
-
-                <!-- Features -->
-                <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:1.6rem;">
+                <div class="paywall-card__desc">${plan.desc}</div>
+                <div class="paywall-card__features">
                     ${allFeatures.map((f) => `
-                    <div style="display:flex;align-items:center;gap:11px;">
-                        <div style="width:19px;height:19px;border-radius:50%;background:${checkBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <i data-lucide="check" size="10" style="color:${checkColor};stroke-width:3;"></i>
-                        </div>
-                        <span style="font-size:13.5px;color:${cardMuted};font-weight:500;line-height:1.3;">${f}</span>
+                    <div class="paywall-card__feature-item">
+                        <div class="paywall-card__feature-icon"><i data-lucide="check" size="10"></i></div>
+                        <span class="paywall-card__feature-text">${f}</span>
                     </div>`).join("")}
                 </div>
-
-                <!-- CTA -->
-                <button type="button" onclick="window.startCheckout('${plan.key}')" id="paywall-btn-${plan.key}"
-                    style="width:100%;height:50px;border-radius:14px;border:none;cursor:pointer;
-                        background:${btnBg};color:${btnText};
-                        font-size:15px;font-weight:700;letter-spacing:-0.2px;
-                        transition:background 0.2s,opacity 0.2s;"
-                    onmouseover="this.style.background='${btnHoverBg}'"
-                    onmouseout="this.style.background='${btnBg}'">
-                    ${ctaLabel}
-                </button>
+                <button type="button" class="paywall-card__cta" onclick="window.startCheckout('${plan.key}')" id="paywall-btn-${plan.key}">${ctaLabel}</button>
             </div>`;
         };
         return `
-        <div style="min-height:calc(100dvh - 80px);display:flex;flex-direction:column;align-items:center;padding:3rem 1.25rem 5rem;box-sizing:border-box;">
-
-            <!-- Header -->
-            <div style="text-align:center;margin-bottom:2.8rem;">
-                <img src="logo.png" alt="Bailadmin" style="width:68px;height:68px;border-radius:20px;box-shadow:0 6px 24px rgba(0,0,0,0.12);margin-bottom:1.25rem;display:block;margin-left:auto;margin-right:auto;">
-                <div style="font-size:30px;font-weight:800;letter-spacing:-1.2px;color:var(--text-primary);line-height:1.1;margin-bottom:0.5rem;">${t2.paywall_title || "Simple, transparent pricing"}</div>
-                <div style="font-size:16px;color:var(--text-secondary);font-weight:400;line-height:1.5;max-width:400px;margin:0 auto;">
-                    ${school?.name ? escapeHtml(school.name) + " \u2014 " : ""}${t2.paywall_subtitle || "Everything you need to run your academy."}
-                </div>
+        <div class="paywall-page">
+            <div class="paywall-header">
+                <img src="logo.png" alt="Bailadmin" class="paywall-header__logo">
+                <h1 class="paywall-header__title">${t2.paywall_title || "Simple, transparent pricing"}</h1>
+                <p class="paywall-header__subtitle">${school?.name ? escapeHtml(school.name) + " \u2014 " : ""}${t2.paywall_subtitle || "Everything you need to run your academy."}</p>
                 ${school?.billing_status ? `
-                <div style="display:inline-flex;align-items:center;gap:7px;background:var(--system-gray6);border:1px solid var(--border);padding:6px 16px;border-radius:20px;margin-top:1.2rem;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
-                    <span style="font-size:12.5px;font-weight:600;color:var(--text-secondary);">${t2.paywall_status_label || "Billing status"}: <span style="color:${statusColor};">${statusLabel}</span></span>
+                <div class="paywall-status">
+                    <span class="paywall-status__dot" style="background:${statusColor};"></span>
+                    <span class="paywall-status__text">${t2.paywall_status_label || "Billing status"}: <span style="color:${statusColor};">${statusLabel}</span></span>
                 </div>` : ""}
             </div>
-
-            <!-- Plan grid \u2014 3 columns on desktop, stacks on mobile -->
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;width:100%;max-width:920px;align-items:start;">
+            <div class="paywall-grid">
                 ${plans.map(renderPlan).join("")}
             </div>
-
-            <div id="paywall-msg" style="margin-top:1.8rem;font-size:13px;color:var(--text-secondary);min-height:20px;text-align:center;"></div>
+            <div id="paywall-msg" class="paywall-msg"></div>
         </div>`;
       }, renderSchoolSelection = function() {
         const schools = state.schools || [];
@@ -7723,11 +7671,15 @@
                             <div class="teacher-booking-day-label">${t22[day.dayName?.toLowerCase()] || day.dayName} ${day.date}</div>
                             ${day.hasAvailability ? `
                             <div class="teacher-booking-slots">
-                                ${(day.slots || []).map((slot) => `
-                                <button type="button" class="teacher-booking-slot ${slot.available ? "available" : "unavailable"}" ${slot.available ? `onclick="window.showTeacherBookingConfirm('${day.date}', '${slot.time}', '${(slot.location || "").replace(/'/g, "\\'")}')"` : "disabled"}>
+                                ${(day.slots || []).map((slot) => {
+                                const avail = slot.available === true || (Array.isArray(slot.availableDurations) && slot.availableDurations.length > 0);
+                                const durStr = Array.isArray(slot.availableDurations) ? slot.availableDurations.join(",") : "";
+                                return `
+                                <button type="button" class="teacher-booking-slot ${avail ? "available" : "unavailable"}" ${avail ? `onclick="window.showTeacherBookingConfirm('${day.date}', '${slot.time}', '${(slot.location || "").replace(/'/g, "\\'")}', '${durStr}')"` : "disabled"}>
                                     ${slot.time}
                                 </button>
-                                `).join("")}
+                                `;
+                                }).join("")}
                             </div>
                             ` : `
                             <div class="teacher-booking-empty-day">${t22.no_availability || "No availability"}</div>
@@ -8083,9 +8035,12 @@
           if (!day.hasAvailability) return "";
           const filteredSlots = selectedLocation ? day.slots.filter((s) => !s.location || s.location === selectedLocation) : day.slots;
           if (filteredSlots.length === 0) return "";
+          const availKey = (d) => (Array.isArray(d) ? d : []).length > 0;
           return '<div class="teacher-booking-day"><div class="teacher-booking-day-label">' + (dayNames[day.dayName] || day.dayName) + ", " + day.dayNumber + '</div><div class="teacher-booking-slots">' + filteredSlots.map((s) => {
+            const isAvailable = s.available === true || availKey(s.availableDurations);
             const isSelected = selectedSlot && selectedSlot.date === day.date && selectedSlot.time === s.time;
-            return '<button class="teacher-booking-slot ' + (s.available ? "available" : "unavailable") + (isSelected ? " selected" : "") + '" ' + (s.available ? `onclick="window.selectBookingSlot('` + day.date + "', '" + s.time + "', '" + (s.location || "").replace(/'/g, "\\\\'") + `')"` : "disabled") + ">" + s.time + "</button>";
+            const durStr = Array.isArray(s.availableDurations) ? s.availableDurations.join(",") : "";
+            return '<button class="teacher-booking-slot ' + (isAvailable ? "available" : "unavailable") + (isSelected ? " selected" : "") + '" ' + (isAvailable ? `onclick="window.selectBookingSlot('` + day.date + "', '" + s.time + "', '" + (s.location || "").replace(/'/g, "\\\\'") + "', '" + durStr + `')"` : "disabled") + ">" + s.time + "</button>";
           }).join("") + "</div></div>";
         }).join("")}
                     </div>
@@ -12693,11 +12648,14 @@ School: ${schoolName}`)) return;
     state._bookingSelectedSlot = null;
     window.loadBookingWeek();
   };
-  window.selectBookingSlot = (date, time, location) => {
+  window.selectBookingSlot = (date, time, location, availableDurationsStr) => {
+    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0);
     if (state._bookingSelectedSlot && state._bookingSelectedSlot.date === date && state._bookingSelectedSlot.time === time) {
       state._bookingSelectedSlot = null;
+      state._bookingSelectedDuration = null;
     } else {
-      state._bookingSelectedSlot = { date, time, location };
+      state._bookingSelectedSlot = { date, time, location, availableDurations: availableDurations.length ? availableDurations : [60] };
+      state._bookingSelectedDuration = null;
     }
     renderView();
   };
@@ -12714,12 +12672,22 @@ School: ${schoolName}`)) return;
     overlay.onclick = (e) => {
       if (e.target === overlay) overlay.remove();
     };
+    const durations = slot.availableDurations && slot.availableDurations.length ? slot.availableDurations : [60];
+    const durationLabels = durations.map((m) => m === 60 ? "1h" : m === 90 ? "1.5h" : m === 120 ? "2h" : m === 30 ? "30 min" : m === 45 ? "45 min" : m + " min");
+    const durationOptionsHtml = durations.map((m, i) => {
+      const lab = durationLabels[i] || m + " min";
+      return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '" style="padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); font-size: 14px; font-weight: 600; cursor: pointer;">' + lab.replace(/</g, "&lt;") + "</button>";
+    }).join("");
     overlay.innerHTML = `
         <div class="teacher-booking-confirm-sheet">
             <div class="teacher-booking-confirm-title">${t2.confirm_request_title || "Confirm class request"}</div>
             <div class="teacher-booking-confirm-row"><span>${t2.teacher_label || "Teacher"}</span><strong>${teacherName}</strong></div>
             <div class="teacher-booking-confirm-row"><span>${t2.date_label || "Date"}</span><strong>${slot.date}</strong></div>
             <div class="teacher-booking-confirm-row"><span>${t2.time_label || "Time"}</span><strong>${slot.time}</strong></div>
+            <div style="margin-top: 8px;">
+                <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t2.lesson_length_label || "Lesson length"}</label>
+                <div class="teacher-booking-duration-options" style="display: flex; flex-wrap: wrap; gap: 8px;">${durationOptionsHtml}</div>
+            </div>
             ${slot.location ? '<div class="teacher-booking-confirm-row"><span>' + (t2.location_label || "Location") + "</span><strong>" + slot.location + "</strong></div>" : ""}
             ${priceLabel ? '<div class="teacher-booking-confirm-row"><span>' + (t2.price_label || "Price") + "</span><strong>" + priceLabel + "</strong></div>" : ""}
             <div style="margin-top: 12px;">
@@ -12728,15 +12696,27 @@ School: ${schoolName}`)) return;
             </div>
             <div class="teacher-booking-confirm-actions">
                 <button class="teacher-booking-confirm-btn secondary" onclick="this.closest('.teacher-booking-confirm-overlay').remove()">${t2.cancel || "Cancel"}</button>
-                <button class="teacher-booking-confirm-btn primary" onclick="window.submitBookingRequest(this)">${t2.send_request_btn || "Send request"}</button>
+                <button class="teacher-booking-confirm-btn primary" id="booking-submit-btn" disabled onclick="window.submitBookingRequest(this)">${t2.send_request_btn || "Send request"}</button>
             </div>
         </div>
     `;
+    overlay.querySelectorAll(".teacher-booking-duration-btn").forEach((b) => {
+      b.addEventListener("click", () => {
+        overlay.querySelectorAll(".teacher-booking-duration-btn").forEach((x) => x.style.background = "");
+        b.style.background = "var(--secondary)";
+        b.style.color = "white";
+        b.style.borderColor = "var(--secondary)";
+        state._bookingSelectedDuration = parseInt(b.getAttribute("data-minutes"), 10);
+        const submitBtn = overlay.querySelector("#booking-submit-btn");
+        if (submitBtn) submitBtn.disabled = false;
+      });
+    });
     document.body.appendChild(overlay);
   };
   window.submitBookingRequest = async (btn) => {
     const slot = state._bookingSelectedSlot;
     if (!slot || !supabaseClient || !state.currentUser?.id) return;
+    const duration = state._bookingSelectedDuration || (slot.availableDurations && slot.availableDurations[0]) || 60;
     btn.disabled = true;
     btn.textContent = "...";
     const message = (document.getElementById("booking-message")?.value || "").trim();
@@ -12747,10 +12727,12 @@ School: ${schoolName}`)) return;
         p_requested_date: slot.date,
         p_requested_time: slot.time,
         p_location: slot.location || null,
-        p_message: message || null
+        p_message: message || null,
+        p_duration_minutes: duration
       });
       if (error) throw error;
       state._bookingSelectedSlot = null;
+      state._bookingSelectedDuration = null;
       if (requestData?.id) {
         try {
           await supabaseClient.functions.invoke("notify_private_class_request", { body: { request_id: requestData.id } });
@@ -12823,23 +12805,34 @@ School: ${schoolName}`)) return;
     state._teacherBookingLoadedWeek = null;
     renderView();
   };
-  window.showTeacherBookingConfirm = (date, time, location) => {
+  window.showTeacherBookingConfirm = (date, time, location, availableDurationsStr) => {
     if (!window.studentHasPackageWithSchool(state.currentSchool?.id)) {
       const t3 = DANCE_LOCALES[state.language || "en"];
       alert(t3.need_package_to_book || "You need a package to request private classes. Visit the Shop to buy one.");
       return;
     }
-    state._teacherBookingConfirm = { date, time, location };
+    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0);
+    state._teacherBookingConfirm = { date, time, location, availableDurations: availableDurations.length ? availableDurations : [60] };
+    state._teacherBookingSelectedDuration = null;
     const overlay = document.getElementById("teacher-booking-confirm-overlay");
     const details = document.getElementById("teacher-booking-confirm-details");
     const t2 = DANCE_LOCALES[state.language || "en"];
     const school = state.currentSchool;
     const cheapestSub = (state.subscriptions || []).filter((s) => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
     const priceStr = cheapestSub ? typeof window.formatPrice === "function" ? window.formatPrice(cheapestSub.price, school?.currency || "MXN") : cheapestSub.price : "\u2014";
+    const durations = state._teacherBookingConfirm.availableDurations || [60];
+    const durationOptionsHtml = durations.map((m) => {
+      const lab = m === 60 ? "1h" : m === 90 ? "1.5h" : m === 120 ? "2h" : m === 30 ? "30 min" : m === 45 ? "45 min" : m + " min";
+      return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '" style="padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--system-gray6); font-size: 14px; font-weight: 600; cursor: pointer; margin-right: 8px; margin-bottom: 8px;">' + lab.replace(/</g, "&lt;") + "</button>";
+    }).join("");
     if (overlay && details) {
       details.innerHTML = `
             <div class="teacher-booking-confirm-row"><span>${t2.date_label || "Date"}</span><strong>${date}</strong></div>
             <div class="teacher-booking-confirm-row"><span>${t2.start_time_label || "Time"}</span><strong>${time}</strong></div>
+            <div style="margin-top: 8px;">
+                <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t2.lesson_length_label || "Lesson length"}</label>
+                <div class="teacher-booking-duration-options" style="display: flex; flex-wrap: wrap; gap: 8px;">${durationOptionsHtml}</div>
+            </div>
             ${location ? `<div class="teacher-booking-confirm-row"><span>${t2.class_location || "Location"}</span><strong>${location}</strong></div>` : ""}
             <div class="teacher-booking-confirm-row"><span>${t2.price_label || "Price"}</span><strong>${priceStr}</strong></div>
         `;
@@ -12847,8 +12840,20 @@ School: ${schoolName}`)) return;
       overlay.style.display = "flex";
       const btn = document.getElementById("teacher-booking-confirm-btn");
       if (btn) {
+        btn.disabled = true;
         btn.onclick = () => window.submitTeacherBookingRequest();
       }
+      details.querySelectorAll(".teacher-booking-duration-btn").forEach((b) => {
+        b.addEventListener("click", () => {
+          details.querySelectorAll(".teacher-booking-duration-btn").forEach((x) => { x.style.background = ""; x.style.color = ""; x.style.borderColor = ""; });
+          b.style.background = "var(--secondary)";
+          b.style.color = "white";
+          b.style.borderColor = "var(--secondary)";
+          state._teacherBookingSelectedDuration = parseInt(b.getAttribute("data-minutes"), 10);
+          const confirmBtn = document.getElementById("teacher-booking-confirm-btn");
+          if (confirmBtn) confirmBtn.disabled = false;
+        });
+      });
     }
   };
   window.hideTeacherBookingConfirm = () => {

@@ -4512,103 +4512,48 @@ function _renderViewImpl() {
 
         const renderPlan = (plan) => {
             const isFeatured = plan.featured;
-            // Featured card: hardcoded blue gradient — always has white text in both light AND dark mode.
-            // Avoids the var(--text-primary) inversion trap where dark-mode flips bg to white.
-            const cardBg       = isFeatured ? 'linear-gradient(155deg,#0071e3 0%,#5e5ce6 100%)' : 'var(--bg-card)';
-            const cardText     = isFeatured ? '#ffffff'                : 'var(--text-primary)';
-            const cardMuted    = isFeatured ? 'rgba(255,255,255,0.62)' : 'var(--text-secondary)';
-            const cardBorder   = isFeatured ? 'transparent'            : 'var(--border)';
-            const dividerColor = isFeatured ? 'rgba(255,255,255,0.15)' : 'var(--border)';
-            const checkBg      = isFeatured ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.05)';
-            const checkColor   = isFeatured ? '#ffffff'                : 'var(--text-primary)';
-            const btnBg        = isFeatured ? 'rgba(255,255,255,0.18)' : 'var(--text-primary)';
-            const btnText      = isFeatured ? '#ffffff'                : 'var(--bg-body)';
-            const btnHoverBg   = isFeatured ? 'rgba(255,255,255,0.26)' : 'var(--text-primary)';
-            const shadow       = isFeatured ? '0 20px 60px rgba(0,113,227,0.35)' : '0 2px 12px rgba(0,0,0,0.04)';
-
             const allFeatures = [...commonFeatures, ...plan.extra];
+            const cardClass = 'paywall-card' + (isFeatured ? ' paywall-card--featured' : '');
 
-            return `<div style="
-                    background:${cardBg};color:${cardText};
-                    border-radius:22px;border:1px solid ${cardBorder};
-                    padding:2rem 1.75rem 1.75rem;
-                    display:flex;flex-direction:column;
-                    box-shadow:${shadow};
-                    position:relative;
-                    transition:box-shadow 0.25s;
-                " onmouseover="this.style.boxShadow='${isFeatured ? '0 28px 80px rgba(0,0,0,0.28)' : '0 8px 30px rgba(0,0,0,0.09)'}'"
-                   onmouseout="this.style.boxShadow='${shadow}'">
-
-                ${isFeatured ? `
-                <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--system-blue,#007aff);color:white;font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 14px;border-radius:0 0 12px 12px;white-space:nowrap;">
-                    ${popularLabel}
-                </div>` : ''}
-
-                <!-- Tier + Name -->
-                <div style="margin-bottom:0.2rem;margin-top:${isFeatured ? '1rem' : '0'};">
-                    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${cardMuted};margin-bottom:6px;">${plan.tier}</div>
-                    <div style="font-size:26px;font-weight:800;letter-spacing:-1px;color:${cardText};line-height:1;">${plan.name}</div>
+            return `<div class="${cardClass}">
+                ${isFeatured ? `<div class="paywall-badge">${popularLabel}</div>` : ''}
+                <div class="paywall-card__tier-wrap">
+                    <div class="paywall-card__tier">${plan.tier}</div>
+                    <div class="paywall-card__name">${plan.name}</div>
                 </div>
-
-                <!-- Price -->
-                <div style="display:flex;align-items:baseline;gap:5px;margin:1.1rem 0 0.2rem;">
-                    ${plan.key === 'avanzado' ? `<span style="font-size:13px;font-weight:500;color:${cardMuted};margin-right:2px;">${fromLabel}</span>` : ''}
-                    <span style="font-size:42px;font-weight:800;letter-spacing:-2px;color:${cardText};line-height:1;">${plan.price}</span>
-                    <span style="font-size:13px;font-weight:500;color:${cardMuted};margin-bottom:2px;">${period}</span>
+                <div class="paywall-card__price-row">
+                    ${plan.key === 'avanzado' ? `<span class="paywall-card__from">${fromLabel}</span>` : ''}
+                    <span class="paywall-card__price">${plan.price}</span>
+                    <span class="paywall-card__period">${period}</span>
                 </div>
-
-                <!-- Desc -->
-                <div style="font-size:13px;color:${cardMuted};line-height:1.55;margin:0.9rem 0 1.2rem;padding-bottom:1.2rem;border-bottom:1px solid ${dividerColor};">
-                    ${plan.desc}
-                </div>
-
-                <!-- Features -->
-                <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:1.6rem;">
+                <div class="paywall-card__desc">${plan.desc}</div>
+                <div class="paywall-card__features">
                     ${allFeatures.map(f => `
-                    <div style="display:flex;align-items:center;gap:11px;">
-                        <div style="width:19px;height:19px;border-radius:50%;background:${checkBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <i data-lucide="check" size="10" style="color:${checkColor};stroke-width:3;"></i>
-                        </div>
-                        <span style="font-size:13.5px;color:${cardMuted};font-weight:500;line-height:1.3;">${f}</span>
+                    <div class="paywall-card__feature-item">
+                        <div class="paywall-card__feature-icon"><i data-lucide="check" size="10"></i></div>
+                        <span class="paywall-card__feature-text">${f}</span>
                     </div>`).join('')}
                 </div>
-
-                <!-- CTA -->
-                <button type="button" onclick="window.startCheckout('${plan.key}')" id="paywall-btn-${plan.key}"
-                    style="width:100%;height:50px;border-radius:14px;border:none;cursor:pointer;
-                        background:${btnBg};color:${btnText};
-                        font-size:15px;font-weight:700;letter-spacing:-0.2px;
-                        transition:background 0.2s,opacity 0.2s;"
-                    onmouseover="this.style.background='${btnHoverBg}'"
-                    onmouseout="this.style.background='${btnBg}'">
-                    ${ctaLabel}
-                </button>
+                <button type="button" class="paywall-card__cta" onclick="window.startCheckout('${plan.key}')" id="paywall-btn-${plan.key}">${ctaLabel}</button>
             </div>`;
         };
 
         return `
-        <div style="min-height:calc(100dvh - 80px);display:flex;flex-direction:column;align-items:center;padding:3rem 1.25rem 5rem;box-sizing:border-box;">
-
-            <!-- Header -->
-            <div style="text-align:center;margin-bottom:2.8rem;">
-                <img src="logo.png" alt="Bailadmin" style="width:68px;height:68px;border-radius:20px;box-shadow:0 6px 24px rgba(0,0,0,0.12);margin-bottom:1.25rem;display:block;margin-left:auto;margin-right:auto;">
-                <div style="font-size:30px;font-weight:800;letter-spacing:-1.2px;color:var(--text-primary);line-height:1.1;margin-bottom:0.5rem;">${t.paywall_title || 'Simple, transparent pricing'}</div>
-                <div style="font-size:16px;color:var(--text-secondary);font-weight:400;line-height:1.5;max-width:400px;margin:0 auto;">
-                    ${school?.name ? escapeHtml(school.name) + ' — ' : ''}${t.paywall_subtitle || 'Everything you need to run your academy.'}
-                </div>
+        <div class="paywall-page">
+            <div class="paywall-header">
+                <img src="logo.png" alt="Bailadmin" class="paywall-header__logo">
+                <h1 class="paywall-header__title">${t.paywall_title || 'Simple, transparent pricing'}</h1>
+                <p class="paywall-header__subtitle">${school?.name ? escapeHtml(school.name) + ' — ' : ''}${t.paywall_subtitle || 'Everything you need to run your academy.'}</p>
                 ${school?.billing_status ? `
-                <div style="display:inline-flex;align-items:center;gap:7px;background:var(--system-gray6);border:1px solid var(--border);padding:6px 16px;border-radius:20px;margin-top:1.2rem;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
-                    <span style="font-size:12.5px;font-weight:600;color:var(--text-secondary);">${t.paywall_status_label || 'Billing status'}: <span style="color:${statusColor};">${statusLabel}</span></span>
+                <div class="paywall-status">
+                    <span class="paywall-status__dot" style="background:${statusColor};"></span>
+                    <span class="paywall-status__text">${t.paywall_status_label || 'Billing status'}: <span style="color:${statusColor};">${statusLabel}</span></span>
                 </div>` : ''}
             </div>
-
-            <!-- Plan grid — 3 columns on desktop, stacks on mobile -->
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;width:100%;max-width:920px;align-items:start;">
+            <div class="paywall-grid">
                 ${plans.map(renderPlan).join('')}
             </div>
-
-            <div id="paywall-msg" style="margin-top:1.8rem;font-size:13px;color:var(--text-secondary);min-height:20px;text-align:center;"></div>
+            <div id="paywall-msg" class="paywall-msg"></div>
         </div>`;
     }
 
