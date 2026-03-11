@@ -83,6 +83,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
     window.addEventListener('scroll', () => { window.updateStickyFooterVisibility(); }, { passive: true });
     window.addEventListener('resize', () => { window.updateStickyFooterVisibility(); });
+    document.addEventListener('focusin', () => window.updateStickyFooterVisibility());
+    document.addEventListener('focusout', () => window.updateStickyFooterVisibility());
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => window.updateStickyFooterVisibility());
+        window.visualViewport.addEventListener('scroll', () => window.updateStickyFooterVisibility());
+    }
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
         state.language = state.language === 'en' ? 'es' : 'en';

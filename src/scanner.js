@@ -527,9 +527,22 @@ export async function confirmAttendance(studentId, count, classType) {
     }
 }
 
+function isKeyboardLikelyActive() {
+    const vv = window.visualViewport;
+    if (vv && vv.height < window.innerHeight * 0.85) return true;
+    const active = document.activeElement;
+    if (!active) return false;
+    const tag = (active.tagName || '').toUpperCase();
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+
 export function updateStickyFooterVisibility() {
     const el = document.querySelector('.sticky-footer-inner');
     if (!el) return;
+    if (isKeyboardLikelyActive()) {
+        el.classList.remove('sticky-footer-visible');
+        return;
+    }
     const threshold = 80;
     const scrollHeight = document.documentElement.scrollHeight;
     const atBottom = window.scrollY + window.innerHeight >= scrollHeight - threshold;

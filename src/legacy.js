@@ -761,9 +761,30 @@ const DANCE_LOCALES = {
         teacher_timezone_hint: "Students will see times in this timezone when booking.",
         times_in_timezone: "Times in {timezone}",
         add_availability: "Add availability",
-        private_class_requests_title: "Private class requests",
-        no_private_requests: "No requests yet",
-        accept_btn: "Accept",
+      class_types_title: "Class types",
+      class_types_hint: "Lesson lengths you offer. Students will choose one when booking.",
+      add_class_length_btn: "Add length",
+      all_lengths_added: "All preset lengths added",
+      class_types_at_least_one: "You must have at least one class length.",
+      blocked_times_title: "Blocked times",
+      blocked_times_hint: "Block dates or times when you're not available. They won't appear in your availability.",
+      add_blocker_btn: "Add blocked time",
+      no_blocked_times: "No blocked times",
+      blocker_reason_placeholder: "e.g. Travel",
+      blocker_repeat_label: "Repeat",
+      blocker_repeat_none: "Once",
+      blocker_repeat_every_day: "Every day",
+      blocker_repeat_every_second_day: "Every second day",
+      blocker_repeat_every_month: "Every month",
+      blocker_modal_your_blockers: "Your blockers",
+      blocker_end_after_start: "End must be after start.",
+      optional: "optional",
+      lesson_length_label: "Lesson length",
+      please_fill_required: "Please fill required fields.",
+      private_class_requests_title: "Private class requests",
+      no_private_requests: "No requests yet",
+      all_private_requests_title: "All requests",
+      accept_btn: "Accept",
         decline_btn: "Decline",
         nav_book_class: "Book Class",
         book_class_title: "Book a Class",
@@ -816,9 +837,11 @@ const DANCE_LOCALES = {
         paywall_title: "Simple, transparent pricing",
         paywall_subtitle: "Everything you need to run your academy.",
         paywall_status_label: "Billing status",
+        paywall_currency_label: "Currency",
         paywall_no_subscription: "No active subscription",
         paywall_cta: "Get started",
         paywall_most_popular: "Most popular",
+        paywall_or_more: "or more",
         paywall_redirecting: "Redirecting to checkout…",
         paywall_price_period: "/ month",
         paywall_plan_basico: "Básico", paywall_plan_basico_tier: "Starter", paywall_price_basico: "MX$799",
@@ -1496,8 +1519,29 @@ const DANCE_LOCALES = {
         teacher_timezone_hint: "Los alumnos verán las horas en esta zona horaria al reservar.",
         times_in_timezone: "Horario en {timezone}",
         add_availability: "Añadir disponibilidad",
-        private_class_requests_title: "Solicitudes de clases privadas",
+      class_types_title: "Tipos de clase",
+      class_types_hint: "Duración de las clases que ofreces. El alumno elegirá una al reservar.",
+      add_class_length_btn: "Añadir duración",
+      all_lengths_added: "Todas las duraciones añadidas",
+      class_types_at_least_one: "Debes tener al menos una duración de clase.",
+      blocked_times_title: "Bloqueos",
+      blocked_times_hint: "Bloquea fechas u horarios en los que no estés disponible. No aparecerán en tu disponibilidad.",
+      add_blocker_btn: "Añadir bloqueo",
+      no_blocked_times: "Sin bloqueos",
+      blocker_reason_placeholder: "ej. Viaje",
+      blocker_repeat_label: "Repetir",
+      blocker_repeat_none: "Una vez",
+      blocker_repeat_every_day: "Cada día",
+      blocker_repeat_every_second_day: "Cada dos días",
+      blocker_repeat_every_month: "Cada mes",
+      blocker_modal_your_blockers: "Tus bloqueos",
+      blocker_end_after_start: "La fecha/hora de fin debe ser posterior al inicio.",
+      optional: "opcional",
+      lesson_length_label: "Duración de la clase",
+      please_fill_required: "Completa los campos obligatorios.",
+      private_class_requests_title: "Solicitudes de clases privadas",
         no_private_requests: "Aún no hay solicitudes",
+        all_private_requests_title: "Todas las solicitudes",
         accept_btn: "Aceptar",
         decline_btn: "Rechazar",
         nav_book_class: "Reservar clase",
@@ -1624,9 +1668,11 @@ const DANCE_LOCALES = {
         paywall_title: "Precios simples y transparentes",
         paywall_subtitle: "Todo lo que necesitas para gestionar tu academia.",
         paywall_status_label: "Estado de facturación",
+        paywall_currency_label: "Moneda",
         paywall_no_subscription: "Sin suscripción activa",
         paywall_cta: "Comenzar",
         paywall_most_popular: "Más popular",
+        paywall_or_more: "o más",
         paywall_redirecting: "Redirigiendo al pago…",
         paywall_price_period: "/ mes",
         paywall_plan_basico: "Básico", paywall_plan_basico_tier: "Inicial", paywall_price_basico: "MX$799",
@@ -2281,8 +2327,29 @@ const DANCE_LOCALES = {
         teacher_timezone_hint: "Schüler sehen die Zeiten in dieser Zeitzone bei der Buchung.",
         times_in_timezone: "Zeiten in {timezone}",
         add_availability: "Verfügbarkeit hinzufügen",
-        private_class_requests_title: "Anfragen für Privatstunden",
+      class_types_title: "Klassenarten",
+      class_types_hint: "Unterrichtslängen, die du anbietest. Schüler wählen beim Buchen.",
+      add_class_length_btn: "Länge hinzufügen",
+      all_lengths_added: "Alle voreingestellten Längen hinzugefügt",
+      class_types_at_least_one: "Du musst mindestens eine Unterrichtslänge haben.",
+      blocked_times_title: "Gesperrte Zeiten",
+      blocked_times_hint: "Blokiere Daten oder Zeiten, in denen du nicht verfügbar bist. Sie erscheinen nicht in deiner Verfügbarkeit.",
+      add_blocker_btn: "Sperrzeit hinzufügen",
+      no_blocked_times: "Keine Sperrzeiten",
+      blocker_reason_placeholder: "z. B. Reise",
+      blocker_repeat_label: "Wiederholen",
+      blocker_repeat_none: "Einmal",
+      blocker_repeat_every_day: "Täglich",
+      blocker_repeat_every_second_day: "Alle zwei Tage",
+      blocker_repeat_every_month: "Jeden Monat",
+      blocker_modal_your_blockers: "Deine Sperrzeiten",
+      blocker_end_after_start: "Ende muss nach dem Start liegen.",
+      optional: "optional",
+      lesson_length_label: "Unterrichtslänge",
+      please_fill_required: "Bitte Pflichtfelder ausfüllen.",
+      private_class_requests_title: "Anfragen für Privatstunden",
         no_private_requests: "Noch keine Anfragen",
+        all_private_requests_title: "Alle Anfragen",
         accept_btn: "Annehmen",
         decline_btn: "Ablehnen",
         nav_book_class: "Klasse buchen",
@@ -2407,9 +2474,11 @@ const DANCE_LOCALES = {
         paywall_title: "Einfache, transparente Preise",
         paywall_subtitle: "Alles, was du für deine Akademie brauchst.",
         paywall_status_label: "Abrechnungsstatus",
+        paywall_currency_label: "Währung",
         paywall_no_subscription: "Kein Abonnement",
         paywall_cta: "Loslegen",
         paywall_most_popular: "Beliebteste",
+        paywall_or_more: "oder mehr",
         paywall_redirecting: "Weiterleitung zur Zahlung…",
         paywall_price_period: "/ Monat",
         paywall_plan_basico: "Básico", paywall_plan_basico_tier: "Starter", paywall_price_basico: "MX$799",
@@ -4459,12 +4528,25 @@ function _renderViewImpl() {
         return school.billing_status === 'active' || school.billing_status === 'trialing';
     }
 
+    const PAYWALL_PRICES = {
+        basico:     { MXN: 'MX$799',      USD: '$46',   EUR: '€40',    CHF: 'CHF 35',  COP: 'COP 170.000' },
+        intermedio: { MXN: 'MX$1,099',    USD: '$65',   EUR: '€55',    CHF: 'CHF 50',  COP: 'COP 235.000' },
+        avanzado:   { MXN: 'MX$1,499',    USD: '$95',   EUR: '€85',    CHF: 'CHF 80',  COP: 'COP 320.000' },
+    };
+    const PAYWALL_CURRENCIES = ['MXN', 'USD', 'EUR', 'CHF', 'COP'];
+
     function renderPaywallCard(school) {
         const statusColorMap = { past_due: 'var(--system-orange,#ff9500)', payment_failed: 'var(--system-red)', canceled: 'var(--system-red)', unpaid: 'var(--system-orange,#ff9500)' };
         const statusColor = statusColorMap[school?.billing_status] || 'var(--system-gray3)';
         const statusLabel = school?.billing_status
             ? school.billing_status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
             : (t.paywall_no_subscription || 'No active subscription');
+
+        if (state.paywallCurrency == null || state.paywallCurrency === '' || state._paywallSchoolId !== school?.id) {
+            state.paywallCurrency = school?.currency ?? 'MXN';
+            state._paywallSchoolId = school?.id;
+        }
+        const currency = state.paywallCurrency;
 
         const commonFeatures = [
             t.paywall_feat_setup       || 'Initial setup included',
@@ -4480,7 +4562,7 @@ function _renderViewImpl() {
                 key: 'basico',
                 name:  t.paywall_plan_basico      || 'Básico',
                 tier:  t.paywall_plan_basico_tier  || 'Starter',
-                price: t.paywall_price_basico      || 'MX$799',
+                price: PAYWALL_PRICES.basico[currency]     ?? t.paywall_price_basico      ?? 'MX$799',
                 desc:  t.paywall_plan_basico_desc  || 'Ideal for small academies just getting started.',
                 extra: [t.paywall_feat_admins_1 || '1 admin user', t.paywall_feat_students_20 || 'Up to 20 active students'],
                 featured: false,
@@ -4489,7 +4571,7 @@ function _renderViewImpl() {
                 key: 'intermedio',
                 name:  t.paywall_plan_intermedio      || 'Intermedio',
                 tier:  t.paywall_plan_intermedio_tier  || 'Professional',
-                price: t.paywall_price_intermedio      || 'MX$1,099',
+                price: PAYWALL_PRICES.intermedio[currency] ?? t.paywall_price_intermedio  ?? 'MX$1,099',
                 desc:  t.paywall_plan_intermedio_desc  || 'For growing academies with fewer than 100 active students.',
                 extra: [t.paywall_feat_admins_3 || '3 admin users', t.paywall_feat_students_100 || 'Up to 100 active students'],
                 featured: true,
@@ -4498,7 +4580,8 @@ function _renderViewImpl() {
                 key: 'avanzado',
                 name:  t.paywall_plan_avanzado      || 'Avanzado',
                 tier:  t.paywall_plan_avanzado_tier  || 'Advanced',
-                price: t.paywall_price_avanzado      || 'MX$1,499',
+                priceAmount: PAYWALL_PRICES.avanzado[currency] ?? t.paywall_price_avanzado ?? 'MX$1,499',
+                priceSuffix: t.paywall_or_more || 'o más',
                 desc:  t.paywall_plan_avanzado_desc  || 'For large academies with more than 100 active students.',
                 extra: [t.paywall_feat_admins_10 || '10 admin users', t.paywall_feat_students_unlimited || '100+ active students'],
                 featured: false,
@@ -4514,7 +4597,6 @@ function _renderViewImpl() {
             const isFeatured = plan.featured;
             const allFeatures = [...commonFeatures, ...plan.extra];
             const cardClass = 'paywall-card' + (isFeatured ? ' paywall-card--featured' : '');
-
             return `<div class="${cardClass}">
                 ${isFeatured ? `<div class="paywall-badge">${popularLabel}</div>` : ''}
                 <div class="paywall-card__tier-wrap">
@@ -4522,8 +4604,9 @@ function _renderViewImpl() {
                     <div class="paywall-card__name">${plan.name}</div>
                 </div>
                 <div class="paywall-card__price-row">
-                    ${plan.key === 'avanzado' ? `<span class="paywall-card__from">${fromLabel}</span>` : ''}
-                    <span class="paywall-card__price">${plan.price}</span>
+                    ${plan.key === 'avanzado'
+                        ? `<span class="paywall-card__price">${plan.priceAmount}</span><span class="paywall-card__price-suffix"> ${plan.priceSuffix}</span>`
+                        : `<span class="paywall-card__price">${plan.price}</span>`}
                     <span class="paywall-card__period">${period}</span>
                 </div>
                 <div class="paywall-card__desc">${plan.desc}</div>
@@ -4538,12 +4621,24 @@ function _renderViewImpl() {
             </div>`;
         };
 
+        const currencyLabel = t.paywall_currency_label || 'Currency';
+        const currencyOptions = PAYWALL_CURRENCIES.map(c => {
+            const labels = { MXN: 'MX$', USD: 'US$', EUR: '€', CHF: 'CHF', COP: 'COP' };
+            return `<option value="${c}" ${c === currency ? 'selected' : ''}>${labels[c] || c}</option>`;
+        }).join('');
+
         return `
         <div class="paywall-page">
             <div class="paywall-header">
                 <img src="logo.png" alt="Bailadmin" class="paywall-header__logo">
                 <h1 class="paywall-header__title">${t.paywall_title || 'Simple, transparent pricing'}</h1>
                 <p class="paywall-header__subtitle">${school?.name ? escapeHtml(school.name) + ' — ' : ''}${t.paywall_subtitle || 'Everything you need to run your academy.'}</p>
+                <div class="paywall-currency-wrap">
+                    <label for="paywall-currency" class="paywall-currency-label">${currencyLabel}</label>
+                    <select id="paywall-currency" class="paywall-currency-select" onchange="state.paywallCurrency=this.value; saveState(); renderView();">
+                        ${currencyOptions}
+                    </select>
+                </div>
                 ${school?.billing_status ? `
                 <div class="paywall-status">
                     <span class="paywall-status__dot" style="background:${statusColor};"></span>
@@ -5817,7 +5912,7 @@ function _renderViewImpl() {
                             ${day.hasAvailability ? `
                             <div class="teacher-booking-slots">
                                 ${(day.slots || []).map(slot => `
-                                <button type="button" class="teacher-booking-slot ${slot.available ? 'available' : 'unavailable'}" ${slot.available ? `onclick="window.showTeacherBookingConfirm('${day.date}', '${slot.time}', '${(slot.location || '').replace(/'/g, "\\'")}')"` : 'disabled'}>
+                                <button type="button" class="teacher-booking-slot ${(slot.available === true || (Array.isArray(slot.availableDurations) && slot.availableDurations.length > 0)) ? 'available' : 'unavailable'}" ${(slot.available === true || (Array.isArray(slot.availableDurations) && slot.availableDurations.length > 0)) ? `onclick="window.showTeacherBookingConfirm('${day.date}', '${slot.time}', '${(slot.location || '').replace(/'/g, "\\'")}', '${(Array.isArray(slot.availableDurations) ? slot.availableDurations.join(',') : '')}')"` : 'disabled'}>
                                     ${slot.time}
                                 </button>
                                 `).join('')}
@@ -6205,7 +6300,9 @@ function _renderViewImpl() {
                             if (filteredSlots.length === 0) return '';
                             return '<div class="teacher-booking-day"><div class="teacher-booking-day-label">' + (dayNames[day.dayName] || day.dayName) + ', ' + day.dayNumber + '</div><div class="teacher-booking-slots">' + filteredSlots.map(s => {
                                 const isSelected = selectedSlot && selectedSlot.date === day.date && selectedSlot.time === s.time;
-                                return '<button class="teacher-booking-slot ' + (s.available ? 'available' : 'unavailable') + (isSelected ? ' selected' : '') + '" ' + (s.available ? 'onclick="window.selectBookingSlot(\'' + day.date + '\', \'' + s.time + '\', \'' + (s.location || '').replace(/'/g, "\\\\'") + '\')"' : 'disabled') + '>' + s.time + '</button>';
+                                const isAvailable = s.available === true || (Array.isArray(s.availableDurations) && s.availableDurations.length > 0);
+            const durStr = Array.isArray(s.availableDurations) ? s.availableDurations.join(',') : '';
+            return '<button class="teacher-booking-slot ' + (isAvailable ? 'available' : 'unavailable') + (isSelected ? ' selected' : '') + '" ' + (isAvailable ? 'onclick="window.selectBookingSlot(\'' + day.date + '\', \'' + s.time + '\', \'' + (s.location || '').replace(/'/g, "\\\\'") + '\', \'' + durStr + '\')"' : 'disabled') + '>' + s.time + '</button>';
                             }).join('') + '</div></div>';
                         }).join(''))}
                     </div>
@@ -6850,17 +6947,12 @@ function _renderViewImpl() {
                         ` : ''}
                     </div>
                 </div>
-                ${state.currentSchool?.profile_type === 'private_teacher' && state.adminSettings?.use_calendly_for_booking === 'false' ? `
-                <div style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
-                    <div style="padding: 0 0 0.5rem 0; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                        ${t.private_class_requests_title || 'Private class requests'}
-                    </div>
-                    ${(state.privateClassRequests || []).length === 0 ? `
-                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t.no_private_requests || 'No requests yet'}</div>
-                    ` : (state.privateClassRequests || []).map(r => {
+                ${state.currentSchool?.profile_type === 'private_teacher' && state.adminSettings?.use_calendly_for_booking === 'false' ? (() => {
+                    const allRequests = state.privateClassRequests || [];
+                    const pendingRequests = allRequests.filter(r => r.status === 'pending');
+                    const renderPcrCard = (r) => {
                         const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
-                        return `
-                        <div class="pcr-card">
+                        return `<div class="pcr-card">
                             <div class="pcr-card-header">
                                 <span class="pcr-card-name">${(studentName || '').replace(/</g, '&lt;')}</span>
                                 <span class="pcr-card-status ${r.status}">${r.status}</span>
@@ -6870,9 +6962,27 @@ function _renderViewImpl() {
                             ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || '').replace(/</g, '&lt;') + '"</div>' : ''}
                             ${r.status === 'pending' ? '<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.accept_btn || 'Accept') + '</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.decline_btn || 'Decline') + '</button></div>' : ''}
                         </div>`;
-                    }).join('')}
+                    };
+                    return `
+                <div style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
+                    <div style="padding: 0 0 0.5rem 0; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                        ${t.private_class_requests_title || 'Private class requests'}
+                    </div>
+                    ${pendingRequests.length === 0 ? `
+                    <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t.no_private_requests || 'No requests yet'}</div>
+                    ` : pendingRequests.map(renderPcrCard).join('')}
+                    ${allRequests.length > 0 ? `
+                    <details class="pcr-all-requests-details" style="margin-top: 1rem;">
+                        <summary style="cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-secondary); padding: 8px 0; list-style: none; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="chevron-right" size="16" class="pcr-details-chevron" style="transition: transform 0.2s;"></i>
+                            <span>${t.all_private_requests_title || 'All requests'} (${allRequests.length})</span>
+                        </summary>
+                        <div style="margin-top: 8px;">${allRequests.map(renderPcrCard).join('')}</div>
+                    </details>
+                    ` : ''}
                 </div>
-                ` : ''}
+                `;
+                })() : ''}
                 ${state.currentSchool?.class_registration_enabled ? (() => {
                     const getToday = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly : () => new Date();
                     const now = getToday();
@@ -7569,6 +7679,30 @@ function _renderViewImpl() {
                 `).join('')}
                 <div class="ios-list-item" onclick="window.addTeacherAvail()" style="color: var(--text-primary); font-weight: 600; justify-content: center; cursor: pointer; padding: 14px;">
                     <i data-lucide="plus-circle" size="18" style="opacity: 0.5; margin-right: 8px;"></i> ${t.add_availability || 'Add availability'}
+                </div>
+            </div>
+            <!-- BLOCKED TIMES -->
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.blocked_times_title || 'Blocked times'}</div>
+            <div class="ios-list" style="padding: 0 1.2rem 0.5rem;">
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px;">
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t.blocked_times_hint || "Block dates or times when you're not available. They won't appear in your availability."}</p>
+                    <button type="button" class="btn-secondary" onclick="window.openAddBlockerModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px;"><i data-lucide="calendar-x" size="16"></i> ${t.add_blocker_btn || 'Add blocked time'}</button>
+                    ${(state.teacherBlockedTimes || []).length === 0 ? '<p style="font-size:12px;color:var(--text-secondary);margin:0;font-style:italic;">' + (t.no_blocked_times || 'No blocked times') + '</p>' : ''}
+                    ${(state.teacherBlockedTimes || []).map(b => { const startStr = b.start_at_utc ? new Date(b.start_at_utc).toLocaleString(void 0, { dateStyle: 'short', timeStyle: 'short' }) : ''; const endStr = b.end_at_utc ? new Date(b.end_at_utc).toLocaleString(void 0, { dateStyle: 'short', timeStyle: 'short' }) : ''; return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--system-gray6);border-radius:10px;margin-top:6px;"><div><div style="font-size:13px;font-weight:600;">' + (startStr || '').replace(/</g, '&lt;') + ' – ' + (endStr || '').replace(/</g, '&lt;') + '</div>' + (b.reason ? '<div style="font-size:12px;color:var(--text-secondary);">' + (b.reason || '').replace(/</g, '&lt;') + '</div>' : '') + '</div><button type="button" onclick="window.deleteTeacherBlocker(\'' + b.id + '\')" style="background:none;border:none;padding:4px;cursor:pointer;color:var(--text-secondary);"><i data-lucide="trash-2" size="16"></i></button></div>'; }).join('')}
+                </div>
+            </div>
+            <!-- CLASS TYPES -->
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.class_types_title || 'Class types'}</div>
+            <div class="ios-list pt-class-types-list" style="padding: 0 1.2rem 0.5rem;">
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px;">
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t.class_types_hint || 'Lesson lengths you offer. Students will choose one when booking.'}</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                        ${((state.teacherAvailabilitySettings?.duration_minutes) || [60]).map(mins => {
+                            const label = mins === 60 ? '1h' : mins === 90 ? '1.5h' : mins === 120 ? '2h' : mins === 30 ? '30 min' : mins === 45 ? '45 min' : mins + ' min';
+                            return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600;">' + label.replace(/</g, '&lt;') + '<button type="button" onclick="window.removeTeacherDuration(' + mins + ')" style="background:none;border:none;padding:0;margin-left:2px;cursor:pointer;color:var(--text-secondary);opacity:0.7;"><i data-lucide="x" size="14"></i></button></span>';
+                        }).join('')}
+                        <div class="custom-dropdown-container" style="overflow:visible;"><div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('add-duration')" style="background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i data-lucide="plus" size="14"></i> ${t.add_class_length_btn || 'Add length'} <i data-lucide="chevron-down" size="12" style="opacity:0.4;"></i></div><div class="custom-dropdown-list" id="dropdown-list-add-duration">${[30,45,60,90,120].filter(m => !((state.teacherAvailabilitySettings?.duration_minutes) || [60]).includes(m)).map(m => { const lab = m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min'; return '<div class="dropdown-item" onclick="window.addTeacherDuration(' + m + ')"><span>' + lab.replace(/</g, '&lt;') + '</span></div>'; }).join('') || '<div class="dropdown-item" style="opacity:0.7;">' + (t.all_lengths_added || 'All preset lengths added') + '</div>'}</div></div>
+                    </div>
                 </div>
             </div>
             <!-- CALENDLY -->
@@ -10566,40 +10700,58 @@ window.addTeacherAvail = async () => {
             p_end_time: '10:00'
         });
         if (error) throw error;
-        await fetchAllData();
+        const newRow = data && typeof data === 'object' ? data : null;
+        if (newRow && newRow.id) {
+            state.teacherAvailability = [...(state.teacherAvailability || []), newRow];
+            if (typeof window.renderView === 'function') window.renderView();
+            if (window.lucide) window.lucide.createIcons();
+        }
     } catch (e) { alert('Error adding availability: ' + (e.message || e)); }
 };
 
-window.updateTeacherAvail = async (id, field, value) => {
+window._pendingAvailUpdates = window._pendingAvailUpdates || {};
+const DAYS_ORDER_AVAIL = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+window.updateTeacherAvail = (id, field, value) => {
     if (!supabaseClient || !state.currentSchool?.id) return;
     const list = state.teacherAvailability || [];
     const row = list.find(a => a.id === id);
     if (!row) return;
-    const updated = { ...row, [field]: value };
-    const previous = { ...row };
-    // Optimistic update: apply change to state and re-render immediately
-    state.teacherAvailability = list.map(a => a.id === id ? updated : a);
+    if (!window._pendingAvailUpdates[id]) window._pendingAvailUpdates[id] = { previous: { ...row } };
+    state.teacherAvailability = list.map(a => a.id === id ? { ...a, [field]: value } : a);
     const ddList = document.getElementById('dropdown-list-avail-' + id);
     if (ddList) ddList.classList.remove('open');
-    if (typeof window.renderView === 'function') window.renderView();
-    if (window.lucide) window.lucide.createIcons();
-    try {
-        const { error } = await supabaseClient.rpc('upsert_teacher_availability', {
-            p_school_id: state.currentSchool.id,
-            p_day_of_week: updated.day_of_week,
-            p_start_time: updated.start_time,
-            p_end_time: updated.end_time,
-            p_location: updated.location || null,
-            p_id: id
-        });
-        if (error) throw error;
-    } catch (e) {
-        // Revert on failure
-        state.teacherAvailability = list.map(a => a.id === id ? previous : a);
+    if (window._pendingAvailUpdates[id].timeout) clearTimeout(window._pendingAvailUpdates[id].timeout);
+    window._pendingAvailUpdates[id].timeout = setTimeout(async () => {
+        const pending = window._pendingAvailUpdates[id];
+        if (!pending) return;
+        const list2 = state.teacherAvailability || [];
+        const current = list2.find(a => a.id === id);
+        if (!current) { delete window._pendingAvailUpdates[id]; return; }
+        try {
+            const { error } = await supabaseClient.rpc('upsert_teacher_availability', {
+                p_school_id: state.currentSchool.id,
+                p_day_of_week: current.day_of_week,
+                p_start_time: current.start_time,
+                p_end_time: current.end_time,
+                p_location: current.location || null,
+                p_id: id
+            });
+            if (error) throw error;
+            const sorted = [...list2].sort((a, b) => {
+                const ai = DAYS_ORDER_AVAIL.indexOf(a.day_of_week);
+                const bi = DAYS_ORDER_AVAIL.indexOf(b.day_of_week);
+                if (ai !== bi) return ai - bi;
+                return (a.start_time || '').localeCompare(b.start_time || '');
+            });
+            state.teacherAvailability = sorted;
+        } catch (e) {
+            state.teacherAvailability = list2.map(a => a.id === id ? pending.previous : a);
+            alert('Error updating availability: ' + (e.message || e));
+        }
+        delete window._pendingAvailUpdates[id];
         if (typeof window.renderView === 'function') window.renderView();
         if (window.lucide) window.lucide.createIcons();
-        alert('Error updating availability: ' + (e.message || e));
-    }
+    }, 500);
 };
 
 window.deleteTeacherAvail = async (id) => {
@@ -10650,6 +10802,191 @@ window.saveTeacherTimezone = async () => {
         if (msgEl) msgEl.textContent = '';
         alert('Error saving timezone: ' + (e.message || e));
     }
+};
+
+window.addTeacherDuration = async (mins) => {
+    if (!state.currentSchool?.id) return;
+    const raw = state.teacherAvailabilitySettings?.duration_minutes;
+    const current = Array.isArray(raw) ? raw : raw != null ? [raw] : [60];
+    if (current.includes(mins)) return;
+    const next = [...current, mins].sort((a, b) => a - b);
+    state.teacherAvailabilitySettings = { ...(state.teacherAvailabilitySettings || {}), duration_minutes: next };
+    const dd = document.getElementById('dropdown-list-add-duration'); if (dd) dd.classList.remove('open');
+    if (typeof window.renderView === 'function') window.renderView();
+    if (window.lucide) window.lucide.createIcons();
+    try {
+        const { error } = await supabaseClient.rpc('upsert_teacher_availability_settings', { p_school_id: state.currentSchool.id, p_duration_minutes: next });
+        if (error) throw error;
+    } catch (e) {
+        state.teacherAvailabilitySettings = { ...(state.teacherAvailabilitySettings || {}), duration_minutes: current };
+        if (typeof window.renderView === 'function') window.renderView();
+        if (window.lucide) window.lucide.createIcons();
+        alert('Error adding length: ' + (e.message || e));
+    }
+};
+
+window.removeTeacherDuration = async (mins) => {
+    if (!state.currentSchool?.id) return;
+    const raw = state.teacherAvailabilitySettings?.duration_minutes;
+    const current = Array.isArray(raw) ? raw : raw != null ? [raw] : [60];
+    if (current.length <= 1) { alert(DANCE_LOCALES[state.language || 'en'].class_types_at_least_one || 'You must have at least one class length.'); return; }
+    const next = current.filter(m => m !== mins);
+    state.teacherAvailabilitySettings = { ...(state.teacherAvailabilitySettings || {}), duration_minutes: next };
+    if (typeof window.renderView === 'function') window.renderView();
+    if (window.lucide) window.lucide.createIcons();
+    try {
+        const { error } = await supabaseClient.rpc('upsert_teacher_availability_settings', { p_school_id: state.currentSchool.id, p_duration_minutes: next });
+        if (error) throw error;
+    } catch (e) {
+        state.teacherAvailabilitySettings = { ...(state.teacherAvailabilitySettings || {}), duration_minutes: current };
+        if (typeof window.renderView === 'function') window.renderView();
+        if (window.lucide) window.lucide.createIcons();
+        alert('Error removing length: ' + (e.message || e));
+    }
+};
+
+window.getBlockerModalListHtml = () => {
+    const t = DANCE_LOCALES[state.language || 'en'];
+    const list = state.teacherBlockedTimes || [];
+    if (list.length === 0) return '<p style="font-size:12px;color:var(--text-secondary);margin:0;font-style:italic;">' + (t.no_blocked_times || 'No blocked times') + '</p>';
+    return list.map(b => {
+        const startStr = b.start_at_utc ? new Date(b.start_at_utc).toLocaleString(void 0, { dateStyle: 'short', timeStyle: 'short' }) : '';
+        const endStr = b.end_at_utc ? new Date(b.end_at_utc).toLocaleString(void 0, { dateStyle: 'short', timeStyle: 'short' }) : '';
+        return '<div class="blocker-modal-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--system-gray6);border-radius:10px;margin-top:6px;"><div><div style="font-size:13px;font-weight:600;">' + (startStr || '').replace(/</g, '&lt;') + ' – ' + (endStr || '').replace(/</g, '&lt;') + '</div>' + (b.reason ? '<div style="font-size:12px;color:var(--text-secondary);">' + (b.reason || '').replace(/</g, '&lt;') + '</div>' : '') + '</div><button type="button" onclick="window.deleteTeacherBlocker(\'' + b.id + '\')" style="background:none;border:none;padding:4px;cursor:pointer;color:var(--text-secondary);flex-shrink:0;"><i data-lucide="trash-2" size="16"></i></button></div>';
+    }).join('');
+};
+window.refreshBlockerModalList = () => {
+    const listEl = document.getElementById('blocker-modal-list');
+    if (listEl) { listEl.innerHTML = window.getBlockerModalListHtml(); if (window.lucide) window.lucide.createIcons(); }
+};
+window.openAddBlockerModal = () => {
+    const t = DANCE_LOCALES[state.language || 'en'];
+    const overlay = document.createElement('div');
+    overlay.className = 'modal';
+    overlay.id = 'add-blocker-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(12px);z-index:9999;padding:16px;';
+    const inputCls = 'blocker-modal-input';
+    const inputStyle = 'width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);font-size:15px;transition:border-color 0.2s, box-shadow 0.2s;';
+    overlay.innerHTML = '<div class="modal-content blocker-modal-content" style="max-width:440px;width:100%;padding:1.75rem;border-radius:20px;background:var(--surface-solid);box-shadow:0 20px 60px rgba(0,0,0,0.35);border:1px solid var(--border);max-height:90vh;overflow-y:auto;" onclick="event.stopPropagation()">' +
+        '<h3 style="margin:0 0 1.25rem 0;font-size:1.25rem;font-weight:700;color:var(--text-primary);">' + (t.add_blocker_btn || 'Add blocked time') + '</h3>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">' +
+        '<div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary);margin-bottom:6px;">' + (t.date_label || 'Date') + ' (start)</label><input type="date" id="blocker-start-date" class="' + inputCls + '" style="' + inputStyle + '"></div>' +
+        '<div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary);margin-bottom:6px;">' + (t.time_label || 'Time') + ' (start)</label><input type="time" id="blocker-start-time" class="' + inputCls + '" value="09:00" style="' + inputStyle + '"></div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">' +
+        '<div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary);margin-bottom:6px;">' + (t.date_label || 'Date') + ' (end)</label><input type="date" id="blocker-end-date" class="' + inputCls + '" style="' + inputStyle + '"></div>' +
+        '<div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary);margin-bottom:6px;">' + (t.time_label || 'Time') + ' (end)</label><input type="time" id="blocker-end-time" class="' + inputCls + '" value="10:00" style="' + inputStyle + '"></div>' +
+        '</div>' +
+        '<div style="margin-bottom:12px;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary);margin-bottom:6px;">' + (t.blocker_repeat_label || 'Repeat') + '</label><select id="blocker-repeat" class="' + inputCls + '" style="' + inputStyle + '">' +
+        '<option value="none">' + (t.blocker_repeat_none || 'Once') + '</option>' +
+        '<option value="every_day">' + (t.blocker_repeat_every_day || 'Every day') + '</option>' +
+        '<option value="every_second_day">' + (t.blocker_repeat_every_second_day || 'Every second day') + '</option>' +
+        '<option value="every_month">' + (t.blocker_repeat_every_month || 'Every month') + '</option>' +
+        '</select></div>' +
+        '<div style="margin-bottom:1.25rem;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary);margin-bottom:6px;">' + (t.message_label || 'Reason') + ' (' + (t.optional || 'optional') + ')</label><input type="text" id="blocker-reason" placeholder="' + (t.blocker_reason_placeholder || 'e.g. Travel') + '" class="' + inputCls + '" style="' + inputStyle + '"></div>' +
+        '<p id="blocker-validation-msg" style="font-size:13px;color:var(--error,#c53030);margin:0 0 12px 0;min-height:1.2em;"></p>' +
+        '<div style="display:flex;gap:10px;justify-content:flex-end;"><button type="button" class="btn-secondary" onclick="document.getElementById(\'add-blocker-modal\').remove();if(window.lucide)window.lucide.createIcons();" style="padding:10px 18px;border-radius:12px;">' + (t.cancel || 'Cancel') + '</button><button type="button" class="btn-primary" id="add-blocker-submit-btn" style="padding:10px 18px;border-radius:12px;font-weight:600;">' + (t.save || 'Save') + '</button></div>' +
+        '<div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border);"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-secondary);margin-bottom:8px;">' + (t.blocker_modal_your_blockers || 'Your blockers') + '</div><div id="blocker-modal-list">' + window.getBlockerModalListHtml() + '</div></div>' +
+        '</div>';
+    overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); if (window.lucide) window.lucide.createIcons(); } };
+    document.body.appendChild(overlay);
+    const today = new Date().toISOString().slice(0, 10);
+    const startDateEl = document.getElementById('blocker-start-date');
+    const endDateEl = document.getElementById('blocker-end-date');
+    if (startDateEl) startDateEl.value = today;
+    if (endDateEl) endDateEl.value = today;
+    document.getElementById('add-blocker-submit-btn').onclick = () => window.submitAddBlocker(overlay);
+    [].forEach.call(overlay.querySelectorAll('.' + inputCls), el => {
+        el.addEventListener('focus', () => { el.style.borderColor = 'var(--primary)'; el.style.boxShadow = '0 0 0 2px rgba(var(--primary-rgb, 0,122,255), 0.25)'; });
+        el.addEventListener('blur', () => { el.style.borderColor = ''; el.style.boxShadow = ''; });
+    });
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.submitAddBlocker = async (overlay) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const startDate = document.getElementById('blocker-start-date')?.value;
+    const startTime = document.getElementById('blocker-start-time')?.value || '09:00';
+    const endDate = document.getElementById('blocker-end-date')?.value;
+    const endTime = document.getElementById('blocker-end-time')?.value || '10:00';
+    const reason = document.getElementById('blocker-reason')?.value?.trim() || null;
+    const repeat = document.getElementById('blocker-repeat')?.value || 'none';
+    const msgEl = document.getElementById('blocker-validation-msg');
+    if (msgEl) msgEl.textContent = '';
+    if (!startDate || !endDate) {
+        if (msgEl) msgEl.textContent = DANCE_LOCALES[state.language || 'en'].please_fill_required || 'Please fill required fields.';
+        return;
+    }
+    const startDt = new Date(startDate + 'T' + startTime + ':00');
+    const endDt = new Date(endDate + 'T' + endTime + ':00');
+    if (repeat === 'none' && endDt.getTime() <= startDt.getTime()) {
+        if (msgEl) msgEl.textContent = DANCE_LOCALES[state.language || 'en'].blocker_end_after_start || 'End must be after start.';
+        return;
+    }
+    if (repeat !== 'none' && new Date(endDate).getTime() < new Date(startDate).getTime()) {
+        if (msgEl) msgEl.textContent = DANCE_LOCALES[state.language || 'en'].blocker_end_after_start || 'End date must be on or after start date.';
+        return;
+    }
+    const btn = overlay?.querySelector('#add-blocker-submit-btn');
+    const saveLabel = btn?.textContent || '';
+    if (btn) { btn.disabled = true; btn.textContent = DANCE_LOCALES[state.language || 'en'].saving_label || 'Saving…'; }
+    const fromUtc = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3).toISOString();
+    const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
+    try {
+        const insertOne = async (sUtc, eUtc) => {
+            const { error } = await supabaseClient.rpc('insert_teacher_blocked_time', { p_school_id: state.currentSchool.id, p_start_at_utc: sUtc, p_end_at_utc: eUtc, p_reason: reason, p_source: 'manual' });
+            if (error) throw error;
+        };
+        if (repeat === 'none') {
+            await insertOne(startDt.toISOString(), endDt.toISOString());
+        } else {
+            const capDay = 365;
+            const capMonth = 24;
+            let count = 0;
+            if (repeat === 'every_day' || repeat === 'every_second_day') {
+                const step = repeat === 'every_second_day' ? 2 : 1;
+                const endDateOnly = new Date(endDate + 'T23:59:59');
+                for (let d = new Date(startDate + 'T00:00:00'); d <= endDateOnly && count < capDay; d.setDate(d.getDate() + step), count++) {
+                    const dayStr = d.toISOString().slice(0, 10);
+                    const s = new Date(dayStr + 'T' + startTime + ':00');
+                    const e = new Date(dayStr + 'T' + endTime + ':00');
+                    await insertOne(s.toISOString(), e.toISOString());
+                }
+            } else if (repeat === 'every_month') {
+                const d = new Date(startDate + 'T' + startTime + ':00');
+                const endDateOnly = new Date(endDate + 'T23:59:59');
+                for (let i = 0; i < capMonth && d <= endDateOnly; i++) {
+                    const e = new Date(d);
+                    e.setHours(parseInt(endTime.slice(0, 2), 10), parseInt(endTime.slice(3, 5), 10), 0, 0);
+                    await insertOne(d.toISOString(), e.toISOString());
+                    d.setMonth(d.getMonth() + 1);
+                    count++;
+                }
+            }
+        }
+        const { data: blockedData } = await supabaseClient.rpc('get_teacher_blocked_times', { p_school_id: state.currentSchool.id, p_start_utc: fromUtc, p_end_utc: toUtc });
+        state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
+        overlay.remove();
+        if (typeof window.renderView === 'function') window.renderView();
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = saveLabel; }
+        if (msgEl) msgEl.textContent = (e.message || e).toString();
+    }
+};
+
+window.deleteTeacherBlocker = async (id) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+        const { error } = await supabaseClient.rpc('delete_teacher_blocked_time', { p_id: id, p_school_id: state.currentSchool.id });
+        if (error) throw error;
+        const fromUtc = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3).toISOString();
+        const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
+        const { data: blockedData } = await supabaseClient.rpc('get_teacher_blocked_times', { p_school_id: state.currentSchool.id, p_start_utc: fromUtc, p_end_utc: toUtc });
+        state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
+        const modal = document.getElementById('add-blocker-modal');
+        if (modal) window.refreshBlockerModalList(); else { if (typeof window.renderView === 'function') window.renderView(); if (window.lucide) window.lucide.createIcons(); }
+    } catch (e) { alert('Error: ' + (e.message || e)); }
 };
 
 // Calendly: get session after refresh; on invalid refresh token, sign out and return null
@@ -10856,11 +11193,14 @@ window.shiftBookingWeek = (direction) => {
     window.loadBookingWeek();
 };
 
-window.selectBookingSlot = (date, time, location) => {
+window.selectBookingSlot = (date, time, location, availableDurationsStr) => {
+    const availableDurations = (availableDurationsStr || '').split(',').map(x => parseInt(x, 10)).filter(n => !isNaN(n) && n > 0);
     if (state._bookingSelectedSlot && state._bookingSelectedSlot.date === date && state._bookingSelectedSlot.time === time) {
         state._bookingSelectedSlot = null;
+        state._bookingSelectedDuration = null;
     } else {
-        state._bookingSelectedSlot = { date, time, location };
+        state._bookingSelectedSlot = { date, time, location, availableDurations: availableDurations.length ? availableDurations : [60] };
+        state._bookingSelectedDuration = null;
     }
     renderView();
 };
@@ -10877,12 +11217,19 @@ window.showBookingConfirmation = () => {
     const overlay = document.createElement('div');
     overlay.className = 'teacher-booking-confirm-overlay';
     overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    const durations = slot.availableDurations && slot.availableDurations.length ? slot.availableDurations : [60];
+    const durationLabels = durations.map(m => m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min');
+    const durationOptionsHtml = durations.map((m, i) => {
+        const lab = durationLabels[i] || m + ' min';
+        return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--system-gray6);font-size:14px;font-weight:600;cursor:pointer;">' + lab.replace(/</g, '&lt;') + '</button>';
+    }).join('');
     overlay.innerHTML = `
         <div class="teacher-booking-confirm-sheet">
             <div class="teacher-booking-confirm-title">${t.confirm_request_title || 'Confirm class request'}</div>
-            <div class="teacher-booking-confirm-row"><span>${t.teacher_label || 'Teacher'}</span><strong>${teacherName}</strong></div>
-            <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong>${slot.date}</strong></div>
-            <div class="teacher-booking-confirm-row"><span>${t.time_label || 'Time'}</span><strong>${slot.time}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.teacher_label || 'Teacher'}</span><strong class="teacher-booking-confirm-value">${teacherName}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong class="teacher-booking-confirm-value">${slot.date}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.time_label || 'Time'}</span><span class="teacher-booking-confirm-time">${slot.time}</span></div>
+            <div style="margin-top:8px;"><label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px;">${t.lesson_length_label || 'Lesson length'}</label><div class="teacher-booking-duration-options" style="display:flex;flex-wrap:wrap;gap:8px;">${durationOptionsHtml}</div></div>
             ${slot.location ? '<div class="teacher-booking-confirm-row"><span>' + (t.location_label || 'Location') + '</span><strong>' + slot.location + '</strong></div>' : ''}
             ${priceLabel ? '<div class="teacher-booking-confirm-row"><span>' + (t.price_label || 'Price') + '</span><strong>' + priceLabel + '</strong></div>' : ''}
             <div style="margin-top: 12px;">
@@ -10891,10 +11238,19 @@ window.showBookingConfirmation = () => {
             </div>
             <div class="teacher-booking-confirm-actions">
                 <button class="teacher-booking-confirm-btn secondary" onclick="this.closest('.teacher-booking-confirm-overlay').remove()">${t.cancel || 'Cancel'}</button>
-                <button class="teacher-booking-confirm-btn primary" onclick="window.submitBookingRequest(this)">${t.send_request_btn || 'Send request'}</button>
+                <button class="teacher-booking-confirm-btn primary" id="booking-submit-btn" disabled onclick="window.submitBookingRequest(this)">${t.send_request_btn || 'Send request'}</button>
             </div>
         </div>
     `;
+    overlay.querySelectorAll('.teacher-booking-duration-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            overlay.querySelectorAll('.teacher-booking-duration-btn').forEach(x => { x.style.background = ''; });
+            b.style.background = 'var(--secondary)'; b.style.color = 'white'; b.style.borderColor = 'var(--secondary)';
+            state._bookingSelectedDuration = parseInt(b.getAttribute('data-minutes'), 10);
+            const submitBtn = overlay.querySelector('#booking-submit-btn');
+            if (submitBtn) submitBtn.disabled = false;
+        });
+    });
     document.body.appendChild(overlay);
 };
 
@@ -10992,32 +11348,47 @@ window.changeTeacherBookingWeek = (delta) => {
     renderView();
 };
 
-window.showTeacherBookingConfirm = (date, time, location) => {
+window.showTeacherBookingConfirm = (date, time, location, availableDurationsStr) => {
     if (!window.studentHasPackageWithSchool(state.currentSchool?.id)) {
         const t = DANCE_LOCALES[state.language || 'en'];
         alert(t.need_package_to_book || 'You need a package to request private classes. Visit the Shop to buy one.');
         return;
     }
-    state._teacherBookingConfirm = { date, time, location };
+    const availableDurations = (availableDurationsStr || '').split(',').map(x => parseInt(x, 10)).filter(n => !isNaN(n) && n > 0);
+    state._teacherBookingConfirm = { date, time, location, availableDurations: availableDurations.length ? availableDurations : [60] };
+    state._teacherBookingSelectedDuration = null;
     const overlay = document.getElementById('teacher-booking-confirm-overlay');
     const details = document.getElementById('teacher-booking-confirm-details');
     const t = DANCE_LOCALES[state.language || 'en'];
     const school = state.currentSchool;
     const cheapestSub = (state.subscriptions || []).filter(s => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
     const priceStr = cheapestSub ? (typeof window.formatPrice === 'function' ? window.formatPrice(cheapestSub.price, school?.currency || 'MXN') : cheapestSub.price) : '—';
+    const durations = state._teacherBookingConfirm.availableDurations || [60];
+    const durationOptionsHtml = durations.map(m => {
+        const lab = m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min';
+        return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--system-gray6);font-size:14px;font-weight:600;cursor:pointer;margin-right:8px;margin-bottom:8px;">' + lab.replace(/</g, '&lt;') + '</button>';
+    }).join('');
     if (overlay && details) {
         details.innerHTML = `
-            <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong>${date}</strong></div>
-            <div class="teacher-booking-confirm-row"><span>${t.start_time_label || 'Time'}</span><strong>${time}</strong></div>
-            ${location ? `<div class="teacher-booking-confirm-row"><span>${t.class_location || 'Location'}</span><strong>${location}</strong></div>` : ''}
-            <div class="teacher-booking-confirm-row"><span>${t.price_label || 'Price'}</span><strong>${priceStr}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong class="teacher-booking-confirm-value">${date}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.start_time_label || 'Time'}</span><span class="teacher-booking-confirm-time">${time}</span></div>
+            <div style="margin-top:8px;"><label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px;">${t.lesson_length_label || 'Lesson length'}</label><div class="teacher-booking-duration-options" style="display:flex;flex-wrap:wrap;gap:8px;">${durationOptionsHtml}</div></div>
+            ${location ? `<div class="teacher-booking-confirm-row"><span>${t.class_location || 'Location'}</span><strong class="teacher-booking-confirm-value">${location}</strong></div>` : ''}
+            <div class="teacher-booking-confirm-row"><span>${t.price_label || 'Price'}</span><strong class="teacher-booking-confirm-value">${priceStr}</strong></div>
         `;
         overlay.classList.remove('hidden');
         overlay.style.display = 'flex';
         const btn = document.getElementById('teacher-booking-confirm-btn');
-        if (btn) {
-            btn.onclick = () => window.submitTeacherBookingRequest();
-        }
+        if (btn) { btn.disabled = true; btn.onclick = () => window.submitTeacherBookingRequest(); }
+        details.querySelectorAll('.teacher-booking-duration-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                details.querySelectorAll('.teacher-booking-duration-btn').forEach(x => { x.style.background = ''; x.style.color = ''; x.style.borderColor = ''; });
+                b.style.background = 'var(--secondary)'; b.style.color = 'white'; b.style.borderColor = 'var(--secondary)';
+                state._teacherBookingSelectedDuration = parseInt(b.getAttribute('data-minutes'), 10);
+                const confirmBtn = document.getElementById('teacher-booking-confirm-btn');
+                if (confirmBtn) confirmBtn.disabled = false;
+            });
+        });
     }
 };
 
@@ -11057,6 +11428,7 @@ window.submitTeacherBookingRequest = async () => {
         alert(t.need_package_to_book || 'You need a package to request private classes. Visit the Shop to buy one.');
         return;
     }
+    const duration = state._teacherBookingSelectedDuration || (c.availableDurations && c.availableDurations[0]) || 60;
     try {
         const { error } = await supabaseClient.rpc('create_private_class_request', {
             p_school_id: state.currentSchool.id,
@@ -11064,7 +11436,8 @@ window.submitTeacherBookingRequest = async () => {
             p_requested_date: c.date,
             p_requested_time: c.time,
             p_location: c.location || null,
-            p_message: null
+            p_message: null,
+            p_duration_minutes: duration
         });
         if (error) throw error;
         window.hideTeacherBookingConfirm();
