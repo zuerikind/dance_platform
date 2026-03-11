@@ -12217,7 +12217,7 @@ Use one of these:
       if (sessionErr || !session?.access_token) throw new Error("Not authenticated");
       const currency = school.currency || "MXN";
       const { data, error } = await supabaseClient.functions.invoke("stripe-create-checkout", {
-        body: { academyId: school.id, planKey, currency }
+        body: { academyId: school.id, planKey, currency, returnView: state.currentView || "admin-settings" }
       });
       if (error) throw new Error(error.message || "Checkout failed");
       if (data?.url) {
@@ -16292,10 +16292,13 @@ School: ${schoolName}`)) return;
       if (billingReturn === "cancel" || billingReturn === "success") {
         const academyId = searchParams.get("academy");
         if (academyId) state.currentSchool = { id: decodeURIComponent(academyId), name: state.currentSchool?.name || "School" };
-        state.currentView = "admin-settings";
+        const returnView = searchParams.get("return_view");
+        if (returnView) state.currentView = decodeURIComponent(returnView);
+        else state.currentView = "admin-settings";
         searchParams.delete("billing");
         searchParams.delete("academy");
         searchParams.delete("session_id");
+        searchParams.delete("return_view");
         const cleanSearch = searchParams.toString();
         const cleanUrl = (window.location.pathname || "/") + (cleanSearch ? "?" + cleanSearch : "") + (window.location.hash || "");
         window.history.replaceState(null, "", cleanUrl);

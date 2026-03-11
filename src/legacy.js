@@ -2935,13 +2935,6 @@ window.renderDashboardProfileView = () => {
         html += `<div class="ios-list-item" style="padding: 12px 16px;"><button type="button" class="resend-verification-btn btn-secondary" ${canResend && !_resendVerificationSending ? '' : 'disabled'} onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="width: 100%; min-height: 44px; cursor: ${canResend && !_resendVerificationSending ? 'pointer' : 'default'}; -webkit-tap-highlight-color: transparent;">${resendLabel}</button>${_resendVerificationFeedback === 'sent' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-green);">${t('resend_success') || 'Check your inbox'}</p>` : ''}${_resendVerificationFeedback === 'error' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-red);">${(_resendVerificationErrorMsg || t('resend_error')).replace(/</g, '&lt;')}</p>` : ''}</div>`;
     }
     html += `</div>`;
-    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin: 1.25rem 0 0.5rem;">${t('change_email_section') || 'Change email'}</h3>`;
-    html += `<div class="ios-list" style="margin-bottom: 0.75rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('new_email_label') || 'New email'}</span><input type="email" id="profile-new-email" autocomplete="email" placeholder="${(t('new_email_placeholder') || 'new@example.com').replace(/"/g, '&quot;')}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('confirm_new_email_label') || 'Confirm new email'}</span><input type="email" id="profile-confirm-email" autocomplete="email" placeholder="${(t('confirm_new_email_placeholder') || 'new@example.com').replace(/"/g, '&quot;')}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
-    html += `</div>`;
-    html += `<div id="profile-email-change-feedback" style="font-size: 13px; margin-bottom: 0.75rem; display: none;"></div>`;
-    html += `<button type="button" class="btn-secondary" onclick="window.changeProfileEmail()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.25rem;">${t('change_email_btn') || 'Change email'}</button>`;
     html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('first_name') || 'First name'}</span><input type="text" id="profile-first-name" value="${(firstName || '').replace(/"/g, '&quot;')}" placeholder="${t('first_name') || 'First name'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('last_name') || 'Last name'}</span><input type="text" id="profile-last-name" value="${(lastName || '').replace(/"/g, '&quot;')}" placeholder="${t('last_name') || 'Last name'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
     html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('phone') || 'Phone'}</span><input type="text" id="profile-phone" value="${(p.phone || '').replace(/"/g, '&quot;')}" placeholder="${t('phone') || 'Phone'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
@@ -2956,6 +2949,13 @@ window.renderDashboardProfileView = () => {
     html += `</div>`;
     html += `<div id="student-password-feedback" style="font-size: 13px; margin-bottom: 0.75rem; display: none;"></div>`;
     html += `<button type="button" class="btn-secondary" onclick="window.changeStudentPassword()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t('change_password_btn') || 'Change password'}</button>`;
+    html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin: 1.25rem 0 0.5rem;">${t('change_email_section') || 'Change email'}</h3>`;
+    html += `<div class="ios-list" style="margin-bottom: 0.75rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('new_email_label') || 'New email'}</span><input type="email" id="profile-new-email" autocomplete="email" placeholder="${(t('new_email_placeholder') || 'new@example.com').replace(/"/g, '&quot;')}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; white-space: nowrap;">${t('confirm_new_email_label') || 'Confirm new email'}</span><input type="email" id="profile-confirm-email" autocomplete="email" placeholder="${(t('confirm_new_email_placeholder') || 'new@example.com').replace(/"/g, '&quot;')}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none; min-width: 0;"></div>`;
+    html += `</div>`;
+    html += `<div id="profile-email-change-feedback" style="font-size: 13px; margin-bottom: 0.75rem; display: none;"></div>`;
+    html += `<button type="button" class="btn-secondary" onclick="window.changeProfileEmail()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t('change_email_btn') || 'Change email'}</button>`;
     html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('linked_schools') || 'Linked schools'}</h3>`;
     html += linkedSchools.length ? `<ul style="margin: 0; padding-left: 1.2rem; color: var(--text-primary);">${linkedSchools.map(s => `<li>${(s.name || s.id || '').replace(/</g, '&lt;')}</li>`).join('')}</ul>` : `<p class="text-muted" style="font-size: 0.9rem;">${t('no_schools_linked') || 'No schools linked yet.'}</p>`;
     const isVerified = !p.origin || p.origin !== 'discovery' || p.email_confirmed;
@@ -10403,7 +10403,7 @@ window.startCheckout = async (planKey) => {
         if (sessionErr || !session?.access_token) throw new Error('Not authenticated');
         const currency = school.currency || 'MXN';
         const { data, error } = await supabaseClient.functions.invoke('stripe-create-checkout', {
-            body: { academyId: school.id, planKey, currency },
+            body: { academyId: school.id, planKey, currency, returnView: state.currentView || 'admin-settings' },
         });
         if (error) throw new Error(error.message || 'Checkout failed');
         if (data?.url) {

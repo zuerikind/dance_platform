@@ -91,10 +91,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return json({ error: 'Invalid JSON body' }, 400);
     }
 
-    const { academyId, planKey, currency } = body as {
+    const { academyId, planKey, currency, returnView } = body as {
       academyId?: unknown;
       planKey?: unknown;
       currency?: unknown;
+      returnView?: unknown;
     };
 
     if (!academyId || typeof academyId !== 'string' || !academyId.trim()) {
@@ -108,6 +109,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     const safeAcademyId = academyId.trim();
+    // Optional: view to restore when user cancels or completes checkout (e.g. admin-settings, admin-students)
+    const safeReturnView =
+      typeof returnView === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(returnView.trim())
+        ? encodeURIComponent(returnView.trim())
+        : '';
 
     // -----------------------------------------------------------------------
     // 3. Load required environment variables
@@ -189,8 +195,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         planKey: planKey as string,
         currency: currency as string,
       },
-      success_url: `${appBaseUrl}/?billing=success&session_id={CHECKOUT_SESSION_ID}&academy=${encodeURIComponent(safeAcademyId)}`,
-      cancel_url: `${appBaseUrl}/?billing=cancel&academy=${encodeURIComponent(safeAcademyId)}`,
+      success_url: `${appBaseUrl}/?billing=success&session_id={CHECKOUT_SESSION_ID}&academy=${encodeURIComponent(safeAcademyId)}${safeReturnView ? `&return_view=${safeReturnView}` : ''}`,
+      cancel_url: `${appBaseUrl}/?billing=cancel&academy=${encodeURIComponent(safeAcademyId)}${safeReturnView ? `&return_view=${safeReturnView}` : ''}`,
     });
 
     if (!session.url) {

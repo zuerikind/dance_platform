@@ -248,16 +248,19 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
         if (isAureSubdomain && !state.currentUser && !state.isAdmin && !state.isPlatformDev) state.currentView = 'auth';
 
-        // Billing return: Stripe redirects to /?billing=cancel or ?billing=success — land back on the platform (admin-settings/paywall)
+        // Billing return: Stripe redirects to /?billing=cancel or ?billing=success — restore the view they were on when they opened checkout
         const searchParams = new URLSearchParams(window.location.search);
         const billingReturn = searchParams.get('billing');
         if (billingReturn === 'cancel' || billingReturn === 'success') {
             const academyId = searchParams.get('academy');
             if (academyId) state.currentSchool = { id: decodeURIComponent(academyId), name: state.currentSchool?.name || 'School' };
-            state.currentView = 'admin-settings';
+            const returnView = searchParams.get('return_view');
+            if (returnView) state.currentView = decodeURIComponent(returnView);
+            else state.currentView = 'admin-settings';
             searchParams.delete('billing');
             searchParams.delete('academy');
             searchParams.delete('session_id');
+            searchParams.delete('return_view');
             const cleanSearch = searchParams.toString();
             const cleanUrl = (window.location.pathname || '/') + (cleanSearch ? '?' + cleanSearch : '') + (window.location.hash || '');
             window.history.replaceState(null, '', cleanUrl);
