@@ -631,8 +631,9 @@ const DANCE_LOCALES = {
         register_success: "Successfully registered!",
         register_error: "Could not register. Please try again.",
         no_active_membership_register: "No active membership. Please purchase a plan first.",
-        not_enough_classes_message: "You don't have enough classes in your package. You have {effective} left and are already registered for {registered} classes, so you only have {available} classes left.",
-        not_enough_classes_monthly_message: "You don't have enough classes in your package to sign up for {need_new} more classes. You have {effective} left and are already registered for {registered} classes, so you only have {available} classes left.",
+        aure_level_must_be_set: "Your level must be set by the admin before you can register directly. Use \"Request clase suelta\" to request this class.",
+        not_enough_classes_message: "You don't have enough classes in your package. You only have {effective} classes left and are already registered for {registered} classes, so you only have {available} classes available.",
+        not_enough_classes_monthly_message: "You don't have enough classes in your package to sign up for {need_new} more classes. You only have {effective} classes left and are already registered for {registered} classes, so you only have {available} classes available.",
         cancel_success: "Registration cancelled.",
         cancel_error: "Could not cancel. Please try again.",
         cancel_too_late_error: "Cannot cancel less than 4 hours before the class.",
@@ -1404,8 +1405,9 @@ const DANCE_LOCALES = {
         register_success: "Registro exitoso!",
         register_error: "No se pudo registrar. Intenta de nuevo.",
         no_active_membership_register: "No tienes membresía activa. Compra un plan primero.",
-        not_enough_classes_message: "No tienes suficientes clases en tu paquete. Te quedan {effective} y ya estás inscrito en {registered} clases, así que solo te quedan {available} clases.",
-        not_enough_classes_monthly_message: "No tienes suficientes clases en tu paquete para inscribirte a {need_new} clases más. Te quedan {effective} y ya estás inscrito en {registered} clases, así que solo te quedan {available} clases.",
+        aure_level_must_be_set: "El nivel debe ser asignado por el administrador antes de que puedas registrarte directamente. Usa \"Solicitar clase suelta\" para pedir esta clase.",
+        not_enough_classes_message: "No tienes suficientes clases en tu paquete. Solo te quedan {effective} clases y ya estás inscrito en {registered} clases, así que solo te quedan {available} clases disponibles.",
+        not_enough_classes_monthly_message: "No tienes suficientes clases en tu paquete para inscribirte a {need_new} clases más. Solo te quedan {effective} clases y ya estás inscrito en {registered} clases, así que solo te quedan {available} clases disponibles.",
         cancel_success: "Registro cancelado.",
         cancel_error: "No se pudo cancelar. Intenta de nuevo.",
         cancel_too_late_error: "No se puede cancelar con menos de 4 horas antes del inicio de la clase.",
@@ -2226,8 +2228,9 @@ const DANCE_LOCALES = {
         register_success: "Erfolgreich angemeldet!",
         register_error: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
         no_active_membership_register: "Keine aktive Mitgliedschaft. Bitte zuerst ein Paket kaufen.",
-        not_enough_classes_message: "Du hast nicht genug Kurse in deinem Paket. Du hast noch {effective} übrig und bist bereits für {registered} Kurse angemeldet, also hast du nur noch {available} Kurse übrig.",
-        not_enough_classes_monthly_message: "Du hast nicht genug Kurse in deinem Paket, um dich für {need_new} weitere Kurse anzumelden. Du hast noch {effective} übrig und bist bereits für {registered} Kurse angemeldet, also hast du nur noch {available} Kurse übrig.",
+        aure_level_must_be_set: "Dein Niveau muss zuerst vom Admin festgelegt werden, bevor du dich direkt anmelden kannst. Nutze „Clase suelta anfragen“, um diesen Kurs anzufragen.",
+        not_enough_classes_message: "Du hast nicht genug Kurse in deinem Paket. Du hast nur noch {effective} Kurse übrig und bist bereits für {registered} Kurse angemeldet, also hast du nur noch {available} Kurse verfügbar.",
+        not_enough_classes_monthly_message: "Du hast nicht genug Kurse in deinem Paket, um dich für {need_new} weitere Kurse anzumelden. Du hast nur noch {effective} Kurse übrig und bist bereits für {registered} Kurse angemeldet, also hast du nur noch {available} Kurse verfügbar.",
         cancel_success: "Anmeldung storniert.",
         cancel_error: "Stornierung fehlgeschlagen. Bitte erneut versuchen.",
         cancel_too_late_error: "Stornierung weniger als 4 Stunden vor Kursbeginn nicht möglich.",
@@ -7130,7 +7133,7 @@ function _renderViewImpl() {
                     const pendingRequests = allRequests.filter(r => r.status === 'pending');
                     const durationLabel = (mins) => (mins === 60 ? '1h' : mins === 90 ? '1.5h' : mins === 120 ? '2h' : mins === 30 ? '30 min' : mins === 45 ? '45 min' : mins != null ? mins + ' min' : '');
                     const renderPcrCard = (r) => {
-                        const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                        const studentName = r.student_name || (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
                         const responding = state.privateClassRequestRespondingId === r.id;
                         const actionsHtml = r.status === 'pending'
                             ? (responding
@@ -7418,7 +7421,7 @@ function _renderViewImpl() {
                             ` : sortedAccepted.map(r => {
                                 const lesson = r.start_at_utc ? r : (state.privateLessons || []).find(l => l.request_id === r.id);
                                 const lessonId = lesson?.id;
-                                const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                                const studentName = r.student_name || (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
                                 const dateLabel = r.start_at_utc ? (window.formatShortDate ? window.formatShortDate(new Date(r.start_at_utc), state.language) : new Date(r.start_at_utc).toLocaleDateString()) : (window.formatShortDate ? window.formatShortDate(new Date(r.requested_date + 'T00:00:00'), state.language) : r.requested_date);
                                 const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : (r.requested_time || '');
                                 const src = lesson || r;
@@ -7478,7 +7481,7 @@ function _renderViewImpl() {
                                         ${selectedEvents.length === 0 ? '<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 13px;">' + (t.no_classes_this_day || 'No classes this day') + '</div>' : selectedEvents.map(r => {
                                             const lesson = r.start_at_utc ? r : (state.privateLessons || []).find(l => l.request_id === r.id);
                                             const lessonId = lesson?.id;
-                                            const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                                            const studentName = r.student_name || (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
                                             const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : (r.requested_time || '');
                                             const src = lesson || r;
                                             const durationMins = src && src.start_at_utc && src.end_at_utc ? Math.round((new Date(src.end_at_utc) - new Date(src.start_at_utc)) / 60000) : 0;
@@ -9376,6 +9379,11 @@ window.registerForClassSingle = async (classId, className, optionalDateStr) => {
             alert(t('no_active_membership_register'));
             return;
         }
+        const levelMustBeSetMatch = /Level must be set by admin\. Use "Request clase suelta" to request (this class|classes)\./i.test(msg);
+        if (levelMustBeSetMatch) {
+            alert(t('aure_level_must_be_set') || msg);
+            return;
+        }
         const singleMatch = msg.match(/You don['']t have enough classes in your package\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
         if (singleMatch) {
             const [, effective, registered, available] = singleMatch;
@@ -9432,6 +9440,11 @@ window.registerForClassMonthly = async (classId, className, optionalAnchorDateSt
         const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
         if (isNoMembership) {
             alert(t('no_active_membership_register'));
+            return;
+        }
+        const levelMustBeSetMatch = /Level must be set by admin\. Use "Request clase suelta" to request (this class|classes)\./i.test(msg);
+        if (levelMustBeSetMatch) {
+            alert(t('aure_level_must_be_set') || msg);
             return;
         }
         const monthlyMatch = msg.match(/You don['']t have enough classes in your package to sign up for (\d+) more classes\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
@@ -9634,13 +9647,14 @@ window.rejectClaseSuelta = async (registrationId) => {
 };
 
 window.updateStudentLevel = async (studentId, level) => {
-    if (!supabaseClient || !state.schoolId) return;
+    const schoolId = state.currentSchool?.id || state.currentUser?.school_id || null;
+    if (!supabaseClient || !schoolId) return;
     const t = typeof window.t === 'function' ? window.t : (k) => k;
     try {
         const pLevel = level && level.trim() ? level.trim() : null;
         const { error } = await supabaseClient.rpc('student_update_level', {
             p_student_id: String(studentId),
-            p_school_id: state.schoolId,
+            p_school_id: schoolId,
             p_level: pLevel
         });
         if (error) throw error;
@@ -11723,9 +11737,6 @@ window.submitTeacherBookingRequest = async () => {
 
 // Private Class Requests: accept/decline
 window.respondToPrivateClassRequest = async (requestId, accept) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:respondToPrivateClassRequest',message:'respondToPrivateClassRequest called',data:{requestId,accept},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     if (!supabaseClient) return;
     state.privateClassRequestRespondingId = requestId;
     if (typeof renderView === 'function') renderView();
@@ -11739,25 +11750,15 @@ window.respondToPrivateClassRequest = async (requestId, accept) => {
             const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/send_private_lesson_confirmation';
             const { data: sess } = await supabaseClient.auth.getSession();
             const token = sess?.session?.access_token;
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:after RPC accept',message:'before confirmation fetch',data:{hasToken:!!token,fnUrl:fnUrl||'(empty)'},timestamp:Date.now(),hypothesisId:'H2,H3'})}).catch(()=>{});
-            // #endregion
             if (token && fnUrl) {
                 try {
-                    const emailRes = await fetch(fnUrl, {
+                    await fetch(fnUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                         body: JSON.stringify({ request_id: requestId })
                     });
-                    // #region agent log
-                    const bodyText = await emailRes.text().catch(() => '');
-                    fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:confirmation fetch response',message:'send_private_lesson_confirmation response',data:{status:emailRes.status,ok:emailRes.ok,bodyPreview:(bodyText||'').slice(0,200)},timestamp:Date.now(),hypothesisId:'H4,H5'})}).catch(()=>{});
-                    // #endregion
-                } catch (fetchErr) {
-                    // #region agent log
-                    fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:confirmation fetch catch',message:'fetch threw',data:{err:String(fetchErr?.message||fetchErr)},timestamp:Date.now(),hypothesisId:'H4,H5'})}).catch(()=>{});
-                    // #endregion
-                    /* email is best-effort; don't block UI */
+                } catch {
+                    /* confirmation email is best-effort; don't block UI */
                 }
             }
         }

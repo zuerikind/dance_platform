@@ -483,7 +483,8 @@ export async function fetchAllData() {
                     await supabaseClient.rpc('process_expired_registrations', { p_school_id: sid });
                 }
             } catch (e) { console.warn('process_expired_registrations error:', e); }
-            if (isStudent && state.currentUser?.id) {
+            // Only load full class availability when the view actually needs it.
+            if (isStudent && state.currentUser?.id && state.currentView === 'schedule') {
                 state.classRegLoaded = false;
                 if (typeof window.loadClassAvailability === 'function') {
                     window.loadClassAvailability().then(() => {
@@ -496,7 +497,7 @@ export async function fetchAllData() {
                     }).catch(() => {});
                 }
             }
-            if (state.isAdmin && typeof window.loadClassAvailability === 'function') {
+            if (state.isAdmin && state.currentView === 'admin-memberships' && typeof window.loadClassAvailability === 'function') {
                 window.loadClassAvailability().then(() => {
                     if (state.currentView === 'admin-memberships' && typeof window.renderView === 'function') window.renderView();
                 }).catch(() => {});

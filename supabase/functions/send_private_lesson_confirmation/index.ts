@@ -62,7 +62,7 @@ ${logoSection}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(undefined, { status: 200, headers: corsHeaders });
   }
 
   try {
