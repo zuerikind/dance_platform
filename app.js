@@ -13304,13 +13304,14 @@ School: ${schoolName}`)) return;
     const enrollment = state.allEnrollments.find((e) => e.school_id === schoolId);
     if (!enrollment) return 0;
     const now = /* @__PURE__ */ new Date();
-    let total = Number(enrollment.balance_private) || 0;
+    const fromBalance = Number(enrollment.balance_private) || 0;
     const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
+    let sumPrivate = 0;
     packs.forEach((p) => {
       const exp = p?.expires_at ? new Date(p.expires_at) : null;
-      if (exp && exp > now) total += Number(p.private_count) || 0;
+      if (exp && exp > now) sumPrivate += Number(p.private_count) || 0;
     });
-    return Math.max(0, total);
+    return Math.max(0, Math.max(fromBalance, sumPrivate));
   };
   window.privateClassInfoFromItem = (item) => {
     let durationMins = 60;

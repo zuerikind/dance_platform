@@ -11497,19 +11497,20 @@ window.studentHasPackageWithSchool = (schoolId) => {
     });
 };
 
-// Effective private class balance for one school (balance_private + non-expired packs' private_count)
+// Effective private class balance for one school. Backend keeps balance_private = sum(non-expired packs' private_count) after deductions, so use max to avoid double-counting (same as getEffectiveBalances).
 window.getEffectivePrivateBalanceForSchool = (schoolId) => {
     if (!schoolId || !Array.isArray(state.allEnrollments)) return 0;
     const enrollment = state.allEnrollments.find(e => e.school_id === schoolId);
     if (!enrollment) return 0;
     const now = new Date();
-    let total = Number(enrollment.balance_private) || 0;
+    const fromBalance = Number(enrollment.balance_private) || 0;
     const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
+    let sumPrivate = 0;
     packs.forEach(p => {
         const exp = p?.expires_at ? new Date(p.expires_at) : null;
-        if (exp && exp > now) total += Number(p.private_count) || 0;
+        if (exp && exp > now) sumPrivate += Number(p.private_count) || 0;
     });
-    return Math.max(0, total);
+    return Math.max(0, Math.max(fromBalance, sumPrivate));
 };
 
 // Duration label and class count for private lesson/request (1h, 2h, 3h only)
@@ -11695,6 +11696,9 @@ window.submitTeacherBookingRequest = async () => {
 
 // Private Class Requests: accept/decline
 window.respondToPrivateClassRequest = async (requestId, accept) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:respondToPrivateClassRequest',message:'respondToPrivateClassRequest called',data:{requestId,accept},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     if (!supabaseClient) return;
     state.privateClassRequestRespondingId = requestId;
     if (typeof renderView === 'function') renderView();
@@ -11708,14 +11712,26 @@ window.respondToPrivateClassRequest = async (requestId, accept) => {
             const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/send_private_lesson_confirmation';
             const { data: sess } = await supabaseClient.auth.getSession();
             const token = sess?.session?.access_token;
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:after RPC accept',message:'before confirmation fetch',data:{hasToken:!!token,fnUrl:fnUrl||'(empty)'},timestamp:Date.now(),hypothesisId:'H2,H3'})}).catch(()=>{});
+            // #endregion
             if (token && fnUrl) {
                 try {
-                    await fetch(fnUrl, {
+                    const emailRes = await fetch(fnUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                         body: JSON.stringify({ request_id: requestId })
                     });
-                } catch (_) { /* email is best-effort; don't block UI */ }
+                    // #region agent log
+                    const bodyText = await emailRes.text().catch(() => '');
+                    fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:confirmation fetch response',message:'send_private_lesson_confirmation response',data:{status:emailRes.status,ok:emailRes.ok,bodyPreview:(bodyText||'').slice(0,200)},timestamp:Date.now(),hypothesisId:'H4,H5'})}).catch(()=>{});
+                    // #endregion
+                } catch (fetchErr) {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d108'},body:JSON.stringify({sessionId:'66d108',location:'legacy.js:confirmation fetch catch',message:'fetch threw',data:{err:String(fetchErr?.message||fetchErr)},timestamp:Date.now(),hypothesisId:'H4,H5'})}).catch(()=>{});
+                    // #endregion
+                    /* email is best-effort; don't block UI */
+                }
             }
         }
         await fetchAllData();
