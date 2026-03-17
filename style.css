@@ -518,6 +518,44 @@ h1 {
     /* Slightly wider for admin screens */
     margin: 0 auto;
 }
+
+/* Student profile tab: fit viewport on phone, no horizontal overflow */
+.profile-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+}
+.profile-container .ios-list-item {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 4px 0;
+}
+.profile-container .ios-list-item > span:first-child {
+    min-width: 0;
+}
+.profile-container .ios-list-item input {
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: 100%;
+}
+.profile-container .ios-header,
+.profile-container .ios-large-title {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+.profile-container .profile-my-reviews-list,
+.profile-container .profile-review-details summary {
+    word-break: break-word;
+}
+.profile-container .btn-primary,
+.profile-container .btn-secondary {
+    box-sizing: border-box;
+    max-width: 100%;
+}
 .container.container-dev {
     max-width: 100%;
     padding: 1.5rem 2rem;

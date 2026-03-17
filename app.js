@@ -8448,19 +8448,26 @@
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
                     ${(() => {
           const now = /* @__PURE__ */ new Date();
-          const eff = getEffectiveBalances(state.currentUser, now);
+          const currentSchoolId = state.currentSchool?.id;
+          const enrollmentForSchool = Array.isArray(state.allEnrollments) && state.allEnrollments.length > 0 && currentSchoolId ? state.allEnrollments.find((e) => e.school_id === currentSchoolId) : null;
+          const dataSource = enrollmentForSchool || { ...state.currentUser, school_id: currentSchoolId, balance: state.currentUser?.balance, balance_private: state.currentUser?.balance_private, active_packs: state.currentUser?.active_packs || [] };
+          const eff = getEffectiveBalances(dataSource, now);
           const isPT = state.currentSchool?.profile_type === "private_teacher";
           const hasDualScanMode = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
           const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
           const groupEffective = eff.group ?? 0;
           const groupVal = eff.groupUnlimited ? "\u221E" : String(Math.max(0, groupEffective));
           const parts = [];
-          parts.push({ label: t2.group_classes_remaining || "Group", value: groupVal });
-          if (hasDualScanMode) parts.push({ label: t2.private_classes_remaining || "Private", value: String(eff.private) });
+          if (isPT) {
+            parts.push({ label: t2.classes_remaining || t2.private_classes_remaining || "Classes remaining", value: String(Math.max(0, eff.private)) });
+          } else {
+            parts.push({ label: t2.group_classes_remaining || "Group", value: groupVal });
+          }
+          if (hasDualScanMode && !isPT) parts.push({ label: t2.private_classes_remaining || "Private", value: String(eff.private) });
           if (hasEventsEnabled) parts.push({ label: t2.events_remaining || "Events", value: String(eff.event) });
           const groupNum = eff.groupUnlimited ? 1 : Math.max(0, groupEffective);
-          if (parts.length === 1 && groupNum <= 0) {
-            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t2.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
+          if (parts.length === 1 && (isPT ? eff.private <= 0 : groupNum <= 0)) {
+            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + (t2.classes_remaining || t2.remaining_classes) + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
           }
           if (parts.length === 1) {
             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + parts[0].label + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + parts[0].value + "</div>";
@@ -8470,7 +8477,10 @@
         })()}
                         ${(() => {
           const now = /* @__PURE__ */ new Date();
-          const eff = getEffectiveBalances(state.currentUser, now);
+          const currentSchoolId = state.currentSchool?.id;
+          const enrollmentForSchool = Array.isArray(state.allEnrollments) && state.allEnrollments.length > 0 && currentSchoolId ? state.allEnrollments.find((e) => e.school_id === currentSchoolId) : null;
+          const dataSource = enrollmentForSchool || state.currentUser;
+          const eff = getEffectiveBalances(dataSource, now);
           const isPT = state.currentSchool?.profile_type === "private_teacher";
           const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
           const classRegEnabled = state.currentSchool?.class_registration_enabled === true;
@@ -8481,8 +8491,8 @@
           const hasEventsLeft = hasEventsEnabled && eff.event > 0;
           const noClassesLeft = isPT ? !hasPrivateLeft && !hasEventsLeft : !hasGroupLeft && !hasEventsLeft;
           if (noClassesLeft) return "";
-          const activePacks = (state.currentUser.active_packs || []).filter((p) => new Date(p.expires_at) > now);
-          const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
+          const activePacks = (dataSource?.active_packs || []).filter((p) => new Date(p.expires_at) > now);
+          const nextExpiry = dataSource?.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
           if (nextExpiry) {
             const d = new Date(nextExpiry);
             const days = window.getDaysRemaining(nextExpiry);
@@ -8573,10 +8583,11 @@
             const eventsFromPacksEn = packs.filter((p) => new Date(p.expires_at) > now).reduce((s, p) => s + (p.event_count || 0), 0);
             const effectiveEvEn = Math.max(enrollment.balance_events ?? 0, eventsFromPacksEn);
             const hasEv = effectiveEvEn > 0 || packs.some((p) => (p.event_count || 0) > 0);
+            const effEn = getEffectiveBalances(enrollment, now);
             let enrollLabel = (enrollment.balance === null ? "\u221E" : enrollment.balance ?? 0) + " clases";
             if (hasPriv || hasEv) {
               const g = (t2.group_classes_remaining || "G") + " " + (enrollment.balance === null ? "\u221E" : enrollment.balance ?? 0);
-              const p_ = hasPriv ? " " + (t2.private_classes_remaining || "P") + " " + (enrollment.balance_private ?? 0) : "";
+              const p_ = hasPriv ? " " + (t2.private_classes_remaining || "P") + " " + Math.max(0, effEn.private) : "";
               const e = hasEv ? " " + (t2.events_remaining || "E") + " " + effectiveEvEn : "";
               enrollLabel = g + p_ + e;
             }

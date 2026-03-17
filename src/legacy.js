@@ -2937,19 +2937,19 @@ window.renderDashboardProfileView = () => {
     const canResend = p.origin === 'discovery' && !p.email_confirmed && (Date.now() >= (_resendVerificationCooldownUntil || 0)) && !_resendVerificationSending;
     const resendLabel = _resendVerificationSending ? (t('resend_sending') || 'Sending…') : (canResend ? (t('resend_verification') || 'Resend verification email') : (t('resend_cooldown') || 'Sent. Wait 60s'));
     const backToDiscovery = "event.preventDefault(); state.currentView=null; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ renderView(); window.scrollTo(0,0); }); if(window.lucide) window.lucide.createIcons();";
-    let html = `<div class="container profile-container" style="padding: 1rem 1.2rem; max-width: 560px; margin: 0 auto;"><div style="margin-bottom: 1.25rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back') || 'Back to all studios'}</a></div><div class="ios-header" style="margin-bottom: 1.25rem;"><div class="ios-large-title">${t('profile_settings') || 'Profile'}</div></div>`;
+    let html = `<div class="container profile-container" style="padding: 1rem 1.2rem; max-width: 560px; margin: 0 auto; width: 100%; box-sizing: border-box;"><div style="margin-bottom: 1.25rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t('discovery_back') || 'Back to all studios'}</a></div><div class="ios-header" style="margin-bottom: 1.25rem;"><div class="ios-large-title">${t('profile_settings') || 'Profile'}</div></div>`;
     html += `<div class="ios-list profile-email-card" style="margin-bottom: 1.25rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
     html += `<div class="ios-list-item profile-email-row" style="padding: 14px 16px; flex-wrap: wrap; gap: 6px 0; align-items: flex-start;"><span style="opacity: 0.85; width: 100%; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em;">${t('email') || 'Email'}</span><span style="width: 100%; font-size: 0.95rem; word-break: break-all;">${(p.email || '').replace(/</g, '&lt;')}</span><span style="font-size: 11px; color: var(--text-secondary);">${p.email_confirmed ? (t('verified') || 'Verified') : (t('not_verified') || 'Not verified')}</span></div>`;
     if (p.origin === 'discovery' && !p.email_confirmed) {
         html += `<div class="ios-list-item" style="padding: 12px 16px;"><button type="button" class="resend-verification-btn btn-secondary" ${canResend && !_resendVerificationSending ? '' : 'disabled'} onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="width: 100%; min-height: 44px; cursor: ${canResend && !_resendVerificationSending ? 'pointer' : 'default'}; -webkit-tap-highlight-color: transparent;">${resendLabel}</button>${_resendVerificationFeedback === 'sent' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-green);">${t('resend_success') || 'Check your inbox'}</p>` : ''}${_resendVerificationFeedback === 'error' ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-red);">${(_resendVerificationErrorMsg || t('resend_error')).replace(/</g, '&lt;')}</p>` : ''}</div>`;
     }
     html += `</div>`;
-    html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('first_name') || 'First name'}</span><input type="text" id="profile-first-name" value="${(firstName || '').replace(/"/g, '&quot;')}" placeholder="${t('first_name') || 'First name'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('last_name') || 'Last name'}</span><input type="text" id="profile-last-name" value="${(lastName || '').replace(/"/g, '&quot;')}" placeholder="${t('last_name') || 'Last name'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('phone') || 'Phone'}</span><input type="text" id="profile-phone" value="${(p.phone || '').replace(/"/g, '&quot;')}" placeholder="${t('phone') || 'Phone'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('city') || 'City'}</span><input type="text" id="profile-city" value="${(p.city || '').replace(/"/g, '&quot;')}" placeholder="${t('city') || 'City'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('country') || 'Country'}</span><input type="text" id="profile-country" value="${(p.country || '').replace(/"/g, '&quot;')}" placeholder="${t('country') || 'Country'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t('instagram') || 'Instagram'}</span><input type="text" id="profile-instagram" value="${(p.instagram || '').replace(/"/g, '&quot;')}" placeholder="${t('instagram_placeholder') || '@handle'}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
+    html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t('first_name') || 'First name'}</span><input type="text" id="profile-first-name" value="${(firstName || '').replace(/"/g, '&quot;')}" placeholder="${t('first_name') || 'First name'}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t('last_name') || 'Last name'}</span><input type="text" id="profile-last-name" value="${(lastName || '').replace(/"/g, '&quot;')}" placeholder="${t('last_name') || 'Last name'}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t('phone') || 'Phone'}</span><input type="text" id="profile-phone" value="${(p.phone || '').replace(/"/g, '&quot;')}" placeholder="${t('phone') || 'Phone'}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t('city') || 'City'}</span><input type="text" id="profile-city" value="${(p.city || '').replace(/"/g, '&quot;')}" placeholder="${t('city') || 'City'}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t('country') || 'Country'}</span><input type="text" id="profile-country" value="${(p.country || '').replace(/"/g, '&quot;')}" placeholder="${t('country') || 'Country'}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t('instagram') || 'Instagram'}</span><input type="text" id="profile-instagram" value="${(p.instagram || '').replace(/"/g, '&quot;')}" placeholder="${t('instagram_placeholder') || '@handle'}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
     html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t('save') || 'Save'}</button>`;
     html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t('change_password_section') || 'Change password'}</h3>`;
     html += `<div class="ios-list" style="margin-bottom: 0.75rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
@@ -6600,20 +6600,28 @@ function _renderViewImpl() {
                     <div class="card" style="max-width: 280px; margin: 0 auto; padding: 1.2rem; border-radius: 20px;">
                     ${(() => {
                         const now = new Date();
-                        const eff = getEffectiveBalances(state.currentUser, now);
+                        const currentSchoolId = state.currentSchool?.id;
+                        const enrollmentForSchool = (Array.isArray(state.allEnrollments) && state.allEnrollments.length > 0 && currentSchoolId)
+                            ? state.allEnrollments.find(e => e.school_id === currentSchoolId)
+                            : null;
+                        const dataSource = enrollmentForSchool || { ...state.currentUser, school_id: currentSchoolId, balance: state.currentUser?.balance, balance_private: state.currentUser?.balance_private, active_packs: state.currentUser?.active_packs || [] };
+                        const eff = getEffectiveBalances(dataSource, now);
                         const isPT = state.currentSchool?.profile_type === 'private_teacher';
                         const hasDualScanMode = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
                         const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
-                        // Clases restantes = package balance until QR scan or class expiry (no deduction at registration).
                         const groupEffective = eff.group ?? 0;
                         const groupVal = eff.groupUnlimited ? '∞' : String(Math.max(0, groupEffective));
                         const parts = [];
-                        parts.push({ label: t.group_classes_remaining || 'Group', value: groupVal });
-                        if (hasDualScanMode) parts.push({ label: t.private_classes_remaining || 'Private', value: String(eff.private) });
+                        if (isPT) {
+                            parts.push({ label: t.classes_remaining || t.private_classes_remaining || 'Classes remaining', value: String(Math.max(0, eff.private)) });
+                        } else {
+                            parts.push({ label: t.group_classes_remaining || 'Group', value: groupVal });
+                        }
+                        if (hasDualScanMode && !isPT) parts.push({ label: t.private_classes_remaining || 'Private', value: String(eff.private) });
                         if (hasEventsEnabled) parts.push({ label: t.events_remaining || 'Events', value: String(eff.event) });
                         const groupNum = eff.groupUnlimited ? 1 : Math.max(0, groupEffective);
-                        if (parts.length === 1 && groupNum <= 0) {
-                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + t.remaining_classes + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
+                        if (parts.length === 1 && (isPT ? eff.private <= 0 : groupNum <= 0)) {
+                            return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + (t.classes_remaining || t.remaining_classes) + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
                         }
                         if (parts.length === 1) {
                             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + parts[0].label + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">' + parts[0].value + '</div>';
@@ -6625,7 +6633,12 @@ function _renderViewImpl() {
                     })()}
                         ${(() => {
                             const now = new Date();
-                            const eff = getEffectiveBalances(state.currentUser, now);
+                            const currentSchoolId = state.currentSchool?.id;
+                            const enrollmentForSchool = (Array.isArray(state.allEnrollments) && state.allEnrollments.length > 0 && currentSchoolId)
+                                ? state.allEnrollments.find(e => e.school_id === currentSchoolId)
+                                : null;
+                            const dataSource = enrollmentForSchool || state.currentUser;
+                            const eff = getEffectiveBalances(dataSource, now);
                             const isPT = state.currentSchool?.profile_type === 'private_teacher';
                             const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
                             const classRegEnabled = state.currentSchool?.class_registration_enabled === true;
@@ -6636,8 +6649,8 @@ function _renderViewImpl() {
                             const hasEventsLeft = hasEventsEnabled && eff.event > 0;
                             const noClassesLeft = isPT ? (!hasPrivateLeft && !hasEventsLeft) : (!hasGroupLeft && !hasEventsLeft);
                             if (noClassesLeft) return ''; // hide next expiry when no classes left
-                            const activePacks = (state.currentUser.active_packs || []).filter(p => new Date(p.expires_at) > now);
-                            const nextExpiry = state.currentUser.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
+                            const activePacks = (dataSource?.active_packs || []).filter(p => new Date(p.expires_at) > now);
+                            const nextExpiry = dataSource?.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
                             if (nextExpiry) {
                                 const d = new Date(nextExpiry);
                                 const days = window.getDaysRemaining(nextExpiry);
@@ -6747,10 +6760,11 @@ function _renderViewImpl() {
                     const eventsFromPacksEn = packs.filter(p => new Date(p.expires_at) > now).reduce((s, p) => s + (p.event_count || 0), 0);
                     const effectiveEvEn = Math.max(enrollment.balance_events ?? 0, eventsFromPacksEn);
                     const hasEv = effectiveEvEn > 0 || packs.some(p => (p.event_count || 0) > 0);
+                    const effEn = getEffectiveBalances(enrollment, now);
                     let enrollLabel = (enrollment.balance === null ? '∞' : (enrollment.balance ?? 0)) + ' clases';
                     if (hasPriv || hasEv) {
                         const g = (t.group_classes_remaining || 'G') + ' ' + (enrollment.balance === null ? '∞' : (enrollment.balance ?? 0));
-                        const p_ = hasPriv ? ' ' + (t.private_classes_remaining || 'P') + ' ' + (enrollment.balance_private ?? 0) : '';
+                        const p_ = hasPriv ? ' ' + (t.private_classes_remaining || 'P') + ' ' + Math.max(0, effEn.private) : '';
                         const e = hasEv ? ' ' + (t.events_remaining || 'E') + ' ' + effectiveEvEn : '';
                         enrollLabel = g + p_ + e;
                     }
