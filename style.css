@@ -285,11 +285,36 @@ body.dark-mode *::-webkit-scrollbar-thumb:active {
     --border: rgba(255, 255, 255, 0.12);
 }
 
+/* Text selection: visible in both themes */
+::selection {
+    background: rgba(0, 122, 255, 0.25);
+    color: inherit;
+}
+.dark-mode ::selection {
+    background: rgba(123, 171, 232, 0.35);
+    color: #f5f5f7;
+}
+
+/* Buttons/links focus in dark mode when no specific style exists */
+.dark-mode button:focus-visible,
+.dark-mode a:focus-visible {
+    outline: 2px solid rgba(123, 171, 232, 0.8);
+    outline-offset: 2px;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
+}
+
+/* Keep every page exactly viewport-sized on mobile (no zoom, no horizontal overflow) */
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -303,8 +328,10 @@ body {
     padding-top: var(--safe-top);
     padding-bottom: calc(100px + var(--safe-bottom));
     min-height: 100vh;
+    min-height: 100dvh; /* mobile: fill visible viewport (avoids address bar jump) */
     transition: background 0.4s var(--transition);
     overflow-x: hidden;
+    max-width: 100%;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -318,7 +345,9 @@ main#app-root {
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100%;
     min-width: 0;
+    overflow-x: hidden;
 }
 main#app-root > .container {
     flex: 1 1 auto;
@@ -6403,6 +6432,60 @@ body:not(.landing-page) .sticky-footer-inner {
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
 }
+/* Duration section label */
+.teacher-booking-confirm-duration-wrap {
+  margin-top: 12px;
+}
+.teacher-booking-confirm-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* Duration options: professional segment control (light + dark) */
+.teacher-booking-duration-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.teacher-booking-duration-btn {
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--system-gray6);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.teacher-booking-duration-btn:hover {
+  background: var(--system-gray5);
+  border-color: var(--system-gray4);
+}
+.teacher-booking-duration-btn.selected {
+  background: var(--text-primary);
+  color: var(--bg-body);
+  border-color: var(--text-primary);
+}
+body.dark-mode .teacher-booking-duration-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+body.dark-mode .teacher-booking-duration-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+body.dark-mode .teacher-booking-duration-btn.selected {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: var(--text-primary);
+}
+
 .teacher-booking-confirm-actions {
   display: flex;
   gap: 10px;
@@ -6418,19 +6501,39 @@ body:not(.landing-page) .sticky-footer-inner {
   cursor: pointer;
   transition: all 0.2s;
 }
+/* Match rest of page: no blue; primary = filled text color, secondary = surface */
 .teacher-booking-confirm-btn.primary {
-  background: var(--system-blue);
-  color: #fff;
+  background: var(--text-primary);
+  color: var(--bg-body);
 }
-.teacher-booking-confirm-btn.primary:hover {
-  filter: brightness(1.1);
+.teacher-booking-confirm-btn.primary:hover:not(:disabled) {
+  filter: brightness(0.92);
 }
 .teacher-booking-confirm-btn.secondary {
   background: var(--bg-body);
   color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 .teacher-booking-confirm-btn.secondary:hover {
-  background: var(--border);
+  background: var(--system-gray6);
+}
+body.dark-mode .teacher-booking-confirm-btn.primary {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+body.dark-mode .teacher-booking-confirm-btn.primary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+body.dark-mode .teacher-booking-confirm-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+}
+body.dark-mode .teacher-booking-confirm-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Private classes calendar (admin accepted classes) */

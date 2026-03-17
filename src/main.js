@@ -117,6 +117,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
             const view = btn.getAttribute('data-view');
+            const prevView = state.currentView;
+            if (prevView === 'admin-settings') {
+                state._settingsScrollTop = window.scrollY ?? document.documentElement?.scrollTop ?? 0;
+                state._settingsScrollTime = Date.now();
+            }
             state.currentView = view;
             if (view === 'dashboard-profile') {
                 window.location.hash = '#/dashboard/profile';
@@ -125,7 +130,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             }
             saveState();
             window.renderView();
-            window.scrollTo(0, 0);
+            const canRestoreSettings = view === 'admin-settings' && state._settingsScrollTime != null && (Date.now() - state._settingsScrollTime) < 10 * 60 * 1000 && (state._settingsScrollTop ?? 0) >= 0;
+            if (canRestoreSettings) {
+                requestAnimationFrame(() => { requestAnimationFrame(() => { window.scrollTo(0, state._settingsScrollTop); }); });
+            } else {
+                window.scrollTo(0, 0);
+            }
             if (view === 'qr' && state.currentUser && !state.isAdmin && state.currentUser.id && (state.currentUser.school_id || state.currentSchool?.id) && supabaseClient) {
                 window.fetchAllData();
             }
@@ -138,6 +148,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
         const icon = state.theme === 'dark' ? 'moon' : 'sun';
         document.getElementById('theme-icon').setAttribute('data-lucide', icon);
+        const metaTheme = document.querySelector('meta[name="theme-color"]');
+        if (metaTheme) metaTheme.setAttribute('content', state.theme === 'dark' ? '#000000' : '#f5f5f7');
         saveState();
         if (typeof window.lucide !== 'undefined' && window.lucide.createIcons) window.lucide.createIcons();
     });
@@ -201,7 +213,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         } catch (_) { saved = {}; }
         if (local && !state.discoveryPath) {
             state.language = saved.language || 'en';
-            state.theme = saved.theme || 'dark';
+            state.theme = (saved.theme === 'light' || saved.theme === 'dark') ? saved.theme : 'dark';
             if (saved.currentUser) state.currentUser = saved.currentUser;
             if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
             if (saved.isPlatformDev !== undefined) state.isPlatformDev = saved.isPlatformDev;
@@ -239,7 +251,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
         if (state.discoveryPath && local) {
             state.language = saved.language || state.language || 'en';
-            state.theme = saved.theme || state.theme || 'dark';
+            state.theme = (saved.theme === 'light' || saved.theme === 'dark') ? saved.theme : (state.theme || 'dark');
             if (saved.currentUser) state.currentUser = saved.currentUser;
             if (saved.lastActivity) state.lastActivity = saved.lastActivity;
             if (saved._discoveryOnlyEdit !== undefined) state._discoveryOnlyEdit = !!saved._discoveryOnlyEdit;
@@ -248,27 +260,49 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
         if (isAureSubdomain && !state.currentUser && !state.isAdmin && !state.isPlatformDev) state.currentView = 'auth';
 
-        // Billing return: Stripe redirects to /?billing=cancel or ?billing=success — restore the view they were on when they opened checkout
+        // Apply theme and icon immediately so first paint is correct and theme never "flips" to light
+        document.body.setAttribute('data-theme', state.theme);
+        document.body.classList.toggle('dark-mode', state.theme === 'dark');
+        const themeIconEl = document.getElementById('theme-icon');
+        if (themeIconEl) themeIconEl.setAttribute('data-lucide', state.theme === 'dark' ? 'moon' : 'sun');
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) metaThemeColor.setAttribute('content', state.theme === 'dark' ? '#000000' : '#f5f5f7');
+
+        // Billing return: apply state from previous load if we just did a reload (sessionStorage)
+        try {
+            const stored = sessionStorage.getItem('billing_return');
+            if (stored) {
+                sessionStorage.removeItem('billing_return');
+                const { academyId, returnView } = JSON.parse(stored);
+                if (academyId) state.currentSchool = { id: academyId, name: state.currentSchool?.name || 'School' };
+                if (returnView) state.currentView = returnView;
+                else state.currentView = 'admin-settings';
+            }
+        } catch (_) {}
+
+        // Billing return: Stripe redirects to /?billing=cancel or ?billing=success (or legacy /billing/cancel). Reload so the app loads cleanly with correct state.
         const searchParams = new URLSearchParams(window.location.search);
         const billingReturn = searchParams.get('billing');
-        if (billingReturn === 'cancel' || billingReturn === 'success') {
+        const isLegacyBillingPath = path === '/billing/cancel' || path === '/billing/success';
+        if (billingReturn === 'cancel' || billingReturn === 'success' || isLegacyBillingPath) {
             const academyId = searchParams.get('academy');
-            if (academyId) state.currentSchool = { id: decodeURIComponent(academyId), name: state.currentSchool?.name || 'School' };
-            const returnView = searchParams.get('return_view');
-            if (returnView) state.currentView = decodeURIComponent(returnView);
-            else state.currentView = 'admin-settings';
-            searchParams.delete('billing');
-            searchParams.delete('academy');
-            searchParams.delete('session_id');
-            searchParams.delete('return_view');
-            const cleanSearch = searchParams.toString();
-            const cleanUrl = (window.location.pathname || '/') + (cleanSearch ? '?' + cleanSearch : '') + (window.location.hash || '');
-            window.history.replaceState(null, '', cleanUrl);
+            const returnViewRaw = searchParams.get('return_view');
+            const returnView = returnViewRaw ? decodeURIComponent(returnViewRaw) : 'admin-settings';
+            try {
+                sessionStorage.setItem('billing_return', JSON.stringify({
+                    academyId: academyId ? decodeURIComponent(academyId) : null,
+                    returnView
+                }));
+            } catch (_) {}
+            window.history.replaceState(null, '', '/');
+            window.location.reload();
+            return;
         }
 
         updateI18n();
         document.body.setAttribute('data-theme', state.theme);
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
+        if (themeIconEl) themeIconEl.setAttribute('data-lucide', state.theme === 'dark' ? 'moon' : 'sun');
         if (state.isAdmin && state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
             try {
                 const { data } = await supabaseClient.from('schools').select('active').eq('id', state.currentSchool.id).maybeSingle();
@@ -279,7 +313,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
                 }
             } catch (_) {}
         }
+        if (typeof window.history !== 'undefined' && window.history.scrollRestoration !== undefined) {
+            window.history.scrollRestoration = 'manual';
+        }
         window.renderView();
+        window.scrollTo(0, 0);
         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
         const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
@@ -405,6 +443,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             }
         }
         window.renderView();
+        window.scrollTo(0, 0);
         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         if (CALENDLY_FEATURE_ENABLED && state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
 
@@ -413,10 +452,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (path === '/discovery' || path.startsWith('/discovery/')) {
                 state.discoveryPath = path;
                 if (path !== '/discovery') state.discoveryDetailFetched = false;
-                window.fetchDiscoveryData().then(() => window.renderView());
+                window.fetchDiscoveryData().then(() => { window.renderView(); window.scrollTo(0, 0); });
             } else {
                 state.discoveryPath = null;
                 window.renderView();
+                window.scrollTo(0, 0);
             }
         });
 
@@ -426,10 +466,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
                 if (state.currentView === 'admin-settings' && (window.location.hash || '').includes('calendly=connected') && typeof window.fetchAllData === 'function') {
                     window.fetchAllData().then(() => {
                         window.renderView();
+                        window.scrollTo(0, 0);
                         if (CALENDLY_FEATURE_ENABLED && state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
                     });
                 } else {
                     window.renderView();
+                    window.scrollTo(0, 0);
                     if (CALENDLY_FEATURE_ENABLED && state.currentView === 'admin-settings' && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === 'function') window.loadCalendlyEventTypes();
                 }
                 if (state.currentView === 'admin-competition-jack-and-jill' && state.competitionTab === 'registrations' && state.competitionId && supabaseClient) {

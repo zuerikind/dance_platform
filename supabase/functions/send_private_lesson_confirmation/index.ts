@@ -1,4 +1,5 @@
-// Send a well-designed confirmation email when admin approves a clase suelta (Aure). Called by frontend after admin_approve_clase_suelta.
+// Send a well-designed confirmation email to the student when a private teacher accepts their class request.
+// Called by the frontend after teacher_respond_to_request(..., true) succeeds.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -17,39 +18,39 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function buildClaseSueltaConfirmedEmail(params: {
+function buildClassConfirmedEmail(params: {
   studentFirstName: string;
   schoolName: string;
   logoUrl: string | null;
-  className: string;
   dateLabel: string;
   timeLabel: string;
+  classLabel: string;
   signOff?: string;
 }): string {
-  const { studentFirstName, schoolName, logoUrl, className, dateLabel, timeLabel, signOff = 'Bailadmin' } = params;
+  const { studentFirstName, schoolName, logoUrl, dateLabel, timeLabel, classLabel, signOff = 'Bailadmin' } = params;
   const logoSection = logoUrl
     ? `<tr><td style="padding:40px 48px 0;"><img src="${escapeHtml(logoUrl)}" alt="" style="max-width:160px;max-height:60px;object-fit:contain;display:block;border:0;" /></td></tr>`
     : '';
   const topPad = logoUrl ? '28px' : '48px';
   const greeting = studentFirstName ? escapeHtml(studentFirstName) : 'there';
   return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Clase aprobada</title></head>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Class confirmed</title></head>
 <body style="margin:0;padding:0;background-color:#f5f5f7;-webkit-font-smoothing:antialiased;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f7;">
 <tr><td align="center" style="padding:48px 16px 64px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
 ${logoSection}
-<tr><td style="padding:${topPad} 48px 12px;"><h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.3px;line-height:1.3;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">¡Tu clase ha sido aprobada!</h1></td></tr>
-<tr><td style="padding:12px 48px 24px;font-size:16px;line-height:1.65;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Hola ${greeting},</td></tr>
-<tr><td style="padding:0 48px 24px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Tu solicitud de clase suelta en <strong>${escapeHtml(schoolName)}</strong> ha sido confirmada.</p></td></tr>
+<tr><td style="padding:${topPad} 48px 12px;"><h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.3px;line-height:1.3;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Your class is confirmed!</h1></td></tr>
+<tr><td style="padding:12px 48px 24px;font-size:16px;line-height:1.65;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Hi ${greeting},</td></tr>
+<tr><td style="padding:0 48px 24px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Great news — your private lesson with <strong>${escapeHtml(schoolName)}</strong> has been confirmed.</p></td></tr>
 <tr><td style="padding:0 48px 32px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f7;border-radius:14px;border:1px solid #e8e8ed;"><tr><td style="padding:20px 24px;">
-<p style="margin:0 0 8px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#86868b;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Detalles</p>
-<p style="margin:0 0 4px;font-size:16px;font-weight:600;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(className)}</p>
+<p style="margin:0 0 8px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#86868b;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Details</p>
+<p style="margin:0 0 4px;font-size:16px;font-weight:600;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(classLabel)}</p>
 <p style="margin:0 0 4px;font-size:15px;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(dateLabel)}</p>
 <p style="margin:0;font-size:15px;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(timeLabel)}</p>
 </td></tr></table></td></tr>
-<tr><td style="padding:0 48px 44px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">¡Nos vemos en la clase!</p></td></tr>
+<tr><td style="padding:0 48px 44px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#3a3a3c;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">See you in class!</p></td></tr>
 <tr><td style="border-top:1px solid #f0f0f2;padding:20px 48px 32px;"><p style="margin:0;font-size:13px;color:#86868b;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">— ${escapeHtml(signOff)}</p></td></tr>
 </table>
 <p style="margin:24px 0 0;font-size:12px;color:#86868b;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;">Bailadmin &bull; noreply@bailadmin.lat</p>
@@ -78,81 +79,43 @@ Deno.serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const emailFrom = Deno.env.get('EMAIL_FROM') || 'Bailadmin <noreply@bailadmin.lat>';
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
-    if (userError || !user?.id) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid or expired session' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const body = await req.json().catch(() => ({}));
-    const registrationId = body?.registration_id;
-    if (!registrationId) {
+    const requestId = body?.request_id ?? body?.requestId;
+    if (!requestId) {
       return new Response(
-        JSON.stringify({ error: 'Missing registration_id' }),
+        JSON.stringify({ error: 'Missing request_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { data: reg, error: regError } = await adminClient
-      .from('class_registrations')
-      .select('id, student_id, school_id, class_id, class_date')
-      .eq('id', registrationId)
-      .single();
-
-    if (regError || !reg) {
-      return new Response(
-        JSON.stringify({ error: 'Registration not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { data: cls } = await adminClient
-      .from('classes')
-      .select('name, time')
-      .eq('id', reg.class_id)
-      .single();
-
-    const { data: student } = await adminClient
-      .from('students')
-      .select('id, user_id, email, name')
-      .eq('id', reg.student_id)
-      .eq('school_id', reg.school_id)
-      .single();
-
-    if (!student) {
-      return new Response(
-        JSON.stringify({ error: 'Student not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    let toEmail = student.email;
-    if (!toEmail && student.user_id) {
-      const { data: profile } = await adminClient
-        .from('profiles')
-        .select('email')
-        .eq('id', student.user_id)
-        .single();
-      toEmail = profile?.email;
-    }
-
-    if (!toEmail) {
-      return new Response(
-        JSON.stringify({ error: 'Student has no email. Cannot send confirmation.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
+    const token = authHeader.replace('Bearer ', '');
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: isAdmin } = await userClient.rpc('is_school_admin', { p_school_id: reg.school_id });
+
+    const { data: reqRow, error: reqError } = await adminClient
+      .from('private_class_requests')
+      .select('id, school_id, student_id, requested_date, requested_time, start_at_utc, end_at_utc, status')
+      .eq('id', requestId)
+      .single();
+
+    if (reqError || !reqRow) {
+      return new Response(
+        JSON.stringify({ error: 'Request not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (reqRow.status !== 'accepted') {
+      return new Response(
+        JSON.stringify({ error: 'Request is not accepted' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: isAdmin } = await userClient.rpc('is_school_admin', { p_school_id: reqRow.school_id });
     const { data: platformAdmin } = await userClient.rpc('is_platform_admin', {});
     if (!isAdmin && !platformAdmin) {
       return new Response(
@@ -164,45 +127,83 @@ Deno.serve(async (req) => {
     const { data: schoolRow } = await adminClient
       .from('schools')
       .select('name, logo_url')
-      .eq('id', reg.school_id)
+      .eq('id', reqRow.school_id)
       .single();
-    const schoolName = schoolRow?.name || 'Tu escuela';
+    const schoolName = schoolRow?.name || 'Your teacher';
+
     let logoUrl: string | null = (schoolRow?.logo_url && String(schoolRow.logo_url).trim()) || null;
     if (!logoUrl) {
       const { data: settingRow } = await adminClient
         .from('admin_settings')
         .select('value')
-        .eq('school_id', reg.school_id)
+        .eq('school_id', reqRow.school_id)
         .eq('key', 'email_logo_url')
         .maybeSingle();
       logoUrl = (settingRow?.value && String(settingRow.value).trim()) || null;
     }
 
+    const { data: studentRow } = await adminClient
+      .from('students')
+      .select('id, name, email, user_id')
+      .eq('id', reqRow.student_id)
+      .eq('school_id', reqRow.school_id)
+      .single();
+
+    if (!studentRow) {
+      return new Response(
+        JSON.stringify({ error: 'Student not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    let toEmail: string | null = (studentRow.email && String(studentRow.email).trim()) || null;
+    if (!toEmail && studentRow.user_id) {
+      const { data: profile } = await adminClient
+        .from('profiles')
+        .select('email')
+        .eq('id', studentRow.user_id)
+        .single();
+      toEmail = (profile?.email && String(profile.email).trim()) || null;
+    }
+
+    if (!toEmail || !toEmail.includes('@')) {
+      return new Response(
+        JSON.stringify({ ok: false, message: 'Student has no email. Cannot send confirmation.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const studentFirstName = studentRow.name
+      ? String(studentRow.name).trim().split(/\s+/)[0] || ''
+      : '';
+
+    const startUtc = reqRow.start_at_utc ? new Date(reqRow.start_at_utc) : null;
+    const endUtc = reqRow.end_at_utc ? new Date(reqRow.end_at_utc) : null;
+    const dateLabel = startUtc
+      ? startUtc.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      : (reqRow.requested_date || '');
+    const timeLabel = startUtc && endUtc
+      ? `${startUtc.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – ${endUtc.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+      : (reqRow.requested_time ? `at ${reqRow.requested_time}` : '');
+
+    const html = buildClassConfirmedEmail({
+      studentFirstName,
+      schoolName,
+      logoUrl,
+      dateLabel,
+      timeLabel,
+      classLabel: 'Private lesson',
+      signOff: schoolName,
+    });
+
     if (!resendApiKey) {
       return new Response(
-        JSON.stringify({ error: 'Email service not configured. Set RESEND_API_KEY.' }),
+        JSON.stringify({ ok: false, message: 'Email service not configured. Set RESEND_API_KEY.' }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const className = cls?.name || 'Clase';
-    const classTime = cls?.time || '';
-    const dateStr = reg.class_date;
-    const studentFirstName = student.name ? String(student.name).trim().split(/\s+/)[0] || '' : '';
-    const dateLabel = dateStr ? new Date(dateStr + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : dateStr;
-    const timeLabel = classTime ? `A las ${classTime}` : '';
-
-    const subject = `Tu clase suelta ha sido aprobada – ${className}`;
-    const html = buildClaseSueltaConfirmedEmail({
-      studentFirstName,
-      schoolName,
-      logoUrl,
-      className,
-      dateLabel,
-      timeLabel,
-      signOff: schoolName,
-    });
-
+    const subject = `Your private lesson is confirmed – ${schoolName}`;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {

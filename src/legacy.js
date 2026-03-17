@@ -797,6 +797,7 @@ const DANCE_LOCALES = {
       private_class_requests_title: "Private class requests",
       no_private_requests: "No requests yet",
       all_private_requests_title: "All requests",
+      request_duration_label: "Duration",
       accept_btn: "Accept",
         decline_btn: "Decline",
         nav_book_class: "Book Class",
@@ -1566,6 +1567,7 @@ const DANCE_LOCALES = {
       private_class_requests_title: "Solicitudes de clases privadas",
         no_private_requests: "Aún no hay solicitudes",
         all_private_requests_title: "Todas las solicitudes",
+        request_duration_label: "Duración",
         accept_btn: "Aceptar",
         decline_btn: "Rechazar",
         nav_book_class: "Reservar clase",
@@ -2383,8 +2385,9 @@ const DANCE_LOCALES = {
       lesson_length_label: "Unterrichtslänge",
       please_fill_required: "Bitte Pflichtfelder ausfüllen.",
       private_class_requests_title: "Anfragen für Privatstunden",
-        no_private_requests: "Noch keine Anfragen",
-        all_private_requests_title: "Alle Anfragen",
+      no_private_requests: "Noch keine Anfragen",
+      all_private_requests_title: "Alle Anfragen",
+      request_duration_label: "Dauer",
         accept_btn: "Annehmen",
         decline_btn: "Ablehnen",
         nav_book_class: "Klasse buchen",
@@ -7061,17 +7064,26 @@ function _renderViewImpl() {
                 ${state.currentSchool?.profile_type === 'private_teacher' && (!CALENDLY_FEATURE_ENABLED || state.adminSettings?.use_calendly_for_booking === 'false') ? (() => {
                     const allRequests = state.privateClassRequests || [];
                     const pendingRequests = allRequests.filter(r => r.status === 'pending');
+                    const durationLabel = (mins) => (mins === 60 ? '1h' : mins === 90 ? '1.5h' : mins === 120 ? '2h' : mins === 30 ? '30 min' : mins === 45 ? '45 min' : mins != null ? mins + ' min' : '');
                     const renderPcrCard = (r) => {
                         const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
+                        const responding = state.privateClassRequestRespondingId === r.id;
+                        const actionsHtml = r.status === 'pending'
+                            ? (responding
+                                ? '<div class="pcr-card-actions"><span class="pcr-responding" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary);"><i data-lucide="loader-2" size="14" class="spin" style="flex-shrink: 0;"></i> ' + (t.aure_accepting || 'Accepting…') + '</span></div>'
+                                : '<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.accept_btn || 'Accept') + '</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.decline_btn || 'Decline') + '</button></div>')
+                            : '';
+                        const durationStr = r.duration_minutes != null ? durationLabel(r.duration_minutes) : '';
                         return `<div class="pcr-card">
                             <div class="pcr-card-header">
                                 <span class="pcr-card-name">${(studentName || '').replace(/</g, '&lt;')}</span>
                                 <span class="pcr-card-status ${r.status}">${r.status}</span>
                             </div>
                             <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
+                            ${durationStr ? '<div class="pcr-card-detail"><i data-lucide="clock" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + (t.request_duration_label || 'Duration') + ': ' + durationStr + '</div>' : ''}
                             ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + (r.location || '').replace(/</g, '&lt;') + '</div>' : ''}
                             ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || '').replace(/</g, '&lt;') + '"</div>' : ''}
-                            ${r.status === 'pending' ? '<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.accept_btn || 'Accept') + '</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest(\'' + r.id + '\', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ' + (t.decline_btn || 'Decline') + '</button></div>' : ''}
+                            ${actionsHtml}
                         </div>`;
                     };
                     return `
@@ -11325,16 +11337,25 @@ window.showBookingConfirmation = () => {
     const school = state.currentSchool || {};
     const teacherName = school.name || 'Teacher';
     const cheapestSub = (state.subscriptions || []).reduce((min, s) => (!min || (s.price && s.price < min.price)) ? s : min, null);
-    const priceLabel = cheapestSub ? ((CURRENCY_SYMBOLS[school.currency || 'MXN'] || '$') + cheapestSub.price) : '';
+    const basePricePerHour = cheapestSub && cheapestSub.price != null ? Number(cheapestSub.price) : null;
+    const currency = school.currency || 'MXN';
+    const durations = slot.availableDurations && slot.availableDurations.length ? slot.availableDurations : [60];
+    const firstDuration = durations[0] || 60;
+    const initialPriceStr = basePricePerHour != null && typeof formatPrice === 'function'
+        ? formatPrice(Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100, currency)
+        : (basePricePerHour != null ? (CURRENCY_SYMBOLS[currency] || '$') + Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100 : '—');
 
     const overlay = document.createElement('div');
     overlay.className = 'teacher-booking-confirm-overlay';
     overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-    const durations = slot.availableDurations && slot.availableDurations.length ? slot.availableDurations : [60];
+    if (basePricePerHour != null) {
+        overlay.dataset.bookingBasePrice = String(basePricePerHour);
+        overlay.dataset.bookingCurrency = currency;
+    }
     const durationLabels = durations.map(m => m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min');
     const durationOptionsHtml = durations.map((m, i) => {
         const lab = durationLabels[i] || m + ' min';
-        return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--system-gray6);font-size:14px;font-weight:600;cursor:pointer;">' + lab.replace(/</g, '&lt;') + '</button>';
+        return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '">' + lab.replace(/</g, '&lt;') + '</button>';
     }).join('');
     overlay.innerHTML = `
         <div class="teacher-booking-confirm-sheet">
@@ -11342,26 +11363,35 @@ window.showBookingConfirmation = () => {
             <div class="teacher-booking-confirm-row"><span>${t.teacher_label || 'Teacher'}</span><strong class="teacher-booking-confirm-value">${teacherName}</strong></div>
             <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong class="teacher-booking-confirm-value">${slot.date}</strong></div>
             <div class="teacher-booking-confirm-row"><span>${t.time_label || 'Time'}</span><span class="teacher-booking-confirm-time">${slot.time}</span></div>
-            <div style="margin-top:8px;"><label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px;">${t.lesson_length_label || 'Lesson length'}</label><div class="teacher-booking-duration-options" style="display:flex;flex-wrap:wrap;gap:8px;">${durationOptionsHtml}</div></div>
+            <div class="teacher-booking-confirm-duration-wrap"><label class="teacher-booking-confirm-label">${t.lesson_length_label || 'Lesson length'}</label><div class="teacher-booking-duration-options">${durationOptionsHtml}</div></div>
             ${slot.location ? '<div class="teacher-booking-confirm-row"><span>' + (t.location_label || 'Location') + '</span><strong>' + slot.location + '</strong></div>' : ''}
-            ${priceLabel ? '<div class="teacher-booking-confirm-row"><span>' + (t.price_label || 'Price') + '</span><strong>' + priceLabel + '</strong></div>' : ''}
+            <div class="teacher-booking-confirm-row"><span>${t.price_label || 'Price'}</span><strong class="teacher-booking-confirm-value teacher-booking-confirm-price">${initialPriceStr}</strong></div>
             <div style="margin-top: 12px;">
                 <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 6px;">${t.message_label || 'Message (optional)'}</label>
                 <textarea id="booking-message" rows="2" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg-body); color: var(--text-primary); font-size: 14px; outline: none; box-sizing: border-box; resize: none;" placeholder="${t.booking_message_placeholder || 'e.g. I\'d like to focus on…'}"></textarea>
             </div>
             <div class="teacher-booking-confirm-actions">
                 <button class="teacher-booking-confirm-btn secondary" onclick="this.closest('.teacher-booking-confirm-overlay').remove()">${t.cancel || 'Cancel'}</button>
-                <button class="teacher-booking-confirm-btn primary" id="booking-submit-btn" disabled onclick="window.submitBookingRequest(this)">${t.send_request_btn || 'Send request'}</button>
+                <button class="teacher-booking-confirm-btn primary" id="booking-submit-btn" onclick="window.submitBookingRequest(this)">${t.send_request_btn || 'Send request'}</button>
             </div>
         </div>
     `;
+    state._bookingSelectedDuration = firstDuration;
+    const firstBtn = overlay.querySelector('.teacher-booking-duration-btn[data-minutes="' + firstDuration + '"]');
+    if (firstBtn) firstBtn.classList.add('selected');
     overlay.querySelectorAll('.teacher-booking-duration-btn').forEach(b => {
         b.addEventListener('click', () => {
-            overlay.querySelectorAll('.teacher-booking-duration-btn').forEach(x => { x.style.background = ''; });
-            b.style.background = 'var(--secondary)'; b.style.color = 'white'; b.style.borderColor = 'var(--secondary)';
-            state._bookingSelectedDuration = parseInt(b.getAttribute('data-minutes'), 10);
-            const submitBtn = overlay.querySelector('#booking-submit-btn');
-            if (submitBtn) submitBtn.disabled = false;
+            overlay.querySelectorAll('.teacher-booking-duration-btn').forEach(x => x.classList.remove('selected'));
+            b.classList.add('selected');
+            const minutes = parseInt(b.getAttribute('data-minutes'), 10);
+            state._bookingSelectedDuration = minutes;
+            const priceEl = overlay.querySelector('.teacher-booking-confirm-price');
+            const base = overlay.dataset.bookingBasePrice;
+            const curr = overlay.dataset.bookingCurrency || 'MXN';
+            if (priceEl && base != null) {
+                const p = Math.round(Number(base) * (minutes / 60) * 100) / 100;
+                priceEl.textContent = typeof formatPrice === 'function' ? formatPrice(p, curr) : (CURRENCY_SYMBOLS[curr] || '$') + p;
+            }
         });
     });
     document.body.appendChild(overlay);
@@ -11374,13 +11404,15 @@ window.submitBookingRequest = async (btn) => {
     btn.textContent = '...';
     const message = (document.getElementById('booking-message')?.value || '').trim();
     try {
+        const duration = state._bookingSelectedDuration || (slot.availableDurations && slot.availableDurations[0]) || 60;
         const { data: requestData, error } = await supabaseClient.rpc('create_private_class_request', {
             p_school_id: state.currentSchool.id,
             p_student_id: String(state.currentUser.id),
             p_requested_date: slot.date,
             p_requested_time: slot.time,
             p_location: slot.location || null,
-            p_message: message || null
+            p_message: message || null,
+            p_duration_minutes: duration
         });
         if (error) throw error;
         state._bookingSelectedSlot = null;
@@ -11475,29 +11507,50 @@ window.showTeacherBookingConfirm = (date, time, location, availableDurationsStr)
     const t = DANCE_LOCALES[state.language || 'en'];
     const school = state.currentSchool;
     const cheapestSub = (state.subscriptions || []).filter(s => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
-    const priceStr = cheapestSub ? (typeof window.formatPrice === 'function' ? window.formatPrice(cheapestSub.price, school?.currency || 'MXN') : cheapestSub.price) : '—';
+    const basePricePerHour = cheapestSub && cheapestSub.price != null ? Number(cheapestSub.price) : null;
+    const currency = school?.currency || 'MXN';
     const durations = state._teacherBookingConfirm.availableDurations || [60];
+    const firstDuration = durations[0] || 60;
+    const initialPriceStr = basePricePerHour != null && typeof formatPrice === 'function'
+        ? formatPrice(Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100, currency)
+        : (basePricePerHour != null ? (CURRENCY_SYMBOLS[currency] || '$') + Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100 : '—');
     const durationOptionsHtml = durations.map(m => {
         const lab = m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min';
-        return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--system-gray6);font-size:14px;font-weight:600;cursor:pointer;margin-right:8px;margin-bottom:8px;">' + lab.replace(/</g, '&lt;') + '</button>';
+        return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '">' + lab.replace(/</g, '&lt;') + '</button>';
     }).join('');
     if (overlay && details) {
+        if (basePricePerHour != null) {
+            overlay.dataset.bookingBasePrice = String(basePricePerHour);
+            overlay.dataset.bookingCurrency = currency;
+        }
         details.innerHTML = `
             <div class="teacher-booking-confirm-row"><span>${t.date_label || 'Date'}</span><strong class="teacher-booking-confirm-value">${date}</strong></div>
             <div class="teacher-booking-confirm-row"><span>${t.start_time_label || 'Time'}</span><span class="teacher-booking-confirm-time">${time}</span></div>
-            <div style="margin-top:8px;"><label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px;">${t.lesson_length_label || 'Lesson length'}</label><div class="teacher-booking-duration-options" style="display:flex;flex-wrap:wrap;gap:8px;">${durationOptionsHtml}</div></div>
+            <div class="teacher-booking-confirm-duration-wrap"><label class="teacher-booking-confirm-label">${t.lesson_length_label || 'Lesson length'}</label><div class="teacher-booking-duration-options">${durationOptionsHtml}</div></div>
             ${location ? `<div class="teacher-booking-confirm-row"><span>${t.class_location || 'Location'}</span><strong class="teacher-booking-confirm-value">${location}</strong></div>` : ''}
-            <div class="teacher-booking-confirm-row"><span>${t.price_label || 'Price'}</span><strong class="teacher-booking-confirm-value">${priceStr}</strong></div>
+            <div class="teacher-booking-confirm-row"><span>${t.price_label || 'Price'}</span><strong class="teacher-booking-confirm-value teacher-booking-confirm-price">${initialPriceStr}</strong></div>
         `;
         overlay.classList.remove('hidden');
         overlay.style.display = 'flex';
+        state._teacherBookingSelectedDuration = firstDuration;
+        const firstBtn = details.querySelector('.teacher-booking-duration-btn[data-minutes="' + firstDuration + '"]');
+        if (firstBtn) firstBtn.classList.add('selected');
         const btn = document.getElementById('teacher-booking-confirm-btn');
-        if (btn) { btn.disabled = true; btn.onclick = () => window.submitTeacherBookingRequest(); }
+        if (btn) { btn.disabled = false; btn.onclick = () => window.submitTeacherBookingRequest(); }
         details.querySelectorAll('.teacher-booking-duration-btn').forEach(b => {
             b.addEventListener('click', () => {
-                details.querySelectorAll('.teacher-booking-duration-btn').forEach(x => { x.style.background = ''; x.style.color = ''; x.style.borderColor = ''; });
-                b.style.background = 'var(--secondary)'; b.style.color = 'white'; b.style.borderColor = 'var(--secondary)';
-                state._teacherBookingSelectedDuration = parseInt(b.getAttribute('data-minutes'), 10);
+                details.querySelectorAll('.teacher-booking-duration-btn').forEach(x => x.classList.remove('selected'));
+                b.classList.add('selected');
+                const minutes = parseInt(b.getAttribute('data-minutes'), 10);
+                state._teacherBookingSelectedDuration = minutes;
+                const priceEl = details.querySelector('.teacher-booking-confirm-price');
+                const sheet = details.closest('.teacher-booking-confirm-overlay');
+                const base = sheet && sheet.dataset.bookingBasePrice;
+                const curr = (sheet && sheet.dataset.bookingCurrency) || 'MXN';
+                if (priceEl && base != null) {
+                    const p = Math.round(Number(base) * (minutes / 60) * 100) / 100;
+                    priceEl.textContent = typeof formatPrice === 'function' ? formatPrice(p, curr) : (CURRENCY_SYMBOLS[curr] || '$') + p;
+                }
                 const confirmBtn = document.getElementById('teacher-booking-confirm-btn');
                 if (confirmBtn) confirmBtn.disabled = false;
             });
@@ -11566,14 +11619,35 @@ window.submitTeacherBookingRequest = async () => {
 // Private Class Requests: accept/decline
 window.respondToPrivateClassRequest = async (requestId, accept) => {
     if (!supabaseClient) return;
+    state.privateClassRequestRespondingId = requestId;
+    if (typeof renderView === 'function') renderView();
     try {
         const { error } = await supabaseClient.rpc('teacher_respond_to_request', {
             p_request_id: requestId,
             p_accept: accept
         });
         if (error) throw error;
+        if (accept) {
+            const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/send_private_lesson_confirmation';
+            const { data: sess } = await supabaseClient.auth.getSession();
+            const token = sess?.session?.access_token;
+            if (token && fnUrl) {
+                try {
+                    await fetch(fnUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ request_id: requestId })
+                    });
+                } catch (_) { /* email is best-effort; don't block UI */ }
+            }
+        }
         await fetchAllData();
     } catch (e) { alert('Error: ' + (e.message || e)); }
+    finally {
+        state.privateClassRequestRespondingId = null;
+        if (typeof renderView === 'function') renderView();
+        if (window.lucide) window.lucide.createIcons();
+    }
 };
 
 window.markPrivateLessonAttended = async (lessonId) => {
@@ -11645,6 +11719,10 @@ window.downloadCalendarIcsOne = function(lessonOrEventOrId, type) {
     let lesson = lessonOrEventOrId;
     if (typeof lessonOrEventOrId === 'string' && type === 'teacher') {
         lesson = (state.privateLessons || []).find(function(l) { return l.id === lessonOrEventOrId; });
+        if (!lesson) {
+            var req = (state.privateClassRequests || []).find(function(r) { return r.id === lessonOrEventOrId && r.status === 'accepted' && r.start_at_utc && r.end_at_utc; });
+            if (req) lesson = req;
+        }
     } else if (typeof lessonOrEventOrId === 'string' && type === 'student') {
         lesson = (state.studentPrivateLessons || []).find(function(l) { return l.id === lessonOrEventOrId; });
     }
@@ -11725,6 +11803,17 @@ window.downloadCalendarIcs = async function(type, useClientOnly) {
                     uid: 'private-lesson-' + l.id + '@bailadmin',
                     start: new Date(l.start_at_utc),
                     end: new Date(l.end_at_utc),
+                    summary: 'Private lesson with ' + name
+                });
+            });
+            var lessonRequestIds = {};
+            lessons.forEach(function(l) { if (l.request_id) lessonRequestIds[l.request_id] = true; });
+            (state.privateClassRequests || []).filter(function(r) { return r.status === 'accepted' && r.start_at_utc && r.end_at_utc && !lessonRequestIds[r.id]; }).forEach(function(r) {
+                var name = studentNames.find(function(s) { return String(s.id) === String(r.student_id); })?.name || 'Student';
+                events.push({
+                    uid: 'private-request-' + r.id + '@bailadmin',
+                    start: new Date(r.start_at_utc),
+                    end: new Date(r.end_at_utc),
                     summary: 'Private lesson with ' + name
                 });
             });

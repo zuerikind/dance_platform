@@ -186,6 +186,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -----------------------------------------------------------------------
     const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-04-10' });
 
+    const success_url = `${appBaseUrl}/?billing=success&session_id={CHECKOUT_SESSION_ID}&academy=${encodeURIComponent(safeAcademyId)}${safeReturnView ? `&return_view=${safeReturnView}` : ''}`;
+    const cancel_url = `${appBaseUrl}/?billing=cancel&academy=${encodeURIComponent(safeAcademyId)}${safeReturnView ? `&return_view=${safeReturnView}` : ''}`;
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
@@ -195,8 +198,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         planKey: planKey as string,
         currency: currency as string,
       },
-      success_url: `${appBaseUrl}/?billing=success&session_id={CHECKOUT_SESSION_ID}&academy=${encodeURIComponent(safeAcademyId)}${safeReturnView ? `&return_view=${safeReturnView}` : ''}`,
-      cancel_url: `${appBaseUrl}/?billing=cancel&academy=${encodeURIComponent(safeAcademyId)}${safeReturnView ? `&return_view=${safeReturnView}` : ''}`,
+      success_url,
+      cancel_url,
     });
 
     if (!session.url) {
