@@ -827,6 +827,8 @@ const DANCE_LOCALES = {
         need_package_to_book: "You need a package to request private classes",
         visit_shop_to_buy: "Visit the Shop to buy one.",
         my_private_classes: "My private classes",
+        classes_remaining: "Classes remaining",
+        x_classes_of_package: "{n} classes of your package",
         no_private_classes_yet: "No accepted private classes yet",
         accepted_private_classes: "Accepted private classes",
         calendar_view: "Calendar",
@@ -1582,6 +1584,8 @@ const DANCE_LOCALES = {
         need_package_to_book: "Necesitas un paquete para solicitar clases privadas",
         visit_shop_to_buy: "Visita la tienda para comprar uno.",
         my_private_classes: "Mis clases privadas",
+        classes_remaining: "Clases restantes",
+        x_classes_of_package: "{n} clases de tu paquete",
         no_private_classes_yet: "Aún no hay clases privadas aceptadas",
         accepted_private_classes: "Clases privadas aceptadas",
         calendar_view: "Calendario",
@@ -2402,6 +2406,8 @@ const DANCE_LOCALES = {
         need_package_to_book: "Du benötigst ein Paket für Privatstunden.",
         visit_shop_to_buy: "Besuche den Shop, um eines zu kaufen.",
         my_private_classes: "Meine Privatstunden",
+        classes_remaining: "Verbleibende Klassen",
+        x_classes_of_package: "{n} Klassen deines Pakets",
         no_private_classes_yet: "Noch keine akzeptierten Privatstunden",
         accepted_private_classes: "Akzeptierte Privatstunden",
         calendar_view: "Kalender",
@@ -5851,6 +5857,13 @@ function _renderViewImpl() {
             const myLessons = (state.studentPrivateLessons || []).filter(l => l.status === 'confirmed' || l.status === 'attended').sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
             const myClassesFallback = (state.studentPrivateClassRequests || []).filter(r => r.status === 'accepted');
             const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
+            const now = new Date();
+            const todayStr = now.toISOString().slice(0, 10);
+            const upcomingClasses = myClasses.filter(item => {
+                if (item.start_at_utc) return new Date(item.start_at_utc) >= now;
+                return (item.requested_date || '') >= todayStr;
+            });
+            const effectiveBalance = typeof window.getEffectivePrivateBalanceForSchool === 'function' ? window.getEffectivePrivateBalanceForSchool(school.id) : 0;
             const myClassesExpanded = state.studentPrivateClassesExpanded !== false;
             const studentClassesView = state.studentPrivateClassesView || 'list';
             const forCalendarStudent = myClasses.map(item => ({ ...item, requested_date: item.start_at_utc ? new Date(item.start_at_utc).toISOString().slice(0, 10) : item.requested_date, requested_time: item.start_at_utc ? new Date(item.start_at_utc).toTimeString().slice(0, 5) : (item.requested_time || '') }));
@@ -5886,8 +5899,18 @@ function _renderViewImpl() {
                             </div>`;
                         }).join(''));
             const studentListHtml = studentListPart + studentListRest;
+            const xClassesOfPackage = (n) => (t2.x_classes_of_package || '{n} classes of your package').replace('{n}', n);
             html += `
             <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
+                <div class="teacher-booking-balance-block" style="margin-bottom: 1rem; padding: 14px 16px; background: var(--system-gray6); border-radius: 16px; border: 1px solid var(--border);">
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(t2.classes_remaining || 'Classes remaining').replace(/</g, '&lt;')}: <strong>${effectiveBalance}</strong></div>
+                    ${upcomingClasses.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary);">${(t2.no_private_classes_yet || 'No accepted private classes yet').replace(/</g, '&lt;')}</div>` : `<ul style="list-style: none; margin: 0; padding: 0;">${upcomingClasses.map(item => {
+                const info = typeof window.privateClassInfoFromItem === 'function' ? window.privateClassInfoFromItem(item) : { durationLabel: '1h', classes: 1 };
+                const dateLabel = item.start_at_utc ? (window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString()) : (window.formatShortDate ? window.formatShortDate(new Date((item.requested_date || '') + 'T00:00:00'), state.language) : item.requested_date || '');
+                const timeStr = item.start_at_utc ? new Date(item.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : (item.requested_time || '');
+                return `<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">${dateLabel} · ${(timeStr || '').replace(/</g, '&lt;')} · ${info.durationLabel} · <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
+            }).join('')}</ul>`}
+                </div>
                 <div class="student-private-classes-expandable ${myClassesExpanded ? 'expanded' : ''}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
                     <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -7335,10 +7358,13 @@ function _renderViewImpl() {
                                 ${todaysLessons.map(l => {
                                     const studentName = (state.students || []).find(s => String(s.id) === String(l.student_id))?.name || l.student_id;
                                     const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                                    const durationMins = l.start_at_utc && l.end_at_utc ? Math.round((new Date(l.end_at_utc) - new Date(l.start_at_utc)) / 60000) : 0;
+                                    const durationStr = durationMins >= 60 ? (durationMins % 60 ? Math.floor(durationMins / 60) + 'h ' + (durationMins % 60) : Math.floor(durationMins / 60) + 'h') : (durationMins ? durationMins + ' min' : '');
+                                    const timeAndDuration = timeStr + (durationStr ? ' · ' + durationStr : '');
                                     const canCheckIn = l.status === 'confirmed';
                                     const isPast = new Date(l.end_at_utc) < new Date();
                                     const exportOneBtn = (l.start_at_utc && l.end_at_utc) ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.downloadCalendarIcsOne(\'' + l.id + '\', \'teacher\')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ' + (t.export_to_calendar || 'Export to your calendar') + '</button>' : '';
-                                    return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === 'attended' ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t.checked_in || 'Checked in') + '</span>' : '<div><strong>' + (studentName || '').replace(/</g, '&lt;') + '</strong> &middot; ' + timeStr + '</div><div style="display: flex; gap: 6px; flex-wrap: wrap;">' + exportOneBtn + (canCheckIn ? '<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended(\'' + l.id + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : '') + (isPast && l.status === 'confirmed' ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow(\'' + l.id + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : '') + '</div>') + '</div>';
+                                    return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === 'attended' ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t.checked_in || 'Checked in') + '</span>' : '<div><strong>' + (studentName || '').replace(/</g, '&lt;') + '</strong> &middot; ' + timeAndDuration + '</div><div style="display: flex; gap: 6px; flex-wrap: wrap;">' + exportOneBtn + (canCheckIn ? '<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended(\'' + l.id + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : '') + (isPast && l.status === 'confirmed' ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow(\'' + l.id + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : '') + '</div>') + '</div>';
                                 }).join('')}
                             </div>
                             ` : ''}
@@ -7354,6 +7380,10 @@ function _renderViewImpl() {
                                 const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
                                 const dateLabel = r.start_at_utc ? (window.formatShortDate ? window.formatShortDate(new Date(r.start_at_utc), state.language) : new Date(r.start_at_utc).toLocaleDateString()) : (window.formatShortDate ? window.formatShortDate(new Date(r.requested_date + 'T00:00:00'), state.language) : r.requested_date);
                                 const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : (r.requested_time || '');
+                                const src = lesson || r;
+                                const durationMins = src && src.start_at_utc && src.end_at_utc ? Math.round((new Date(src.end_at_utc) - new Date(src.start_at_utc)) / 60000) : 0;
+                                const durationStr = durationMins >= 60 ? (durationMins % 60 ? Math.floor(durationMins / 60) + 'h ' + (durationMins % 60) : Math.floor(durationMins / 60) + 'h') : (durationMins ? durationMins + ' min' : '');
+                                const timeAndDuration = (timeStr || '') + (durationStr ? ' · ' + durationStr : '');
                                 const canCheckIn = lesson && lesson.status === 'confirmed' && !lesson.credit_deducted;
                                 const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < new Date();
                                 const attended = lesson && lesson.status === 'attended';
@@ -7362,7 +7392,7 @@ function _renderViewImpl() {
                                     <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
                                     <div style="flex: 1;">
                                         <div style="font-weight: 600; font-size: 14px;">${(studentName || '').replace(/</g, '&lt;')}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(timeStr || '').replace(/</g, '&lt;')} ${attended ? ' &middot; <span style="color: var(--system-green);">' + (t.checked_in || 'Checked in') + '</span>' : ''}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(timeAndDuration || '').replace(/</g, '&lt;')} ${attended ? ' &middot; <span style="color: var(--system-green);">' + (t.checked_in || 'Checked in') + '</span>' : ''}</div>
                                     </div>
                                     ${lessonId && lesson.start_at_utc && lesson.end_at_utc ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.downloadCalendarIcsOne(\'' + lessonId + '\', \'teacher\')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ' + (t.export_to_calendar || 'Export to your calendar') + '</button>' : ''}
                                     ${lessonId && canCheckIn ? '<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonAttended(\'' + lessonId + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : ''}
@@ -7409,12 +7439,16 @@ function _renderViewImpl() {
                                             const lessonId = lesson?.id;
                                             const studentName = (state.students || []).find(s => String(s.id) === String(r.student_id))?.name || r.student_id;
                                             const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : (r.requested_time || '');
+                                            const src = lesson || r;
+                                            const durationMins = src && src.start_at_utc && src.end_at_utc ? Math.round((new Date(src.end_at_utc) - new Date(src.start_at_utc)) / 60000) : 0;
+                                            const durationStr = durationMins >= 60 ? (durationMins % 60 ? Math.floor(durationMins / 60) + 'h ' + (durationMins % 60) : Math.floor(durationMins / 60) + 'h') : (durationMins ? durationMins + ' min' : '');
+                                            const timeAndDuration = (timeStr || '') + (durationStr ? ' · ' + durationStr : '');
                                             const canCheckIn = lesson && lesson.status === 'confirmed' && !lesson.credit_deducted;
                                             const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < new Date();
                                             return '<div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">' +
                                                 '<i data-lucide="clock" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>' +
                                                 '<div style="flex: 1;"><div style="font-weight: 600; font-size: 14px;">' + (studentName || '').replace(/</g, '&lt;') + '</div>' +
-                                                '<div style="font-size: 12px; color: var(--text-secondary);">' + (timeStr || '').replace(/</g, '&lt;') + (lesson && lesson.status === 'attended' ? ' &middot; ' + (t.checked_in || 'Checked in') : '') + '</div></div>' +
+                                                '<div style="font-size: 12px; color: var(--text-secondary);">' + (timeAndDuration || '').replace(/</g, '&lt;') + (lesson && lesson.status === 'attended' ? ' &middot; ' + (t.checked_in || 'Checked in') : '') + '</div></div>' +
                                                 (lessonId && canCheckIn ? '<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended(\'' + lessonId + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : '') +
                                                 (lessonId && isPast && lesson.status === 'confirmed' && !lesson.credit_deducted ? '<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow(\'' + lessonId + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : '') +
                                                 '</div>';
@@ -7821,10 +7855,10 @@ function _renderViewImpl() {
                     <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t.class_types_hint || 'Lesson lengths you offer. Students will choose one when booking.'}</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
                         ${((state.teacherAvailabilitySettings?.duration_minutes) || [60]).map(mins => {
-                            const label = mins === 60 ? '1h' : mins === 90 ? '1.5h' : mins === 120 ? '2h' : mins === 30 ? '30 min' : mins === 45 ? '45 min' : mins + ' min';
+                            const label = mins === 60 ? '1h' : mins === 120 ? '2h' : mins === 180 ? '3h' : mins === 90 ? '1.5h' : mins === 30 ? '30 min' : mins === 45 ? '45 min' : mins + ' min';
                             return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600;">' + label.replace(/</g, '&lt;') + '<button type="button" onclick="window.removeTeacherDuration(' + mins + ')" style="background:none;border:none;padding:0;margin-left:2px;cursor:pointer;color:var(--text-secondary);opacity:0.7;"><i data-lucide="x" size="14"></i></button></span>';
                         }).join('')}
-                        <div class="custom-dropdown-container" style="overflow:visible;"><div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('add-duration')" style="background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i data-lucide="plus" size="14"></i> ${t.add_class_length_btn || 'Add length'} <i data-lucide="chevron-down" size="12" style="opacity:0.4;"></i></div><div class="custom-dropdown-list" id="dropdown-list-add-duration">${[30,45,60,90,120].filter(m => !((state.teacherAvailabilitySettings?.duration_minutes) || [60]).includes(m)).map(m => { const lab = m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min'; return '<div class="dropdown-item" onclick="window.addTeacherDuration(' + m + ')"><span>' + lab.replace(/</g, '&lt;') + '</span></div>'; }).join('') || '<div class="dropdown-item" style="opacity:0.7;">' + (t.all_lengths_added || 'All preset lengths added') + '</div>'}</div></div>
+                        <div class="custom-dropdown-container" style="overflow:visible;"><div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('add-duration')" style="background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i data-lucide="plus" size="14"></i> ${t.add_class_length_btn || 'Add length'} <i data-lucide="chevron-down" size="12" style="opacity:0.4;"></i></div><div class="custom-dropdown-list" id="dropdown-list-add-duration">${[60, 120, 180].filter(m => !((state.teacherAvailabilitySettings?.duration_minutes) || [60]).includes(m)).map(m => { const lab = m === 60 ? '1h' : m === 120 ? '2h' : m === 180 ? '3h' : m + ' min'; return '<div class="dropdown-item" onclick="window.addTeacherDuration(' + m + ')"><span>' + lab.replace(/</g, '&lt;') + '</span></div>'; }).join('') || '<div class="dropdown-item" style="opacity:0.7;">' + (t.all_lengths_added || 'All preset lengths added') + '</div>'}</div></div>
                     </div>
                 </div>
             </div>
@@ -11352,7 +11386,7 @@ window.showBookingConfirmation = () => {
         overlay.dataset.bookingBasePrice = String(basePricePerHour);
         overlay.dataset.bookingCurrency = currency;
     }
-    const durationLabels = durations.map(m => m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min');
+    const durationLabels = durations.map(m => m === 60 ? '1h' : m === 120 ? '2h' : m === 180 ? '3h' : m + ' min');
     const durationOptionsHtml = durations.map((m, i) => {
         const lab = durationLabels[i] || m + ' min';
         return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '">' + lab.replace(/</g, '&lt;') + '</button>';
@@ -11449,6 +11483,34 @@ window.studentHasPackageWithSchool = (schoolId) => {
     });
 };
 
+// Effective private class balance for one school (balance_private + non-expired packs' private_count)
+window.getEffectivePrivateBalanceForSchool = (schoolId) => {
+    if (!schoolId || !Array.isArray(state.allEnrollments)) return 0;
+    const enrollment = state.allEnrollments.find(e => e.school_id === schoolId);
+    if (!enrollment) return 0;
+    const now = new Date();
+    let total = Number(enrollment.balance_private) || 0;
+    const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
+    packs.forEach(p => {
+        const exp = p?.expires_at ? new Date(p.expires_at) : null;
+        if (exp && exp > now) total += Number(p.private_count) || 0;
+    });
+    return Math.max(0, total);
+};
+
+// Duration label and class count for private lesson/request (1h, 2h, 3h only)
+window.privateClassInfoFromItem = (item) => {
+    let durationMins = 60;
+    if (item.start_at_utc && item.end_at_utc) {
+        durationMins = Math.round((new Date(item.end_at_utc) - new Date(item.start_at_utc)) / (60 * 1000));
+    } else if (item.duration_minutes != null) {
+        durationMins = Number(item.duration_minutes);
+    }
+    const classes = durationMins / 60;
+    const durationLabel = durationMins === 60 ? '1h' : durationMins === 120 ? '2h' : durationMins === 180 ? '3h' : durationMins + ' min';
+    return { durationMins, durationLabel, classes };
+};
+
 // Teacher Booking (Student) - fetch slots, week nav, confirm
 window.fetchTeacherBookingSlots = async () => {
     if (!supabaseClient || !state.currentSchool?.id) return;
@@ -11499,7 +11561,8 @@ window.showTeacherBookingConfirm = (date, time, location, availableDurationsStr)
         alert(t.need_package_to_book || 'You need a package to request private classes. Visit the Shop to buy one.');
         return;
     }
-    const availableDurations = (availableDurationsStr || '').split(',').map(x => parseInt(x, 10)).filter(n => !isNaN(n) && n > 0);
+    const allowedDurations = [60, 120, 180];
+    const availableDurations = (availableDurationsStr || '').split(',').map(x => parseInt(x, 10)).filter(n => !isNaN(n) && n > 0 && allowedDurations.includes(n));
     state._teacherBookingConfirm = { date, time, location, availableDurations: availableDurations.length ? availableDurations : [60] };
     state._teacherBookingSelectedDuration = null;
     const overlay = document.getElementById('teacher-booking-confirm-overlay');
@@ -11515,7 +11578,7 @@ window.showTeacherBookingConfirm = (date, time, location, availableDurationsStr)
         ? formatPrice(Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100, currency)
         : (basePricePerHour != null ? (CURRENCY_SYMBOLS[currency] || '$') + Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100 : '—');
     const durationOptionsHtml = durations.map(m => {
-        const lab = m === 60 ? '1h' : m === 90 ? '1.5h' : m === 120 ? '2h' : m === 30 ? '30 min' : m === 45 ? '45 min' : m + ' min';
+        const lab = m === 60 ? '1h' : m === 120 ? '2h' : m === 180 ? '3h' : m + ' min';
         return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '">' + lab.replace(/</g, '&lt;') + '</button>';
     }).join('');
     if (overlay && details) {

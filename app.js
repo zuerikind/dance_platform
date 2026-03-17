@@ -2473,6 +2473,8 @@
       need_package_to_book: "You need a package to request private classes",
       visit_shop_to_buy: "Visit the Shop to buy one.",
       my_private_classes: "My private classes",
+      classes_remaining: "Classes remaining",
+      x_classes_of_package: "{n} classes of your package",
       no_private_classes_yet: "No accepted private classes yet",
       accepted_private_classes: "Accepted private classes",
       calendar_view: "Calendar",
@@ -3249,6 +3251,8 @@
       need_package_to_book: "Necesitas un paquete para solicitar clases privadas",
       visit_shop_to_buy: "Visita la tienda para comprar uno.",
       my_private_classes: "Mis clases privadas",
+      classes_remaining: "Clases restantes",
+      x_classes_of_package: "{n} clases de tu paquete",
       no_private_classes_yet: "A\xFAn no hay clases privadas aceptadas",
       accepted_private_classes: "Clases privadas aceptadas",
       calendar_view: "Calendario",
@@ -4081,6 +4085,8 @@
       need_package_to_book: "Du ben\xF6tigst ein Paket f\xFCr Privatstunden.",
       visit_shop_to_buy: "Besuche den Shop, um eines zu kaufen.",
       my_private_classes: "Meine Privatstunden",
+      classes_remaining: "Verbleibende Klassen",
+      x_classes_of_package: "{n} Klassen deines Pakets",
       no_private_classes_yet: "Noch keine akzeptierten Privatstunden",
       accepted_private_classes: "Akzeptierte Privatstunden",
       calendar_view: "Kalender",
@@ -7705,6 +7711,13 @@
           const myLessons = (state.studentPrivateLessons || []).filter((l) => l.status === "confirmed" || l.status === "attended").sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
           const myClassesFallback = (state.studentPrivateClassRequests || []).filter((r) => r.status === "accepted");
           const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
+          const now = /* @__PURE__ */ new Date();
+          const todayStr = now.toISOString().slice(0, 10);
+          const upcomingClasses = myClasses.filter((item) => {
+            if (item.start_at_utc) return new Date(item.start_at_utc) >= now;
+            return (item.requested_date || "") >= todayStr;
+          });
+          const effectiveBalance = typeof window.getEffectivePrivateBalanceForSchool === "function" ? window.getEffectivePrivateBalanceForSchool(school.id) : 0;
           const myClassesExpanded = state.studentPrivateClassesExpanded !== false;
           const studentClassesView = state.studentPrivateClassesView || "list";
           const forCalendarStudent = myClasses.map((item) => ({ ...item, requested_date: item.start_at_utc ? new Date(item.start_at_utc).toISOString().slice(0, 10) : item.requested_date, requested_time: item.start_at_utc ? new Date(item.start_at_utc).toTimeString().slice(0, 5) : item.requested_time || "" }));
@@ -7743,8 +7756,18 @@
                             </div>`;
           }).join("");
           const studentListHtml = studentListPart + studentListRest;
+          const xClassesOfPackage = (n) => (t22.x_classes_of_package || "{n} classes of your package").replace("{n}", n);
           html += `
             <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
+                <div class="teacher-booking-balance-block" style="margin-bottom: 1rem; padding: 14px 16px; background: var(--system-gray6); border-radius: 16px; border: 1px solid var(--border);">
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(t22.classes_remaining || "Classes remaining").replace(/</g, "&lt;")}: <strong>${effectiveBalance}</strong></div>
+                    ${upcomingClasses.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary);">${(t22.no_private_classes_yet || "No accepted private classes yet").replace(/</g, "&lt;")}</div>` : `<ul style="list-style: none; margin: 0; padding: 0;">${upcomingClasses.map((item) => {
+            const info = typeof window.privateClassInfoFromItem === "function" ? window.privateClassInfoFromItem(item) : { durationLabel: "1h", classes: 1 };
+            const dateLabel = item.start_at_utc ? window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(new Date((item.requested_date || "") + "T00:00:00"), state.language) : item.requested_date || "";
+            const timeStr = item.start_at_utc ? new Date(item.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : item.requested_time || "";
+            return `<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">${dateLabel} \u00B7 ${(timeStr || "").replace(/</g, "&lt;")} \u00B7 ${info.durationLabel} \u00B7 <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
+          }).join("")}</ul>`}
+                </div>
                 <div class="student-private-classes-expandable ${myClassesExpanded ? "expanded" : ""}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
                     <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -8893,6 +8916,8 @@
           const durationLabel = (mins) => mins === 60 ? "1h" : mins === 90 ? "1.5h" : mins === 120 ? "2h" : mins === 30 ? "30 min" : mins === 45 ? "45 min" : mins != null ? mins + " min" : "";
           const renderPcrCard = (r) => {
             const studentName = (state.students || []).find((s) => String(s.id) === String(r.student_id))?.name || r.student_id;
+            const responding = state.privateClassRequestRespondingId === r.id;
+            const actionsHtml = r.status === "pending" ? responding ? '<div class="pcr-card-actions"><span class="pcr-responding" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary);"><i data-lucide="loader-2" size="14" class="spin" style="flex-shrink: 0;"></i> ' + (t2.aure_accepting || "Accepting\u2026") + "</span></div>" : `<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest('` + r.id + `', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.accept_btn || "Accept") + `</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest('` + r.id + `', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.decline_btn || "Decline") + "</button></div>" : "";
             const durationStr = r.duration_minutes != null ? durationLabel(r.duration_minutes) : "";
             return `<div class="pcr-card">
                             <div class="pcr-card-header">
@@ -8903,7 +8928,7 @@
                             ${durationStr ? '<div class="pcr-card-detail"><i data-lucide="clock" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + (t2.request_duration_label || "Duration") + ": " + durationStr + "</div>" : ""}
                             ${r.location ? '<div class="pcr-card-detail"><i data-lucide="map-pin" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ' + (r.location || "").replace(/</g, "&lt;") + "</div>" : ""}
                             ${r.message ? '<div class="pcr-card-detail" style="font-style: italic; margin-top: 4px;">"' + (r.message || "").replace(/</g, "&lt;") + '"</div>' : ""}
-                            ${r.status === "pending" ? `<div class="pcr-card-actions"><button class="pcr-btn-accept" onclick="window.respondToPrivateClassRequest('` + r.id + `', true)"><i data-lucide="check" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.accept_btn || "Accept") + `</button><button class="pcr-btn-decline" onclick="window.respondToPrivateClassRequest('` + r.id + `', false)"><i data-lucide="x" size="14" style="vertical-align: middle; margin-right: 4px;"></i> ` + (t2.decline_btn || "Decline") + "</button></div>" : ""}
+                            ${actionsHtml}
                         </div>`;
           };
           return `
@@ -9655,8 +9680,8 @@
           const label = mins === 60 ? "1h" : mins === 90 ? "1.5h" : mins === 120 ? "2h" : mins === 30 ? "30 min" : mins === 45 ? "45 min" : mins + " min";
           return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600;">' + label.replace(/</g, "&lt;") + '<button type="button" onclick="window.removeTeacherDuration(' + mins + ')" style="background:none;border:none;padding:0;margin-left:2px;cursor:pointer;color:var(--text-secondary);opacity:0.7;"><i data-lucide="x" size="14"></i></button></span>';
         }).join("")}
-                        <div class="custom-dropdown-container" style="overflow:visible;"><div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('add-duration')" style="background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i data-lucide="plus" size="14"></i> ${t2.add_class_length_btn || "Add length"} <i data-lucide="chevron-down" size="12" style="opacity:0.4;"></i></div><div class="custom-dropdown-list" id="dropdown-list-add-duration">${[30, 45, 60, 90, 120].filter((m) => !(state.teacherAvailabilitySettings?.duration_minutes || [60]).includes(m)).map((m) => {
-          const lab = m === 60 ? "1h" : m === 90 ? "1.5h" : m === 120 ? "2h" : m === 30 ? "30 min" : m === 45 ? "45 min" : m + " min";
+                        <div class="custom-dropdown-container" style="overflow:visible;"><div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('add-duration')" style="background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i data-lucide="plus" size="14"></i> ${t2.add_class_length_btn || "Add length"} <i data-lucide="chevron-down" size="12" style="opacity:0.4;"></i></div><div class="custom-dropdown-list" id="dropdown-list-add-duration">${[60, 120, 180].filter((m) => !(state.teacherAvailabilitySettings?.duration_minutes || [60]).includes(m)).map((m) => {
+          const lab = m === 60 ? "1h" : m === 120 ? "2h" : m === 180 ? "3h" : m + " min";
           return '<div class="dropdown-item" onclick="window.addTeacherDuration(' + m + ')"><span>' + lab.replace(/</g, "&lt;") + "</span></div>";
         }).join("") || '<div class="dropdown-item" style="opacity:0.7;">' + (t2.all_lengths_added || "All preset lengths added") + "</div>"}</div></div>
                     </div>
@@ -13137,7 +13162,8 @@ School: ${schoolName}`)) return;
     window.loadBookingWeek();
   };
   window.selectBookingSlot = (date, time, location, availableDurationsStr) => {
-    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0);
+    const allowedDurations = [60, 120, 180];
+    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0 && allowedDurations.includes(n));
     if (state._bookingSelectedSlot && state._bookingSelectedSlot.date === date && state._bookingSelectedSlot.time === time) {
       state._bookingSelectedSlot = null;
       state._bookingSelectedDuration = null;
@@ -13158,9 +13184,7 @@ School: ${schoolName}`)) return;
     const currency = school.currency || "MXN";
     const durations = slot.availableDurations && slot.availableDurations.length ? slot.availableDurations : [60];
     const firstDuration = durations[0] || 60;
-    const initialPriceStr = basePricePerHour != null && typeof window.formatPrice === "function"
-      ? window.formatPrice(Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100, currency)
-      : basePricePerHour != null ? (CURRENCY_SYMBOLS[currency] || "$") + Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100 : "\u2014";
+    const initialPriceStr = basePricePerHour != null && typeof formatPrice === "function" ? formatPrice(Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100, currency) : basePricePerHour != null ? (CURRENCY_SYMBOLS[currency] || "$") + Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100 : "\u2014";
     const overlay = document.createElement("div");
     overlay.className = "teacher-booking-confirm-overlay";
     overlay.onclick = (e) => {
@@ -13170,7 +13194,7 @@ School: ${schoolName}`)) return;
       overlay.dataset.bookingBasePrice = String(basePricePerHour);
       overlay.dataset.bookingCurrency = currency;
     }
-    const durationLabels = durations.map((m) => m === 60 ? "1h" : m === 90 ? "1.5h" : m === 120 ? "2h" : m === 30 ? "30 min" : m === 45 ? "45 min" : m + " min");
+    const durationLabels = durations.map((m) => m === 60 ? "1h" : m === 120 ? "2h" : m === 180 ? "3h" : m + " min");
     const durationOptionsHtml = durations.map((m, i) => {
       const lab = durationLabels[i] || m + " min";
       return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '">' + lab.replace(/</g, "&lt;") + "</button>";
@@ -13208,7 +13232,7 @@ School: ${schoolName}`)) return;
         const curr = overlay.dataset.bookingCurrency || "MXN";
         if (priceEl && base != null) {
           const p = Math.round(Number(base) * (minutes / 60) * 100) / 100;
-          priceEl.textContent = typeof window.formatPrice === "function" ? window.formatPrice(p, curr) : (CURRENCY_SYMBOLS[curr] || "$") + p;
+          priceEl.textContent = typeof formatPrice === "function" ? formatPrice(p, curr) : (CURRENCY_SYMBOLS[curr] || "$") + p;
         }
       });
     });
@@ -13220,8 +13244,8 @@ School: ${schoolName}`)) return;
     btn.disabled = true;
     btn.textContent = "...";
     const message = (document.getElementById("booking-message")?.value || "").trim();
-    const duration = state._bookingSelectedDuration || (slot.availableDurations && slot.availableDurations[0]) || 60;
     try {
+      const duration = state._bookingSelectedDuration || slot.availableDurations && slot.availableDurations[0] || 60;
       const { data: requestData, error } = await supabaseClient.rpc("create_private_class_request", {
         p_school_id: state.currentSchool.id,
         p_student_id: String(state.currentUser.id),
@@ -13263,6 +13287,30 @@ School: ${schoolName}`)) return;
       const exp = p?.expires_at ? new Date(p.expires_at) : null;
       return exp && exp > now;
     });
+  };
+  window.getEffectivePrivateBalanceForSchool = (schoolId) => {
+    if (!schoolId || !Array.isArray(state.allEnrollments)) return 0;
+    const enrollment = state.allEnrollments.find((e) => e.school_id === schoolId);
+    if (!enrollment) return 0;
+    const now = /* @__PURE__ */ new Date();
+    let total = Number(enrollment.balance_private) || 0;
+    const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
+    packs.forEach((p) => {
+      const exp = p?.expires_at ? new Date(p.expires_at) : null;
+      if (exp && exp > now) total += Number(p.private_count) || 0;
+    });
+    return Math.max(0, total);
+  };
+  window.privateClassInfoFromItem = (item) => {
+    let durationMins = 60;
+    if (item.start_at_utc && item.end_at_utc) {
+      durationMins = Math.round((new Date(item.end_at_utc) - new Date(item.start_at_utc)) / (60 * 1e3));
+    } else if (item.duration_minutes != null) {
+      durationMins = Number(item.duration_minutes);
+    }
+    const classes = durationMins / 60;
+    const durationLabel = durationMins === 60 ? "1h" : durationMins === 120 ? "2h" : durationMins === 180 ? "3h" : durationMins + " min";
+    return { durationMins, durationLabel, classes };
   };
   window.fetchTeacherBookingSlots = async () => {
     if (!supabaseClient || !state.currentSchool?.id) return;
@@ -13311,7 +13359,8 @@ School: ${schoolName}`)) return;
       alert(t3.need_package_to_book || "You need a package to request private classes. Visit the Shop to buy one.");
       return;
     }
-    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0);
+    const allowedDurations = [60, 120, 180];
+    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0 && allowedDurations.includes(n));
     state._teacherBookingConfirm = { date, time, location, availableDurations: availableDurations.length ? availableDurations : [60] };
     state._teacherBookingSelectedDuration = null;
     const overlay = document.getElementById("teacher-booking-confirm-overlay");
@@ -13323,11 +13372,9 @@ School: ${schoolName}`)) return;
     const currency = school?.currency || "MXN";
     const durations = state._teacherBookingConfirm.availableDurations || [60];
     const firstDuration = durations[0] || 60;
-    const initialPriceStr = basePricePerHour != null && typeof window.formatPrice === "function"
-      ? window.formatPrice(Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100, currency)
-      : basePricePerHour != null ? (CURRENCY_SYMBOLS[currency] || "$") + Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100 : "\u2014";
+    const initialPriceStr = basePricePerHour != null && typeof formatPrice === "function" ? formatPrice(Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100, currency) : basePricePerHour != null ? (CURRENCY_SYMBOLS[currency] || "$") + Math.round(basePricePerHour * (firstDuration / 60) * 100) / 100 : "\u2014";
     const durationOptionsHtml = durations.map((m) => {
-      const lab = m === 60 ? "1h" : m === 90 ? "1.5h" : m === 120 ? "2h" : m === 30 ? "30 min" : m === 45 ? "45 min" : m + " min";
+      const lab = m === 60 ? "1h" : m === 120 ? "2h" : m === 180 ? "3h" : m + " min";
       return '<button type="button" class="teacher-booking-duration-btn" data-minutes="' + m + '">' + lab.replace(/</g, "&lt;") + "</button>";
     }).join("");
     if (overlay && details) {
@@ -13364,7 +13411,7 @@ School: ${schoolName}`)) return;
           const curr = sheet && sheet.dataset.bookingCurrency || "MXN";
           if (priceEl && base != null) {
             const p = Math.round(Number(base) * (minutes / 60) * 100) / 100;
-            priceEl.textContent = typeof window.formatPrice === "function" ? window.formatPrice(p, curr) : (CURRENCY_SYMBOLS[curr] || "$") + p;
+            priceEl.textContent = typeof formatPrice === "function" ? formatPrice(p, curr) : (CURRENCY_SYMBOLS[curr] || "$") + p;
           }
           const confirmBtn = document.getElementById("teacher-booking-confirm-btn");
           if (confirmBtn) confirmBtn.disabled = false;
@@ -13434,15 +13481,36 @@ School: ${schoolName}`)) return;
   };
   window.respondToPrivateClassRequest = async (requestId, accept) => {
     if (!supabaseClient) return;
+    state.privateClassRequestRespondingId = requestId;
+    if (typeof renderView === "function") renderView();
     try {
       const { error } = await supabaseClient.rpc("teacher_respond_to_request", {
         p_request_id: requestId,
         p_accept: accept
       });
       if (error) throw error;
+      if (accept) {
+        const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/send_private_lesson_confirmation";
+        const { data: sess } = await supabaseClient.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (token && fnUrl) {
+          try {
+            await fetch(fnUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+              body: JSON.stringify({ request_id: requestId })
+            });
+          } catch (_) {
+          }
+        }
+      }
       await fetchAllData();
     } catch (e) {
       alert("Error: " + (e.message || e));
+    } finally {
+      state.privateClassRequestRespondingId = null;
+      if (typeof renderView === "function") renderView();
+      if (window.lucide) window.lucide.createIcons();
     }
   };
   window.markPrivateLessonAttended = async (lessonId) => {
@@ -13524,6 +13592,12 @@ School: ${schoolName}`)) return;
       lesson = (state.privateLessons || []).find(function(l) {
         return l.id === lessonOrEventOrId;
       });
+      if (!lesson) {
+        var req = (state.privateClassRequests || []).find(function(r) {
+          return r.id === lessonOrEventOrId && r.status === "accepted" && r.start_at_utc && r.end_at_utc;
+        });
+        if (req) lesson = req;
+      }
     } else if (typeof lessonOrEventOrId === "string" && type === "student") {
       lesson = (state.studentPrivateLessons || []).find(function(l) {
         return l.id === lessonOrEventOrId;
@@ -13628,6 +13702,23 @@ School: ${schoolName}`)) return;
             uid: "private-lesson-" + l.id + "@bailadmin",
             start: new Date(l.start_at_utc),
             end: new Date(l.end_at_utc),
+            summary: "Private lesson with " + name
+          });
+        });
+        var lessonRequestIds = {};
+        lessons.forEach(function(l) {
+          if (l.request_id) lessonRequestIds[l.request_id] = true;
+        });
+        (state.privateClassRequests || []).filter(function(r) {
+          return r.status === "accepted" && r.start_at_utc && r.end_at_utc && !lessonRequestIds[r.id];
+        }).forEach(function(r) {
+          var name = studentNames.find(function(s) {
+            return String(s.id) === String(r.student_id);
+          })?.name || "Student";
+          events.push({
+            uid: "private-request-" + r.id + "@bailadmin",
+            start: new Date(r.start_at_utc),
+            end: new Date(r.end_at_utc),
             summary: "Private lesson with " + name
           });
         });
@@ -16196,6 +16287,11 @@ School: ${schoolName}`)) return;
     document.querySelectorAll(".nav-item").forEach((btn) => {
       btn.addEventListener("click", () => {
         const view = btn.getAttribute("data-view");
+        const prevView = state.currentView;
+        if (prevView === "admin-settings") {
+          state._settingsScrollTop = window.scrollY ?? document.documentElement?.scrollTop ?? 0;
+          state._settingsScrollTime = Date.now();
+        }
         state.currentView = view;
         if (view === "dashboard-profile") {
           window.location.hash = "#/dashboard/profile";
@@ -16204,7 +16300,16 @@ School: ${schoolName}`)) return;
         }
         saveState();
         window.renderView();
-        window.scrollTo(0, 0);
+        const canRestoreSettings = view === "admin-settings" && state._settingsScrollTime != null && Date.now() - state._settingsScrollTime < 10 * 60 * 1e3 && (state._settingsScrollTop ?? 0) >= 0;
+        if (canRestoreSettings) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              window.scrollTo(0, state._settingsScrollTop);
+            });
+          });
+        } else {
+          window.scrollTo(0, 0);
+        }
         if (view === "qr" && state.currentUser && !state.isAdmin && state.currentUser.id && (state.currentUser.school_id || state.currentSchool?.id) && supabaseClient) {
           window.fetchAllData();
         }
@@ -16216,6 +16321,8 @@ School: ${schoolName}`)) return;
       document.body.classList.toggle("dark-mode", state.theme === "dark");
       const icon = state.theme === "dark" ? "moon" : "sun";
       document.getElementById("theme-icon").setAttribute("data-lucide", icon);
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) metaTheme.setAttribute("content", state.theme === "dark" ? "#000000" : "#f5f5f7");
       saveState();
       if (typeof window.lucide !== "undefined" && window.lucide.createIcons) window.lucide.createIcons();
     });
@@ -16278,7 +16385,7 @@ School: ${schoolName}`)) return;
       }
       if (local && !state.discoveryPath) {
         state.language = saved.language || "en";
-        state.theme = saved.theme || "dark";
+        state.theme = saved.theme === "light" || saved.theme === "dark" ? saved.theme : "dark";
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.isAdmin !== void 0) state.isAdmin = saved.isAdmin;
         if (saved.isPlatformDev !== void 0) state.isPlatformDev = saved.isPlatformDev;
@@ -16316,7 +16423,7 @@ School: ${schoolName}`)) return;
       }
       if (state.discoveryPath && local) {
         state.language = saved.language || state.language || "en";
-        state.theme = saved.theme || state.theme || "dark";
+        state.theme = saved.theme === "light" || saved.theme === "dark" ? saved.theme : state.theme || "dark";
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved._discoveryOnlyEdit !== void 0) state._discoveryOnlyEdit = !!saved._discoveryOnlyEdit;
@@ -16324,6 +16431,12 @@ School: ${schoolName}`)) return;
         if (saved.reviewDraft !== void 0) state.reviewDraft = saved.reviewDraft;
       }
       if (isAureSubdomain2 && !state.currentUser && !state.isAdmin && !state.isPlatformDev) state.currentView = "auth";
+      document.body.setAttribute("data-theme", state.theme);
+      document.body.classList.toggle("dark-mode", state.theme === "dark");
+      const themeIconEl = document.getElementById("theme-icon");
+      if (themeIconEl) themeIconEl.setAttribute("data-lucide", state.theme === "dark" ? "moon" : "sun");
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) metaThemeColor.setAttribute("content", state.theme === "dark" ? "#000000" : "#f5f5f7");
       try {
         const stored = sessionStorage.getItem("billing_return");
         if (stored) {
@@ -16333,7 +16446,8 @@ School: ${schoolName}`)) return;
           if (returnView) state.currentView = returnView;
           else state.currentView = "admin-settings";
         }
-      } catch (_) {}
+      } catch (_) {
+      }
       const searchParams = new URLSearchParams(window.location.search);
       const billingReturn = searchParams.get("billing");
       const isLegacyBillingPath = path === "/billing/cancel" || path === "/billing/success";
@@ -16346,7 +16460,8 @@ School: ${schoolName}`)) return;
             academyId: academyId ? decodeURIComponent(academyId) : null,
             returnView
           }));
-        } catch (_) {}
+        } catch (_) {
+        }
         window.history.replaceState(null, "", "/");
         window.location.reload();
         return;
@@ -16354,6 +16469,7 @@ School: ${schoolName}`)) return;
       updateI18n();
       document.body.setAttribute("data-theme", state.theme);
       document.body.classList.toggle("dark-mode", state.theme === "dark");
+      if (themeIconEl) themeIconEl.setAttribute("data-lucide", state.theme === "dark" ? "moon" : "sun");
       if (state.isAdmin && state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
         try {
           const { data } = await supabaseClient.from("schools").select("active").eq("id", state.currentSchool.id).maybeSingle();
@@ -16365,7 +16481,11 @@ School: ${schoolName}`)) return;
         } catch (_) {
         }
       }
+      if (typeof window.history !== "undefined" && window.history.scrollRestoration !== void 0) {
+        window.history.scrollRestoration = "manual";
+      }
       window.renderView();
+      window.scrollTo(0, 0);
       if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
       let sessRes = { data: { session: null } };
@@ -16485,6 +16605,7 @@ School: ${schoolName}`)) return;
         }
       }
       window.renderView();
+      window.scrollTo(0, 0);
       if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       if (CALENDLY_FEATURE_ENABLED3 && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
       window.addEventListener("popstate", () => {
@@ -16492,10 +16613,14 @@ School: ${schoolName}`)) return;
         if (path2 === "/discovery" || path2.startsWith("/discovery/")) {
           state.discoveryPath = path2;
           if (path2 !== "/discovery") state.discoveryDetailFetched = false;
-          window.fetchDiscoveryData().then(() => window.renderView());
+          window.fetchDiscoveryData().then(() => {
+            window.renderView();
+            window.scrollTo(0, 0);
+          });
         } else {
           state.discoveryPath = null;
           window.renderView();
+          window.scrollTo(0, 0);
         }
       });
       window.addEventListener("hashchange", () => {
@@ -16504,10 +16629,12 @@ School: ${schoolName}`)) return;
           if (state.currentView === "admin-settings" && (window.location.hash || "").includes("calendly=connected") && typeof window.fetchAllData === "function") {
             window.fetchAllData().then(() => {
               window.renderView();
+              window.scrollTo(0, 0);
               if (CALENDLY_FEATURE_ENABLED3 && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
             });
           } else {
             window.renderView();
+            window.scrollTo(0, 0);
             if (CALENDLY_FEATURE_ENABLED3 && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
           }
           if (state.currentView === "admin-competition-jack-and-jill" && state.competitionTab === "registrations" && state.competitionId && supabaseClient) {
