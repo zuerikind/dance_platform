@@ -6613,7 +6613,8 @@ function _renderViewImpl() {
                         const groupVal = eff.groupUnlimited ? '∞' : String(Math.max(0, groupEffective));
                         const parts = [];
                         if (isPT) {
-                            parts.push({ label: t.classes_remaining || t.private_classes_remaining || 'Classes remaining', value: String(Math.max(0, eff.private)) });
+                            const privateRemaining = (typeof window.getEffectivePrivateBalanceForSchool === 'function' && currentSchoolId) ? window.getEffectivePrivateBalanceForSchool(currentSchoolId) : Math.max(0, eff.private);
+                            parts.push({ label: t.classes_remaining || t.private_classes_remaining || 'Classes remaining', value: String(privateRemaining) });
                         } else {
                             parts.push({ label: t.group_classes_remaining || 'Group', value: groupVal });
                         }
@@ -6663,6 +6664,32 @@ function _renderViewImpl() {
                             return '';
                         })()}
                     </div>
+                    ${(() => {
+                        const isPT = state.currentSchool?.profile_type === 'private_teacher';
+                        if (!isPT || !state.currentSchool?.id) return '';
+                        const currentSchoolId = state.currentSchool.id;
+                        const myLessons = (state.studentPrivateLessons || []).filter(l => l.status === 'confirmed' || l.status === 'attended').sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
+                        const myReqs = (state.studentPrivateClassRequests || []).filter(r => r.status === 'accepted');
+                        const myClasses = myLessons.length > 0 ? myLessons : myReqs;
+                        const now = new Date();
+                        const todayStr = now.toISOString().slice(0, 10);
+                        const upcomingPrivate = myClasses.filter(item => {
+                            if (item.start_at_utc) return new Date(item.start_at_utc) >= now;
+                            return (item.requested_date || '') >= todayStr;
+                        });
+                        const effectiveBalance = typeof window.getEffectivePrivateBalanceForSchool === 'function' ? window.getEffectivePrivateBalanceForSchool(currentSchoolId) : 0;
+                        const xClassesOfPackage = (n) => (t.x_classes_of_package || '{n} classes of your package').replace('{n}', n);
+                        return '<div class="teacher-booking-balance-block" style="margin-top: 1rem; max-width: 280px; margin-left: auto; margin-right: auto; padding: 14px 16px; background: var(--system-gray6); border-radius: 16px; border: 1px solid var(--border);">' +
+                            '<div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">' + (t.classes_remaining || 'Classes remaining').replace(/</g, '&lt;') + ': <strong>' + effectiveBalance + '</strong></div>' +
+                            (upcomingPrivate.length === 0 ? '<div style="font-size: 13px; color: var(--text-secondary);">' + (t.no_private_classes_yet || 'No accepted private classes yet').replace(/</g, '&lt;') + '</div>' :
+                                '<ul style="list-style: none; margin: 0; padding: 0;">' + upcomingPrivate.map(item => {
+                                    const info = typeof window.privateClassInfoFromItem === 'function' ? window.privateClassInfoFromItem(item) : { durationLabel: '1h', classes: 1 };
+                                    const dateLabel = item.start_at_utc ? (window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString()) : (window.formatShortDate ? window.formatShortDate(new Date((item.requested_date || '') + 'T00:00:00'), state.language) : item.requested_date || '');
+                                    const timeStr = item.start_at_utc ? new Date(item.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : (item.requested_time || '');
+                                    return '<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">' + dateLabel + ' · ' + (timeStr || '').replace(/</g, '&lt;') + ' · ' + info.durationLabel + ' · <strong>' + xClassesOfPackage(info.classes) + '</strong></li>';
+                                }).join('') + '</ul>') +
+                            '</div>';
+                    })()}
 
                     <div style="margin-top: 2rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; text-align: left;">
                         ${(() => {
@@ -11941,6 +11968,11 @@ window.studentCancelPrivateLesson = async (lessonId) => {
         const { error } = await supabaseClient.rpc('student_cancel_private_lesson', { p_lesson_id: lessonId });
         if (error) throw error;
         await fetchAllData();
+        state._teacherBookingSlots = [];
+        state._teacherBookingLoadedWeek = null;
+        if (state.currentView === 'teacher-booking' && state.currentSchool?.id && typeof window.fetchTeacherBookingSlots === 'function') {
+            await window.fetchTeacherBookingSlots();
+        }
         if (typeof renderView === 'function') renderView();
         if (window.lucide) window.lucide.createIcons();
     } catch (e) { alert('Error: ' + (e.message || e)); }

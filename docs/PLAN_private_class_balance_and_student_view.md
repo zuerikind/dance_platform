@@ -39,6 +39,8 @@
 
 **File:** New migration, e.g. `supabase/migrations/YYYYMMDDHHMMSS_private_class_deduct_on_accept.sql`.
 
+**Apply the migration:** Run `supabase db push` (or your migration process) so `teacher_respond_to_request` on the database includes the deduction step. Until the migration is applied, accepting a request will not deduct the student’s balance.
+
 **Safety (live-safety / AGENTS.md):** Same function name and signature; only add a step inside the function. No new overloads.
 
 ---

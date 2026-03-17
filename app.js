@@ -4640,19 +4640,19 @@
     const canResend = p.origin === "discovery" && !p.email_confirmed && Date.now() >= (_resendVerificationCooldownUntil || 0) && !_resendVerificationSending;
     const resendLabel = _resendVerificationSending ? t2("resend_sending") || "Sending\u2026" : canResend ? t2("resend_verification") || "Resend verification email" : t2("resend_cooldown") || "Sent. Wait 60s";
     const backToDiscovery = "event.preventDefault(); state.currentView=null; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ renderView(); window.scrollTo(0,0); }); if(window.lucide) window.lucide.createIcons();";
-    let html = `<div class="container profile-container" style="padding: 1rem 1.2rem; max-width: 560px; margin: 0 auto;"><div style="margin-bottom: 1.25rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t2("discovery_back") || "Back to all studios"}</a></div><div class="ios-header" style="margin-bottom: 1.25rem;"><div class="ios-large-title">${t2("profile_settings") || "Profile"}</div></div>`;
+    let html = `<div class="container profile-container" style="padding: 1rem 1.2rem; max-width: 560px; margin: 0 auto; width: 100%; box-sizing: border-box;"><div style="margin-bottom: 1.25rem;"><a href="/discovery" onclick="${backToDiscovery}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); text-decoration: none;"><i data-lucide="arrow-left" size="16"></i>${t2("discovery_back") || "Back to all studios"}</a></div><div class="ios-header" style="margin-bottom: 1.25rem;"><div class="ios-large-title">${t2("profile_settings") || "Profile"}</div></div>`;
     html += `<div class="ios-list profile-email-card" style="margin-bottom: 1.25rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
     html += `<div class="ios-list-item profile-email-row" style="padding: 14px 16px; flex-wrap: wrap; gap: 6px 0; align-items: flex-start;"><span style="opacity: 0.85; width: 100%; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em;">${t2("email") || "Email"}</span><span style="width: 100%; font-size: 0.95rem; word-break: break-all;">${(p.email || "").replace(/</g, "&lt;")}</span><span style="font-size: 11px; color: var(--text-secondary);">${p.email_confirmed ? t2("verified") || "Verified" : t2("not_verified") || "Not verified"}</span></div>`;
     if (p.origin === "discovery" && !p.email_confirmed) {
       html += `<div class="ios-list-item" style="padding: 12px 16px;"><button type="button" class="resend-verification-btn btn-secondary" ${canResend && !_resendVerificationSending ? "" : "disabled"} onclick="event.preventDefault(); event.stopPropagation(); if(window.resendVerificationEmail) window.resendVerificationEmail(); return false;" style="width: 100%; min-height: 44px; cursor: ${canResend && !_resendVerificationSending ? "pointer" : "default"}; -webkit-tap-highlight-color: transparent;">${resendLabel}</button>${_resendVerificationFeedback === "sent" ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-green);">${t2("resend_success") || "Check your inbox"}</p>` : ""}${_resendVerificationFeedback === "error" ? `<p style="margin-top: 8px; font-size: 13px; color: var(--system-red);">${(_resendVerificationErrorMsg || t2("resend_error")).replace(/</g, "&lt;")}</p>` : ""}</div>`;
     }
     html += `</div>`;
-    html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("first_name") || "First name"}</span><input type="text" id="profile-first-name" value="${(firstName || "").replace(/"/g, "&quot;")}" placeholder="${t2("first_name") || "First name"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("last_name") || "Last name"}</span><input type="text" id="profile-last-name" value="${(lastName || "").replace(/"/g, "&quot;")}" placeholder="${t2("last_name") || "Last name"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("phone") || "Phone"}</span><input type="text" id="profile-phone" value="${(p.phone || "").replace(/"/g, "&quot;")}" placeholder="${t2("phone") || "Phone"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("city") || "City"}</span><input type="text" id="profile-city" value="${(p.city || "").replace(/"/g, "&quot;")}" placeholder="${t2("city") || "City"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("country") || "Country"}</span><input type="text" id="profile-country" value="${(p.country || "").replace(/"/g, "&quot;")}" placeholder="${t2("country") || "Country"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
-    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8;">${t2("instagram") || "Instagram"}</span><input type="text" id="profile-instagram" value="${(p.instagram || "").replace(/"/g, "&quot;")}" placeholder="${t2("instagram_placeholder") || "@handle"}" style="flex: 1; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
+    html += `<div class="ios-list" style="margin-bottom: 1rem;"><div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t2("first_name") || "First name"}</span><input type="text" id="profile-first-name" value="${(firstName || "").replace(/"/g, "&quot;")}" placeholder="${t2("first_name") || "First name"}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t2("last_name") || "Last name"}</span><input type="text" id="profile-last-name" value="${(lastName || "").replace(/"/g, "&quot;")}" placeholder="${t2("last_name") || "Last name"}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t2("phone") || "Phone"}</span><input type="text" id="profile-phone" value="${(p.phone || "").replace(/"/g, "&quot;")}" placeholder="${t2("phone") || "Phone"}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t2("city") || "City"}</span><input type="text" id="profile-city" value="${(p.city || "").replace(/"/g, "&quot;")}" placeholder="${t2("city") || "City"}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t2("country") || "Country"}</span><input type="text" id="profile-country" value="${(p.country || "").replace(/"/g, "&quot;")}" placeholder="${t2("country") || "Country"}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div>`;
+    html += `<div class="ios-list-item" style="padding: 12px 16px;"><span style="opacity: 0.8; min-width: 0;">${t2("instagram") || "Instagram"}</span><input type="text" id="profile-instagram" value="${(p.instagram || "").replace(/"/g, "&quot;")}" placeholder="${t2("instagram_placeholder") || "@handle"}" style="flex: 1; min-width: 0; border: none; background: transparent; color: var(--text-primary); text-align: right; outline: none;"></div></div>`;
     html += `<button type="button" class="btn-primary" onclick="window.saveProfile()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 1.75rem;">${t2("save") || "Save"}</button>`;
     html += `<h3 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t2("change_password_section") || "Change password"}</h3>`;
     html += `<div class="ios-list" style="margin-bottom: 0.75rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">`;
@@ -7763,9 +7763,9 @@
                     <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(t22.classes_remaining || "Classes remaining").replace(/</g, "&lt;")}: <strong>${effectiveBalance}</strong></div>
                     ${upcomingClasses.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary);">${(t22.no_private_classes_yet || "No accepted private classes yet").replace(/</g, "&lt;")}</div>` : `<ul style="list-style: none; margin: 0; padding: 0;">${upcomingClasses.map((item) => {
             const info = typeof window.privateClassInfoFromItem === "function" ? window.privateClassInfoFromItem(item) : { durationLabel: "1h", classes: 1 };
-            const dateLabel = item.start_at_utc ? window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(new Date((item.requested_date || "") + "T00:00:00"), state.language) : item.requested_date || "";
+            const dateLabel = item.start_at_utc ? window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date((item.requested_date || "") + "T00:00:00"), state.language) : item.requested_date || "";
             const timeStr = item.start_at_utc ? new Date(item.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : item.requested_time || "";
-            return `<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">${dateLabel} \u00B7 ${(timeStr || "").replace(/</g, "&lt;")} \u00B7 ${info.durationLabel} \u00B7 <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
+            return `<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">${dateLabel} \xB7 ${(timeStr || "").replace(/</g, "&lt;")} \xB7 ${info.durationLabel} \xB7 <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
           }).join("")}</ul>`}
                 </div>
                 <div class="student-private-classes-expandable ${myClassesExpanded ? "expanded" : ""}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
@@ -8459,7 +8459,8 @@
           const groupVal = eff.groupUnlimited ? "\u221E" : String(Math.max(0, groupEffective));
           const parts = [];
           if (isPT) {
-            parts.push({ label: t2.classes_remaining || t2.private_classes_remaining || "Classes remaining", value: String(Math.max(0, eff.private)) });
+            const privateRemaining = typeof window.getEffectivePrivateBalanceForSchool === "function" && currentSchoolId ? window.getEffectivePrivateBalanceForSchool(currentSchoolId) : Math.max(0, eff.private);
+            parts.push({ label: t2.classes_remaining || t2.private_classes_remaining || "Classes remaining", value: String(privateRemaining) });
           } else {
             parts.push({ label: t2.group_classes_remaining || "Group", value: groupVal });
           }
@@ -8505,6 +8506,28 @@
           return "";
         })()}
                     </div>
+                    ${(() => {
+          const isPT = state.currentSchool?.profile_type === "private_teacher";
+          if (!isPT || !state.currentSchool?.id) return "";
+          const currentSchoolId = state.currentSchool.id;
+          const myLessons = (state.studentPrivateLessons || []).filter((l) => l.status === "confirmed" || l.status === "attended").sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
+          const myReqs = (state.studentPrivateClassRequests || []).filter((r) => r.status === "accepted");
+          const myClasses = myLessons.length > 0 ? myLessons : myReqs;
+          const now = /* @__PURE__ */ new Date();
+          const todayStr = now.toISOString().slice(0, 10);
+          const upcomingPrivate = myClasses.filter((item) => {
+            if (item.start_at_utc) return new Date(item.start_at_utc) >= now;
+            return (item.requested_date || "") >= todayStr;
+          });
+          const effectiveBalance = typeof window.getEffectivePrivateBalanceForSchool === "function" ? window.getEffectivePrivateBalanceForSchool(currentSchoolId) : 0;
+          const xClassesOfPackage = (n) => (t2.x_classes_of_package || "{n} classes of your package").replace("{n}", n);
+          return '<div class="teacher-booking-balance-block" style="margin-top: 1rem; max-width: 280px; margin-left: auto; margin-right: auto; padding: 14px 16px; background: var(--system-gray6); border-radius: 16px; border: 1px solid var(--border);"><div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">' + (t2.classes_remaining || "Classes remaining").replace(/</g, "&lt;") + ": <strong>" + effectiveBalance + "</strong></div>" + (upcomingPrivate.length === 0 ? '<div style="font-size: 13px; color: var(--text-secondary);">' + (t2.no_private_classes_yet || "No accepted private classes yet").replace(/</g, "&lt;") + "</div>" : '<ul style="list-style: none; margin: 0; padding: 0;">' + upcomingPrivate.map((item) => {
+            const info = typeof window.privateClassInfoFromItem === "function" ? window.privateClassInfoFromItem(item) : { durationLabel: "1h", classes: 1 };
+            const dateLabel = item.start_at_utc ? window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date((item.requested_date || "") + "T00:00:00"), state.language) : item.requested_date || "";
+            const timeStr = item.start_at_utc ? new Date(item.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : item.requested_time || "";
+            return '<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">' + dateLabel + " \xB7 " + (timeStr || "").replace(/</g, "&lt;") + " \xB7 " + info.durationLabel + " \xB7 <strong>" + xClassesOfPackage(info.classes) + "</strong></li>";
+          }).join("") + "</ul>") + "</div>";
+        })()}
 
                     <div style="margin-top: 2rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; text-align: left;">
                         ${(() => {
@@ -9192,10 +9215,13 @@
                                 ${todaysLessons.map((l) => {
             const studentName = (state.students || []).find((s) => String(s.id) === String(l.student_id))?.name || l.student_id;
             const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
+            const durationMins = l.start_at_utc && l.end_at_utc ? Math.round((new Date(l.end_at_utc) - new Date(l.start_at_utc)) / 6e4) : 0;
+            const durationStr = durationMins >= 60 ? durationMins % 60 ? Math.floor(durationMins / 60) + "h " + durationMins % 60 : Math.floor(durationMins / 60) + "h" : durationMins ? durationMins + " min" : "";
+            const timeAndDuration = timeStr + (durationStr ? " \xB7 " + durationStr : "");
             const canCheckIn = l.status === "confirmed";
             const isPast = new Date(l.end_at_utc) < /* @__PURE__ */ new Date();
             const exportOneBtn = l.start_at_utc && l.end_at_utc ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.downloadCalendarIcsOne('` + l.id + `', 'teacher')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : "";
-            return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === "attended" ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t2.checked_in || "Checked in") + "</span>" : "<div><strong>" + (studentName || "").replace(/</g, "&lt;") + "</strong> &middot; " + timeStr + '</div><div style="display: flex; gap: 6px; flex-wrap: wrap;">' + exportOneBtn + (canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + l.id + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (isPast && l.status === "confirmed" ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + l.id + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>") + "</div>";
+            return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === "attended" ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t2.checked_in || "Checked in") + "</span>" : "<div><strong>" + (studentName || "").replace(/</g, "&lt;") + "</strong> &middot; " + timeAndDuration + '</div><div style="display: flex; gap: 6px; flex-wrap: wrap;">' + exportOneBtn + (canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + l.id + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (isPast && l.status === "confirmed" ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + l.id + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>") + "</div>";
           }).join("")}
                             </div>
                             ` : ""}
@@ -9211,6 +9237,10 @@
             const studentName = (state.students || []).find((s) => String(s.id) === String(r.student_id))?.name || r.student_id;
             const dateLabel = r.start_at_utc ? window.formatShortDate ? window.formatShortDate(new Date(r.start_at_utc), state.language) : new Date(r.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(r.requested_date + "T00:00:00"), state.language) : r.requested_date;
             const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : r.requested_time || "";
+            const src = lesson || r;
+            const durationMins = src && src.start_at_utc && src.end_at_utc ? Math.round((new Date(src.end_at_utc) - new Date(src.start_at_utc)) / 6e4) : 0;
+            const durationStr = durationMins >= 60 ? durationMins % 60 ? Math.floor(durationMins / 60) + "h " + durationMins % 60 : Math.floor(durationMins / 60) + "h" : durationMins ? durationMins + " min" : "";
+            const timeAndDuration = (timeStr || "") + (durationStr ? " \xB7 " + durationStr : "");
             const canCheckIn = lesson && lesson.status === "confirmed" && !lesson.credit_deducted;
             const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < /* @__PURE__ */ new Date();
             const attended = lesson && lesson.status === "attended";
@@ -9219,7 +9249,7 @@
                                     <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
                                     <div style="flex: 1;">
                                         <div style="font-weight: 600; font-size: 14px;">${(studentName || "").replace(/</g, "&lt;")}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(timeStr || "").replace(/</g, "&lt;")} ${attended ? ' &middot; <span style="color: var(--system-green);">' + (t2.checked_in || "Checked in") + "</span>" : ""}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(timeAndDuration || "").replace(/</g, "&lt;")} ${attended ? ' &middot; <span style="color: var(--system-green);">' + (t2.checked_in || "Checked in") + "</span>" : ""}</div>
                                     </div>
                                     ${lessonId && lesson.start_at_utc && lesson.end_at_utc ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.downloadCalendarIcsOne('` + lessonId + `', 'teacher')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : ""}
                                     ${lessonId && canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : ""}
@@ -9274,9 +9304,13 @@
               const lessonId = lesson?.id;
               const studentName = (state.students || []).find((s) => String(s.id) === String(r.student_id))?.name || r.student_id;
               const timeStr = r.start_at_utc ? new Date(r.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : r.requested_time || "";
+              const src = lesson || r;
+              const durationMins = src && src.start_at_utc && src.end_at_utc ? Math.round((new Date(src.end_at_utc) - new Date(src.start_at_utc)) / 6e4) : 0;
+              const durationStr = durationMins >= 60 ? durationMins % 60 ? Math.floor(durationMins / 60) + "h " + durationMins % 60 : Math.floor(durationMins / 60) + "h" : durationMins ? durationMins + " min" : "";
+              const timeAndDuration = (timeStr || "") + (durationStr ? " \xB7 " + durationStr : "");
               const canCheckIn = lesson && lesson.status === "confirmed" && !lesson.credit_deducted;
               const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < /* @__PURE__ */ new Date();
-              return '<div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;"><i data-lucide="clock" size="16" style="opacity: 0.5; flex-shrink: 0;"></i><div style="flex: 1;"><div style="font-weight: 600; font-size: 14px;">' + (studentName || "").replace(/</g, "&lt;") + '</div><div style="font-size: 12px; color: var(--text-secondary);">' + (timeStr || "").replace(/</g, "&lt;") + (lesson && lesson.status === "attended" ? " &middot; " + (t2.checked_in || "Checked in") : "") + "</div></div>" + (lessonId && canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>";
+              return '<div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;"><i data-lucide="clock" size="16" style="opacity: 0.5; flex-shrink: 0;"></i><div style="flex: 1;"><div style="font-weight: 600; font-size: 14px;">' + (studentName || "").replace(/</g, "&lt;") + '</div><div style="font-size: 12px; color: var(--text-secondary);">' + (timeAndDuration || "").replace(/</g, "&lt;") + (lesson && lesson.status === "attended" ? " &middot; " + (t2.checked_in || "Checked in") : "") + "</div></div>" + (lessonId && canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>";
             }).join("")}
                                     </div>
                                     ` : ""}
@@ -9688,7 +9722,7 @@
                     <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t2.class_types_hint || "Lesson lengths you offer. Students will choose one when booking."}</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
                         ${(state.teacherAvailabilitySettings?.duration_minutes || [60]).map((mins) => {
-          const label = mins === 60 ? "1h" : mins === 90 ? "1.5h" : mins === 120 ? "2h" : mins === 30 ? "30 min" : mins === 45 ? "45 min" : mins + " min";
+          const label = mins === 60 ? "1h" : mins === 120 ? "2h" : mins === 180 ? "3h" : mins === 90 ? "1.5h" : mins === 30 ? "30 min" : mins === 45 ? "45 min" : mins + " min";
           return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600;">' + label.replace(/</g, "&lt;") + '<button type="button" onclick="window.removeTeacherDuration(' + mins + ')" style="background:none;border:none;padding:0;margin-left:2px;cursor:pointer;color:var(--text-secondary);opacity:0.7;"><i data-lucide="x" size="14"></i></button></span>';
         }).join("")}
                         <div class="custom-dropdown-container" style="overflow:visible;"><div class="custom-dropdown-trigger" onclick="window.toggleCustomDropdown('add-duration')" style="background:var(--system-gray6);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i data-lucide="plus" size="14"></i> ${t2.add_class_length_btn || "Add length"} <i data-lucide="chevron-down" size="12" style="opacity:0.4;"></i></div><div class="custom-dropdown-list" id="dropdown-list-add-duration">${[60, 120, 180].filter((m) => !(state.teacherAvailabilitySettings?.duration_minutes || [60]).includes(m)).map((m) => {
@@ -13173,8 +13207,7 @@ School: ${schoolName}`)) return;
     window.loadBookingWeek();
   };
   window.selectBookingSlot = (date, time, location, availableDurationsStr) => {
-    const allowedDurations = [60, 120, 180];
-    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0 && allowedDurations.includes(n));
+    const availableDurations = (availableDurationsStr || "").split(",").map((x) => parseInt(x, 10)).filter((n) => !isNaN(n) && n > 0);
     if (state._bookingSelectedSlot && state._bookingSelectedSlot.date === date && state._bookingSelectedSlot.time === time) {
       state._bookingSelectedSlot = null;
       state._bookingSelectedDuration = null;
@@ -13492,6 +13525,8 @@ School: ${schoolName}`)) return;
     }
   };
   window.respondToPrivateClassRequest = async (requestId, accept) => {
+    fetch("http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "66d108" }, body: JSON.stringify({ sessionId: "66d108", location: "legacy.js:respondToPrivateClassRequest", message: "respondToPrivateClassRequest called", data: { requestId, accept }, timestamp: Date.now(), hypothesisId: "H1" }) }).catch(() => {
+    });
     if (!supabaseClient) return;
     state.privateClassRequestRespondingId = requestId;
     if (typeof renderView === "function") renderView();
@@ -13505,14 +13540,21 @@ School: ${schoolName}`)) return;
         const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/send_private_lesson_confirmation";
         const { data: sess } = await supabaseClient.auth.getSession();
         const token = sess?.session?.access_token;
+        fetch("http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "66d108" }, body: JSON.stringify({ sessionId: "66d108", location: "legacy.js:after RPC accept", message: "before confirmation fetch", data: { hasToken: !!token, fnUrl: fnUrl || "(empty)" }, timestamp: Date.now(), hypothesisId: "H2,H3" }) }).catch(() => {
+        });
         if (token && fnUrl) {
           try {
-            await fetch(fnUrl, {
+            const emailRes = await fetch(fnUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
               body: JSON.stringify({ request_id: requestId })
             });
-          } catch (_) {
+            const bodyText = await emailRes.text().catch(() => "");
+            fetch("http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "66d108" }, body: JSON.stringify({ sessionId: "66d108", location: "legacy.js:confirmation fetch response", message: "send_private_lesson_confirmation response", data: { status: emailRes.status, ok: emailRes.ok, bodyPreview: (bodyText || "").slice(0, 200) }, timestamp: Date.now(), hypothesisId: "H4,H5" }) }).catch(() => {
+            });
+          } catch (fetchErr) {
+            fetch("http://127.0.0.1:7243/ingest/7b281481-0261-4a8b-b9bc-f5a1ae641eb7", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "66d108" }, body: JSON.stringify({ sessionId: "66d108", location: "legacy.js:confirmation fetch catch", message: "fetch threw", data: { err: String(fetchErr?.message || fetchErr) }, timestamp: Date.now(), hypothesisId: "H4,H5" }) }).catch(() => {
+            });
           }
         }
       }
@@ -13781,6 +13823,11 @@ School: ${schoolName}`)) return;
       const { error } = await supabaseClient.rpc("student_cancel_private_lesson", { p_lesson_id: lessonId });
       if (error) throw error;
       await fetchAllData();
+      state._teacherBookingSlots = [];
+      state._teacherBookingLoadedWeek = null;
+      if (state.currentView === "teacher-booking" && state.currentSchool?.id && typeof window.fetchTeacherBookingSlots === "function") {
+        await window.fetchTeacherBookingSlots();
+      }
       if (typeof renderView === "function") renderView();
       if (window.lucide) window.lucide.createIcons();
     } catch (e) {
