@@ -10,6 +10,32 @@ import { parseHashRoute, parseQueryAndHashForView, navigateToAdminJackAndJill, n
 import { getCapabilities, bootstrapAuth } from './auth.js';
 
 const CALENDLY_FEATURE_ENABLED = false;
+const SCHOOL_THEME_BY_ID = {
+    [AURE_SCHOOL_ID]: 'aure'
+};
+
+function resolveSchoolThemeKey() {
+    const school = state.currentSchool;
+    if (!school) return '';
+    const mapped = school.id ? SCHOOL_THEME_BY_ID[school.id] : '';
+    const raw = mapped || school.discovery_slug || school.slug || '';
+    return String(raw || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+}
+
+function getMetaThemeColor(theme) {
+    const schoolTheme = resolveSchoolThemeKey();
+    if (schoolTheme === 'aure') return '#a6b5b2';
+    return theme === 'dark' ? '#000000' : '#f5f5f7';
+}
+
+function applySchoolTheme() {
+    if (typeof document === 'undefined') return;
+    const themeKey = resolveSchoolThemeKey();
+    if (themeKey) document.body.setAttribute('data-school-theme', themeKey);
+    else document.body.removeAttribute('data-school-theme');
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', getMetaThemeColor(state.theme));
+}
 
 if (typeof window !== 'undefined') {
     window.getCapabilities = getCapabilities;
@@ -32,6 +58,7 @@ if (typeof window !== 'undefined') {
     window.getPlanExpiryUseFixedDate = getPlanExpiryUseFixedDate;
     window.DISCOVERY_COUNTRIES_CITIES = DISCOVERY_COUNTRIES_CITIES;
     window.DISCOVERY_COUNTRIES = DISCOVERY_COUNTRIES;
+    window.applySchoolTheme = applySchoolTheme;
 }
 
 import './legacy.js';
@@ -148,8 +175,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
         const icon = state.theme === 'dark' ? 'moon' : 'sun';
         document.getElementById('theme-icon').setAttribute('data-lucide', icon);
-        const metaTheme = document.querySelector('meta[name="theme-color"]');
-        if (metaTheme) metaTheme.setAttribute('content', state.theme === 'dark' ? '#000000' : '#f5f5f7');
+        applySchoolTheme();
         saveState();
         if (typeof window.lucide !== 'undefined' && window.lucide.createIcons) window.lucide.createIcons();
     });
@@ -265,8 +291,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
         const themeIconEl = document.getElementById('theme-icon');
         if (themeIconEl) themeIconEl.setAttribute('data-lucide', state.theme === 'dark' ? 'moon' : 'sun');
-        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-        if (metaThemeColor) metaThemeColor.setAttribute('content', state.theme === 'dark' ? '#000000' : '#f5f5f7');
+        applySchoolTheme();
 
         // Billing return: apply state from previous load if we just did a reload (sessionStorage)
         try {
@@ -302,6 +327,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         updateI18n();
         document.body.setAttribute('data-theme', state.theme);
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
+        applySchoolTheme();
         if (themeIconEl) themeIconEl.setAttribute('data-lucide', state.theme === 'dark' ? 'moon' : 'sun');
         if (state.isAdmin && state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
             try {
@@ -432,6 +458,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         updateI18n();
         document.body.setAttribute('data-theme', state.theme);
         document.body.classList.toggle('dark-mode', state.theme === 'dark');
+        applySchoolTheme();
 
         if (state.discoveryPath && supabaseClient) {
             await window.fetchDiscoveryData();

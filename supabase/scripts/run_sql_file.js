@@ -36,10 +36,6 @@ if (!dropMatch || !createMatch) {
 
 const statements = [dropMatch[0].trim(), createMatch[0].trim(), ...grantMatches.map((g) => g.trim())];
 
-// #region agent log
-const log = (hypothesisId, message, data) => { fetch('http://127.0.0.1:7243/ingest/adf50a45-9f8f-4c1e-8e97-90df72d1c8da', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'c5e6cc' }, body: JSON.stringify({ sessionId: 'c5e6cc', hypothesisId, location: 'run_sql_file.js', message, data: data || {}, timestamp: Date.now() }) }).catch(() => {}); };
-// #endregion
-
 const client = new Client({ connectionString: databaseUrl });
 
 const checkQuery = `
@@ -51,25 +47,16 @@ const checkQuery = `
 `;
 
 async function run() {
-  // #region agent log
-  log('H1-H4', 'Parsed script', { statementCount: statements.length, createLength: statements[1].length, createHasMessage: statements[1].includes("have enough classes in your package") });
-  // #endregion
   await client.connect();
 
   // Run each statement separately
   for (let i = 0; i < statements.length; i++) {
     await client.query(statements[i]);
-    // #region agent log
-    log('H1', 'Statement executed', { i: i + 1, total: statements.length });
-    // #endregion
     console.log('Executed statement', i + 1, 'of', statements.length);
   }
 
   const res = await client.query(checkQuery);
   const row = res.rows[0];
-  // #region agent log
-  log('H2-H4', 'Verification after run', { db: row.db, server_addr: row.server_addr, has_new_message: row.has_new_message });
-  // #endregion
   console.log('');
   console.log('On this connection:');
   console.log('  database    =', row.db);

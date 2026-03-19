@@ -20,6 +20,18 @@ verify_jwt = false
 [functions.notifications_send]
 verify_jwt = false
 
+[functions.send_clase_suelta_confirmation]
+verify_jwt = false
+
+[functions.notify_clase_suelta_request]
+verify_jwt = false
+
+[functions.notify_class_cancellation]
+verify_jwt = false
+
+[functions.send_private_lesson_confirmation]
+verify_jwt = false
+
 # admin-auth-sync verifies legacy credentials internally; no JWT needed from the gateway.
 [functions.admin-auth-sync]
 verify_jwt = false

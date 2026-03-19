@@ -8,6 +8,45 @@ import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegiste
 
 const CALENDLY_FEATURE_ENABLED = false;
 
+/**
+ * Supabase Edge Functions require the anon key in `apikey` plus the user's JWT in Authorization.
+ * Raw fetch without `apikey` often fails at the gateway (401 / function never runs).
+ */
+async function postEdgeFunction(functionName, accessToken, jsonBody) {
+    const base = (SUPABASE_URL || '').replace(/\/$/, '');
+    const key = SUPABASE_KEY || '';
+    if (!base || !key || !accessToken) {
+        return { ok: false, status: 0, data: {}, skipped: true };
+    }
+    const url = `${base}/functions/v1/${functionName}`;
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            apikey: key
+        },
+        body: JSON.stringify(jsonBody || {})
+    });
+    // Always read raw text so we can debug non-JSON error bodies (401 gateways).
+    const rawText = await res.text().catch(() => '');
+    let data = {};
+    try { data = rawText ? JSON.parse(rawText) : {}; } catch (_) { data = {}; }
+    return { ok: res.ok, status: res.status, data, rawText };
+}
+
+async function getAccessTokenForEdgeFunctions() {
+    if (!supabaseClient) return null;
+    try {
+        const { data: ref, error: refErr } = await supabaseClient.auth.refreshSession();
+        if (!refErr && ref?.session?.access_token) return ref.session.access_token;
+    } catch (_) { /* ignore */ }
+    const { data: s1 } = await supabaseClient.auth.getSession();
+    if (s1?.session?.access_token) return s1.session.access_token;
+    const tok = state.auth?.session?.access_token;
+    return tok || null;
+}
+
 // --- TRANSLATIONS (DANCE_LOCALES) ---
 const DANCE_LOCALES = {
     en: {
@@ -655,6 +694,12 @@ const DANCE_LOCALES = {
         aure_principiantes_no_thursday: "Principiantes cannot register for Thursday classes.",
         aure_need_4_8_package: "Direct registration requires a 4 or 8 class package. Use \"Request clase suelta\" instead.",
         aure_monthly_4_8_only: "Monthly registration is only available with a 4 or 8 class package.",
+        aure_week_register_btn: "Register for all classes this week",
+        aure_week_register_body: "In the first two weeks of the month you sign up for every class of your level (Mon–Wed or Mon–Thu) for this week in one step. From the 15th onward, request each class separately.",
+        aure_use_week_banner: "Use “Register for all classes this week” above.",
+        aure_week_registered_ok: "You’re registered for all classes this week!",
+        aure_no_classes_left_suelta: "You have no classes left on your package. Buy a new package to register or request a class.",
+        aure_rpc_week_bundle: "In the first two weeks of the month, register for all classes of this week at once (use the week registration button), or wait until after the 14th to request classes one by one.",
         aure_approve: "Approve",
         aure_reject: "Reject",
         aure_pending_badge: "Pending",
@@ -682,6 +727,10 @@ const DANCE_LOCALES = {
         aure_request_denied: "Request denied.",
         aure_accepting: "Accepting…",
         aure_rejecting: "Rejecting…",
+        email_confirmation_needs_supabase_session: "Confirmation email was not sent: sign in with your admin email and password (linked account) so Supabase can send mail.",
+        email_confirmation_failed_short: "Confirmation email could not be sent. Check the student’s email, Resend, and domain (SPF/DKIM).",
+        student_no_email_confirmation: "Student has no email on file — confirmation email not sent.",
+        private_lesson_email_failed: "Class was confirmed but the student may not have received the email. Check Resend and that the student has an email on file.",
         spots_left_format: "{left}/{max} spots left",
         no_students_yet: "No students yet",
         registered_count: "{n} registered",
@@ -1429,6 +1478,12 @@ const DANCE_LOCALES = {
         aure_principiantes_no_thursday: "Los principiantes no pueden registrarse en clases de jueves.",
         aure_need_4_8_package: "El registro directo requiere un paquete de 4 u 8 clases. Usa \"Solicitar clase suelta\" en su lugar.",
         aure_monthly_4_8_only: "El registro mensual solo está disponible con un paquete de 4 u 8 clases.",
+        aure_week_register_btn: "Inscribirse a todas las clases de esta semana",
+        aure_week_register_body: "En las dos primeras semanas del mes te inscribes a todas las clases de tu nivel (lun–mié o lun–jue) de esta semana de una vez. A partir del día 15, solicita cada clase por separado.",
+        aure_use_week_banner: "Usa «Inscribirse a todas las clases de esta semana» arriba.",
+        aure_week_registered_ok: "¡Te inscribiste a todas las clases de esta semana!",
+        aure_no_classes_left_suelta: "No te quedan clases en tu paquete. Compra un paquete nuevo para inscribirte o solicitar una clase.",
+        aure_rpc_week_bundle: "En las dos primeras semanas del mes, inscríbete a todas las clases de la semana a la vez (botón de la semana), o espera después del día 14 para solicitar clase por clase.",
         aure_approve: "Aprobar",
         aure_reject: "Rechazar",
         aure_pending_badge: "Pendiente",
@@ -1456,6 +1511,10 @@ const DANCE_LOCALES = {
         aure_request_denied: "Solicitud rechazada.",
         aure_accepting: "Aceptando…",
         aure_rejecting: "Rechazando…",
+        email_confirmation_needs_supabase_session: "No se envió el correo de confirmación: inicia sesión con el correo y contraseña del admin (cuenta vinculada) para que se pueda enviar el mail.",
+        email_confirmation_failed_short: "No se pudo enviar el correo de confirmación. Revisa el correo del alumno, Resend y el dominio (SPF/DKIM).",
+        student_no_email_confirmation: "El alumno no tiene correo — no se envió confirmación.",
+        private_lesson_email_failed: "La clase quedó confirmada pero el alumno puede no haber recibido el correo. Revisa Resend y que el alumno tenga correo.",
         spots_left_format: "{left}/{max} plazas libres",
         no_students_yet: "Ningún alumno",
         registered_count: "{n} registrados",
@@ -2252,6 +2311,12 @@ const DANCE_LOCALES = {
         aure_principiantes_no_thursday: "Anfänger können sich nicht für Donnerstagskurse anmelden.",
         aure_need_4_8_package: "Direkte Anmeldung erfordert ein 4- oder 8-Stunden-Paket. Nutze stattdessen „Clase suelta anfragen“.",
         aure_monthly_4_8_only: "Monatliche Anmeldung ist nur mit einem 4- oder 8-Stunden-Paket möglich.",
+        aure_week_register_btn: "Für alle Kurse dieser Woche anmelden",
+        aure_week_register_body: "In den ersten zwei Wochen des Monats meldest du dich für alle Kurse deines Niveaus (Mo–Mi oder Mo–Do) dieser Woche auf einmal an. Ab dem 15. jede Stunde einzeln anfragen.",
+        aure_use_week_banner: "Nutze oben „Für alle Kurse dieser Woche anmelden“.",
+        aure_week_registered_ok: "Du bist für alle Kurse dieser Woche angemeldet!",
+        aure_no_classes_left_suelta: "Keine Kurse mehr auf dem Paket. Neues Paket kaufen, um dich anzumelden oder anzufragen.",
+        aure_rpc_week_bundle: "In den ersten zwei Wochen: alle Kurse der Woche auf einmal (Wochen-Button), oder ab dem 15. einzeln anfragen.",
         aure_approve: "Genehmigen",
         aure_reject: "Ablehnen",
         aure_pending_badge: "Ausstehend",
@@ -2279,6 +2344,10 @@ const DANCE_LOCALES = {
         aure_request_denied: "Anfrage abgelehnt.",
         aure_accepting: "Wird angenommen…",
         aure_rejecting: "Wird abgelehnt…",
+        email_confirmation_needs_supabase_session: "Bestätigungs-E-Mail wurde nicht gesendet: Melde dich mit Admin-E-Mail und Passwort an (verknüpftes Konto), damit E-Mails versendet werden können.",
+        email_confirmation_failed_short: "Bestätigungs-E-Mail konnte nicht gesendet werden. Prüfe Schüler-E-Mail, Resend und Domain (SPF/DKIM).",
+        student_no_email_confirmation: "Schüler hat keine E-Mail — keine Bestätigung gesendet.",
+        private_lesson_email_failed: "Stunde bestätigt, aber der Schüler hat die E-Mail evtl. nicht erhalten. Prüfe Resend und Schüler-E-Mail.",
         spots_left_format: "{left}/{max} Plätze frei",
         no_students_yet: "Noch keine Schüler",
         registered_count: "{n} angemeldet",
@@ -2702,7 +2771,15 @@ window.resendVerificationEmail = async () => {
         const token = session?.access_token;
         if (!token) throw new Error('Session expired');
         const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/send_verification_email';
-        const res = await fetch(fnUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: '{}' });
+        const res = await fetch(fnUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + token,
+                apikey: SUPABASE_KEY || ''
+            },
+            body: '{}'
+        });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw Object.assign(new Error(data?.error || ('HTTP ' + res.status)), { context: { status: res.status } });
         if (data && data.error) throw new Error(data.error);
@@ -4240,6 +4317,9 @@ function renderView() {
 window.renderView = renderView;
 
 function _renderViewImpl() {
+    if (typeof window.applySchoolTheme === 'function') {
+        window.applySchoolTheme();
+    }
     try {
         state._usePlanExpiryFixedDate = state.adminSettings?.plan_expiry_fixed_date === 'true' ||
             (state.adminSettings?.plan_expiry_fixed_date !== 'false' && (state.adminSettings?.monthly_registration_enabled === 'true' || !!state.currentSchool?.monthly_registration_enabled));
@@ -5750,6 +5830,14 @@ function _renderViewImpl() {
     }
     else if (view === 'auth') {
         const isSignup = state.authMode === 'signup';
+        const schoolLogoRaw = (
+            state.currentSchool?.logo_url ||
+            (Array.isArray(state.schools) ? (state.schools.find(s => s?.id === state.currentSchool?.id)?.logo_url || '') : '') ||
+            state.currentSchool?.teacher_photo_url ||
+            'logo.png'
+        );
+        const schoolLogoUrl = String(schoolLogoRaw).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        const schoolLogoAlt = (state.currentSchool?.name || 'School').replace(/"/g, '&quot;').replace(/</g, '&lt;');
         html += `
             <div class="auth-page-container">
                 <div style="position: fixed; bottom: 10px; right: 10px; font-size: 10px; color: rgba(255,255,255,0.1); z-index: 9999;">V2.1-REBUILT</div>
@@ -5757,7 +5845,7 @@ function _renderViewImpl() {
                     <!-- LEFT / TOP: HERO SECTION -->
                     <div class="hero-section">
                         <div class="auth-logo-container">
-                            <img src="logo.png" class="auth-logo">
+                            <img src="${schoolLogoUrl}" class="auth-logo" alt="${schoolLogoAlt}">
                         </div>
                         
                         <button onclick="window.backToSchoolSelection()" style="background: rgba(255,255,255,0.05); color: var(--text-muted); border: none; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.05);">
@@ -7273,7 +7361,7 @@ function _renderViewImpl() {
                             ` : ''}
                             ${(isAure && state.adminRegTab === 'requested') ? `
                             <div class="admin-reg-requested-wrap">
-                                ${state.adminRegFeedback ? `<div class="admin-reg-feedback admin-reg-feedback-${state.adminRegFeedback.type}"><i data-lucide="${state.adminRegFeedback.type === 'accepted' ? 'check-circle' : 'x-circle'}" size="18"></i><span>${state.adminRegFeedback.type === 'accepted' ? (t.aure_request_accepted || 'Request accepted.') : (t.aure_request_denied || 'Request denied.')}</span></div>` : ''}
+                                ${state.adminRegFeedback ? `<div class="admin-reg-feedback admin-reg-feedback-${state.adminRegFeedback.type}"><i data-lucide="${state.adminRegFeedback.type === 'accepted' ? 'check-circle' : 'x-circle'}" size="18"></i><div style="flex:1;min-width:0;"><div>${state.adminRegFeedback.type === 'accepted' ? (t.aure_request_accepted || 'Request accepted.') : (t.aure_request_denied || 'Request denied.')}</div>${state.adminRegFeedback.emailNote ? `<div style="margin-top:6px;font-size:12px;opacity:0.9;line-height:1.35;">${String(state.adminRegFeedback.emailNote).replace(/</g, '&lt;')}</div>` : ''}</div></div>` : ''}
                             <div class="admin-reg-requested-list">
                                 ${pendingList.length === 0 ? `
                                 <div class="admin-reg-empty">
@@ -9230,6 +9318,11 @@ window.showCancelConfirmModal = (registrationId) => {
                     p_student_id: String(studentId)
                 });
                 if (error) throw error;
+                try {
+                    await supabaseClient.functions.invoke('notify_class_cancellation', {
+                        body: { registration_id: registrationId }
+                    });
+                } catch (_) {}
                 close();
                 await window.loadClassAvailability();
                 if (shouldDeferRender()) scheduleDeferredRender();
@@ -9265,6 +9358,11 @@ window.showCancelAllConfirmModal = (registrationIds) => {
                         p_student_id: String(studentId)
                     });
                     if (error) throw error;
+                    try {
+                        await supabaseClient.functions.invoke('notify_class_cancellation', {
+                            body: { registration_id: id }
+                        });
+                    } catch (_) {}
                 }
                 close();
                 await window.loadClassAvailability();
@@ -9494,11 +9592,52 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
     }
 
     const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
-    // Aure: single-class registration goes through request (pending, teacher approves). Monthly stays direct.
-    const singleClassHandler = isAure
-        ? () => window.requestClaseSuelta(classId, className, targetDateStr)
-        : () => window.registerForClassSingle(classId, className, targetDateStr);
+    const has48 = typeof window.has4or8Package === 'function' && window.has4or8Package(state.currentUser);
+    const levelOk = !!((state.currentUser?.level || '').trim());
+    const runSuelta = () => window.requestClaseSuelta(classId, className, targetDateStr);
 
+    if (isAure) {
+        if (has48 && !levelOk) {
+            window.showMessageModal({ icon: 'warning', title: t('aure_level_must_be_set'), body: '', primaryLabel: t('got_it') });
+            return;
+        }
+        const dom = new Date(targetDateStr + 'T12:00:00').getDate();
+        const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
+        if (has48 && dom <= 14 && monthlyDates.length > 1) {
+            const dayNames = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday' };
+            const dayName = dayNames[classObj.day] || classObj.day;
+            window.showMessageModal({
+                icon: 'success',
+                title: className || classObj.name,
+                body: (t('register_monthly') || 'Register for all {n} classes this month').replace('{n}', monthlyDates.length) + ' (' + dayName + ')',
+                primaryLabel: (t('register_monthly') || 'Register for all {n} classes this month').replace('{n}', monthlyDates.length),
+                secondaryLabel: t('clase_suelta_request') || 'Request clase suelta',
+                cancelLabel: t('cancel'),
+                onPrimary: (close) => {
+                    close();
+                    window.registerForClassMonthly(classId, className, targetDateStr);
+                },
+                onSecondary: (close) => {
+                    close();
+                    runSuelta();
+                },
+                onCancel: (close) => { close(); }
+            });
+            return;
+        }
+        window.showMessageModal({
+            icon: 'success',
+            title: className || classObj.name,
+            body: t('register_success_4h_note'),
+            primaryLabel: t('clase_suelta_request'),
+            cancelLabel: t('cancel'),
+            onPrimary: (close) => { close(); runSuelta(); },
+            onCancel: (close) => { close(); }
+        });
+        return;
+    }
+
+    const singleClassHandler = () => window.registerForClassSingle(classId, className, targetDateStr);
     if (window.isMonthlyRegistrationAvailable()) {
         const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
         if (monthlyDates.length > 1) {
@@ -9525,7 +9664,6 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
         }
     }
 
-    // Pre-registration confirmation: show 4h policy first, then register (or request at Aure) only if user confirms
     window.showMessageModal({
         icon: 'success',
         title: className || classObj.name,
@@ -9549,7 +9687,7 @@ window.requestClaseSuelta = async (classId, className, optionalDateStr) => {
     const schoolId = state.currentSchool?.id;
     const studentId = state.currentUser?.id;
     if (!schoolId || !studentId || !supabaseClient) return;
-    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const loc = DANCE_LOCALES[state.language || 'en'] || DANCE_LOCALES.en;
     const classObj = (state.classes || []).find(c => c.id === classId);
     if (!classObj) return;
     const nextDate = optionalDateStr ? new Date(optionalDateStr + 'T00:00:00') : window.getNextClassDate(classObj.day);
@@ -9564,11 +9702,21 @@ window.requestClaseSuelta = async (classId, className, optionalDateStr) => {
             p_class_date: dateStr
         });
         if (error) throw error;
+        const regId = data && (typeof data === 'object' ? data.id : null);
+        if (regId) {
+            try {
+                await supabaseClient.functions.invoke('notify_clase_suelta_request', {
+                    body: { registration_id: regId },
+                });
+            } catch (_) {
+                /* best-effort admin email */
+            }
+        }
         window.showMessageModal({
             icon: 'success',
-            title: t.clase_suelta_request_sent || 'Request sent',
-            body: (t.clase_suelta_request_pending || 'Your request has been sent. You will receive a confirmation email when it is approved.').replace(/"/g, '&quot;'),
-            primaryLabel: t.got_it
+            title: loc.clase_suelta_request_sent || 'Request sent',
+            body: (loc.clase_suelta_request_pending || 'Your request has been sent. You will receive a confirmation email when it is approved.').replace(/"/g, '&quot;'),
+            primaryLabel: loc.got_it || 'Got it'
         });
         window.loadClassAvailability().then(() => {
             if (shouldDeferRender()) scheduleDeferredRender();
@@ -9578,7 +9726,17 @@ window.requestClaseSuelta = async (classId, className, optionalDateStr) => {
         console.error('Clase suelta request error:', e);
         const msg = (e && e.message) || '';
         const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
-        alert(isNoMembership ? t('no_active_membership_register') : (msg || t('register_error')));
+        const tFn = typeof window.t === 'function' ? window.t : (k) => k;
+        if (isNoMembership) {
+            alert(tFn('no_active_membership_register'));
+            return;
+        }
+        const bal = msg.match(/You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left/);
+        if (bal) {
+            alert((tFn('not_enough_classes_message') || msg).replace(/{effective}/g, bal[1]).replace(/{registered}/g, bal[2]).replace(/{available}/g, bal[3]));
+            return;
+        }
+        alert(msg || tFn('register_error'));
     }
 };
 
@@ -9592,24 +9750,39 @@ window.approveClaseSuelta = async (registrationId) => {
     try {
         const { error } = await supabaseClient.rpc('admin_approve_clase_suelta', { p_registration_id: registrationId });
         if (error) throw error;
-        const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/send_clase_suelta_confirmation';
-        const { data: sess } = await supabaseClient.auth.getSession();
-        const token = sess?.session?.access_token;
-        if (token) {
-            await fetch(fnUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ registration_id: registrationId })
-            });
+        let emailNote = null;
+        const token = await getAccessTokenForEdgeFunctions();
+        if (!token) {
+            emailNote = t.email_confirmation_needs_supabase_session || 'Sign in with linked admin email to send confirmation mail.';
+            console.warn('send_clase_suelta_confirmation: no Supabase JWT (legacy-only admin login?).');
+        } else {
+            try {
+                const { data: invData, error: invErr } = await supabaseClient.functions.invoke('send_clase_suelta_confirmation', {
+                    body: { registration_id: registrationId }
+                });
+                if (invErr) throw invErr;
+                if (invData && invData.error) throw new Error(invData.error);
+            } catch (e) {
+                const errMsg = (e && (e.message || e.error)) ? String(e.message || e.error) : String(e);
+                const status503 = (e && (e.status === 503 || e.statusCode === 503 || e.context?.status === 503)) || /503|RESEND|not configured/i.test(errMsg);
+                console.warn('send_clase_suelta_confirmation:', errMsg);
+                if (status503) {
+                    emailNote = t.email_confirmation_failed_short;
+                } else if (/no email|Student has no email/i.test(errMsg)) {
+                    emailNote = t.student_no_email_confirmation;
+                } else {
+                    emailNote = t.email_confirmation_failed_short;
+                }
+            }
         }
         await window.loadClassAvailability?.();
         state.adminRegActionId = null;
         state.adminRegActionType = null;
         const viewMonth = state.adminRegMonth || (() => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); })();
         state.adminWeekRegistrationsByMonth[viewMonth] = undefined;
-        state.adminRegFeedback = { type: 'accepted' };
+        state.adminRegFeedback = { type: 'accepted', emailNote };
         if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
-        setTimeout(() => { state.adminRegFeedback = null; if (typeof renderView === 'function') renderView(); }, 3000);
+        setTimeout(() => { state.adminRegFeedback = null; if (typeof renderView === 'function') renderView(); }, emailNote ? 8000 : 3000);
     } catch (e) {
         console.error('Approve error:', e);
         state.adminRegActionId = null;
@@ -11747,19 +11920,27 @@ window.respondToPrivateClassRequest = async (requestId, accept) => {
         });
         if (error) throw error;
         if (accept) {
-            const fnUrl = (SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1/send_private_lesson_confirmation';
-            const { data: sess } = await supabaseClient.auth.getSession();
-            const token = sess?.session?.access_token;
-            if (token && fnUrl) {
-                try {
-                    await fetch(fnUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                        body: JSON.stringify({ request_id: requestId })
-                    });
-                } catch {
-                    /* confirmation email is best-effort; don't block UI */
+            const token = await getAccessTokenForEdgeFunctions();
+            const tLoc = DANCE_LOCALES[state.language || 'en'] || DANCE_LOCALES.en;
+            if (token) {
+                let r = await postEdgeFunction('send_private_lesson_confirmation', token, { request_id: requestId });
+                const notAccepted = r.data && String(r.data.error || '').includes('not accepted');
+                if (!r.ok && notAccepted) {
+                    await new Promise((resolve) => setTimeout(resolve, 700));
+                    r = await postEdgeFunction('send_private_lesson_confirmation', token, { request_id: requestId });
                 }
+                if (!r.ok && !r.skipped) {
+                    console.warn('send_private_lesson_confirmation:', r.data, r.status);
+                    const msg = (r.data && r.data.error) || '';
+                    if (!/Request is not accepted/i.test(msg)) {
+                        alert(tLoc.private_lesson_email_failed || 'Student may not have received the confirmation email.');
+                    }
+                } else if (r.data && r.data.ok === false && r.data.message && String(r.data.message).toLowerCase().includes('no email')) {
+                    alert(tLoc.student_no_email_confirmation || 'Student has no email.');
+                }
+            } else {
+                console.warn('send_private_lesson_confirmation: no JWT');
+                alert(tLoc.email_confirmation_needs_supabase_session || 'Sign in with email to send confirmation emails.');
             }
         }
         await fetchAllData();

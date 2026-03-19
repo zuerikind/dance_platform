@@ -1649,6 +1649,43 @@
 
   // src/legacy.js
   var CALENDLY_FEATURE_ENABLED2 = false;
+  async function postEdgeFunction(functionName, accessToken, jsonBody) {
+    const base = (SUPABASE_URL || "").replace(/\/$/, "");
+    const key = SUPABASE_KEY || "";
+    if (!base || !key || !accessToken) {
+      return { ok: false, status: 0, data: {}, skipped: true };
+    }
+    const url = `${base}/functions/v1/${functionName}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        apikey: key
+      },
+      body: JSON.stringify(jsonBody || {})
+    });
+    const rawText = await res.text().catch(() => "");
+    let data = {};
+    try {
+      data = rawText ? JSON.parse(rawText) : {};
+    } catch (_) {
+      data = {};
+    }
+    return { ok: res.ok, status: res.status, data, rawText };
+  }
+  async function getAccessTokenForEdgeFunctions() {
+    if (!supabaseClient) return null;
+    try {
+      const { data: ref, error: refErr } = await supabaseClient.auth.refreshSession();
+      if (!refErr && ref?.session?.access_token) return ref.session.access_token;
+    } catch (_) {
+    }
+    const { data: s1 } = await supabaseClient.auth.getSession();
+    if (s1?.session?.access_token) return s1.session.access_token;
+    const tok = state.auth?.session?.access_token;
+    return tok || null;
+  }
   var DANCE_LOCALES = {
     en: {
       nav_schedule: "Schedule",
@@ -2301,6 +2338,12 @@
       aure_principiantes_no_thursday: "Principiantes cannot register for Thursday classes.",
       aure_need_4_8_package: 'Direct registration requires a 4 or 8 class package. Use "Request clase suelta" instead.',
       aure_monthly_4_8_only: "Monthly registration is only available with a 4 or 8 class package.",
+      aure_week_register_btn: "Register for all classes this week",
+      aure_week_register_body: "In the first two weeks of the month you sign up for every class of your level (Mon\u2013Wed or Mon\u2013Thu) for this week in one step. From the 15th onward, request each class separately.",
+      aure_use_week_banner: "Use \u201CRegister for all classes this week\u201D above.",
+      aure_week_registered_ok: "You\u2019re registered for all classes this week!",
+      aure_no_classes_left_suelta: "You have no classes left on your package. Buy a new package to register or request a class.",
+      aure_rpc_week_bundle: "In the first two weeks of the month, register for all classes of this week at once (use the week registration button), or wait until after the 14th to request classes one by one.",
       aure_approve: "Approve",
       aure_reject: "Reject",
       aure_pending_badge: "Pending",
@@ -2328,6 +2371,10 @@
       aure_request_denied: "Request denied.",
       aure_accepting: "Accepting\u2026",
       aure_rejecting: "Rejecting\u2026",
+      email_confirmation_needs_supabase_session: "Confirmation email was not sent: sign in with your admin email and password (linked account) so Supabase can send mail.",
+      email_confirmation_failed_short: "Confirmation email could not be sent. Check the student\u2019s email, Resend, and domain (SPF/DKIM).",
+      student_no_email_confirmation: "Student has no email on file \u2014 confirmation email not sent.",
+      private_lesson_email_failed: "Class was confirmed but the student may not have received the email. Check Resend and that the student has an email on file.",
       spots_left_format: "{left}/{max} spots left",
       no_students_yet: "No students yet",
       registered_count: "{n} registered",
@@ -3096,6 +3143,12 @@
       aure_principiantes_no_thursday: "Los principiantes no pueden registrarse en clases de jueves.",
       aure_need_4_8_package: 'El registro directo requiere un paquete de 4 u 8 clases. Usa "Solicitar clase suelta" en su lugar.',
       aure_monthly_4_8_only: "El registro mensual solo est\xE1 disponible con un paquete de 4 u 8 clases.",
+      aure_week_register_btn: "Inscribirse a todas las clases de esta semana",
+      aure_week_register_body: "En las dos primeras semanas del mes te inscribes a todas las clases de tu nivel (lun\u2013mi\xE9 o lun\u2013jue) de esta semana de una vez. A partir del d\xEDa 15, solicita cada clase por separado.",
+      aure_use_week_banner: "Usa \xABInscribirse a todas las clases de esta semana\xBB arriba.",
+      aure_week_registered_ok: "\xA1Te inscribiste a todas las clases de esta semana!",
+      aure_no_classes_left_suelta: "No te quedan clases en tu paquete. Compra un paquete nuevo para inscribirte o solicitar una clase.",
+      aure_rpc_week_bundle: "En las dos primeras semanas del mes, inscr\xEDbete a todas las clases de la semana a la vez (bot\xF3n de la semana), o espera despu\xE9s del d\xEDa 14 para solicitar clase por clase.",
       aure_approve: "Aprobar",
       aure_reject: "Rechazar",
       aure_pending_badge: "Pendiente",
@@ -3123,6 +3176,10 @@
       aure_request_denied: "Solicitud rechazada.",
       aure_accepting: "Aceptando\u2026",
       aure_rejecting: "Rechazando\u2026",
+      email_confirmation_needs_supabase_session: "No se envi\xF3 el correo de confirmaci\xF3n: inicia sesi\xF3n con el correo y contrase\xF1a del admin (cuenta vinculada) para que se pueda enviar el mail.",
+      email_confirmation_failed_short: "No se pudo enviar el correo de confirmaci\xF3n. Revisa el correo del alumno, Resend y el dominio (SPF/DKIM).",
+      student_no_email_confirmation: "El alumno no tiene correo \u2014 no se envi\xF3 confirmaci\xF3n.",
+      private_lesson_email_failed: "La clase qued\xF3 confirmada pero el alumno puede no haber recibido el correo. Revisa Resend y que el alumno tenga correo.",
       spots_left_format: "{left}/{max} plazas libres",
       no_students_yet: "Ning\xFAn alumno",
       registered_count: "{n} registrados",
@@ -3931,6 +3988,12 @@
       aure_principiantes_no_thursday: "Anf\xE4nger k\xF6nnen sich nicht f\xFCr Donnerstagskurse anmelden.",
       aure_need_4_8_package: "Direkte Anmeldung erfordert ein 4- oder 8-Stunden-Paket. Nutze stattdessen \u201EClase suelta anfragen\u201C.",
       aure_monthly_4_8_only: "Monatliche Anmeldung ist nur mit einem 4- oder 8-Stunden-Paket m\xF6glich.",
+      aure_week_register_btn: "F\xFCr alle Kurse dieser Woche anmelden",
+      aure_week_register_body: "In den ersten zwei Wochen des Monats meldest du dich f\xFCr alle Kurse deines Niveaus (Mo\u2013Mi oder Mo\u2013Do) dieser Woche auf einmal an. Ab dem 15. jede Stunde einzeln anfragen.",
+      aure_use_week_banner: "Nutze oben \u201EF\xFCr alle Kurse dieser Woche anmelden\u201C.",
+      aure_week_registered_ok: "Du bist f\xFCr alle Kurse dieser Woche angemeldet!",
+      aure_no_classes_left_suelta: "Keine Kurse mehr auf dem Paket. Neues Paket kaufen, um dich anzumelden oder anzufragen.",
+      aure_rpc_week_bundle: "In den ersten zwei Wochen: alle Kurse der Woche auf einmal (Wochen-Button), oder ab dem 15. einzeln anfragen.",
       aure_approve: "Genehmigen",
       aure_reject: "Ablehnen",
       aure_pending_badge: "Ausstehend",
@@ -3958,6 +4021,10 @@
       aure_request_denied: "Anfrage abgelehnt.",
       aure_accepting: "Wird angenommen\u2026",
       aure_rejecting: "Wird abgelehnt\u2026",
+      email_confirmation_needs_supabase_session: "Best\xE4tigungs-E-Mail wurde nicht gesendet: Melde dich mit Admin-E-Mail und Passwort an (verkn\xFCpftes Konto), damit E-Mails versendet werden k\xF6nnen.",
+      email_confirmation_failed_short: "Best\xE4tigungs-E-Mail konnte nicht gesendet werden. Pr\xFCfe Sch\xFCler-E-Mail, Resend und Domain (SPF/DKIM).",
+      student_no_email_confirmation: "Sch\xFCler hat keine E-Mail \u2014 keine Best\xE4tigung gesendet.",
+      private_lesson_email_failed: "Stunde best\xE4tigt, aber der Sch\xFCler hat die E-Mail evtl. nicht erhalten. Pr\xFCfe Resend und Sch\xFCler-E-Mail.",
       spots_left_format: "{left}/{max} Pl\xE4tze frei",
       no_students_yet: "Noch keine Sch\xFCler",
       registered_count: "{n} angemeldet",
@@ -4385,7 +4452,15 @@
       const token = session?.access_token;
       if (!token) throw new Error("Session expired");
       const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/send_verification_email";
-      const res = await fetch(fnUrl, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: "{}" });
+      const res = await fetch(fnUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+          apikey: SUPABASE_KEY || ""
+        },
+        body: "{}"
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw Object.assign(new Error(data?.error || "HTTP " + res.status), { context: { status: res.status } });
       if (data && data.error) throw new Error(data.error);
@@ -6096,6 +6171,9 @@
   }
   window.renderView = renderView;
   function _renderViewImpl() {
+    if (typeof window.applySchoolTheme === "function") {
+      window.applySchoolTheme();
+    }
     try {
       state._usePlanExpiryFixedDate = state.adminSettings?.plan_expiry_fixed_date === "true" || state.adminSettings?.plan_expiry_fixed_date !== "false" && (state.adminSettings?.monthly_registration_enabled === "true" || !!state.currentSchool?.monthly_registration_enabled);
     } catch (_) {
@@ -7606,6 +7684,9 @@
         `;
       } else if (view === "auth") {
         const isSignup2 = state.authMode === "signup";
+        const schoolLogoRaw = state.currentSchool?.logo_url || (Array.isArray(state.schools) ? state.schools.find((s) => s?.id === state.currentSchool?.id)?.logo_url || "" : "") || state.currentSchool?.teacher_photo_url || "logo.png";
+        const schoolLogoUrl = String(schoolLogoRaw).replace(/"/g, "&quot;").replace(/</g, "&lt;");
+        const schoolLogoAlt = (state.currentSchool?.name || "School").replace(/"/g, "&quot;").replace(/</g, "&lt;");
         html += `
             <div class="auth-page-container">
                 <div style="position: fixed; bottom: 10px; right: 10px; font-size: 10px; color: rgba(255,255,255,0.1); z-index: 9999;">V2.1-REBUILT</div>
@@ -7613,7 +7694,7 @@
                     <!-- LEFT / TOP: HERO SECTION -->
                     <div class="hero-section">
                         <div class="auth-logo-container">
-                            <img src="logo.png" class="auth-logo">
+                            <img src="${schoolLogoUrl}" class="auth-logo" alt="${schoolLogoAlt}">
                         </div>
                         
                         <button onclick="window.backToSchoolSelection()" style="background: rgba(255,255,255,0.05); color: var(--text-muted); border: none; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.05);">
@@ -9087,7 +9168,7 @@
                             ` : ""}
                             ${isAure2 && state.adminRegTab === "requested" ? `
                             <div class="admin-reg-requested-wrap">
-                                ${state.adminRegFeedback ? `<div class="admin-reg-feedback admin-reg-feedback-${state.adminRegFeedback.type}"><i data-lucide="${state.adminRegFeedback.type === "accepted" ? "check-circle" : "x-circle"}" size="18"></i><span>${state.adminRegFeedback.type === "accepted" ? t2.aure_request_accepted || "Request accepted." : t2.aure_request_denied || "Request denied."}</span></div>` : ""}
+                                ${state.adminRegFeedback ? `<div class="admin-reg-feedback admin-reg-feedback-${state.adminRegFeedback.type}"><i data-lucide="${state.adminRegFeedback.type === "accepted" ? "check-circle" : "x-circle"}" size="18"></i><div style="flex:1;min-width:0;"><div>${state.adminRegFeedback.type === "accepted" ? t2.aure_request_accepted || "Request accepted." : t2.aure_request_denied || "Request denied."}</div>${state.adminRegFeedback.emailNote ? `<div style="margin-top:6px;font-size:12px;opacity:0.9;line-height:1.35;">${String(state.adminRegFeedback.emailNote).replace(/</g, "&lt;")}</div>` : ""}</div></div>` : ""}
                             <div class="admin-reg-requested-list">
                                 ${pendingList.length === 0 ? `
                                 <div class="admin-reg-empty">
@@ -11041,6 +11122,12 @@
             p_student_id: String(studentId)
           });
           if (error) throw error;
+          try {
+            await supabaseClient.functions.invoke("notify_class_cancellation", {
+              body: { registration_id: registrationId }
+            });
+          } catch (_) {
+          }
           close();
           await window.loadClassAvailability();
           if (shouldDeferRender()) scheduleDeferredRender();
@@ -11080,6 +11167,12 @@
               p_student_id: String(studentId)
             });
             if (error) throw error;
+            try {
+              await supabaseClient.functions.invoke("notify_class_cancellation", {
+                body: { registration_id: id }
+              });
+            } catch (_) {
+            }
           }
           close();
           await window.loadClassAvailability();
@@ -11298,7 +11391,57 @@
       return;
     }
     const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
-    const singleClassHandler = isAure ? () => window.requestClaseSuelta(classId, className, targetDateStr) : () => window.registerForClassSingle(classId, className, targetDateStr);
+    const has48 = typeof window.has4or8Package === "function" && window.has4or8Package(state.currentUser);
+    const levelOk = !!(state.currentUser?.level || "").trim();
+    const runSuelta = () => window.requestClaseSuelta(classId, className, targetDateStr);
+    if (isAure) {
+      if (has48 && !levelOk) {
+        window.showMessageModal({ icon: "warning", title: t2("aure_level_must_be_set"), body: "", primaryLabel: t2("got_it") });
+        return;
+      }
+      const dom = (/* @__PURE__ */ new Date(targetDateStr + "T12:00:00")).getDate();
+      const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
+      if (has48 && dom <= 14 && monthlyDates.length > 1) {
+        const dayNames = { "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday" };
+        const dayName = dayNames[classObj.day] || classObj.day;
+        window.showMessageModal({
+          icon: "success",
+          title: className || classObj.name,
+          body: (t2("register_monthly") || "Register for all {n} classes this month").replace("{n}", monthlyDates.length) + " (" + dayName + ")",
+          primaryLabel: (t2("register_monthly") || "Register for all {n} classes this month").replace("{n}", monthlyDates.length),
+          secondaryLabel: t2("clase_suelta_request") || "Request clase suelta",
+          cancelLabel: t2("cancel"),
+          onPrimary: (close) => {
+            close();
+            window.registerForClassMonthly(classId, className, targetDateStr);
+          },
+          onSecondary: (close) => {
+            close();
+            runSuelta();
+          },
+          onCancel: (close) => {
+            close();
+          }
+        });
+        return;
+      }
+      window.showMessageModal({
+        icon: "success",
+        title: className || classObj.name,
+        body: t2("register_success_4h_note"),
+        primaryLabel: t2("clase_suelta_request"),
+        cancelLabel: t2("cancel"),
+        onPrimary: (close) => {
+          close();
+          runSuelta();
+        },
+        onCancel: (close) => {
+          close();
+        }
+      });
+      return;
+    }
+    const singleClassHandler = () => window.registerForClassSingle(classId, className, targetDateStr);
     if (window.isMonthlyRegistrationAvailable()) {
       const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
       if (monthlyDates.length > 1) {
@@ -11349,7 +11492,7 @@
     const schoolId = state.currentSchool?.id;
     const studentId = state.currentUser?.id;
     if (!schoolId || !studentId || !supabaseClient) return;
-    const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    const loc = DANCE_LOCALES[state.language || "en"] || DANCE_LOCALES.en;
     const classObj = (state.classes || []).find((c) => c.id === classId);
     if (!classObj) return;
     const nextDate = optionalDateStr ? /* @__PURE__ */ new Date(optionalDateStr + "T00:00:00") : window.getNextClassDate(classObj.day);
@@ -11363,11 +11506,20 @@
         p_class_date: dateStr
       });
       if (error) throw error;
+      const regId = data && (typeof data === "object" ? data.id : null);
+      if (regId) {
+        try {
+          await supabaseClient.functions.invoke("notify_clase_suelta_request", {
+            body: { registration_id: regId }
+          });
+        } catch (_) {
+        }
+      }
       window.showMessageModal({
         icon: "success",
-        title: t2.clase_suelta_request_sent || "Request sent",
-        body: (t2.clase_suelta_request_pending || "Your request has been sent. You will receive a confirmation email when it is approved.").replace(/"/g, "&quot;"),
-        primaryLabel: t2.got_it
+        title: loc.clase_suelta_request_sent || "Request sent",
+        body: (loc.clase_suelta_request_pending || "Your request has been sent. You will receive a confirmation email when it is approved.").replace(/"/g, "&quot;"),
+        primaryLabel: loc.got_it || "Got it"
       });
       window.loadClassAvailability().then(() => {
         if (shouldDeferRender()) scheduleDeferredRender();
@@ -11381,7 +11533,17 @@
       console.error("Clase suelta request error:", e);
       const msg = e && e.message || "";
       const isNoMembership = /no active membership|purchase a plan first/i.test(msg);
-      alert(isNoMembership ? t2("no_active_membership_register") : msg || t2("register_error"));
+      const tFn = typeof window.t === "function" ? window.t : (k) => k;
+      if (isNoMembership) {
+        alert(tFn("no_active_membership_register"));
+        return;
+      }
+      const bal = msg.match(/You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left/);
+      if (bal) {
+        alert((tFn("not_enough_classes_message") || msg).replace(/{effective}/g, bal[1]).replace(/{registered}/g, bal[2]).replace(/{available}/g, bal[3]));
+        return;
+      }
+      alert(msg || tFn("register_error"));
     }
   };
   window.approveClaseSuelta = async (registrationId) => {
@@ -11397,15 +11559,30 @@
     try {
       const { error } = await supabaseClient.rpc("admin_approve_clase_suelta", { p_registration_id: registrationId });
       if (error) throw error;
-      const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/send_clase_suelta_confirmation";
-      const { data: sess } = await supabaseClient.auth.getSession();
-      const token = sess?.session?.access_token;
-      if (token) {
-        await fetch(fnUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-          body: JSON.stringify({ registration_id: registrationId })
-        });
+      let emailNote = null;
+      const token = await getAccessTokenForEdgeFunctions();
+      if (!token) {
+        emailNote = t2.email_confirmation_needs_supabase_session || "Sign in with linked admin email to send confirmation mail.";
+        console.warn("send_clase_suelta_confirmation: no Supabase JWT (legacy-only admin login?).");
+      } else {
+        try {
+          const { data: invData, error: invErr } = await supabaseClient.functions.invoke("send_clase_suelta_confirmation", {
+            body: { registration_id: registrationId }
+          });
+          if (invErr) throw invErr;
+          if (invData && invData.error) throw new Error(invData.error);
+        } catch (e) {
+          const errMsg = e && (e.message || e.error) ? String(e.message || e.error) : String(e);
+          const status503 = e && (e.status === 503 || e.statusCode === 503 || e.context?.status === 503) || /503|RESEND|not configured/i.test(errMsg);
+          console.warn("send_clase_suelta_confirmation:", errMsg);
+          if (status503) {
+            emailNote = t2.email_confirmation_failed_short;
+          } else if (/no email|Student has no email/i.test(errMsg)) {
+            emailNote = t2.student_no_email_confirmation;
+          } else {
+            emailNote = t2.email_confirmation_failed_short;
+          }
+        }
       }
       await window.loadClassAvailability?.();
       state.adminRegActionId = null;
@@ -11415,7 +11592,7 @@
         return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0");
       })();
       state.adminWeekRegistrationsByMonth[viewMonth] = void 0;
-      state.adminRegFeedback = { type: "accepted" };
+      state.adminRegFeedback = { type: "accepted", emailNote };
       if (typeof renderView === "function") {
         renderView();
         if (window.lucide) window.lucide.createIcons();
@@ -11423,7 +11600,7 @@
       setTimeout(() => {
         state.adminRegFeedback = null;
         if (typeof renderView === "function") renderView();
-      }, 3e3);
+      }, emailNote ? 8e3 : 3e3);
     } catch (e) {
       console.error("Approve error:", e);
       state.adminRegActionId = null;
@@ -13549,18 +13726,27 @@ School: ${schoolName}`)) return;
       });
       if (error) throw error;
       if (accept) {
-        const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/send_private_lesson_confirmation";
-        const { data: sess } = await supabaseClient.auth.getSession();
-        const token = sess?.session?.access_token;
-        if (token && fnUrl) {
-          try {
-            await fetch(fnUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-              body: JSON.stringify({ request_id: requestId })
-            });
-          } catch {
+        const token = await getAccessTokenForEdgeFunctions();
+        const tLoc = DANCE_LOCALES[state.language || "en"] || DANCE_LOCALES.en;
+        if (token) {
+          let r = await postEdgeFunction("send_private_lesson_confirmation", token, { request_id: requestId });
+          const notAccepted = r.data && String(r.data.error || "").includes("not accepted");
+          if (!r.ok && notAccepted) {
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            r = await postEdgeFunction("send_private_lesson_confirmation", token, { request_id: requestId });
           }
+          if (!r.ok && !r.skipped) {
+            console.warn("send_private_lesson_confirmation:", r.data, r.status);
+            const msg = r.data && r.data.error || "";
+            if (!/Request is not accepted/i.test(msg)) {
+              alert(tLoc.private_lesson_email_failed || "Student may not have received the confirmation email.");
+            }
+          } else if (r.data && r.data.ok === false && r.data.message && String(r.data.message).toLowerCase().includes("no email")) {
+            alert(tLoc.student_no_email_confirmation || "Student has no email.");
+          }
+        } else {
+          console.warn("send_private_lesson_confirmation: no JWT");
+          alert(tLoc.email_confirmation_needs_supabase_session || "Sign in with email to send confirmation emails.");
         }
       }
       await fetchAllData();
@@ -16250,6 +16436,29 @@ School: ${schoolName}`)) return;
 
   // src/main.js
   var CALENDLY_FEATURE_ENABLED3 = false;
+  var SCHOOL_THEME_BY_ID = {
+    [AURE_SCHOOL_ID]: "aure"
+  };
+  function resolveSchoolThemeKey() {
+    const school = state.currentSchool;
+    if (!school) return "";
+    const mapped = school.id ? SCHOOL_THEME_BY_ID[school.id] : "";
+    const raw = mapped || school.discovery_slug || school.slug || "";
+    return String(raw || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  }
+  function getMetaThemeColor(theme) {
+    const schoolTheme = resolveSchoolThemeKey();
+    if (schoolTheme === "aure") return "#a6b5b2";
+    return theme === "dark" ? "#000000" : "#f5f5f7";
+  }
+  function applySchoolTheme() {
+    if (typeof document === "undefined") return;
+    const themeKey = resolveSchoolThemeKey();
+    if (themeKey) document.body.setAttribute("data-school-theme", themeKey);
+    else document.body.removeAttribute("data-school-theme");
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute("content", getMetaThemeColor(state.theme));
+  }
   if (typeof window !== "undefined") {
     window.getCapabilities = getCapabilities;
     window.parseHashRoute = parseHashRoute;
@@ -16271,6 +16480,7 @@ School: ${schoolName}`)) return;
     window.getPlanExpiryUseFixedDate = getPlanExpiryUseFixedDate;
     window.DISCOVERY_COUNTRIES_CITIES = DISCOVERY_COUNTRIES_CITIES;
     window.DISCOVERY_COUNTRIES = DISCOVERY_COUNTRIES;
+    window.applySchoolTheme = applySchoolTheme;
   }
   if (typeof window !== "undefined" && typeof document !== "undefined") {
     window.addEventListener("unhandledrejection", function onAuthRejection(event) {
@@ -16385,8 +16595,7 @@ School: ${schoolName}`)) return;
       document.body.classList.toggle("dark-mode", state.theme === "dark");
       const icon = state.theme === "dark" ? "moon" : "sun";
       document.getElementById("theme-icon").setAttribute("data-lucide", icon);
-      const metaTheme = document.querySelector('meta[name="theme-color"]');
-      if (metaTheme) metaTheme.setAttribute("content", state.theme === "dark" ? "#000000" : "#f5f5f7");
+      applySchoolTheme();
       saveState();
       if (typeof window.lucide !== "undefined" && window.lucide.createIcons) window.lucide.createIcons();
     });
@@ -16499,8 +16708,7 @@ School: ${schoolName}`)) return;
       document.body.classList.toggle("dark-mode", state.theme === "dark");
       const themeIconEl = document.getElementById("theme-icon");
       if (themeIconEl) themeIconEl.setAttribute("data-lucide", state.theme === "dark" ? "moon" : "sun");
-      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-      if (metaThemeColor) metaThemeColor.setAttribute("content", state.theme === "dark" ? "#000000" : "#f5f5f7");
+      applySchoolTheme();
       try {
         const stored = sessionStorage.getItem("billing_return");
         if (stored) {
@@ -16533,6 +16741,7 @@ School: ${schoolName}`)) return;
       updateI18n();
       document.body.setAttribute("data-theme", state.theme);
       document.body.classList.toggle("dark-mode", state.theme === "dark");
+      applySchoolTheme();
       if (themeIconEl) themeIconEl.setAttribute("data-lucide", state.theme === "dark" ? "moon" : "sun");
       if (state.isAdmin && state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
         try {
@@ -16659,6 +16868,7 @@ School: ${schoolName}`)) return;
       updateI18n();
       document.body.setAttribute("data-theme", state.theme);
       document.body.classList.toggle("dark-mode", state.theme === "dark");
+      applySchoolTheme();
       if (state.discoveryPath && supabaseClient) {
         await window.fetchDiscoveryData();
       }

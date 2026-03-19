@@ -285,6 +285,245 @@ body.dark-mode *::-webkit-scrollbar-thumb:active {
     --border: rgba(255, 255, 255, 0.12);
 }
 
+/* School theming entrypoint. Add future school palettes here. */
+body[data-school-theme="aure"] {
+    --bg-body: #a6b5b2;
+    --bg-card: #b5c1bf;
+    --bg-body-grouped: #9eafac;
+    --text-primary: #4c2f3c;
+    --text-secondary: #6a4f5b;
+    --border-color: rgba(76, 47, 60, 0.26);
+    --background: #a6b5b2;
+    --surface: rgba(255, 255, 255, 0.42);
+    --surface-solid: #c4cfcd;
+    --text: #4c2f3c;
+    --text-muted: #6a4f5b;
+    --primary: #4c2f3c;
+    --accent: #4c2f3c;
+    --primary-soft: rgba(76, 47, 60, 0.12);
+    --secondary: #4c2f3c;
+    --border: rgba(76, 47, 60, 0.18);
+}
+
+body.dark-mode[data-school-theme="aure"],
+[data-theme="dark"][data-school-theme="aure"] {
+    --bg-body: #241c22;
+    --bg-card: #31252d;
+    --bg-body-grouped: #2a2027;
+    --text-primary: #f1e7ec;
+    --text-secondary: #c9b6c0;
+    --border-color: rgba(221, 188, 204, 0.2);
+    --background: #241c22;
+    --surface: rgba(62, 47, 58, 0.68);
+    --surface-solid: #2f232b;
+    --text: #f1e7ec;
+    --text-muted: #c9b6c0;
+    --primary: #d7b3c3;
+    --accent: #d7b3c3;
+    --primary-soft: rgba(215, 179, 195, 0.17);
+    --secondary: #f1e7ec;
+    --border: rgba(221, 188, 204, 0.24);
+}
+
+/* Aure visual polish for logged-in UI chrome and containers */
+body[data-school-theme="aure"] .navbar {
+    background: rgba(166, 181, 178, 0.84);
+    border-bottom: 1px solid rgba(76, 47, 60, 0.2);
+    box-shadow: 0 8px 24px rgba(76, 47, 60, 0.08);
+}
+body[data-school-theme="aure"] .logo,
+body[data-school-theme="aure"] .nav-controls .btn-secondary,
+body[data-school-theme="aure"] .nav-controls .btn-icon {
+    color: #4c2f3c;
+    opacity: 0.9;
+}
+body[data-school-theme="aure"] .nav-controls .btn-secondary:hover,
+body[data-school-theme="aure"] .nav-controls .btn-icon:hover {
+    background: rgba(76, 47, 60, 0.1);
+}
+
+body[data-school-theme="aure"] .bottom-nav {
+    background: rgba(166, 181, 178, 0.9);
+    border-top: 1px solid rgba(76, 47, 60, 0.2);
+    box-shadow: 0 -8px 24px rgba(76, 47, 60, 0.08);
+}
+body[data-school-theme="aure"] .nav-item {
+    color: rgba(76, 47, 60, 0.68);
+}
+body[data-school-theme="aure"] .nav-item.active {
+    color: #4c2f3c;
+    background: rgba(76, 47, 60, 0.12);
+}
+body[data-school-theme="aure"] .nav-item.active i {
+    color: #4c2f3c;
+}
+
+body[data-school-theme="aure"] .card,
+body[data-school-theme="aure"] .ios-list,
+body[data-school-theme="aure"] .ios-list-item {
+    border-color: rgba(76, 47, 60, 0.16);
+    box-shadow: 0 6px 18px rgba(76, 47, 60, 0.06);
+}
+body[data-school-theme="aure"] .modal {
+    background: rgba(58, 39, 49, 0.35);
+    backdrop-filter: blur(16px);
+}
+body[data-school-theme="aure"] .modal-content,
+body[data-school-theme="aure"] .message-modal-content,
+body[data-school-theme="aure"] .payment-modal-content {
+    background: #c1cdca;
+    border-color: rgba(76, 47, 60, 0.22);
+    box-shadow: 0 22px 52px rgba(54, 35, 44, 0.22);
+}
+body[data-school-theme="aure"] .minimal-input,
+body[data-school-theme="aure"] .ios-input,
+body[data-school-theme="aure"] .ios-select,
+body[data-school-theme="aure"] .minimal-select {
+    border-color: rgba(76, 47, 60, 0.22);
+    background: rgba(255, 255, 255, 0.45);
+    color: #4c2f3c;
+}
+body[data-school-theme="aure"] .btn-primary {
+    background: #4c2f3c;
+    color: #f2f6f5;
+    box-shadow: 0 10px 20px rgba(76, 47, 60, 0.18);
+}
+
+body.dark-mode[data-school-theme="aure"] .navbar,
+[data-theme="dark"][data-school-theme="aure"] .navbar {
+    background: rgba(41, 31, 39, 0.9);
+    border-bottom: 1px solid rgba(221, 188, 204, 0.2);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
+}
+body.dark-mode[data-school-theme="aure"] .bottom-nav,
+[data-theme="dark"][data-school-theme="aure"] .bottom-nav {
+    background: rgba(45, 34, 43, 0.94);
+    border-top: 1px solid rgba(221, 188, 204, 0.2);
+    box-shadow: 0 -10px 26px rgba(0, 0, 0, 0.34);
+}
+body.dark-mode[data-school-theme="aure"] .logo,
+[data-theme="dark"][data-school-theme="aure"] .logo,
+body.dark-mode[data-school-theme="aure"] .nav-controls .btn-secondary,
+body.dark-mode[data-school-theme="aure"] .nav-controls .btn-icon,
+[data-theme="dark"][data-school-theme="aure"] .nav-controls .btn-secondary,
+[data-theme="dark"][data-school-theme="aure"] .nav-controls .btn-icon {
+    color: #f1e7ec;
+    opacity: 0.9;
+}
+body.dark-mode[data-school-theme="aure"] .card,
+[data-theme="dark"][data-school-theme="aure"] .card {
+    background: #33272f;
+    border: 1px solid rgba(221, 188, 204, 0.2);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+body.dark-mode[data-school-theme="aure"] .modal-content,
+[data-theme="dark"][data-school-theme="aure"] .modal-content {
+    background: #34272f;
+    border-color: rgba(221, 188, 204, 0.24);
+}
+body.dark-mode[data-school-theme="aure"] .nav-item.active,
+[data-theme="dark"][data-school-theme="aure"] .nav-item.active {
+    background: rgba(215, 179, 195, 0.16);
+    color: #f7edf2;
+}
+body.dark-mode[data-school-theme="aure"] .nav-item,
+[data-theme="dark"][data-school-theme="aure"] .nav-item {
+    color: rgba(241, 231, 236, 0.72);
+}
+body.dark-mode[data-school-theme="aure"] .nav-badge,
+[data-theme="dark"][data-school-theme="aure"] .nav-badge {
+    box-shadow: 0 0 0 2px #33272f;
+}
+body.dark-mode[data-school-theme="aure"] .logo-img,
+[data-theme="dark"][data-school-theme="aure"] .logo-img {
+    filter: none;
+    mix-blend-mode: multiply;
+}
+body.dark-mode[data-school-theme="aure"] .ios-list,
+body.dark-mode[data-school-theme="aure"] .ios-list-item,
+[data-theme="dark"][data-school-theme="aure"] .ios-list,
+[data-theme="dark"][data-school-theme="aure"] .ios-list-item {
+    background: #33272f;
+    border-color: rgba(221, 188, 204, 0.18);
+}
+body.dark-mode[data-school-theme="aure"] .ios-list-item:active,
+[data-theme="dark"][data-school-theme="aure"] .ios-list-item:active {
+    background: #3c2e37;
+}
+body.dark-mode[data-school-theme="aure"] .students-search-wrap,
+body.dark-mode[data-school-theme="aure"] .students-list,
+body.dark-mode[data-school-theme="aure"] .students-jackblock,
+body.dark-mode[data-school-theme="aure"] .admin-reg-card,
+body.dark-mode[data-school-theme="aure"] .admin-reg-tabs,
+body.dark-mode[data-school-theme="aure"] .admin-reg-request-card,
+[data-theme="dark"][data-school-theme="aure"] .students-search-wrap,
+[data-theme="dark"][data-school-theme="aure"] .students-list,
+[data-theme="dark"][data-school-theme="aure"] .students-jackblock,
+[data-theme="dark"][data-school-theme="aure"] .admin-reg-card,
+[data-theme="dark"][data-school-theme="aure"] .admin-reg-tabs,
+[data-theme="dark"][data-school-theme="aure"] .admin-reg-request-card {
+    background: #33272f;
+    border-color: rgba(221, 188, 204, 0.22);
+}
+body.dark-mode[data-school-theme="aure"] .admin-reg-tab,
+[data-theme="dark"][data-school-theme="aure"] .admin-reg-tab {
+    color: #d8c2cc;
+}
+body.dark-mode[data-school-theme="aure"] .admin-reg-tab.active,
+[data-theme="dark"][data-school-theme="aure"] .admin-reg-tab.active {
+    background: rgba(215, 179, 195, 0.2);
+    color: #f7edf2;
+}
+body.dark-mode[data-school-theme="aure"] .students-search,
+body.dark-mode[data-school-theme="aure"] .minimal-input,
+body.dark-mode[data-school-theme="aure"] .ios-input,
+body.dark-mode[data-school-theme="aure"] .ios-select,
+body.dark-mode[data-school-theme="aure"] .minimal-select,
+[data-theme="dark"][data-school-theme="aure"] .students-search,
+[data-theme="dark"][data-school-theme="aure"] .minimal-input,
+[data-theme="dark"][data-school-theme="aure"] .ios-input,
+[data-theme="dark"][data-school-theme="aure"] .ios-select,
+[data-theme="dark"][data-school-theme="aure"] .minimal-select {
+    background: #3a2d35;
+    border-color: rgba(221, 188, 204, 0.25);
+    color: #f4eaf0;
+}
+body.dark-mode[data-school-theme="aure"] .students-search::placeholder,
+body.dark-mode[data-school-theme="aure"] .minimal-input::placeholder,
+[data-theme="dark"][data-school-theme="aure"] .students-search::placeholder,
+[data-theme="dark"][data-school-theme="aure"] .minimal-input::placeholder {
+    color: rgba(230, 206, 216, 0.62);
+}
+body.dark-mode[data-school-theme="aure"] .minimal-input:focus,
+body.dark-mode[data-school-theme="aure"] .ios-input:focus,
+body.dark-mode[data-school-theme="aure"] .students-search:focus,
+[data-theme="dark"][data-school-theme="aure"] .minimal-input:focus,
+[data-theme="dark"][data-school-theme="aure"] .ios-input:focus,
+[data-theme="dark"][data-school-theme="aure"] .students-search:focus {
+    border-color: rgba(215, 179, 195, 0.65);
+    box-shadow: 0 0 0 3px rgba(215, 179, 195, 0.16);
+}
+body.dark-mode[data-school-theme="aure"] .student-card-status-active,
+[data-theme="dark"][data-school-theme="aure"] .student-card-status-active {
+    background: rgba(122, 197, 140, 0.22);
+    color: #9be2ad;
+}
+body.dark-mode[data-school-theme="aure"] .student-card-status-unpaid,
+[data-theme="dark"][data-school-theme="aure"] .student-card-status-unpaid {
+    background: rgba(255, 179, 179, 0.2);
+    color: #ffc3c3;
+}
+body.dark-mode[data-school-theme="aure"] .reg-badge-registered,
+body.dark-mode[data-school-theme="aure"] .reg-badge-pending,
+body.dark-mode[data-school-theme="aure"] .reg-badge-full,
+body.dark-mode[data-school-theme="aure"] .reg-badge-blocked,
+[data-theme="dark"][data-school-theme="aure"] .reg-badge-registered,
+[data-theme="dark"][data-school-theme="aure"] .reg-badge-pending,
+[data-theme="dark"][data-school-theme="aure"] .reg-badge-full,
+[data-theme="dark"][data-school-theme="aure"] .reg-badge-blocked {
+    border-color: rgba(221, 188, 204, 0.26);
+}
+
 /* Text selection: visible in both themes */
 ::selection {
     background: rgba(0, 122, 255, 0.25);
@@ -755,6 +994,11 @@ select option {
     filter: invert(1);
     mix-blend-mode: screen;
     /* Improved for transparency in dark mode */
+}
+body.dark-mode[data-school-theme="aure"] .auth-logo,
+[data-theme="dark"][data-school-theme="aure"] .auth-logo {
+    filter: none;
+    mix-blend-mode: normal;
 }
 
 @keyframes floatingLogo {
@@ -5090,7 +5334,7 @@ body.dark-mode .admin-reg-tab:hover {
 }
 .admin-reg-feedback {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   padding: 0.6rem 0.9rem;
   border-radius: 10px;

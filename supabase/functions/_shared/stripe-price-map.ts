@@ -36,3 +36,4 @@ export function isValidPlan(value: unknown): value is PlanKey {
 export function isValidCurrency(value: unknown): value is Currency {
   return typeof value === 'string' && (VALID_CURRENCIES as readonly string[]).includes(value);
 }
+
