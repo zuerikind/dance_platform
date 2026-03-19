@@ -524,6 +524,207 @@ body.dark-mode[data-school-theme="aure"] .reg-badge-blocked,
     border-color: rgba(221, 188, 204, 0.26);
 }
 
+/* Mobile-first tuning for admin students + revenue pages (critical on small phones) */
+@media (max-width: 480px) {
+    .students-page {
+        --students-pad: 10px;
+        --students-gap: 10px;
+        padding-left: var(--students-pad);
+        padding-right: var(--students-pad);
+    }
+    .students-header {
+        padding-bottom: 8px;
+    }
+    .students-title {
+        font-size: clamp(1.8rem, 8.5vw, 2.1rem);
+    }
+
+    .admin-reg-content {
+        padding-top: 0.5rem !important;
+    }
+    .admin-reg-month-carousel {
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+    .admin-reg-month-carousel > span {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+        font-size: 1rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .admin-reg-month-carousel > button {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+    }
+
+    .admin-reg-tabs {
+        margin-bottom: 0.8rem;
+    }
+    .admin-reg-tab {
+        font-size: 0.95rem;
+        padding: 0.6rem 0.5rem;
+    }
+
+    .admin-reg-day-box {
+        padding: 0.75rem 0.6rem;
+        border-radius: 12px;
+    }
+    .admin-reg-day-title {
+        font-size: 1.35rem;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.15rem;
+    }
+    .admin-reg-day-summary {
+        font-size: 0.85rem;
+        margin-bottom: 0.55rem;
+    }
+    .admin-reg-segment-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0.58rem 0.58rem;
+    }
+    .admin-reg-segment-left {
+        width: 100%;
+        gap: 0.35rem 0.45rem;
+    }
+    .admin-reg-segment-right {
+        width: 100%;
+        justify-content: space-between;
+        gap: 0.45rem;
+        margin-top: 2px;
+    }
+    .admin-reg-segment-name {
+        font-size: 1.02rem;
+        line-height: 1.25;
+    }
+    .admin-reg-segment-time,
+    .admin-reg-segment-date,
+    .admin-reg-segment-spots {
+        font-size: 0.82rem;
+        line-height: 1.2;
+    }
+    .admin-reg-segment-count {
+        font-size: 0.95rem;
+        padding: 3px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+    .admin-reg-segment-body {
+        padding: 0.5rem 0.58rem 0.7rem;
+    }
+
+    .admin-revenue-header {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .admin-revenue-header-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+    .admin-revenue-add-btn {
+        width: 100%;
+        justify-content: center;
+        margin-top: 2px;
+    }
+    .admin-revenue-page .revenue-filters-expandable {
+        margin-left: 10px !important;
+        margin-right: 10px !important;
+    }
+    .admin-revenue-page .filter-bar {
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0.72rem;
+        gap: 8px;
+    }
+    .admin-revenue-page input.filter-control[type="date"],
+    .admin-revenue-page .filter-select-wrap,
+    .admin-revenue-page select.filter-control,
+    .admin-revenue-page .filter-btn,
+    .admin-revenue-page .filter-count {
+        width: 100%;
+        max-width: 100%;
+        flex: 1 1 100%;
+    }
+    .admin-revenue-summary-wrap,
+    .admin-revenue-list-label {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    .admin-revenue-summary-card {
+        padding: 1.15rem !important;
+        border-radius: 18px !important;
+    }
+    .admin-revenue-summary-total {
+        font-size: clamp(2rem, 11vw, 2.4rem) !important;
+        letter-spacing: -0.05em !important;
+        line-height: 1.05;
+        word-break: break-word;
+    }
+    .admin-revenue-list {
+        margin: 1rem 10px 0;
+    }
+    .admin-revenue-item {
+        align-items: flex-start !important;
+        padding: 12px 10px !important;
+        gap: 8px !important;
+    }
+    .admin-revenue-item-main {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    .admin-revenue-item-name {
+        font-size: 1.18rem !important;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+    .admin-revenue-item-meta {
+        display: block !important;
+        font-size: 0.82rem !important;
+        line-height: 1.3;
+    }
+    .admin-revenue-item-amount-wrap {
+        margin-right: 0 !important;
+    }
+    .admin-revenue-item-amount {
+        font-size: 1.2rem !important;
+        line-height: 1.1;
+        white-space: nowrap;
+    }
+}
+
+/* Extra-small devices (e.g. iPhone 13 mini width constraints) */
+@media (max-width: 390px) {
+    .admin-reg-segment-spots {
+        display: none;
+    }
+    .admin-reg-segment-right {
+        justify-content: flex-end;
+    }
+    .admin-revenue-item {
+        flex-wrap: wrap;
+    }
+    .admin-revenue-item-amount-wrap {
+        text-align: left !important;
+    }
+}
+
+/* Improve Aure registration contrast in light mode */
+body[data-school-theme="aure"] .admin-reg-day-box,
+body[data-school-theme="aure"] .admin-reg-segment {
+    background: rgba(245, 249, 248, 0.78);
+}
+body[data-school-theme="aure"] .admin-reg-day-summary,
+body[data-school-theme="aure"] .admin-reg-segment-time,
+body[data-school-theme="aure"] .admin-reg-segment-spots,
+body[data-school-theme="aure"] .admin-reg-segment-date {
+    color: rgba(76, 47, 60, 0.74);
+}
+
 /* Text selection: visible in both themes */
 ::selection {
     background: rgba(0, 122, 255, 0.25);

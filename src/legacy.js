@@ -7742,12 +7742,12 @@ function _renderViewImpl() {
         const isCurrentMonth = !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
 
         html += `
-            <div class="ios-header" style="background: transparent;">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div class="ios-header admin-revenue-header" style="background: transparent;">
+                <div class="admin-revenue-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <div class="ios-large-title">${t.nav_revenue}</div>
                     <button
                         type="button"
-                        class="btn-primary"
+                        class="btn-primary admin-revenue-add-btn"
                         onclick="window.openManualPaymentModal()"
                         style="padding: 0.55rem 1.1rem; font-size: 13px; font-weight: 650; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); white-space: nowrap;"
                     >
@@ -7800,11 +7800,12 @@ function _renderViewImpl() {
                 </div>
             </div>
             
-            <div style="padding: 0 1.2rem; margin-bottom: 2rem;">
-                <div style="background: var(--text-primary); padding: 2rem; border-radius: 24px; color: var(--bg-body); box-shadow: 0 15px 35px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+            <div class="admin-revenue-page">
+            <div class="admin-revenue-summary-wrap" style="padding: 0 1.2rem; margin-bottom: 2rem;">
+                <div class="admin-revenue-summary-card" style="background: var(--text-primary); padding: 2rem; border-radius: 24px; color: var(--bg-body); box-shadow: 0 15px 35px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
                     <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
                     <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${isCurrentMonth && !pkgFilter ? (t.monthly_total || 'This Month Total') : (t.period_total || 'Total for period')}</div>
-                    <div style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(periodTotal, state.currentSchool?.currency || 'MXN')}</div>
+                    <div class="admin-revenue-summary-total" style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(periodTotal, state.currentSchool?.currency || 'MXN')}</div>
                     
                     <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
                         <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
@@ -7813,10 +7814,10 @@ function _renderViewImpl() {
                 </div>
             </div>
 
-            <div style="padding: 0 1.2rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+            <div class="admin-revenue-list-label" style="padding: 0 1.2rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t.all_payments}
             </div>
-            <div class="ios-list">
+            <div class="ios-list admin-revenue-list">
                 ${state.loading && state.paymentRequests.length === 0 ? `
                     <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
                         <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
@@ -7827,16 +7828,16 @@ function _renderViewImpl() {
             const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
             const statusLabel = t[req.status] || req.status;
             return `
-                        <div class="ios-list-item" style="padding: 16px; align-items: center;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${studentName}</div>
-                                <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                        <div class="ios-list-item admin-revenue-item" style="padding: 16px; align-items: center;">
+                            <div class="admin-revenue-item-main" style="flex: 1;">
+                                <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${studentName}</div>
+                                <div class="admin-revenue-item-meta" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
                                     ${req.sub_name} • ${new Date(req.created_at).toLocaleDateString()}
                                     <span style="font-size: 9px; opacity: 0.6; text-transform: uppercase; font-weight: 700; background: var(--system-gray6); padding: 1px 6px; border-radius: 4px;">${t[req.payment_method] || req.payment_method}</span>
                                 </div>
                             </div>
-                            <div style="text-align: right; margin-right: 12px;">
-                                <div style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">${formatPrice(req.price, state.currentSchool?.currency || 'MXN')}</div>
+                            <div class="admin-revenue-item-amount-wrap" style="text-align: right; margin-right: 12px;">
+                                <div class="admin-revenue-item-amount" style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">${formatPrice(req.price, state.currentSchool?.currency || 'MXN')}</div>
                                 <div style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; letter-spacing: 0.02em;">${statusLabel}</div>
                             </div>
                             <button onclick="window.removePaymentRequest('${req.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6;" title="${t.delete_payment_confirm || 'Delete'}">
@@ -7845,6 +7846,7 @@ function _renderViewImpl() {
                         </div>
                     `;
         }).join('') : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">${t.no_data_msg}</div>`)}
+            </div>
             </div>
         `;
     } else if (view === 'admin-scanner') {
