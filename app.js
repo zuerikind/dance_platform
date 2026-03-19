@@ -6197,6 +6197,12 @@
       const devTriggerEl = document.getElementById("dev-login-trigger");
       const studentNavEl = document.getElementById("student-nav");
       const adminNavEl = document.getElementById("admin-nav");
+      const topNavEl = document.querySelector("body > nav.navbar");
+      if (topNavEl) {
+        topNavEl.classList.remove("hidden");
+        topNavEl.style.display = "";
+        topNavEl.style.visibility = "";
+      }
       if (logoutEl) logoutEl.classList.toggle("hidden", !showLogout);
       if (devTriggerEl) devTriggerEl.classList.toggle("hidden", state.currentUser !== null);
       if (studentNavEl) studentNavEl.classList.toggle("hidden", !showStudentNav);
@@ -9138,8 +9144,8 @@
             const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t2.monthly_badge || "Monthly") + "</span>" : "";
             const displayName = (state.students || []).find((st) => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || "\u2014";
             const rowStyle = s.status === "cancelled" ? " opacity: 0.7;" : "";
-            const pendingActions = isAure2 && s.status === "pending" ? `<span style="margin-left: 6px;"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t2.aure_approve || "Approve"}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t2.aure_reject || "Reject"}</button></span>` : "";
-            return `<div class="admin-reg-student-row" style="${rowStyle} display: flex; align-items: center; flex-wrap: wrap;">${statusIcon}<span style="font-size: 0.8rem; font-weight: 500;">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span><span style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-left: auto;">${statusLabel}</span>${pendingActions}</div>`;
+            const pendingActions = isAure2 && s.status === "pending" ? `<span class="admin-reg-student-actions"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t2.aure_approve || "Approve"}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t2.aure_reject || "Reject"}</button></span>` : "";
+            return `<div class="admin-reg-student-row" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><span class="admin-reg-student-name">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span><span class="admin-reg-student-status">${statusLabel}</span>${pendingActions}</div>`;
           };
           return `
                     <div class="admin-reg-section ${state.adminRegExpanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
@@ -9223,7 +9229,6 @@
               const maxCap = (state.classes || []).find((cl) => cl.id === g.students[0]?.class_id)?.max_capacity;
               const registeredCount = g.students.filter((s) => s.status === "registered" || s.status === "pending").length;
               const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
-              const spotsLeft = maxCap != null ? Math.max(0, maxCap - registeredCount) : null;
               const registeredStudents = g.students.filter((s) => s.status === "registered" || s.status === "attended" || s.status === "no_show" || s.status === "pending");
               const cancelledStudents = g.students.filter((s) => s.status === "cancelled");
               const cardKey = (g.students[0]?.class_id || "") + "_" + (g.class_date || "");
@@ -9239,7 +9244,6 @@
                                                     </div>
                                                     <div class="admin-reg-segment-right">
                                                         <span class="admin-reg-segment-count">${capLabel}</span>
-                                                        ${spotsLeft !== null ? `<span class="admin-reg-segment-spots">${(t2.spots_left || "{n} spots left").replace("{n}", spotsLeft)}</span>` : ""}
                                                         <i data-lucide="chevron-${segmentExpanded ? "down" : "right"}" size="18" class="admin-reg-segment-chevron"></i>
                                                     </div>
                                                 </button>
@@ -16088,7 +16092,7 @@ School: ${schoolName}`)) return;
     const hasEmail = (s.email || "").trim().length > 0;
     const canInvite = hasEmail && !isLinked && !isInvited;
     const activationBadge = isLinked ? `<span class="student-card-activation-badge linked" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--system-green); margin-left: 6px;">${t2("activation_status_linked") || "Linked"}</span>` : isInvited ? `<span class="student-card-activation-badge invited" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-left: 6px;">${t2("activation_status_invited") || "Invited"}</span>` : "";
-    const inviteBtn = canInvite ? `<button type="button" class="student-card-invite-btn" onclick="event.stopPropagation(); event.preventDefault(); window.inviteStudentActivation('${String(s.id).replace(/'/g, "\\'")}');" style="margin-top: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--system-gray6); color: var(--text-primary); cursor: pointer; flex-shrink: 0;">${t2("invite_activation") || "Invite to activate"}</button>` : "";
+    const inviteBtn = canInvite ? `<button type="button" class="student-card-invite-btn" onclick="event.stopPropagation(); event.preventDefault(); window.inviteStudentActivation('${String(s.id).replace(/'/g, "\\'")}');">${t2("invite_activation") || "Invite to activate"}</button>` : "";
     return `
         <div class="student-card" onclick="updateStudentPrompt('${escapeHtml(s.id)}')">
             <div class="student-card-avatar">${escapeHtml((s.name || "").charAt(0).toUpperCase())}</div>
