@@ -439,9 +439,9 @@ body.dark-mode[data-school-theme="aure"] .nav-badge,
 body.dark-mode[data-school-theme="aure"] .logo-img,
 [data-theme="dark"][data-school-theme="aure"] .logo-img {
     /* Keep visible but avoid a harsh pure-white mark in Aure dark mode. */
-    filter: grayscale(1) brightness(1.35) contrast(0.88);
-    mix-blend-mode: screen;
-    opacity: 0.84;
+    filter: grayscale(1) brightness(1.18) contrast(0.92);
+    mix-blend-mode: soft-light;
+    opacity: 0.78;
 }
 body.dark-mode[data-school-theme="aure"] .ios-list,
 body.dark-mode[data-school-theme="aure"] .ios-list-item,
@@ -730,15 +730,21 @@ body.dark-mode[data-school-theme="aure"] .reg-badge-blocked,
         padding: 0.4rem 0.52rem 0.58rem;
     }
     .admin-reg-student-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
         gap: 4px;
     }
     .admin-reg-student-name {
         font-size: 0.75rem;
-        flex: 1 1 auto;
+        flex: 1 1 calc(100% - 26px);
+        min-width: 0;
         order: 1;
+        line-height: 1.2;
     }
     .admin-reg-student-icon {
         order: 0;
+        margin-top: 1px;
     }
     .admin-reg-student-status {
         order: 2;

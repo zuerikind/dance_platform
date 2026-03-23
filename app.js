@@ -6207,6 +6207,11 @@
       if (devTriggerEl) devTriggerEl.classList.toggle("hidden", state.currentUser !== null);
       if (studentNavEl) studentNavEl.classList.toggle("hidden", !showStudentNav);
       if (adminNavEl) adminNavEl.classList.toggle("hidden", !showNav || !state.isAdmin);
+      if (view === "admin-settings") {
+        const rootEl = document.documentElement;
+        if (rootEl) rootEl.scrollLeft = 0;
+        if (document.body) document.body.scrollLeft = 0;
+      }
       if (studentNavEl && studentNavEl.children) {
         const isPrivateTeacher = state.currentSchool?.profile_type === "private_teacher";
         const navItems = [
