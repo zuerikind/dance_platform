@@ -1312,6 +1312,7 @@ const DANCE_LOCALES = {
         total_classes_label: "Clases Restantes (Total)",
         pack_details_title: "Paquetes Detalles",
         reg_date_label: "Fecha de Registro",
+        date_label: "fecha",
         dates_label: "fechas",
         next_expiry_label: "Próximo Vencimiento",
         delete_perm_label: "Eliminar Alumno permanentemente",
@@ -2201,6 +2202,7 @@ const DANCE_LOCALES = {
         total_classes_label: "Stunden insgesamt",
         pack_details_title: "Paket-Details",
         reg_date_label: "Registriert am",
+        date_label: "Termin",
         dates_label: "Termine",
         next_expiry_label: "Nächster Ablauf",
         delete_perm_label: "Schüler dauerhaft löschen",
@@ -7322,7 +7324,6 @@ function _renderViewImpl() {
                     const monthLabel = new Date(viewYear, viewMonthNum - 1, 1).toLocaleDateString(state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US', { month: 'long', year: 'numeric' });
                     const prevMonth = viewMonthNum === 1 ? (viewYear - 1) + '-12' : viewYear + '-' + String(viewMonthNum - 1).padStart(2, '0');
                     const nextMonth = viewMonthNum === 12 ? (viewYear + 1) + '-01' : viewYear + '-' + String(viewMonthNum + 1).padStart(2, '0');
-                    const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.length, 0);
                     const locale = state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US';
                     const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
                     const getWeekdayName = (dow) => new Date(2024, 0, dow === 0 ? 7 : dow).toLocaleDateString(locale, { weekday: 'long' });
@@ -7334,6 +7335,12 @@ function _renderViewImpl() {
                     });
                     state.adminRegSegmentExpanded = state.adminRegSegmentExpanded || {};
                     const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
+                    const countsTowardRegistradosLine = (s) => {
+                        if (!s || s.status === 'cancelled') return false;
+                        if (isAure && s.status === 'pending') return false;
+                        return true;
+                    };
+                    const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.filter(countsTowardRegistradosLine).length, 0);
                     state.adminRegTab = state.adminRegTab || 'registered';
                     const pendingList = (weekRegs || []).filter(r => r.status === 'pending').sort((a, b) => (a.class_date || '').localeCompare(b.class_date || '') || (a.class_time || '').localeCompare(b.class_time || '') || ((a.student_name || '').localeCompare(b.student_name || '')));
                     const getLevelLabel = (lev) => !lev || lev === '' ? (t.aure_level_not_set || 'Not set') : lev === 'principiante' ? (t.aure_level_principiante || 'Principiante') : lev === 'avanzada' ? (t.aure_level_avanzada || 'Avanzada') : lev;
@@ -7418,7 +7425,7 @@ function _renderViewImpl() {
                                 const dayOccurrences = dayGroups[dow] || [];
                                 if (dayOccurrences.length === 0) return '';
                                 const dayName = getWeekdayName(dow);
-                                const dayTotal = dayOccurrences.reduce((sum, g) => sum + g.students.length, 0);
+                                const dayTotal = dayOccurrences.reduce((sum, g) => sum + g.students.filter(countsTowardRegistradosLine).length, 0);
                                 return `
                                 <div class="admin-reg-day-box">
                                     <div class="admin-reg-day-title">${dayName}</div>
@@ -7429,7 +7436,7 @@ function _renderViewImpl() {
                                             const dateShort = dateObj.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
                                             const dateLabel = window.formatShortDate(dateObj, state.language);
                                             const maxCap = (state.classes || []).find(cl => cl.id === g.students[0]?.class_id)?.max_capacity;
-                                            const registeredCount = g.students.filter(s => s.status === 'registered' || s.status === 'pending').length;
+                                            const registeredCount = g.students.filter(countsTowardRegistradosLine).length;
                                             const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
                                             const registeredStudents = g.students.filter(s => s.status === 'registered' || s.status === 'attended' || s.status === 'no_show' || s.status === 'pending');
                                             const cancelledStudents = g.students.filter(s => s.status === 'cancelled');
