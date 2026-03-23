@@ -6148,6 +6148,13 @@
     const container = document.querySelector(`.${containerClass}`);
     if (content) content.style.display = state[stateKey] ? "" : "none";
     if (container) container.classList.toggle("expanded", !!state[stateKey]);
+    if (key === "settingsAdvanced") {
+      const rootEl = document.documentElement;
+      if (rootEl) rootEl.scrollLeft = 0;
+      if (document.body) document.body.scrollLeft = 0;
+      const appRoot = document.getElementById("app-root");
+      if (appRoot) appRoot.scrollLeft = 0;
+    }
   };
   function scheduleDeferredRender() {
     if (_deferredRenderTimer) clearTimeout(_deferredRenderTimer);
@@ -6213,6 +6220,8 @@
         const rootEl = document.documentElement;
         if (rootEl) rootEl.scrollLeft = 0;
         if (document.body) document.body.scrollLeft = 0;
+        const appRoot = document.getElementById("app-root");
+        if (appRoot) appRoot.scrollLeft = 0;
       }
       if (studentNavEl && studentNavEl.children) {
         const isPrivateTeacher = state.currentSchool?.profile_type === "private_teacher";
@@ -10500,6 +10509,17 @@
                             </label>
                         </div>
                     </div>
+                    <div class="admin-private-classes-toggle-card">
+                        <div class="admin-private-contact-title">${t2.registration_enabled}</div>
+                        <p class="admin-private-contact-desc">${t2.registration_enabled_desc}</p>
+                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
+                            <span style="font-size: 15px; font-weight: 600;">${t2.registration_enabled}</span>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${state.currentSchool?.class_registration_enabled ? "checked" : ""} onchange="window.toggleClassRegistration(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
                     ${state.currentSchool?.monthly_registration_enabled || state.currentSchool?.profile_type === "private_teacher" ? `
                     <div class="admin-private-classes-toggle-card">
                         <div class="admin-private-contact-title">${t2.offer_monthly_registration || "Offer monthly class registration"}</div>
@@ -10584,30 +10604,15 @@
                         </div>
                     </div>
 
+                    ${state.currentSchool?.jack_and_jill_enabled === true ? `
                     <div style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem;">${t2.additional_features}</div>
                     <div style="margin-bottom: 1rem;">
-                        <div class="card" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="flex: 1;">
-                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                                        <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
-                                        ${t2.registration_enabled}
-                                    </div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; padding-left: 26px;">${t2.registration_enabled_desc}</div>
-                                </div>
-                                <label class="toggle-switch" style="flex-shrink: 0; margin-left: 12px;">
-                                    <input type="checkbox" class="toggle-switch-input" ${state.currentSchool?.class_registration_enabled ? "checked" : ""} onchange="window.toggleClassRegistration(this.checked)">
-                                    <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                                </label>
-                            </div>
-                        </div>
-                        ${state.currentSchool?.jack_and_jill_enabled === true ? `
                         <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">${t2.create_new_competition}</div>
                         <button class="btn-primary" onclick="navigateToAdminJackAndJill(state.currentSchool?.id, null)" style="width: 100%; border-radius: 14px; height: 48px; font-size: 15px; font-weight: 600;">
                             <i data-lucide="trophy" size="16" style="margin-right: 8px;"></i> ${t2.jack_and_jill}
                         </button>
-                        ` : ""}
                     </div>
+                    ` : ""}
                 </div>
             </div>
                     ` : ""}

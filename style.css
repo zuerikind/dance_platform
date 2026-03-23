@@ -438,10 +438,10 @@ body.dark-mode[data-school-theme="aure"] .nav-badge,
 }
 body.dark-mode[data-school-theme="aure"] .logo-img,
 [data-theme="dark"][data-school-theme="aure"] .logo-img {
-    /* Keep visible but avoid a harsh pure-white mark in Aure dark mode. */
-    filter: grayscale(1) brightness(1.18) contrast(0.92);
-    mix-blend-mode: soft-light;
-    opacity: 0.78;
+    /* Softer than global invert+screen: dim + slight warmth so it reads as a logo, not a white slab. */
+    filter: invert(1) brightness(0.8) sepia(0.12) hue-rotate(300deg) saturate(0.35);
+    mix-blend-mode: normal;
+    opacity: 0.9;
 }
 body.dark-mode[data-school-theme="aure"] .ios-list,
 body.dark-mode[data-school-theme="aure"] .ios-list-item,
@@ -729,36 +729,16 @@ body.dark-mode[data-school-theme="aure"] .reg-badge-blocked,
     .admin-reg-segment-body {
         padding: 0.4rem 0.52rem 0.58rem;
     }
-    .admin-reg-student-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        gap: 4px;
-    }
+    /* Student row layout: inherit grid from max-width 768px block (do not use flex here or name gets squished). */
     .admin-reg-student-name {
         font-size: 0.75rem;
-        flex: 1 1 calc(100% - 26px);
-        min-width: 0;
-        order: 1;
         line-height: 1.2;
     }
     .admin-reg-student-icon {
-        order: 0;
         margin-top: 1px;
     }
     .admin-reg-student-status {
-        order: 2;
-        flex: 1 1 100%;
-        margin-left: 20px;
         font-size: 0.62rem;
-        white-space: normal;
-        line-height: 1.25;
-        overflow-wrap: anywhere;
-    }
-    .admin-reg-student-actions {
-        order: 3;
-        margin-left: 0;
-        width: 100%;
     }
 }
 
@@ -992,6 +972,48 @@ body.dark-mode[data-school-theme="aure"] .student-card-chevron,
     .container.container-settings button {
         max-width: 100%;
     }
+    /* Admin registros: long status text (e.g. auto-discount) must not squeeze the name — stack on narrow viewports. */
+    .admin-reg-student-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: start;
+        column-gap: 8px;
+        row-gap: 4px;
+    }
+    .admin-reg-student-icon {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .admin-reg-student-name {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        flex: none;
+    }
+    .admin-reg-student-status {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin-left: 0 !important;
+        max-width: 100%;
+        white-space: normal;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+    .admin-reg-student-actions {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+/* Settings: nested expandable content must not widen past viewport (avoids horizontal “stuck” feel on mobile). */
+.settings-advanced-expandable,
+#settings-advanced-content {
+    max-width: 100%;
+    overflow-x: hidden;
+    min-width: 0;
 }
 
 /* Text selection: visible in both themes */
