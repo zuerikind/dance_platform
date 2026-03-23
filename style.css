@@ -985,6 +985,7 @@ html {
     overflow-x: hidden;
     max-width: 100%;
     width: 100%;
+    text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
 }
 
@@ -1010,6 +1011,20 @@ body {
 }
 body.landing-page {
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+/* Mobile Safari focus-zoom guard: keep form controls at >=16px on phones. */
+@media (max-width: 768px) {
+    input,
+    textarea,
+    select,
+    .students-search,
+    .minimal-input,
+    .ios-input,
+    .ios-select,
+    .filter-control {
+        font-size: 16px !important;
+    }
 }
 
 main#app-root {
