@@ -2176,6 +2176,8 @@
       next_expiry_label: "Next Expiry",
       delete_perm_label: "Delete member permanently",
       admin_pass_req: "Admin Password Required:",
+      admin_password_gate_hint: "Enter your admin password to continue.",
+      admin_password_continue: "Continue",
       leave_blank_keep: "leave blank to keep",
       invalid_pass_msg: "Incorrect Admin Password.",
       save_btn: "Save",
@@ -2982,6 +2984,8 @@
       next_expiry_label: "Pr\xF3ximo Vencimiento",
       delete_perm_label: "Eliminar Alumno permanentemente",
       admin_pass_req: "Password Admin Requerido:",
+      admin_password_gate_hint: "Introduce tu contrase\xF1a de administrador para continuar.",
+      admin_password_continue: "Continuar",
       leave_blank_keep: "dejar en blanco para mantener",
       invalid_pass_msg: "Contrase\xF1a Incorrecta.",
       save_btn: "Guardar",
@@ -3884,6 +3888,8 @@
       next_expiry_label: "N\xE4chster Ablauf",
       delete_perm_label: "Sch\xFCler dauerhaft l\xF6schen",
       admin_pass_req: "Admin-Passwort erforderlich:",
+      admin_password_gate_hint: "Gib dein Admin-Passwort ein, um fortzufahren.",
+      admin_password_continue: "Weiter",
       leave_blank_keep: "leer lassen um beizubehalten",
       invalid_pass_msg: "Falsches Admin-Passwort.",
       save_btn: "Speichern",
@@ -11113,6 +11119,65 @@
     modal.classList.remove("hidden");
     if (window.lucide) window.lucide.createIcons();
   };
+  window.promptAdminPasswordGate = () => new Promise((resolve) => {
+    const modal = document.getElementById("message-modal");
+    const iconEl = document.getElementById("message-modal-icon");
+    const titleEl = document.getElementById("message-modal-title");
+    const bodyEl = document.getElementById("message-modal-body");
+    const actionsEl = document.getElementById("message-modal-actions");
+    if (!modal || !iconEl || !titleEl || !bodyEl || !actionsEl) {
+      resolve(null);
+      return;
+    }
+    const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const phAttr = String(t2("admin_password_placeholder") || t2("password_label") || "Password").replace(/"/g, "&quot;");
+    const close = () => {
+      modal.classList.add("hidden");
+      bodyEl.innerHTML = "";
+      bodyEl.style.display = "";
+      document.removeEventListener("keydown", onKey);
+    };
+    const finish = (value) => {
+      close();
+      resolve(value);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        finish(null);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    iconEl.className = "message-modal-icon message-modal-icon-warning";
+    iconEl.innerHTML = '<i data-lucide="shield" size="30"></i>';
+    titleEl.textContent = t2("admin_pass_req");
+    bodyEl.style.display = "";
+    bodyEl.innerHTML = `<p class="message-modal-password-hint" style="margin:0 0 12px;font-size:14px;line-height:1.4;color:var(--text-secondary);">${esc(t2("admin_password_gate_hint") || "")}</p><input type="password" id="admin-password-gate-input" class="minimal-input" autocomplete="current-password" placeholder="${phAttr}" style="width:100%;box-sizing:border-box;" />`;
+    actionsEl.className = "message-modal-actions message-modal-actions-row message-modal-actions-with-cancel";
+    actionsEl.innerHTML = '<div class="message-modal-actions-main"><button type="button" class="btn-primary" style="flex:1;"></button></div><button type="button" class="btn-secondary message-modal-cancel"></button>';
+    const okBtn = actionsEl.querySelector(".btn-primary");
+    const cancelBtn = actionsEl.querySelector(".message-modal-cancel");
+    if (okBtn) okBtn.textContent = t2("admin_password_continue") || "Continue";
+    if (cancelBtn) cancelBtn.textContent = t2("cancel") || "Cancel";
+    const input = document.getElementById("admin-password-gate-input");
+    const submit = () => finish(input ? String(input.value) : "");
+    if (okBtn) okBtn.onclick = () => submit();
+    if (cancelBtn) cancelBtn.onclick = () => finish(null);
+    if (input) {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          submit();
+        }
+      });
+    }
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+      if (input) input.focus();
+    }, 80);
+    if (window.lucide) window.lucide.createIcons();
+  });
   window.showRegisterSuccessModal = (registrationId, canCancelFromSuccess) => {
     const t2 = typeof window.t === "function" ? window.t : (k) => k;
     window.showMessageModal({
@@ -16193,7 +16258,7 @@ School: ${schoolName}`)) return;
     if (!state.isAdmin || !state.currentSchool?.id) return;
     const adminUsername = (state.currentUser?.name || "").replace(/\s*\(Admin\)\s*$/i, "").trim();
     if (!adminUsername) return;
-    const adminPassword = prompt(t2("admin_pass_req") + "\n" + (t2("password_label") || "Password"));
+    const adminPassword = await window.promptAdminPasswordGate();
     if (adminPassword == null) return;
     if (supabaseClient) {
       const { data: adminRows, error } = await supabaseClient.rpc("get_admin_by_credentials", {

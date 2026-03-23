@@ -328,8 +328,8 @@ body.dark-mode[data-school-theme="aure"],
     --secondary: #f1e7ec;
     --border: rgba(221, 188, 204, 0.24);
     /*
-     * Filled pills / selected tabs use inline “background: var(--secondary); color: white”.
-     * Aure’s --secondary is light, so map selected controls to a dark fill + light text instead.
+     * Many controls used “background: var(--secondary); color: white”. Here --secondary is light ink,
+     * not a fill. Use --control-selected-* for pills, tabs (JS), Aprobar, schedule tile CTAs, etc.
      */
     --control-selected-fill: #4a3a45;
     --control-selected-text: #faf6f9;
@@ -5286,8 +5286,8 @@ select.filter-control {
   padding: 0.6rem 1rem;
   border: none;
   border-radius: 12px;
-  background: var(--secondary);
-  color: white;
+  background: var(--control-selected-fill, var(--secondary));
+  color: var(--control-selected-text, #fff);
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -5566,11 +5566,11 @@ select.filter-control {
   transition: all 0.2s ease;
 }
 .tile-join-btn:hover {
-  background: var(--secondary);
-  color: var(--bg-card);
+  background: var(--control-selected-fill, var(--secondary));
+  color: var(--control-selected-text, var(--bg-card));
 }
 .dark-mode .tile-join-btn:hover {
-  color: var(--text-primary);
+  color: var(--control-selected-text, var(--text-primary));
 }
 .tile-join-btn:active {
   transform: scale(0.96);
@@ -5591,8 +5591,8 @@ select.filter-control {
   transition: all 0.2s ease;
 }
 .tile-reg-btn:hover {
-  background: var(--secondary);
-  color: white;
+  background: var(--control-selected-fill, var(--secondary));
+  color: var(--control-selected-text, #fff);
 }
 .tile-reg-btn:active {
   transform: scale(0.9);
@@ -6034,9 +6034,10 @@ body.dark-mode .admin-reg-tab:hover {
 .admin-reg-request-btn:hover {
   opacity: 0.9;
 }
+/* Use same tokens as tab/pill “selected” states: Aure dark --secondary is light ink, not a fill. */
 .admin-reg-request-btn.accept {
-  background: var(--secondary);
-  color: white;
+  background: var(--control-selected-fill, var(--secondary));
+  color: var(--control-selected-text, #fff);
 }
 .admin-reg-request-btn.decline {
   background: var(--system-gray5, rgba(0, 0, 0, 0.08));
