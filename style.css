@@ -313,18 +313,26 @@ body.dark-mode[data-school-theme="aure"],
     --bg-card: #31252d;
     --bg-body-grouped: #2a2027;
     --text-primary: #f1e7ec;
-    --text-secondary: #c9b6c0;
+    /* Slightly brighter than before for secondary labels (email, hints) on violet backgrounds */
+    --text-secondary: #dccad1;
     --border-color: rgba(221, 188, 204, 0.2);
     --background: #241c22;
     --surface: rgba(62, 47, 58, 0.68);
     --surface-solid: #2f232b;
     --text: #f1e7ec;
-    --text-muted: #c9b6c0;
+    --text-muted: #d0bec6;
     --primary: #d7b3c3;
     --accent: #d7b3c3;
     --primary-soft: rgba(215, 179, 195, 0.17);
+    /* Kept light for borders/icons that expect a “light ink” on dark (e.g. checkmarks). */
     --secondary: #f1e7ec;
     --border: rgba(221, 188, 204, 0.24);
+    /*
+     * Filled pills / selected tabs use inline “background: var(--secondary); color: white”.
+     * Aure’s --secondary is light, so map selected controls to a dark fill + light text instead.
+     */
+    --control-selected-fill: #4a3a45;
+    --control-selected-text: #faf6f9;
 }
 
 /* Aure visual polish for logged-in UI chrome and containers */
@@ -471,12 +479,13 @@ body.dark-mode[data-school-theme="aure"] .admin-reg-request-card,
 }
 body.dark-mode[data-school-theme="aure"] .admin-reg-tab,
 [data-theme="dark"][data-school-theme="aure"] .admin-reg-tab {
-    color: #d8c2cc;
+    color: #e8d6de;
 }
 body.dark-mode[data-school-theme="aure"] .admin-reg-tab.active,
 [data-theme="dark"][data-school-theme="aure"] .admin-reg-tab.active {
-    background: rgba(215, 179, 195, 0.2);
-    color: #f7edf2;
+    background: rgba(90, 72, 84, 0.92);
+    color: #faf6f9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 body.dark-mode[data-school-theme="aure"] .students-search,
 body.dark-mode[data-school-theme="aure"] .minimal-input,
@@ -862,6 +871,19 @@ body.dark-mode[data-school-theme="aure"] .student-card-invite-btn,
 body.dark-mode[data-school-theme="aure"] .student-card-chevron,
 [data-theme="dark"][data-school-theme="aure"] .student-card-chevron {
     color: rgba(230, 210, 220, 0.8);
+}
+/* Aure nivel subtab: native select + Todos/Nivel pills must stay readable */
+body.dark-mode[data-school-theme="aure"] .student-card select.student-level-select,
+[data-theme="dark"][data-school-theme="aure"] .student-card select.student-level-select {
+    background-color: #3a2d35;
+    color: #faf6f9;
+    border-color: rgba(230, 210, 220, 0.48);
+}
+body.dark-mode[data-school-theme="aure"] .admin-students-tabs .btn-tab.active,
+[data-theme="dark"][data-school-theme="aure"] .admin-students-tabs .btn-tab.active {
+    background: var(--control-selected-fill) !important;
+    color: var(--control-selected-text) !important;
+    border-color: rgba(230, 210, 220, 0.35) !important;
 }
 
 /* Settings mobile hardening: toggles, schedule editor, and plan cards */

@@ -7879,7 +7879,7 @@
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
                             <span style="font-weight: 700; font-size: 15px;">${t22.my_private_classes || "My private classes"}</span>
-                            ${myClasses.length > 0 ? `<span style="background: var(--secondary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ""}
+                            ${myClasses.length > 0 ? `<span style="background: var(--control-selected-fill, var(--secondary)); color: var(--control-selected-text, #fff); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ""}
                         </div>
                         <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
                             <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t22.export_all_to_calendar || "Export all to your calendar"}</button>
@@ -8981,7 +8981,7 @@
                 return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
                                     <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || "").charAt(0).toUpperCase()}</div>
                                     <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${(s.name || s.email || s.id || "").toString().replace(/</g, "&lt;")}</div><div style="font-size: 12px; color: var(--text-secondary);">${(s.email || "").toString().replace(/</g, "&lt;")}</div></div>
-                                    <select style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${String(s.id).replace(/'/g, "\\'")}', this.value)">
+                                    <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${String(s.id).replace(/'/g, "\\'")}', this.value)">
                                         <option value="" ${lev === "" ? "selected" : ""}>${t2.aure_level_not_set || "Not set"}</option>
                                         <option value="principiante" ${lev === "principiante" ? "selected" : ""}>${t2.aure_level_principiante || "Principiante"}</option>
                                         <option value="avanzada" ${lev === "avanzada" ? "selected" : ""}>${t2.aure_level_avanzada || "Avanzada"}</option>
@@ -9001,8 +9001,8 @@
                     <h1 class="students-title">${t2.nav_students}</h1>
                     ${isAure ? `
                     <div class="admin-students-tabs" style="display: flex; gap: 4px; margin-top: 10px;">
-                        <button type="button" class="btn-tab ${adminStudentsSubtab === "lista" ? "active" : ""}" onclick="state.adminStudentsSubtab='lista'; renderView();" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: ${adminStudentsSubtab === "lista" ? "var(--secondary)" : "transparent"}; color: ${adminStudentsSubtab === "lista" ? "white" : "var(--text-primary)"};">${t2.filter_all || "Lista"}</button>
-                        <button type="button" class="btn-tab ${adminStudentsSubtab === "nivel" ? "active" : ""}" onclick="state.adminStudentsSubtab='nivel'; renderView();" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: ${adminStudentsSubtab === "nivel" ? "var(--secondary)" : "transparent"}; color: ${adminStudentsSubtab === "nivel" ? "white" : "var(--text-primary)"};">${t2.aure_level_subtab || "Nivel"}</button>
+                        <button type="button" class="btn-tab ${adminStudentsSubtab === "lista" ? "active" : ""}" onclick="state.adminStudentsSubtab='lista'; renderView();" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: ${adminStudentsSubtab === "lista" ? "var(--control-selected-fill, var(--secondary))" : "transparent"}; color: ${adminStudentsSubtab === "lista" ? "var(--control-selected-text, #fff)" : "var(--text-primary)"};">${t2.filter_all || "Lista"}</button>
+                        <button type="button" class="btn-tab ${adminStudentsSubtab === "nivel" ? "active" : ""}" onclick="state.adminStudentsSubtab='nivel'; renderView();" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: ${adminStudentsSubtab === "nivel" ? "var(--control-selected-fill, var(--secondary))" : "transparent"}; color: ${adminStudentsSubtab === "nivel" ? "var(--control-selected-text, #fff)" : "var(--text-primary)"};">${t2.aure_level_subtab || "Nivel"}</button>
                     </div>
                     ` : ""}
                     <div class="students-actions">
@@ -9177,7 +9177,7 @@
                                 <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500;">${monthLabel}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                ${filteredRegCount > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${filteredRegCount}</span>` : ""}
+                                ${filteredRegCount > 0 ? `<span style="background: var(--control-selected-fill, var(--secondary)); color: var(--control-selected-text, #fff); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${filteredRegCount}</span>` : ""}
                                 <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
                         </div>
@@ -9308,15 +9308,15 @@
                             <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1;" onclick="toggleExpandableNoRender('teacherAcceptedClasses')">
                                 <i data-lucide="calendar-check" size="16" style="opacity: 0.6;"></i>
                                 <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.accepted_private_classes || "Accepted private classes"}</span>
-                                ${(lessons.length || acceptedReqs.length) > 0 ? `<span style="background: var(--secondary); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${lessons.length || acceptedReqs.length}</span>` : ""}
+                                ${(lessons.length || acceptedReqs.length) > 0 ? `<span style="background: var(--control-selected-fill, var(--secondary)); color: var(--control-selected-text, #fff); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${lessons.length || acceptedReqs.length}</span>` : ""}
                                 <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
                             <button type="button" class="btn-ghost" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || "Export all to your calendar"}</button>
                         </div>
                         <div id="teacher-accepted-classes-content" style="padding: 0.8rem 0; display: ${expanded ? "" : "none"};">
                             <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                                <button type="button" class="btn-tab ${viewMode === "list" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "list" ? "var(--secondary)" : "transparent"}; color: ${viewMode === "list" ? "white" : "var(--text-primary)"};">${t2.list_view || "List"}</button>
-                                <button type="button" class="btn-tab ${viewMode === "calendar" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "calendar" ? "var(--secondary)" : "transparent"}; color: ${viewMode === "calendar" ? "white" : "var(--text-primary)"};">${t2.calendar_view || "Calendar"}</button>
+                                <button type="button" class="btn-tab ${viewMode === "list" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "list" ? "var(--control-selected-fill, var(--secondary))" : "transparent"}; color: ${viewMode === "list" ? "var(--control-selected-text, #fff)" : "var(--text-primary)"};">${t2.list_view || "List"}</button>
+                                <button type="button" class="btn-tab ${viewMode === "calendar" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "calendar" ? "var(--control-selected-fill, var(--secondary))" : "transparent"}; color: ${viewMode === "calendar" ? "var(--control-selected-text, #fff)" : "var(--text-primary)"};">${t2.calendar_view || "Calendar"}</button>
                             </div>
                             ${todaysLessons.length > 0 ? `
                             <div style="margin-bottom: 12px; padding: 10px; background: var(--system-gray6); border-radius: 12px;">
