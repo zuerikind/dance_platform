@@ -8630,6 +8630,17 @@ function _renderViewImpl() {
                         </div>
                     </div>
                     ` : ''}
+                    <div class="admin-private-classes-toggle-card">
+                        <div class="admin-private-contact-title">${t.plan_expiry_fixed_date_label || 'Use fixed expiry date'}</div>
+                        <p class="admin-private-contact-desc">${t.plan_expiry_fixed_date_desc || 'When ON: Plans and students see a fixed expiry date (e.g. 28.02.2026). When OFF: Plans and students see validity in days (e.g. 30 days left).'}</p>
+                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
+                            <span style="font-size: 15px; font-weight: 600;">${t.plan_expiry_fixed_date_label || 'Use fixed expiry date'}</span>
+                            <label class="toggle-switch" style="flex-shrink: 0;">
+                                <input type="checkbox" class="toggle-switch-input" ${state._usePlanExpiryFixedDate ? 'checked' : ''} onchange="window.togglePlanExpiryFixedDate(this.checked)">
+                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
                     ${(state.currentSchool?.monthly_registration_enabled || state.currentSchool?.profile_type === 'private_teacher') ? `
                     <div class="admin-private-classes-toggle-card">
                         <div class="admin-private-contact-title">${t.offer_monthly_registration || 'Offer monthly class registration'}</div>
@@ -8643,17 +8654,6 @@ function _renderViewImpl() {
                         </div>
                     </div>
                     ` : ''}
-                    <div class="admin-private-classes-toggle-card">
-                        <div class="admin-private-contact-title">${t.plan_expiry_fixed_date_label || 'Use fixed expiry date'}</div>
-                        <p class="admin-private-contact-desc">${t.plan_expiry_fixed_date_desc || 'When ON: Plans and students see a fixed expiry date (e.g. 28.02.2026). When OFF: Plans and students see validity in days (e.g. 30 days left).'}</p>
-                        <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
-                            <span style="font-size: 15px; font-weight: 600;">${t.plan_expiry_fixed_date_label || 'Use fixed expiry date'}</span>
-                            <label class="toggle-switch" style="flex-shrink: 0;">
-                                <input type="checkbox" class="toggle-switch-input" ${state._usePlanExpiryFixedDate ? 'checked' : ''} onchange="window.togglePlanExpiryFixedDate(this.checked)">
-                                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                            </label>
-                        </div>
-                    </div>
                     <!-- Contacto clases particulares -->
                     <div class="admin-private-contact-card">
                         <div class="admin-private-contact-title">${t.private_contact_section}</div>
@@ -14242,10 +14242,7 @@ window.renderAdminStudentCard = (s) => {
     const act = state.studentActivationStatus && state.studentActivationStatus[s.id];
     const isLinked = act && act.linked;
     const isInvited = act && act.invited_at;
-    const hasEmail = (s.email || '').trim().length > 0;
-    const canInvite = hasEmail && !isLinked && !isInvited;
     const activationBadge = isLinked ? `<span class="student-card-activation-badge linked" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--system-green); margin-left: 6px;">${t('activation_status_linked') || 'Linked'}</span>` : (isInvited ? `<span class="student-card-activation-badge invited" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-left: 6px;">${t('activation_status_invited') || 'Invited'}</span>` : '');
-    const inviteBtn = canInvite ? `<button type="button" class="student-card-invite-btn" onclick="event.stopPropagation(); event.preventDefault(); window.inviteStudentActivation('${String(s.id).replace(/'/g, "\\'")}');">${t('invite_activation') || 'Invite to activate'}</button>` : '';
     return `
         <div class="student-card" onclick="updateStudentPrompt('${escapeHtml(s.id)}')">
             <div class="student-card-avatar">${escapeHtml((s.name || '').charAt(0).toUpperCase())}</div>
@@ -14254,7 +14251,6 @@ window.renderAdminStudentCard = (s) => {
                 <div class="student-card-meta">
                     <span class="balance">${balanceStr}</span>${packsHtml}
                 </div>
-                ${inviteBtn}
             </div>
             <span class="student-card-status ${statusClass}">${statusLabel}</span>
             <i data-lucide="chevron-right" size="18" class="student-card-chevron"></i>

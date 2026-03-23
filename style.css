@@ -438,10 +438,10 @@ body.dark-mode[data-school-theme="aure"] .nav-badge,
 }
 body.dark-mode[data-school-theme="aure"] .logo-img,
 [data-theme="dark"][data-school-theme="aure"] .logo-img {
-    /* multiply on dark plum made the mark disappear — keep a light, readable glyph */
-    filter: brightness(0) invert(1);
-    mix-blend-mode: normal;
-    opacity: 0.92;
+    /* Keep visible but avoid a harsh pure-white mark in Aure dark mode. */
+    filter: grayscale(1) brightness(1.35) contrast(0.88);
+    mix-blend-mode: screen;
+    opacity: 0.84;
 }
 body.dark-mode[data-school-theme="aure"] .ios-list,
 body.dark-mode[data-school-theme="aure"] .ios-list-item,
@@ -734,7 +734,7 @@ body.dark-mode[data-school-theme="aure"] .reg-badge-blocked,
     }
     .admin-reg-student-name {
         font-size: 0.75rem;
-        flex: 1 1 100%;
+        flex: 1 1 auto;
         order: 1;
     }
     .admin-reg-student-icon {
@@ -742,8 +742,12 @@ body.dark-mode[data-school-theme="aure"] .reg-badge-blocked,
     }
     .admin-reg-student-status {
         order: 2;
-        margin-left: 0;
+        flex: 1 1 100%;
+        margin-left: 20px;
         font-size: 0.62rem;
+        white-space: normal;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
     }
     .admin-reg-student-actions {
         order: 3;
@@ -953,6 +957,34 @@ body.dark-mode[data-school-theme="aure"] .student-card-chevron,
     .container.container-settings div[style*="grid-template-columns: repeat(2, 1fr)"][style*="padding: 0 1.2rem"] {
         padding-left: 0.6rem !important;
         padding-right: 0.6rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Extra guard: expanded settings sections must never force page-wide horizontal overflow. */
+    .container.container-settings {
+        max-width: 100% !important;
+        width: 100% !important;
+        overflow-x: hidden;
+    }
+    .container.container-settings .ios-list,
+    .container.container-settings .ios-list-item,
+    .container.container-settings .card,
+    .container.container-settings .admin-private-classes-toggle-card,
+    .container.container-settings .admin-private-contact-card {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+    .container.container-settings .ios-list-item > span:first-child {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .container.container-settings input,
+    .container.container-settings select,
+    .container.container-settings textarea,
+    .container.container-settings button {
+        max-width: 100%;
     }
 }
 
@@ -5610,6 +5642,7 @@ body.dark-mode .day-tile-today {
 .admin-reg-student-name {
   font-size: 0.8rem;
   font-weight: 500;
+  flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
 }
