@@ -11,6 +11,16 @@ function isAureSubdomain() {
 }
 import { state, saveState } from './state.js';
 
+/** YYYY-MM-DD in local timezone (matches window.formatClassDate when bundle load order differs). */
+function formatLocalClassDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 const CALENDLY_FEATURE_ENABLED = false;
 const FETCH_THROTTLE_MS = 1500;
 let _lastFetchEndTime = 0;
@@ -334,6 +344,7 @@ export async function fetchAllData() {
         }
         const currentSchoolObj = state.schools.find(s => s.id === sid) || state.currentSchool;
         if (currentSchoolObj?.profile_type === 'private_teacher' && supabaseClient) {
+            state.groupClassExceptions = [];
             try {
                 const { data: availData } = await supabaseClient.rpc('get_teacher_availability', { p_school_id: sid });
                 state.teacherAvailability = Array.isArray(availData) ? availData : [];
@@ -385,6 +396,24 @@ export async function fetchAllData() {
             state.teacherBlockedTimes = [];
             state.calendlyConnected = false;
             state.calendlyEventTypeSelection = null;
+            state.groupClassExceptions = [];
+            if (state.isAdmin && supabaseClient) {
+                try {
+                    const d0 = new Date();
+                    d0.setDate(d0.getDate() - 7);
+                    const d1 = new Date();
+                    d1.setDate(d1.getDate() + 180);
+                    const pStart = formatLocalClassDate(d0);
+                    const pEnd = formatLocalClassDate(d1);
+                    const { data: gceData } = await supabaseClient.rpc('get_group_class_exceptions', { p_school_id: sid, p_start_date: pStart, p_end_date: pEnd });
+                    if (gceData != null) {
+                        const arr = Array.isArray(gceData) ? gceData : (typeof gceData === 'string' ? JSON.parse(gceData) : []);
+                        state.groupClassExceptions = arr;
+                    }
+                } catch (_) {
+                    state.groupClassExceptions = [];
+                }
+            }
         }
         if (isStudent && state.currentSchool?.profile_type === 'private_teacher' && state.currentUser?.id && supabaseClient && sid) {
             try {

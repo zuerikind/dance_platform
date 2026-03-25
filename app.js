@@ -80,6 +80,7 @@
     adminStudentsFilterPackage: null,
     adminRevenueDateStart: null,
     adminRevenueDateEnd: null,
+    adminRevenueAllTime: false,
     adminRevenuePackageFilter: null,
     adminRevenueStatusFilter: null,
     adminRevenueMethodFilter: null,
@@ -99,6 +100,10 @@
     qrRegistrationsExpanded: true,
     todayRegistrations: [],
     classRegLoaded: false,
+    groupClassExceptions: [],
+    scheduleGroupClassExceptions: [],
+    scheduleExceptionsDataKey: null,
+    _scheduleExFetchInFlight: false,
     adminWeekRegistrations: [],
     adminWeekRegistrationsByMonth: {},
     adminRegExpanded: false,
@@ -471,6 +476,14 @@
     const h = window.location.hostname.toLowerCase();
     return h === "aure.bailadmin.lat" || h === "aurea.bailadmin.lat";
   }
+  function formatLocalClassDate(date) {
+    if (!date) return "";
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
   var CALENDLY_FEATURE_ENABLED = false;
   var FETCH_THROTTLE_MS = 1500;
   var _lastFetchEndTime = 0;
@@ -770,6 +783,7 @@
       }
       const currentSchoolObj = state.schools.find((s) => s.id === sid) || state.currentSchool;
       if (currentSchoolObj?.profile_type === "private_teacher" && supabaseClient) {
+        state.groupClassExceptions = [];
         try {
           const { data: availData } = await supabaseClient.rpc("get_teacher_availability", { p_school_id: sid });
           state.teacherAvailability = Array.isArray(availData) ? availData : [];
@@ -835,6 +849,24 @@
         state.teacherBlockedTimes = [];
         state.calendlyConnected = false;
         state.calendlyEventTypeSelection = null;
+        state.groupClassExceptions = [];
+        if (state.isAdmin && supabaseClient) {
+          try {
+            const d0 = /* @__PURE__ */ new Date();
+            d0.setDate(d0.getDate() - 7);
+            const d1 = /* @__PURE__ */ new Date();
+            d1.setDate(d1.getDate() + 180);
+            const pStart = formatLocalClassDate(d0);
+            const pEnd = formatLocalClassDate(d1);
+            const { data: gceData } = await supabaseClient.rpc("get_group_class_exceptions", { p_school_id: sid, p_start_date: pStart, p_end_date: pEnd });
+            if (gceData != null) {
+              const arr = Array.isArray(gceData) ? gceData : typeof gceData === "string" ? JSON.parse(gceData) : [];
+              state.groupClassExceptions = arr;
+            }
+          } catch (_) {
+            state.groupClassExceptions = [];
+          }
+        }
       }
       if (isStudent && state.currentSchool?.profile_type === "private_teacher" && state.currentUser?.id && supabaseClient && sid) {
         try {
@@ -2142,6 +2174,8 @@
       filter_no_pack: "No active pack",
       filter_package_type: "Packages",
       filter_this_month: "This Month",
+      filter_all_time: "All time",
+      revenue_total_all_time: "All-time total",
       filter_status: "Status",
       filter_method: "Method",
       filter_paid: "Paid",
@@ -2479,6 +2513,25 @@
       blocked_times_hint: "Block dates or times when you're not available. They won't appear in your availability.",
       add_blocker_btn: "Add blocked time",
       no_blocked_times: "No blocked times",
+      group_class_exceptions_title: "Class cancellations & special dates",
+      group_class_exceptions_hint: "Mark a date when a class is cancelled, add a note students will see, or describe a one-off special class. A whole-school day applies to every class that calendar day.",
+      add_class_exception_btn: "Add schedule exception",
+      no_class_exceptions: "No schedule exceptions",
+      class_exception_date: "Date",
+      class_exception_scope: "Applies to",
+      class_exception_scope_whole_day: "All classes this day",
+      class_exception_scope_one_class: "One class",
+      class_exception_kind: "Type",
+      class_exception_kind_cancelled: "Cancelled / no class",
+      class_exception_kind_info: "Note / announcement (blocks self-serve signup)",
+      class_exception_kind_special: "Special one-off (blocks registration)",
+      schedule_exception_badge_info: "Information",
+      schedule_exception_badge_cancelled: "No class",
+      schedule_exception_badge_special: "Special class",
+      class_exception_message: "Message for students",
+      class_exception_display_title: "Special title (optional)",
+      class_exception_display_time: "Special time text (optional)",
+      class_exception_select_class: "Class",
       blocker_reason_placeholder: "e.g. Travel",
       blocker_repeat_label: "Repeat",
       blocker_repeat_none: "Once",
@@ -2948,6 +3001,8 @@
       filter_no_pack: "Sin paquete activo",
       filter_package_type: "Paquetes",
       filter_this_month: "Este mes",
+      filter_all_time: "Desde siempre",
+      revenue_total_all_time: "Total (desde siempre)",
       filter_status: "Estado",
       filter_method: "M\xE9todo",
       filter_paid: "Pagado",
@@ -3286,6 +3341,25 @@
       blocked_times_hint: "Bloquea fechas u horarios en los que no est\xE9s disponible. No aparecer\xE1n en tu disponibilidad.",
       add_blocker_btn: "A\xF1adir bloqueo",
       no_blocked_times: "Sin bloqueos",
+      group_class_exceptions_title: "Cancelaciones y fechas especiales",
+      group_class_exceptions_hint: "Marca una fecha si no hay clase, a\xF1ade una nota visible para alumnos, o describe una clase especial \xFAnica. Un d\xEDa de toda la escuela aplica a todas las clases ese d\xEDa.",
+      add_class_exception_btn: "A\xF1adir excepci\xF3n al calendario",
+      no_class_exceptions: "Sin excepciones de horario",
+      class_exception_date: "Fecha",
+      class_exception_scope: "Aplica a",
+      class_exception_scope_whole_day: "Todas las clases este d\xEDa",
+      class_exception_scope_one_class: "Una clase",
+      class_exception_kind: "Tipo",
+      class_exception_kind_cancelled: "Cancelada / no hay clase",
+      class_exception_kind_info: "Nota / aviso (bloquea inscripci\xF3n del alumno)",
+      class_exception_kind_special: "Clase especial \xFAnica (bloquea inscripci\xF3n)",
+      schedule_exception_badge_info: "Informaci\xF3n",
+      schedule_exception_badge_cancelled: "Sin clase",
+      schedule_exception_badge_special: "Clase especial",
+      class_exception_message: "Mensaje para alumnos",
+      class_exception_display_title: "T\xEDtulo especial (opcional)",
+      class_exception_display_time: "Hora en texto (opcional)",
+      class_exception_select_class: "Clase",
       blocker_reason_placeholder: "ej. Viaje",
       blocker_repeat_label: "Repetir",
       blocker_repeat_none: "Una vez",
@@ -3820,6 +3894,8 @@
       filter_no_pack: "Ohne aktives Paket",
       filter_package_type: "Pakete",
       filter_this_month: "Dieser Monat",
+      filter_all_time: "Gesamte Zeit",
+      revenue_total_all_time: "Gesamtsumme (Zeitraum)",
       filter_status: "Status",
       filter_method: "Methode",
       filter_paid: "Bezahlt",
@@ -4134,6 +4210,25 @@
       blocked_times_hint: "Blokiere Daten oder Zeiten, in denen du nicht verf\xFCgbar bist. Sie erscheinen nicht in deiner Verf\xFCgbarkeit.",
       add_blocker_btn: "Sperrzeit hinzuf\xFCgen",
       no_blocked_times: "Keine Sperrzeiten",
+      group_class_exceptions_title: "Ausf\xE4lle & Sondertage",
+      group_class_exceptions_hint: "Markiere ein Datum ohne regul\xE4re Kursstunde, zeige eine Notiz f\xFCr Sch\xFCler, oder beschreibe eine einmalige Sonderstunde. Ganzt\xE4gig gilt f\xFCr alle Gruppenkurse an diesem Kalendertag.",
+      add_class_exception_btn: "Ausnahme hinzuf\xFCgen",
+      no_class_exceptions: "Keine Kalenderausnahmen",
+      class_exception_date: "Datum",
+      class_exception_scope: "Gilt f\xFCr",
+      class_exception_scope_whole_day: "Alle Kurse an diesem Tag",
+      class_exception_scope_one_class: "Ein Kurs",
+      class_exception_kind: "Art",
+      class_exception_kind_cancelled: "Entf\xE4llt / keine Stunde",
+      class_exception_kind_info: "Hinweis (keine Selbst-Anmeldung)",
+      class_exception_kind_special: "Sonderstunde (keine Anmeldung)",
+      schedule_exception_badge_info: "Hinweis",
+      schedule_exception_badge_cancelled: "F\xE4llt aus",
+      schedule_exception_badge_special: "Sonderstunde",
+      class_exception_message: "Nachricht f\xFCr Sch\xFCler",
+      class_exception_display_title: "Sondertitel (optional)",
+      class_exception_display_time: "Zeit als Text (optional)",
+      class_exception_select_class: "Kurs",
       blocker_reason_placeholder: "z. B. Reise",
       blocker_repeat_label: "Wiederholen",
       blocker_repeat_none: "Einmal",
@@ -8077,46 +8172,149 @@
           renderView();
           return;
         }
+        const scheduleWeekOffset = state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
         const regEnabled = !state.isAdmin && state.currentSchool?.class_registration_enabled;
-        if (regEnabled && !state.classRegLoaded) {
-          window.loadClassAvailability().then(() => {
-            if (shouldDeferRender()) scheduleDeferredRender();
-            else {
-              renderView();
-              if (window.lucide) window.lucide.createIcons();
+        if (!state.isAdmin && scheduleSchool?.profile_type !== "private_teacher") {
+          const exDataKey = `${state.currentSchool?.id}|${scheduleWeekOffset}|${state.scheduleView}`;
+          if (regEnabled) {
+            if ((!state.classRegLoaded || state.scheduleExceptionsDataKey !== exDataKey) && !state._scheduleExFetchInFlight) {
+              state._scheduleExFetchInFlight = true;
+              window.loadScheduleWeekData().then(() => {
+                state._scheduleExFetchInFlight = false;
+                state.scheduleExceptionsDataKey = `${state.currentSchool?.id}|${state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0}|${state.scheduleView}`;
+                if (shouldDeferRender()) scheduleDeferredRender();
+                else {
+                  renderView();
+                  if (window.lucide) window.lucide.createIcons();
+                }
+              }).catch(() => {
+                state._scheduleExFetchInFlight = false;
+              });
             }
-          }).catch(() => {
-          });
+          } else if (state.scheduleExceptionsDataKey !== exDataKey && !state._scheduleExFetchInFlight) {
+            state._scheduleExFetchInFlight = true;
+            window.loadScheduleWeekData().then(() => {
+              state._scheduleExFetchInFlight = false;
+              state.scheduleExceptionsDataKey = `${state.currentSchool?.id}|${state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0}|${state.scheduleView}`;
+              if (shouldDeferRender()) scheduleDeferredRender();
+              else {
+                renderView();
+                if (window.lucide) window.lucide.createIcons();
+              }
+            }).catch(() => {
+              state._scheduleExFetchInFlight = false;
+            });
+          }
         }
         const getRegInfo = (classObj, dateOverride) => {
-          if (!regEnabled || !state.classRegLoaded) return null;
+          if (state.isAdmin) return null;
           const useDate = dateOverride != null ? new Date(dateOverride) : window.getNextClassDate(classObj.day);
           if (!useDate) return null;
           const dateStr = window.formatClassDate(useDate);
-          const key = classObj.id + "_" + dateStr;
-          const avail = state.classAvailability[key] || {};
-          const regPool = state.mockDate ? [...state.studentRegistrations || [], ...state.studentPastRegistrations || []] : state.studentRegistrations || [];
-          const myReg = regPool.find((r) => r.class_id === classObj.id && r.class_date === dateStr && r.status === "registered");
-          const myPending = regPool.find((r) => r.class_id === classObj.id && r.class_date === dateStr && r.status === "pending");
           const classDateTime = /* @__PURE__ */ new Date(dateStr + "T" + (classObj.time || "23:59"));
           const nowMs = getVirtualNow().getTime();
           const isOver = classDateTime.getTime() <= nowMs;
+          let maxCapacity = null;
+          let registeredCount = 0;
+          let spotsLeft = null;
+          let occurrenceKind = null;
+          let occurrenceMessage = null;
+          let displayTitle = null;
+          let displayTime = null;
+          let registrationClosed = false;
+          if (regEnabled) {
+            if (!state.classRegLoaded) return null;
+            const key = classObj.id + "_" + dateStr;
+            const avail = state.classAvailability[key] || {};
+            maxCapacity = avail.max_capacity;
+            registeredCount = avail.registered_count || 0;
+            spotsLeft = avail.spots_left;
+            occurrenceKind = avail.occurrence_kind || null;
+            occurrenceMessage = avail.occurrence_message || null;
+            displayTitle = avail.display_title || null;
+            displayTime = avail.display_time || null;
+            const kindFromAvail = String(occurrenceKind || "").trim().toLowerCase();
+            occurrenceKind = kindFromAvail || null;
+            registrationClosed = avail.registration_closed === true || avail.registration_closed === "true" || kindFromAvail === "cancelled" || kindFromAvail === "special" || kindFromAvail === "info";
+          } else {
+            const ex = typeof window.resolveScheduleGroupException === "function" ? window.resolveScheduleGroupException(classObj.id, dateStr) : null;
+            if (ex) {
+              const ek = String(ex.exception_kind || "").trim().toLowerCase();
+              occurrenceKind = ek || ex.exception_kind || null;
+              occurrenceMessage = ex.message || null;
+              displayTitle = ex.display_title || null;
+              displayTime = ex.display_time || null;
+              registrationClosed = ek === "cancelled" || ek === "special" || ek === "info";
+            }
+          }
+          if (typeof window.resolveScheduleGroupException === "function") {
+            const exM = window.resolveScheduleGroupException(classObj.id, dateStr);
+            const kindM = exM ? String(exM.exception_kind || "").trim().toLowerCase() : "";
+            if (kindM === "cancelled" || kindM === "special" || kindM === "info") {
+              registrationClosed = true;
+              occurrenceKind = occurrenceKind || kindM;
+              if (exM.message && !occurrenceMessage) occurrenceMessage = exM.message;
+              if (exM.display_title && !displayTitle) displayTitle = exM.display_title;
+              if (exM.display_time && !displayTime) displayTime = exM.display_time;
+            }
+          }
+          const regPool = state.mockDate ? [...state.studentRegistrations || [], ...state.studentPastRegistrations || []] : state.studentRegistrations || [];
+          const myReg = regEnabled ? regPool.find((r) => r.class_id === classObj.id && r.class_date === dateStr && r.status === "registered") : null;
+          const myPending = regEnabled ? regPool.find((r) => r.class_id === classObj.id && r.class_date === dateStr && r.status === "pending") : null;
           return {
             dateStr,
-            maxCapacity: avail.max_capacity,
-            registeredCount: avail.registered_count || 0,
-            spotsLeft: avail.spots_left,
+            maxCapacity,
+            registeredCount,
+            spotsLeft,
             isRegistered: !!myReg,
             isPending: !!myPending,
             registrationId: myReg?.id,
             canCancel: myReg ? classDateTime.getTime() - nowMs > 4 * 60 * 60 * 1e3 : false,
-            isOver
+            isOver,
+            occurrenceKind,
+            occurrenceMessage,
+            displayTitle,
+            displayTime,
+            registrationClosed
           };
+        };
+        const scheduleExceptionBadgeLabel = (kind) => {
+          const k = String(kind || "").trim().toLowerCase();
+          if (k === "special") return t2.schedule_exception_badge_special || "Special class";
+          if (k === "info") return t2.schedule_exception_badge_info || "Information";
+          return t2.schedule_exception_badge_cancelled || "No class";
+        };
+        const scheduleExceptionNoticeHtml = (kind, specTitleHtml, specTimeHtml, occNoteHtml, forListCard) => {
+          const k = String(kind || "").trim().toLowerCase();
+          const labelEsc = String(scheduleExceptionBadgeLabel(k) || "").replace(/</g, "&lt;");
+          const icon = k === "info" ? "info" : "calendar-x";
+          const tone = k === "info" ? "schedule-exception-notice--tone-info" : k === "special" ? "schedule-exception-notice--tone-special" : "schedule-exception-notice--tone-muted";
+          const listMod = forListCard ? " schedule-exception-notice--list" : "";
+          const iconSize = forListCard ? 16 : 14;
+          return `<div class="schedule-exception-notice ${tone}${listMod}" role="status">
+                <div class="schedule-exception-notice__head">
+                    <span class="schedule-exception-notice__icon-wrap"><i data-lucide="${icon}" size="${iconSize}"></i></span>
+                    <span class="schedule-exception-notice__badge">${labelEsc}</span>
+                </div>
+                ${specTitleHtml ? `<p class="schedule-exception-notice__display-title">${specTitleHtml}</p>` : ""}
+                ${specTimeHtml ? `<p class="schedule-exception-notice__display-time">${specTimeHtml}</p>` : ""}
+                ${occNoteHtml ? `<p class="schedule-exception-notice__body">${occNoteHtml}</p>` : ""}
+            </div>`;
         };
         const buildRegButton = (c, info) => {
           if (!info) return "";
           if (info.isOver) {
             return `<div class="class-reg-status"><div class="reg-past-note">${t2.class_already_started}</div></div>`;
+          }
+          const occNoteHtml = (info.occurrenceMessage || "").replace(/</g, "&lt;");
+          const specTitle = (info.displayTitle || "").replace(/</g, "&lt;");
+          const specTime = (info.displayTime || "").replace(/</g, "&lt;");
+          const occKindLowerBtn = String(info.occurrenceKind || "").trim().toLowerCase();
+          if (!regEnabled) {
+            if (info.registrationClosed) {
+              return `<div class="class-reg-status">${scheduleExceptionNoticeHtml(occKindLowerBtn, specTitle || "", specTime || "", occNoteHtml, true)}</div>`;
+            }
+            return "";
           }
           let spotsHtml = "";
           if (info.isRegistered) {
@@ -8128,6 +8326,9 @@
           }
           if (info.isPending) {
             return `<div class="class-reg-status"><div class="reg-badge reg-badge-pending"><i data-lucide="clock" size="14"></i> ${t2.registration_status_pending || "Pending approval"}</div></div>`;
+          }
+          if (info.registrationClosed) {
+            return `<div class="class-reg-status">${scheduleExceptionNoticeHtml(occKindLowerBtn, specTitle || "", specTime || "", occNoteHtml, true)}</div>`;
           }
           const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
           const has4or8 = typeof window.has4or8Package === "function" ? window.has4or8Package(state.currentUser) : true;
@@ -8145,8 +8346,10 @@
           }
           const btnLabel = isAure && !has4or8 ? t2.clase_suelta_request || "Request clase suelta" : t2.register_for_class || "Register for this class";
           const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')`;
+          const infoBanner = !info.registrationClosed && occKindLowerBtn === "info" && occNoteHtml ? `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">${occNoteHtml}</div>` : "";
           return `
                 <div class="class-reg-status">
+                    ${infoBanner}
                     ${spotsHtml}
                     <button class="reg-register-btn" onclick="event.stopPropagation(); ${btnHandler}">${btnLabel}</button>
                     ${info.maxCapacity != null ? `<div class="reg-spots-info">${(t2.spots_left || "").replace("{n}", info.spotsLeft)}</div>` : `<div class="reg-spots-info">${t2.unlimited_spots}</div>`}
@@ -8157,6 +8360,16 @@
           if (info.isOver) {
             return `<div class="tile-reg-past">${t2.class_already_started}</div>`;
           }
+          const occNoteT = (info.occurrenceMessage || "").replace(/</g, "&lt;");
+          const specTitleT = (info.displayTitle || "").replace(/</g, "&lt;");
+          const specTimeT = (info.displayTime || "").replace(/</g, "&lt;");
+          const occKindLowerTile = String(info.occurrenceKind || "").trim().toLowerCase();
+          if (!regEnabled) {
+            if (info.registrationClosed) {
+              return scheduleExceptionNoticeHtml(occKindLowerTile, specTitleT || "", specTimeT || "", occNoteT, false);
+            }
+            return "";
+          }
           if (info.isRegistered) {
             return `<div class="tile-reg-signed-up-row">
                     <div class="tile-reg-signed-up"><i data-lucide="check" size="12"></i> ${t2.registered}</div>
@@ -8165,6 +8378,9 @@
           }
           if (info.isPending) {
             return `<div class="tile-reg-pending-pill"><i data-lucide="clock" size="12"></i> ${t2.registration_status_pending || "Pending"}</div>`;
+          }
+          if (info.registrationClosed) {
+            return scheduleExceptionNoticeHtml(occKindLowerTile, specTitleT || "", specTimeT || "", occNoteT, false);
           }
           const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
           const has4or8 = typeof window.has4or8Package === "function" ? window.has4or8Package(state.currentUser) : true;
@@ -8181,7 +8397,9 @@
           }
           const btnLabel = isAure && !has4or8 ? t2.clase_suelta_request || "Request clase suelta" : t2.join_class || "Join";
           const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')`;
+          const infoBannerT = !info.registrationClosed && occKindLowerTile === "info" && occNoteT ? `<div style="font-size:10px;color:var(--text-secondary);margin-bottom:6px;">${occNoteT}</div>` : "";
           return `<div class="tile-reg-actions">
+                ${infoBannerT}
                 ${urgency}
                 <button type="button" class="tile-join-btn" onclick="event.stopPropagation(); ${btnHandler}" title="${btnLabel}"><i data-lucide="plus" size="12"></i> ${btnLabel}</button>
             </div>`;
@@ -8190,7 +8408,6 @@
         const weekStartStr = window.formatShortDate(weekRange.start, state.language);
         const weekEndStr = window.formatShortDate(weekRange.end, state.language);
         const weekBannerText = (t2.week_of || "Week of {start} \u2013 {end}").replace("{start}", weekStartStr).replace("{end}", weekEndStr);
-        const scheduleWeekOffset = state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
         html += `<h1 style="margin-bottom: 0.5rem;">${t2.schedule_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 0.8rem; font-size: 1.1rem;">${t2.classes_subtitle}</p>`;
         if (regEnabled && state.classRegLoaded) {
@@ -8229,8 +8446,8 @@
         }
         const weekNavLoading = state.scheduleWeekLoading;
         const navStyle = weekNavLoading ? "padding: 6px 10px; flex-shrink: 0; opacity:0.5; pointer-events:none;" : "padding: 6px 10px; flex-shrink: 0;";
-        const goPrev = weekNavLoading ? "" : `state.scheduleWeekOffset=${scheduleWeekOffset - 1}; state.scheduleWeekLoading=true; renderView(); if(window.lucide) window.lucide.createIcons(); window.loadClassAvailability().then(function(){ state.scheduleWeekLoading=false; renderView(); if(window.lucide) window.lucide.createIcons(); }).catch(function(){ state.scheduleWeekLoading=false; renderView(); });`;
-        const goNext = weekNavLoading ? "" : `state.scheduleWeekOffset=${scheduleWeekOffset + 1}; state.scheduleWeekLoading=true; renderView(); if(window.lucide) window.lucide.createIcons(); window.loadClassAvailability().then(function(){ state.scheduleWeekLoading=false; renderView(); if(window.lucide) window.lucide.createIcons(); }).catch(function(){ state.scheduleWeekLoading=false; renderView(); });`;
+        const goPrev = weekNavLoading ? "" : `state.scheduleWeekOffset=${scheduleWeekOffset - 1}; state.scheduleExceptionsDataKey=null; state.scheduleWeekLoading=true; renderView(); if(window.lucide) window.lucide.createIcons(); window.loadScheduleWeekData().then(function(){ state.scheduleWeekLoading=false; renderView(); if(window.lucide) window.lucide.createIcons(); }).catch(function(){ state.scheduleWeekLoading=false; renderView(); });`;
+        const goNext = weekNavLoading ? "" : `state.scheduleWeekOffset=${scheduleWeekOffset + 1}; state.scheduleExceptionsDataKey=null; state.scheduleWeekLoading=true; renderView(); if(window.lucide) window.lucide.createIcons(); window.loadScheduleWeekData().then(function(){ state.scheduleWeekLoading=false; renderView(); if(window.lucide) window.lucide.createIcons(); }).catch(function(){ state.scheduleWeekLoading=false; renderView(); });`;
         html += state.scheduleView === "weekly" ? `
             <div class="week-banner week-banner-carousel" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                 <button type="button" class="btn-ghost week-nav-btn" style="${navStyle}" ${weekNavLoading ? "disabled" : ""} onclick="${goPrev}" aria-label="${t2.go_back || "Previous week"}"><i data-lucide="chevron-left" size="20"></i></button>
@@ -9565,11 +9782,46 @@
         `;
       } else if (view === "admin-revenue") {
         const now = /* @__PURE__ */ new Date();
-        const defaultStart = state.adminRevenueDateStart || window.formatClassDate(new Date(now.getFullYear(), now.getMonth(), 1));
-        const defaultEnd = state.adminRevenueDateEnd || window.formatClassDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-        const dateStart = state.adminRevenueDateStart ? /* @__PURE__ */ new Date(state.adminRevenueDateStart + "T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
-        const dateEnd = state.adminRevenueDateEnd ? /* @__PURE__ */ new Date(state.adminRevenueDateEnd + "T23:59:59.999") : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        const pkgFilter = state.adminRevenuePackageFilter;
+        const allTime = !!state.adminRevenueAllTime;
+        const settingsSchoolRev = state.schools && state.currentSchool?.id && state.schools.find((s) => s.id === state.currentSchool.id) || state.currentSchool;
+        const isPTRev = settingsSchoolRev?.profile_type === "private_teacher";
+        const hasDualRev = isPTRev || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+        const hasEventsRev = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
+        const hasPrivateInPlanRev = (s) => s.limit_count_private != null && s.limit_count_private > 0;
+        const hasEventsInPlanRev = (s) => s.limit_count_events != null && s.limit_count_events > 0;
+        let revenueSubs = (state.subscriptions || []).filter((s) => {
+          if (!hasEventsRev && hasEventsInPlanRev(s)) return false;
+          if (!hasDualRev && hasPrivateInPlanRev(s)) return false;
+          return true;
+        });
+        const seenRevNames = /* @__PURE__ */ new Set();
+        revenueSubs = revenueSubs.filter((s) => {
+          const k = String(s.name || "").trim().toLowerCase();
+          if (!k || seenRevNames.has(k)) return false;
+          seenRevNames.add(k);
+          return true;
+        });
+        let pkgFilter = state.adminRevenuePackageFilter;
+        if (pkgFilter && !revenueSubs.some((s) => String(s.name || "").trim() === String(pkgFilter).trim())) {
+          state.adminRevenuePackageFilter = null;
+          pkgFilter = null;
+        }
+        let defaultStart;
+        let defaultEnd;
+        let dateStart;
+        let dateEnd;
+        if (allTime) {
+          defaultStart = "";
+          defaultEnd = "";
+          dateStart = /* @__PURE__ */ new Date(0);
+          dateEnd = /* @__PURE__ */ new Date();
+          dateEnd.setHours(23, 59, 59, 999);
+        } else {
+          defaultStart = state.adminRevenueDateStart || window.formatClassDate(new Date(now.getFullYear(), now.getMonth(), 1));
+          defaultEnd = state.adminRevenueDateEnd || window.formatClassDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+          dateStart = state.adminRevenueDateStart ? /* @__PURE__ */ new Date(state.adminRevenueDateStart + "T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
+          dateEnd = state.adminRevenueDateEnd ? /* @__PURE__ */ new Date(state.adminRevenueDateEnd + "T23:59:59.999") : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
         const statusFilter = state.adminRevenueStatusFilter;
         const methodFilter = state.adminRevenueMethodFilter;
         let filteredPayments = [...state.paymentRequests || []];
@@ -9584,7 +9836,8 @@
         filteredPayments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         const periodTotal = filteredPayments.filter((r) => r.status === "approved").reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
         const totalHistorical = (state.paymentRequests || []).filter((r) => r.status === "approved").reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
-        const isCurrentMonth = !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
+        const isCurrentMonth = !allTime && !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
+        const revenueSummaryTitle = allTime ? t2.revenue_total_all_time || "All-time total" : isCurrentMonth && !pkgFilter ? t2.monthly_total || "This Month Total" : t2.period_total || "Total for period";
         html += `
             <div class="ios-header admin-revenue-header" style="background: transparent;">
                 <div class="admin-revenue-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
@@ -9608,17 +9861,20 @@
                 </div>
                 <div id="revenue-filters-content" style="display: ${state.adminRevenueFiltersExpanded ? "" : "none"}; padding-bottom: 12px;">
                     <div class="filter-bar">
-                        <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueDateStart=this.value||null; renderView();">
-                        <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueDateEnd=this.value||null; renderView();">
-                        <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
+                        <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateStart=this.value||null; renderView();">
+                        <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateEnd=this.value||null; renderView();">
+                        <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueAllTime=false; state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
                             <i data-lucide="calendar" size="14"></i> ${t2.filter_this_month || "This Month"}
+                        </button>
+                        <button type="button" class="filter-btn" onclick="state.adminRevenueAllTime=true; state.adminRevenueDateStart=null; state.adminRevenueDateEnd=null; renderView();">
+                            <i data-lucide="infinity" size="14"></i> ${t2.filter_all_time || "All time"}
                         </button>
                     </div>
                     <div class="filter-bar">
                         <span class="filter-select-wrap">
                             <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
                                 <option value="">${t2.filter_all || "All"} ${(t2.filter_package_type || "packages").toLowerCase()}</option>
-                                ${(state.subscriptions || []).map((sub) => `<option value="${(sub.name || "").replace(/"/g, "&quot;")}" ${state.adminRevenuePackageFilter === sub.name ? "selected" : ""}>${(sub.name || "").replace(/</g, "&lt;")}</option>`).join("")}
+                                ${revenueSubs.map((sub) => `<option value="${(sub.name || "").replace(/"/g, "&quot;")}" ${String(pkgFilter || "").trim() === String(sub.name || "").trim() ? "selected" : ""}>${(sub.name || "").replace(/</g, "&lt;")}</option>`).join("")}
                             </select>
                             <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
                         </span>
@@ -9648,7 +9904,7 @@
             <div class="admin-revenue-summary-wrap" style="padding: 0 1.2rem; margin-bottom: 2rem;">
                 <div class="admin-revenue-summary-card" style="background: var(--text-primary); padding: 2rem; border-radius: 24px; color: var(--bg-body); box-shadow: 0 15px 35px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
                     <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
-                    <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${isCurrentMonth && !pkgFilter ? t2.monthly_total || "This Month Total" : t2.period_total || "Total for period"}</div>
+                    <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${revenueSummaryTitle}</div>
                     <div class="admin-revenue-summary-total" style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(periodTotal, state.currentSchool?.currency || "MXN")}</div>
                     
                     <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
@@ -9970,6 +10226,22 @@
                         ${state._scheduleSaving ? `<i data-lucide="loader-2" class="spin" size="18" style="margin-right: 8px;"></i> ${t2.saving_label || "Saving\u2026"}` : `<i data-lucide="save" size="18" style="margin-right: 8px;"></i> ${t2.save_schedule_btn || "Save schedule"}`}
                     </button>
                     ${state._scheduleSaveStatus ? `<div style="font-size: 13px; color: var(--secondary); font-weight: 600; margin-top: 0.5rem; text-align: center;">${state._scheduleSaveStatus}</div>` : ""}
+                </div>
+            </div>
+
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.group_class_exceptions_title || "Class cancellations & special dates"}</div>
+            <div class="ios-list" style="padding: 0 1.2rem 0.5rem;">
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px;">
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">${t2.group_class_exceptions_hint || ""}</p>
+                    <button type="button" class="btn-secondary" onclick="window.openAddGroupClassExceptionModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px;"><i data-lucide="calendar-x" size="16"></i> ${t2.add_class_exception_btn || "Add schedule exception"}</button>
+                    ${(state.groupClassExceptions || []).length === 0 ? '<p style="font-size:12px;color:var(--text-secondary);margin:0;font-style:italic;">' + (t2.no_class_exceptions || "No schedule exceptions") + "</p>" : ""}
+                    ${(state.groupClassExceptions || []).map((ex) => {
+          const cls = ex.class_id != null ? classesList.find((cl) => String(cl.id) === String(ex.class_id)) : null;
+          const scopeLabel = ex.class_id == null ? t2.class_exception_scope_whole_day || "All classes" : cls?.name || "#" + ex.class_id;
+          const kindLabel = ex.exception_kind === "special" ? t2.class_exception_kind_special : ex.exception_kind === "info" ? t2.class_exception_kind_info : t2.class_exception_kind_cancelled;
+          const dStr = ex.occurrence_date || "";
+          return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--system-gray6);border-radius:10px;margin-top:6px;"><div style="min-width:0;"><div style="font-size:13px;font-weight:600;">' + dStr.replace(/</g, "&lt;") + " \u2022 " + String(scopeLabel || "").replace(/</g, "&lt;") + '</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">' + String(kindLabel || "").replace(/</g, "&lt;") + "</div>" + (ex.message ? '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">' + String(ex.message).replace(/</g, "&lt;") + "</div>" : "") + (ex.display_title ? '<div style="font-size:12px;font-weight:600;margin-top:4px;">' + String(ex.display_title).replace(/</g, "&lt;") + "</div>" : "") + (ex.display_time ? '<div style="font-size:11px;color:var(--text-secondary);">' + String(ex.display_time).replace(/</g, "&lt;") + "</div>" : "") + `</div><button type="button" onclick="window.deleteGroupClassException('` + ex.id + `')" style="background:none;border:none;padding:4px;cursor:pointer;color:var(--text-secondary);flex-shrink:0;"><i data-lucide="trash-2" size="16"></i></button></div>`;
+        }).join("")}
                 </div>
             </div>
 
@@ -10841,6 +11113,7 @@
   window.setScheduleView = (v) => {
     state.scheduleView = v;
     if (v === "list") state.scheduleWeekOffset = 0;
+    state.scheduleExceptionsDataKey = null;
     saveState();
     renderView();
     window.scrollTo(0, 0);
@@ -11032,6 +11305,189 @@
     state.studentRegistrations = myRegs;
     state.studentPastRegistrations = pastRegs;
     state.classRegLoaded = true;
+  };
+  window.resolveScheduleGroupException = (classId, dateStr) => {
+    const list = state.scheduleGroupClassExceptions || [];
+    const idStr = String(classId);
+    const want = dateStr != null ? String(dateStr).slice(0, 10) : "";
+    const sameDay = (d) => {
+      if (d == null || !want) return false;
+      if (d instanceof Date && !isNaN(d.getTime())) return window.formatClassDate(d) === want;
+      const s = String(d).slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s === want;
+      const tryFmt = window.formatClassDate(new Date(d));
+      return tryFmt === want;
+    };
+    const forClass = list.find((e) => e.class_id != null && String(e.class_id) === idStr && sameDay(e.occurrence_date));
+    if (forClass) return forClass;
+    return list.find((e) => e.class_id == null && sameDay(e.occurrence_date)) || null;
+  };
+  window.loadScheduleGroupClassExceptions = async () => {
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient || state.currentSchool?.profile_type === "private_teacher") {
+      state.scheduleGroupClassExceptions = [];
+      return;
+    }
+    const dates = /* @__PURE__ */ new Set();
+    const weekRange = window.getCurrentWeekRange();
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+      dates.add(window.formatClassDate(d));
+    }
+    const scheduleOffset = state && state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
+    if (scheduleOffset !== 0) {
+      const displayMonday = new Date(weekRange.start);
+      displayMonday.setDate(displayMonday.getDate() + scheduleOffset * 7);
+      const displayEnd = new Date(displayMonday);
+      displayEnd.setDate(displayMonday.getDate() + 6);
+      for (let d = new Date(displayMonday); d <= displayEnd; d.setDate(d.getDate() + 1)) {
+        dates.add(window.formatClassDate(d));
+      }
+    }
+    (state.classes || []).forEach((c) => {
+      const nextDate = window.getNextClassDate(c.day);
+      if (nextDate) dates.add(window.formatClassDate(nextDate));
+    });
+    const dateArr = [...dates].sort();
+    if (dateArr.length === 0) {
+      state.scheduleGroupClassExceptions = [];
+      return;
+    }
+    const pStart = dateArr[0];
+    const pEnd = dateArr[dateArr.length - 1];
+    try {
+      const { data, error } = await supabaseClient.rpc("get_group_class_exceptions", { p_school_id: schoolId, p_start_date: pStart, p_end_date: pEnd });
+      if (error) throw error;
+      let rows = [];
+      if (data != null) {
+        let raw = data;
+        if (typeof raw === "string") {
+          try {
+            raw = JSON.parse(raw);
+          } catch (_) {
+            raw = [];
+          }
+        }
+        if (Array.isArray(raw)) rows = raw;
+        else if (raw && typeof raw === "object") {
+          rows = Object.values(raw).filter((x) => x && typeof x === "object");
+        }
+      }
+      state.scheduleGroupClassExceptions = rows;
+    } catch (e) {
+      console.warn("loadScheduleGroupClassExceptions", e);
+      state.scheduleGroupClassExceptions = [];
+    }
+  };
+  window.loadScheduleWeekData = async () => {
+    await window.loadClassAvailability();
+    await window.loadScheduleGroupClassExceptions();
+  };
+  window.refreshGroupClassExceptionsAdmin = async () => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const d0 = /* @__PURE__ */ new Date();
+    d0.setDate(d0.getDate() - 7);
+    const d1 = /* @__PURE__ */ new Date();
+    d1.setDate(d1.getDate() + 180);
+    const pStart = window.formatClassDate(d0);
+    const pEnd = window.formatClassDate(d1);
+    try {
+      const { data, error } = await supabaseClient.rpc("get_group_class_exceptions", { p_school_id: state.currentSchool.id, p_start_date: pStart, p_end_date: pEnd });
+      if (error) throw error;
+      state.groupClassExceptions = data != null ? Array.isArray(data) ? data : typeof data === "string" ? JSON.parse(data) : [] : [];
+    } catch (e) {
+      console.warn("refreshGroupClassExceptionsAdmin", e);
+    }
+  };
+  window.deleteGroupClassException = async (id) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    try {
+      const { error } = await supabaseClient.rpc("delete_group_class_exception", { p_id: id, p_school_id: state.currentSchool.id });
+      if (error) throw error;
+      await window.refreshGroupClassExceptionsAdmin();
+      if (typeof window.renderView === "function") window.renderView();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      alert((e.message || e).toString());
+    }
+  };
+  window.openAddGroupClassExceptionModal = () => {
+    const tLoc = DANCE_LOCALES[state.language || "en"];
+    const overlay = document.createElement("div");
+    overlay.className = "modal";
+    overlay.id = "add-gce-modal";
+    overlay.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(12px);z-index:9999;padding:16px;";
+    const classesOpts = (state.classes || []).map((c) => `<option value="${String(c.id)}">${(c.name || "").replace(/</g, "&lt;")}</option>`).join("");
+    overlay.innerHTML = '<div class="modal-content" style="max-width:440px;width:100%;padding:1.75rem;border-radius:20px;background:var(--surface-solid);box-shadow:0 20px 60px rgba(0,0,0,0.35);border:1px solid var(--border);max-height:90vh;overflow-y:auto;" onclick="event.stopPropagation()"><h3 style="margin:0 0 1rem 0;font-size:1.2rem;font-weight:700;">' + (tLoc.add_class_exception_btn || "Add exception") + '</h3><div style="margin-bottom:12px;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">' + (tLoc.class_exception_date || "Date") + '</label><input type="date" id="gce-date" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);"></div><div style="margin-bottom:12px;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">' + (tLoc.class_exception_scope || "Scope") + '</label><select id="gce-scope" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);"><option value="whole">' + (tLoc.class_exception_scope_whole_day || "Whole day") + '</option><option value="one">' + (tLoc.class_exception_scope_one_class || "One class") + '</option></select></div><div style="margin-bottom:12px;display:none;" id="gce-class-wrap"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">' + (tLoc.class_exception_select_class || "Class") + '</label><select id="gce-class" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);">' + classesOpts + '</select></div><div style="margin-bottom:12px;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">' + (tLoc.class_exception_kind || "Type") + '</label><select id="gce-kind" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);"><option value="cancelled">' + (tLoc.class_exception_kind_cancelled || "Cancelled") + '</option><option value="info">' + (tLoc.class_exception_kind_info || "Info") + '</option><option value="special">' + (tLoc.class_exception_kind_special || "Special") + '</option></select></div><div style="margin-bottom:12px;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">' + (tLoc.class_exception_message || "Message") + '</label><input type="text" id="gce-message" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);"></div><div style="margin-bottom:12px;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">' + (tLoc.class_exception_display_title || "Title") + " (" + (tLoc.optional || "optional") + ')</label><input type="text" id="gce-dtitle" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);"></div><div style="margin-bottom:12px;"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">' + (tLoc.class_exception_display_time || "Time") + " (" + (tLoc.optional || "optional") + `)</label><input type="text" id="gce-dtime" placeholder="e.g. 19:00" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-primary);"></div><p id="gce-validation-msg" style="font-size:13px;color:var(--error,#c53030);margin:0 0 12px 0;min-height:1.2em;"></p><div style="display:flex;gap:10px;justify-content:flex-end;"><button type="button" class="btn-secondary" onclick="document.getElementById('add-gce-modal').remove();" style="padding:10px 18px;border-radius:12px;">` + (tLoc.cancel || "Cancel") + '</button><button type="button" class="btn-primary" id="gce-submit-btn" style="padding:10px 18px;border-radius:12px;font-weight:600;">' + (tLoc.save || "Save") + "</button></div></div>";
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        if (window.lucide) window.lucide.createIcons();
+      }
+    };
+    document.body.appendChild(overlay);
+    const dateEl = document.getElementById("gce-date");
+    if (dateEl) dateEl.value = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+    const scopeEl = document.getElementById("gce-scope");
+    const classWrap = document.getElementById("gce-class-wrap");
+    const toggleClass = () => {
+      if (classWrap) classWrap.style.display = scopeEl && scopeEl.value === "one" ? "block" : "none";
+    };
+    if (scopeEl) {
+      scopeEl.onchange = toggleClass;
+      toggleClass();
+    }
+    document.getElementById("gce-submit-btn").onclick = () => window.submitGroupClassException(overlay);
+    if (window.lucide) window.lucide.createIcons();
+  };
+  window.submitGroupClassException = async (overlay) => {
+    if (!supabaseClient || !state.currentSchool?.id) return;
+    const tLoc = DANCE_LOCALES[state.language || "en"];
+    const msgEl = document.getElementById("gce-validation-msg");
+    if (msgEl) msgEl.textContent = "";
+    const dateVal = document.getElementById("gce-date")?.value;
+    const scope = document.getElementById("gce-scope")?.value || "whole";
+    const classIdRaw = document.getElementById("gce-class")?.value;
+    const kind = document.getElementById("gce-kind")?.value || "cancelled";
+    const message = document.getElementById("gce-message")?.value?.trim() || null;
+    const dtitle = document.getElementById("gce-dtitle")?.value?.trim() || null;
+    const dtime = document.getElementById("gce-dtime")?.value?.trim() || null;
+    if (!dateVal) {
+      if (msgEl) msgEl.textContent = tLoc.please_fill_required || "Please fill required fields.";
+      return;
+    }
+    const pClassId = scope === "one" && classIdRaw ? parseInt(classIdRaw, 10) : null;
+    if (scope === "one" && (pClassId == null || isNaN(pClassId))) {
+      if (msgEl) msgEl.textContent = tLoc.please_fill_required || "Please select a class.";
+      return;
+    }
+    const btn = document.getElementById("gce-submit-btn");
+    const saveLabel = btn?.textContent || "";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = tLoc.saving_label || "Saving\u2026";
+    }
+    try {
+      const { error } = await supabaseClient.rpc("insert_group_class_exception", {
+        p_school_id: state.currentSchool.id,
+        p_occurrence_date: dateVal,
+        p_class_id: pClassId,
+        p_exception_kind: kind,
+        p_message: message,
+        p_display_title: dtitle,
+        p_display_time: dtime
+      });
+      if (error) throw error;
+      await window.refreshGroupClassExceptionsAdmin();
+      overlay.remove();
+      if (typeof window.renderView === "function") window.renderView();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = saveLabel;
+      }
+      if (msgEl) msgEl.textContent = (e.message || e).toString();
+    }
   };
   window.openPrivateClassesModal = async () => {
     const modal = document.getElementById("private-classes-modal");

@@ -444,8 +444,8 @@ body.dark-mode[data-school-theme="aure"] .nav-badge,
 [data-theme="dark"][data-school-theme="aure"] .nav-badge {
     box-shadow: 0 0 0 2px #33272f;
 }
-body.dark-mode[data-school-theme="aure"] .logo-img,
-[data-theme="dark"][data-school-theme="aure"] .logo-img {
+body.dark-mode[data-school-theme="aure"] .logo-img:not(.logo-img--photo),
+[data-theme="dark"][data-school-theme="aure"] .logo-img:not(.logo-img--photo) {
     /* Softer than global invert+screen: dim + slight warmth so it reads as a logo, not a white slab. */
     filter: invert(1) brightness(0.8) sepia(0.12) hue-rotate(300deg) saturate(0.35);
     mix-blend-mode: normal;
@@ -1201,10 +1201,27 @@ body::before {
     transition: all 0.3s ease;
 }
 
-.dark-mode .logo-img {
+/* School / teacher photos in the navbar — keep natural colors (no invert) */
+.logo-img.logo-img--photo {
+    mix-blend-mode: normal;
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.dark-mode .logo-img:not(.logo-img--photo) {
     filter: invert(1);
     mix-blend-mode: screen;
     /* Changed from normal to screen to hide black background */
+}
+
+.dark-mode .logo-img.logo-img--photo,
+body.dark-mode[data-school-theme="aure"] .logo-img.logo-img--photo,
+[data-theme="dark"][data-school-theme="aure"] .logo-img.logo-img--photo {
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    opacity: 1;
 }
 
 .logo span {
@@ -1519,6 +1536,11 @@ select option {
     background: transparent !important;
 }
 
+.auth-logo.auth-logo--photo {
+    mix-blend-mode: normal;
+    border-radius: 16px;
+}
+
 @media (max-width: 600px) {
     .auth-logo {
         width: 120px;
@@ -1526,13 +1548,22 @@ select option {
     }
 }
 
-.dark-mode .auth-logo {
+.dark-mode .auth-logo:not(.auth-logo--photo) {
     filter: invert(1);
     mix-blend-mode: screen;
     /* Improved for transparency in dark mode */
 }
-body.dark-mode[data-school-theme="aure"] .auth-logo,
-[data-theme="dark"][data-school-theme="aure"] .auth-logo {
+
+/* Custom school / teacher image on auth — same as navbar: no color inversion */
+.dark-mode .auth-logo.auth-logo--photo,
+body.dark-mode[data-school-theme="aure"] .auth-logo.auth-logo--photo,
+[data-theme="dark"][data-school-theme="aure"] .auth-logo.auth-logo--photo {
+    filter: none !important;
+    mix-blend-mode: normal !important;
+}
+
+body.dark-mode[data-school-theme="aure"] .auth-logo:not(.auth-logo--photo),
+[data-theme="dark"][data-school-theme="aure"] .auth-logo:not(.auth-logo--photo) {
     filter: none;
     mix-blend-mode: normal;
 }
@@ -5518,6 +5549,140 @@ select.filter-control {
   color: var(--text-secondary);
 }
 
+/* Schedule exception: student-facing notice (replaces heavy pill for blocked dates) */
+.schedule-exception-notice {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--system-gray6, rgba(142, 142, 147, 0.09));
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  line-height: 1.4;
+}
+@media (min-width: 380px) {
+  .schedule-exception-notice {
+    padding: 0.65rem 0.78rem;
+    margin-top: 0.5rem;
+  }
+}
+.schedule-exception-notice--list {
+  margin-top: 0.65rem;
+  padding: 0.72rem 0.9rem;
+}
+@media (min-width: 480px) {
+  .schedule-exception-notice--list {
+    padding: 0.8rem 1rem;
+  }
+}
+.schedule-exception-notice__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+.schedule-exception-notice__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.45rem;
+  height: 1.45rem;
+  margin-top: 0.06rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.055);
+  color: var(--text-secondary);
+}
+.dark-mode .schedule-exception-notice__icon-wrap {
+  background: rgba(255, 255, 255, 0.08);
+}
+.schedule-exception-notice--tone-info .schedule-exception-notice__icon-wrap {
+  background: rgba(0, 122, 255, 0.14);
+  color: var(--system-blue, #007aff);
+}
+.schedule-exception-notice--tone-special .schedule-exception-notice__icon-wrap {
+  background: rgba(175, 82, 222, 0.14);
+  color: #af52de;
+}
+.schedule-exception-notice__badge {
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(0.68rem, 2.9vw, 0.74rem);
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.28;
+  padding-top: 0.12rem;
+}
+.schedule-exception-notice__display-title {
+  margin: 0.45rem 0 0 0;
+  padding: 0;
+  font-size: clamp(0.78rem, 3.1vw, 0.9rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.38;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.schedule-exception-notice__display-time {
+  margin: 0.2rem 0 0 0;
+  padding: 0;
+  font-size: clamp(0.7rem, 2.9vw, 0.8rem);
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+.schedule-exception-notice__body {
+  margin: 0.45rem 0 0 0;
+  padding: 0;
+  font-size: clamp(0.74rem, 3vw, 0.86rem);
+  font-weight: 400;
+  color: var(--text-primary);
+  opacity: 0.95;
+  line-height: 1.48;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.schedule-exception-notice--tone-info {
+  border-color: rgba(0, 122, 255, 0.22);
+  background: rgba(0, 122, 255, 0.055);
+}
+.schedule-exception-notice--tone-special {
+  border-color: rgba(175, 82, 222, 0.22);
+  background: rgba(175, 82, 222, 0.055);
+}
+.schedule-exception-notice--tone-muted {
+  border-color: var(--border);
+}
+.dark-mode .schedule-exception-notice--tone-info {
+  background: rgba(0, 122, 255, 0.1);
+  border-color: rgba(0, 122, 255, 0.28);
+}
+.dark-mode .schedule-exception-notice--tone-special {
+  background: rgba(175, 82, 222, 0.1);
+  border-color: rgba(175, 82, 222, 0.3);
+}
+.dark-mode .schedule-exception-notice--tone-muted {
+  background: rgba(142, 142, 147, 0.12);
+}
+body[data-school-theme="aure"] .schedule-exception-notice--tone-info {
+  border-color: rgba(90, 120, 115, 0.32);
+  background: rgba(90, 120, 115, 0.1);
+}
+body[data-school-theme="aure"] .schedule-exception-notice--tone-info .schedule-exception-notice__icon-wrap {
+  background: rgba(90, 120, 115, 0.2);
+  color: rgba(55, 75, 72, 0.95);
+}
+body.dark-mode[data-school-theme="aure"] .schedule-exception-notice--tone-info .schedule-exception-notice__icon-wrap,
+[data-theme="dark"][data-school-theme="aure"] .schedule-exception-notice--tone-info .schedule-exception-notice__icon-wrap {
+  color: rgba(200, 220, 215, 0.95);
+}
+
 /* Full pill badge (icon + "Full" text) */
 .tile-reg-full-pill {
   display: inline-flex;
@@ -6883,13 +7048,18 @@ body:not(.landing-page) .sticky-footer-inner {
 .pcr-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px 10px;
   margin-bottom: 6px;
 }
 .pcr-card-name {
   font-weight: 700;
   font-size: 15px;
   color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
 }
 .pcr-card-status {
   font-size: 11px;
@@ -6941,6 +7111,255 @@ body:not(.landing-page) .sticky-footer-inner {
 .pcr-all-requests-details[open] .pcr-details-chevron { transform: rotate(90deg); }
 .pcr-all-requests-details summary::-webkit-details-marker { display: none; }
 
+.admin-teacher-pcr-section {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  margin-bottom: 1.5rem;
+}
+.admin-teacher-pcr-heading {
+  padding: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+/* Private teacher — admin students: accepted classes panel */
+.teacher-accepted-classes-expandable {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  margin-bottom: 1rem;
+}
+.teacher-accepted-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.teacher-accepted-panel-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 1;
+  min-width: min(100%, 220px);
+}
+.teacher-accepted-panel-title {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+.teacher-accepted-panel-badge {
+  background: var(--control-selected-fill, var(--secondary));
+  color: var(--control-selected-text, #fff);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.teacher-accepted-export-btn {
+  flex-shrink: 0;
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 10px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+}
+.teacher-accepted-classes-body {
+  padding: 0.85rem 0 0;
+}
+.teacher-admin-view-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  margin-bottom: 12px;
+  background: var(--system-gray5, rgba(0, 0, 0, 0.06));
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+body.dark-mode .teacher-admin-view-tabs {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.teacher-admin-view-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.teacher-admin-view-tab:hover {
+  color: var(--text-primary);
+}
+.teacher-admin-view-tab.active {
+  background: var(--system-background, #fff);
+  color: #1d1d1f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+body.dark-mode .teacher-admin-view-tab {
+  color: rgba(255, 255, 255, 0.78);
+}
+body.dark-mode .teacher-admin-view-tab:hover {
+  color: #f5f5f7;
+}
+body.dark-mode .teacher-admin-view-tab.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #f5f5f7;
+  box-shadow: none;
+}
+
+.teacher-accepted-today-card {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  background: var(--system-gray6);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.teacher-accepted-today-heading {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.teacher-accepted-today-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.teacher-accepted-today-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.teacher-accepted-today-row--done {
+  border-bottom: 1px solid var(--border);
+}
+.teacher-accepted-today-status {
+  color: var(--system-green);
+  font-size: 13px;
+  font-weight: 600;
+}
+.teacher-accepted-today-main {
+  flex: 1;
+  min-width: min(100%, 200px);
+}
+.teacher-accepted-today-main strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.teacher-accepted-today-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.teacher-accepted-today-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  flex: 1 1 100%;
+}
+@media (min-width: 520px) {
+  .teacher-accepted-today-actions {
+    flex: 0 1 auto;
+    justify-content: flex-end;
+  }
+}
+
+.teacher-accepted-class-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 12px;
+  padding: 12px 14px;
+  background: var(--system-gray6);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+}
+.teacher-accepted-class-row-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: 0.5;
+}
+.teacher-accepted-class-main {
+  flex: 1;
+  min-width: min(100%, 200px);
+}
+.teacher-accepted-class-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+.teacher-accepted-class-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+.teacher-accepted-inline-ok {
+  color: var(--system-green);
+  font-weight: 600;
+}
+.teacher-accepted-class-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+@media (min-width: 520px) {
+  .teacher-accepted-class-row {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .teacher-accepted-class-actions {
+    width: auto;
+    flex: 0 0 auto;
+    max-width: min(100%, 340px);
+  }
+}
+.teacher-accepted-action-btn {
+  min-height: 40px;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+}
+
+@media (max-width: 380px) {
+  .private-classes-calendar-day {
+    min-height: 32px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+  .private-classes-calendar-grid {
+    gap: 2px;
+  }
+}
+
 /* Teacher Booking (Student View) - Scheduling Card */
 .teacher-booking-container {
   max-width: 100%;
@@ -6975,6 +7394,13 @@ body:not(.landing-page) .sticky-footer-inner {
   object-fit: cover;
   background: var(--bg-body);
   flex-shrink: 0;
+}
+
+/* Teacher portrait on booking card — never inherit logo-style filters */
+body.dark-mode .teacher-booking-avatar,
+[data-theme="dark"] .teacher-booking-avatar {
+  filter: none;
+  mix-blend-mode: normal;
 }
 .teacher-booking-info {
   flex: 1;
