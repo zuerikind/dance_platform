@@ -1306,9 +1306,12 @@ h1 {
 
 .container {
     padding: 1.5rem 1.2rem;
-    max-width: 800px;
-    /* Slightly wider for admin screens */
+    max-width: min(800px, 100%);
+    /* Slightly wider for admin screens; never wider than viewport */
     margin: 0 auto;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 /* Student profile tab: fit viewport on phone, no horizontal overflow */
@@ -7125,6 +7128,111 @@ body:not(.landing-page) .sticky-footer-inner {
   color: var(--text-secondary);
 }
 
+/* Private-teacher students page — calmer layout */
+.students-page--private-teacher .students-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.15rem;
+}
+.students-page--private-teacher .students-header {
+  padding-bottom: 0.35rem;
+}
+.students-page--private-teacher .admin-pt-section {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  margin-bottom: 1.1rem;
+}
+.students-page--private-teacher .admin-pt-section-heading {
+  padding: 0 0 0.35rem;
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.students-page--private-teacher .pcr-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-color: color-mix(in srgb, var(--border) 85%, transparent);
+}
+.students-page--private-teacher .teacher-accepted-classes-expandable {
+  margin-left: max(1rem, env(safe-area-inset-left));
+  margin-right: max(1rem, env(safe-area-inset-right));
+  padding: 14px 16px 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  background: var(--bg-card);
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+body.dark-mode .students-page--private-teacher .teacher-accepted-classes-expandable {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.students-page--private-teacher .teacher-accepted-panel-header {
+  border-bottom-color: color-mix(in srgb, var(--border) 70%, transparent);
+  padding: 6px 0 12px;
+  gap: 8px 10px;
+}
+.students-page--private-teacher .teacher-accepted-classes-expandable .teacher-accepted-panel-badge {
+  background: var(--text-primary);
+  color: var(--bg-card);
+}
+.students-page--private-teacher .teacher-accepted-class-row {
+  background: color-mix(in srgb, var(--system-gray6) 55%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  box-shadow: none;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+}
+.students-page--private-teacher .teacher-accepted-class-row-icon {
+  display: none;
+}
+@media (min-width: 520px) {
+  .students-page--private-teacher .teacher-accepted-class-row-icon {
+    display: block;
+  }
+}
+.students-page--private-teacher .teacher-accepted-today-card {
+  background: color-mix(in srgb, var(--system-gray6) 50%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  box-shadow: none;
+  padding: 10px 12px;
+}
+.students-page--private-teacher .admin-students-list-expandable {
+  margin-left: max(1rem, env(safe-area-inset-left)) !important;
+  margin-right: max(1rem, env(safe-area-inset-right)) !important;
+  border-color: color-mix(in srgb, var(--border) 90%, transparent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-radius: 16px !important;
+}
+body.dark-mode .students-page--private-teacher .admin-students-list-expandable {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.teacher-accepted-view-tabs {
+  margin-bottom: 14px !important;
+  padding: 4px !important;
+}
+.students-page--private-teacher .teacher-accepted-view-tabs .teacher-admin-view-tab {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.teacher-accepted-action-btn--export {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  color: var(--text-secondary) !important;
+}
+.teacher-accepted-action-btn--export:hover {
+  color: var(--text-primary) !important;
+  background: var(--system-gray6) !important;
+}
+body.dark-mode .teacher-accepted-action-btn--export:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
 /* Private teacher — admin students: accepted classes panel */
 .teacher-accepted-classes-expandable {
   padding-left: max(1rem, env(safe-area-inset-left));
@@ -7145,8 +7253,8 @@ body:not(.landing-page) .sticky-footer-inner {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  flex: 1;
-  min-width: min(100%, 220px);
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .teacher-accepted-panel-title {
   text-transform: uppercase;
@@ -7165,15 +7273,55 @@ body:not(.landing-page) .sticky-footer-inner {
   flex-shrink: 0;
 }
 .teacher-accepted-export-btn {
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 100%;
+  width: 100%;
   max-width: 100%;
-  font-size: 13px;
+  box-sizing: border-box;
+  justify-content: center;
+  font-size: 11px;
   font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 10px;
-  line-height: 1.3;
+  padding: 6px 11px;
+  border-radius: 9px;
+  line-height: 1.35;
   text-align: center;
   white-space: normal;
+  border: 1px solid var(--border);
+  background: var(--bg-body, rgba(0, 0, 0, 0.02));
+  color: var(--text-primary);
+}
+.teacher-accepted-export-btn:hover {
+  background: var(--system-gray6);
+}
+body.dark-mode .teacher-accepted-export-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-mode .teacher-accepted-export-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+@media (min-width: 520px) {
+  .teacher-accepted-panel-header .teacher-accepted-export-btn {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: min(100%, 260px);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    gap: 5px;
+    border-radius: 8px;
+    line-height: 1.25;
+    white-space: normal;
+    text-align: center;
+  }
+  .teacher-accepted-panel-header .teacher-accepted-export-btn i,
+  .teacher-accepted-panel-header .teacher-accepted-export-btn svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
 }
 .teacher-accepted-classes-body {
   padding: 0.85rem 0 0;
@@ -7338,8 +7486,10 @@ body.dark-mode .teacher-admin-view-tab.active {
   }
   .teacher-accepted-class-actions {
     width: auto;
-    flex: 0 0 auto;
-    max-width: min(100%, 340px);
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    justify-content: flex-end;
   }
 }
 .teacher-accepted-action-btn {
@@ -7348,15 +7498,22 @@ body.dark-mode .teacher-admin-view-tab.active {
   font-size: 13px !important;
   border-radius: 10px !important;
 }
-
-@media (max-width: 380px) {
-  .private-classes-calendar-day {
-    min-height: 32px;
-    font-size: 12px;
-    border-radius: 8px;
-  }
-  .private-classes-calendar-grid {
-    gap: 2px;
+/* Per-row export: allow wrap + comfortable horizontal padding (overrides .btn-ghost nowrap) */
+.teacher-accepted-class-actions .teacher-accepted-action-btn--export,
+.teacher-accepted-today-actions .teacher-accepted-action-btn--export {
+  white-space: normal !important;
+  text-align: center !important;
+  line-height: 1.3 !important;
+  padding: 8px 14px !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+@media (min-width: 520px) {
+  .teacher-accepted-class-actions .teacher-accepted-action-btn--export {
+    max-width: min(100%, 240px);
   }
 }
 
@@ -7366,12 +7523,31 @@ body.dark-mode .teacher-admin-view-tab.active {
   box-sizing: border-box;
   padding-left: max(1.2rem, env(safe-area-inset-left));
   padding-right: max(1.2rem, env(safe-area-inset-right));
+  padding-top: 1.2rem;
+  padding-bottom: 6rem;
 }
 @media (min-width: 600px) {
   .teacher-booking-container {
     max-width: min(560px, calc(100vw - 2rem));
     margin-left: auto;
     margin-right: auto;
+  }
+}
+
+@media (max-width: 350px) {
+  .students-page {
+    --students-pad: 6px;
+    --students-gap: 6px;
+    padding-left: var(--students-pad);
+    padding-right: var(--students-pad);
+  }
+  .students-title {
+    font-size: clamp(1.45rem, 10vw, 1.85rem);
+    margin-bottom: 10px;
+  }
+  #student-nav .nav-item i {
+    width: 26px;
+    height: 26px;
   }
 }
 .teacher-booking-card {
@@ -7404,6 +7580,7 @@ body.dark-mode .teacher-booking-avatar,
 }
 .teacher-booking-info {
   flex: 1;
+  min-width: 0;
 }
 .teacher-booking-name {
   font-size: 18px;
@@ -7608,13 +7785,19 @@ body.dark-mode .teacher-booking-avatar,
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
+  min-width: 0;
+  gap: 6px;
 }
 .teacher-booking-week-label {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: center;
 }
 .teacher-booking-week-btn {
+  flex-shrink: 0;
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -7849,20 +8032,279 @@ body.dark-mode .teacher-booking-confirm-btn.secondary:hover {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Private classes calendar (admin accepted classes) */
+/*
+ * Private-teacher student + PT admin narrow layouts.
+ * Placed AFTER all base .teacher-booking-* rules so these actually win the cascade
+ * (earlier @media blocks were overridden by later base flex/padding rules — e.g. week strip).
+ */
+@media (max-width: 520px) {
+  .teacher-booking-container {
+    padding-left: max(0.65rem, env(safe-area-inset-left));
+    padding-right: max(0.65rem, env(safe-area-inset-right));
+    padding-top: 0.75rem;
+    padding-bottom: 5.75rem;
+    overflow-x: clip;
+  }
+  .teacher-booking-card > .teacher-booking-loading,
+  .teacher-booking-card > .teacher-booking-no-package,
+  .teacher-booking-card > .calendly-embed-wrap {
+    margin-left: max(0.35rem, env(safe-area-inset-left)) !important;
+    margin-right: max(0.35rem, env(safe-area-inset-right)) !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .calendly-embed-wrap iframe {
+    max-width: 100%;
+  }
+  .teacher-booking-balance-block {
+    padding: 10px 12px !important;
+  }
+  .teacher-booking-header {
+    gap: 10px;
+    padding: 14px 12px 12px;
+  }
+  .teacher-booking-avatar {
+    width: 48px;
+    height: 48px;
+  }
+  .teacher-booking-name {
+    font-size: 16px;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+  .teacher-booking-location-bar,
+  .teacher-booking-week-nav {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .teacher-booking-week-nav {
+    flex-wrap: wrap;
+    gap: 6px 4px;
+    justify-content: center;
+  }
+  .teacher-booking-week-label {
+    order: -1;
+    flex: 1 1 100%;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.35;
+    padding: 0 4px;
+    word-break: break-word;
+  }
+  .teacher-booking-days {
+    padding: 0 10px 14px;
+  }
+  .teacher-booking-day-label {
+    font-size: 11px;
+  }
+  .teacher-booking-slots {
+    gap: 5px;
+  }
+  .teacher-booking-slot {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .student-private-classes-expandable .expandable-section-header {
+    padding: 10px 12px !important;
+    align-items: flex-start;
+  }
+  .student-private-classes-expandable #student-private-classes-content {
+    padding: 10px 12px !important;
+  }
+  .private-classes-calendar {
+    padding: 0.65rem;
+  }
+  .private-classes-calendar-month {
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.3;
+    word-break: break-word;
+    padding: 0 4px;
+  }
+  .private-classes-calendar-nav {
+    gap: 6px;
+  }
+  .private-classes-calendar-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .private-classes-calendar-weekdays {
+    gap: 2px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .private-classes-calendar-wd {
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+  .private-classes-calendar-grid {
+    gap: 2px;
+    min-height: 180px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .private-classes-calendar-day {
+    min-height: 0;
+    font-size: 12px;
+    border-radius: 8px;
+    padding: 0;
+  }
+  .students-page .admin-students-list-expandable[style] {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .admin-pt-private-requests-wrap {
+    padding-left: max(0.65rem, env(safe-area-inset-left)) !important;
+    padding-right: max(0.65rem, env(safe-area-inset-right)) !important;
+  }
+  .pcr-card {
+    padding: 12px;
+  }
+  .pcr-card-actions {
+    flex-wrap: wrap;
+  }
+  .pcr-btn-accept,
+  .pcr-btn-decline {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+  .teacher-accepted-class-row {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px;
+    padding: 10px;
+  }
+  .teacher-accepted-class-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .teacher-accepted-class-actions .btn-primary,
+  .teacher-accepted-class-actions .btn-secondary {
+    flex: 1;
+    min-width: 0;
+  }
+  .teacher-accepted-class-actions .teacher-accepted-action-btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+  }
+  .navbar {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+  }
+  .nav-controls {
+    gap: 0.35rem;
+  }
+  .logo span {
+    max-width: min(110px, 32vw);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1rem;
+  }
+  .logo-img {
+    height: 40px;
+  }
+  #admin-nav .nav-item {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  #admin-nav .nav-item i {
+    width: 24px;
+    height: 24px;
+  }
+  .teacher-booking-container .calendly-mode-btn,
+  .student-private-classes-expandable .calendly-mode-btn {
+    min-width: 0;
+    flex: 1 1 calc(50% - 4px);
+  }
+  .student-private-classes-header-actions {
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .student-private-classes-header-actions .btn-ghost {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+    max-width: 100%;
+  }
+  .teacher-booking-location-bar select {
+    min-width: 0;
+  }
+  .teacher-booking-confirm-sheet {
+    padding: 18px 14px;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+  .teacher-booking-confirm-title {
+    font-size: 16px;
+  }
+  .teacher-booking-confirm-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 6px 0;
+  }
+  .teacher-booking-confirm-time {
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .teacher-booking-duration-btn {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  .teacher-booking-confirm-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .teacher-booking-confirm-btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    padding: 12px;
+    font-size: 14px;
+  }
+  /* Shop / any 2-column grids inside dashboard container */
+  main#app-root > .container .card {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .teacher-booking-container {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+    padding-top: 0.65rem;
+    padding-bottom: 5.5rem;
+  }
+}
+
+/* Private classes calendar (admin accepted classes) — grid uses minmax(0,1fr) so columns stay aligned on narrow widths */
 .private-classes-calendar {
   background: var(--bg-card);
   border-radius: 16px;
   padding: 1rem;
   border: 1px solid var(--border);
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .private-classes-calendar-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  gap: 8px;
+  min-width: 0;
 }
 .private-classes-calendar-btn {
+  flex-shrink: 0;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -7879,13 +8321,18 @@ body.dark-mode .teacher-booking-confirm-btn.secondary:hover {
   background: var(--border);
 }
 .private-classes-calendar-month {
+  flex: 1;
+  min-width: 0;
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
+  text-align: center;
 }
 .private-classes-calendar-today {
   display: block;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 8px 12px;
   margin-bottom: 12px;
   font-size: 13px;
@@ -7902,31 +8349,39 @@ body.dark-mode .teacher-booking-confirm-btn.secondary:hover {
 }
 .private-classes-calendar-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
   margin-bottom: 8px;
+  width: 100%;
+  min-width: 0;
 }
 .private-classes-calendar-wd {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .private-classes-calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
-  min-height: 200px; /* Ensure calendar grid is always visible */
+  min-height: 200px;
+  width: 100%;
+  min-width: 0;
 }
 .private-classes-calendar-day {
   aspect-ratio: 1;
-  min-height: 36px;
+  min-width: 0;
+  min-height: 0;
   border: none;
   background: transparent;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
@@ -7936,6 +8391,13 @@ body.dark-mode .teacher-booking-confirm-btn.secondary:hover {
   justify-content: center;
   gap: 2px;
   transition: background 0.2s;
+  box-sizing: border-box;
+  padding: 1px;
+  -webkit-tap-highlight-color: transparent;
+}
+.private-classes-calendar-day-num {
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
 }
 .private-classes-calendar-day:hover {
   background: var(--bg-body);

@@ -1210,14 +1210,24 @@
       const exp = p.expires_at ? new Date(p.expires_at) : null;
       return !exp || exp > now;
     });
+    const hadAnyPack = packs.length > 0;
+    const anyActivePack = activePacks.length > 0;
+    const packsFullyExpired = hadAnyPack && !anyActivePack;
     const hasUnlimitedPack = activePacks.some((p) => p.count == null || p.count === "null");
-    const groupUnlimited = student?.balance === null || student?.balance === void 0 || hasUnlimitedPack;
+    const groupUnlimited = !packsFullyExpired && (student?.balance === null || student?.balance === void 0 || hasUnlimitedPack);
     const sumGroup = activePacks.reduce((s, p) => s + (parseInt(p.count, 10) || 0), 0);
-    const group = groupUnlimited ? null : Math.max(student?.balance ?? 0, sumGroup);
+    let group;
+    if (groupUnlimited) {
+      group = null;
+    } else if (packsFullyExpired) {
+      group = 0;
+    } else {
+      group = Math.max(student?.balance ?? 0, sumGroup);
+    }
     const sumPrivate = activePacks.reduce((s, p) => s + (p.private_count || 0), 0);
-    const privateBal = Math.max(student?.balance_private ?? 0, sumPrivate);
+    const privateBal = packsFullyExpired ? 0 : Math.max(student?.balance_private ?? 0, sumPrivate);
     const sumEvents = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-    const eventBal = Math.max(student?.balance_events ?? 0, sumEvents);
+    const eventBal = packsFullyExpired ? 0 : Math.max(student?.balance_events ?? 0, sumEvents);
     return { group, groupUnlimited, private: privateBal, event: eventBal };
   }
   async function startScanner() {
@@ -2188,6 +2198,7 @@
       filters_label: "Filters",
       period_total: "Total for period",
       loading_students_msg: "Loading members...",
+      loading_private_teacher_dashboard_msg: "Loading students and requests...",
       no_pending_msg: "No pending payments",
       refresh_btn: "Refresh",
       historical_total_label: "Historical",
@@ -3015,6 +3026,7 @@
       filters_label: "Filtros",
       period_total: "Total del per\xEDodo",
       loading_students_msg: "Cargando alumnos...",
+      loading_private_teacher_dashboard_msg: "Cargando alumnos y solicitudes...",
       no_pending_msg: "Sin pagos pendientes",
       refresh_btn: "Actualizar",
       historical_total_label: "Hist\xF3rico",
@@ -3908,6 +3920,7 @@
       filters_label: "Filter",
       period_total: "Gesamt f\xFCr Zeitraum",
       loading_students_msg: "Sch\xFCler werden geladen...",
+      loading_private_teacher_dashboard_msg: "Sch\xFCler und Anfragen werden geladen...",
       no_pending_msg: "Keine ausstehenden Zahlungen",
       refresh_btn: "Aktualisieren",
       historical_total_label: "Gesamtverlauf",
@@ -7965,7 +7978,7 @@
           const studentListHtml = studentListPart + studentListRest;
           const xClassesOfPackage = (n) => (t22.x_classes_of_package || "{n} classes of your package").replace("{n}", n);
           html += `
-            <div class="teacher-booking-container" style="padding: 1.2rem; padding-bottom: 6rem;">
+            <div class="teacher-booking-container">
                 <div class="teacher-booking-balance-block" style="margin-bottom: 1rem; padding: 14px 16px; background: var(--system-gray6); border-radius: 16px; border: 1px solid var(--border);">
                     <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(t22.classes_remaining || "Classes remaining").replace(/</g, "&lt;")}: <strong>${effectiveBalance}</strong></div>
                     ${upcomingClasses.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary);">${(t22.no_private_classes_yet || "No accepted private classes yet").replace(/</g, "&lt;")}</div>` : `<ul style="list-style: none; margin: 0; padding: 0;">${upcomingClasses.map((item) => {
@@ -8821,8 +8834,17 @@
           const hasEventsLeft = hasEventsEnabled && eff.event > 0;
           const noClassesLeft = isPT ? !hasPrivateLeft && !hasEventsLeft : !hasGroupLeft && !hasEventsLeft;
           if (noClassesLeft) return "";
-          const activePacks = (dataSource?.active_packs || []).filter((p) => new Date(p.expires_at) > now);
-          const nextExpiry = dataSource?.package_expires_at || (activePacks.length > 0 ? activePacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null);
+          const activePacks = (dataSource?.active_packs || []).filter((p) => {
+            const exp = p?.expires_at ? new Date(p.expires_at) : null;
+            return !exp || exp > now;
+          });
+          const pkgExp = dataSource?.package_expires_at ? new Date(dataSource.package_expires_at) : null;
+          let nextExpiry = null;
+          if (activePacks.length > 0) {
+            nextExpiry = [...activePacks].sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
+          } else if (pkgExp && pkgExp > now) {
+            nextExpiry = dataSource.package_expires_at;
+          }
           if (nextExpiry) {
             const d = new Date(nextExpiry);
             const days = window.getDaysRemaining(nextExpiry);
@@ -9219,7 +9241,7 @@
         }
         html += `
             <div class="ios-header" style="background: transparent;"></div>
-            <div class="students-page">
+            <div class="students-page${state.currentSchool?.profile_type === "private_teacher" ? " students-page--private-teacher" : ""}">
                 <div class="students-header">
                     <h1 class="students-title">${t2.nav_students}</h1>
                     ${isAure ? `
@@ -9295,10 +9317,16 @@
                         </div>`;
           };
           return `
-                <div style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
-                    <div style="padding: 0 0 0.5rem 0; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                <div class="admin-pt-private-requests-wrap admin-pt-section">
+                    <div class="admin-pt-section-heading">
                         ${t2.private_class_requests_title || "Private class requests"}
                     </div>
+                    ${state.loading ? `
+                    <div class="admin-pt-dashboard-loading students-loading" role="status" aria-live="polite" style="padding: 1.5rem 0;">
+                        <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="28"></i></div>
+                        <p style="margin: 0.65rem 0 0; font-size: 14px; color: var(--text-secondary);">${t2.loading_private_teacher_dashboard_msg}</p>
+                    </div>
+                    ` : `
                     ${pendingRequests.length === 0 ? `
                     <div style="padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 14px; font-style: italic;">${t2.no_private_requests || "No requests yet"}</div>
                     ` : pendingRequests.map(renderPcrCard).join("")}
@@ -9311,6 +9339,7 @@
                         <div style="margin-top: 8px;">${allRequests.map(renderPcrCard).join("")}</div>
                     </details>
                     ` : ""}
+                    `}
                 </div>
                 `;
         })() : ""}
@@ -9526,24 +9555,30 @@
           todayEnd.setDate(todayEnd.getDate() + 1);
           const todaysLessons = (state.privateLessons || []).filter((l) => (l.status === "confirmed" || l.status === "attended") && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd);
           return `
-                    <div class="teacher-accepted-classes-expandable ${expanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
-                        <div class="admin-reg-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1;" onclick="toggleExpandableNoRender('teacherAcceptedClasses')">
+                    <div class="teacher-accepted-classes-expandable ${expanded ? "expanded" : ""}">
+                        <div class="teacher-accepted-panel-header">
+                            <div class="teacher-accepted-panel-toggle" onclick="toggleExpandableNoRender('teacherAcceptedClasses')">
                                 <i data-lucide="calendar-check" size="16" style="opacity: 0.6;"></i>
-                                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.accepted_private_classes || "Accepted private classes"}</span>
-                                ${(lessons.length || acceptedReqs.length) > 0 ? `<span style="background: var(--control-selected-fill, var(--secondary)); color: var(--control-selected-text, #fff); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${lessons.length || acceptedReqs.length}</span>` : ""}
+                                <span class="teacher-accepted-panel-title">${t2.accepted_private_classes || "Accepted private classes"}</span>
+                                ${(lessons.length || acceptedReqs.length) > 0 ? `<span class="teacher-accepted-panel-badge">${lessons.length || acceptedReqs.length}</span>` : ""}
                                 <i data-lucide="chevron-down" size="16" class="expandable-chevron" style="opacity: 0.4;"></i>
                             </div>
-                            <button type="button" class="btn-ghost" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || "Export all to your calendar"}</button>
+                            <button type="button" class="btn-ghost teacher-accepted-export-btn" onclick="event.stopPropagation(); window.downloadCalendarIcs('teacher');"><i data-lucide="calendar-plus" size="14"></i>${t2.export_all_to_calendar || "Export all to your calendar"}</button>
                         </div>
-                        <div id="teacher-accepted-classes-content" style="padding: 0.8rem 0; display: ${expanded ? "" : "none"};">
-                            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                                <button type="button" class="btn-tab ${viewMode === "list" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "list" ? "var(--control-selected-fill, var(--secondary))" : "transparent"}; color: ${viewMode === "list" ? "var(--control-selected-text, #fff)" : "var(--text-primary)"};">${t2.list_view || "List"}</button>
-                                <button type="button" class="btn-tab ${viewMode === "calendar" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: ${viewMode === "calendar" ? "var(--control-selected-fill, var(--secondary))" : "transparent"}; color: ${viewMode === "calendar" ? "var(--control-selected-text, #fff)" : "var(--text-primary)"};">${t2.calendar_view || "Calendar"}</button>
+                        <div id="teacher-accepted-classes-content" class="teacher-accepted-classes-body" style="display: ${expanded ? "" : "none"};">
+                            ${state.loading ? `
+                            <div class="admin-pt-dashboard-loading students-loading" role="status" aria-live="polite" style="padding: 1.75rem 0 1.25rem;">
+                                <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="28"></i></div>
+                                <p style="margin: 0.65rem 0 0; font-size: 14px; color: var(--text-secondary);">${t2.loading_private_teacher_dashboard_msg}</p>
+                            </div>
+                            ` : `
+                            <div class="teacher-admin-view-tabs teacher-accepted-view-tabs" role="tablist">
+                                <button type="button" role="tab" class="teacher-admin-view-tab ${viewMode === "list" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='list'; renderView();">${t2.list_view || "List"}</button>
+                                <button type="button" role="tab" class="teacher-admin-view-tab ${viewMode === "calendar" ? "active" : ""}" onclick="state.teacherAcceptedClassesView='calendar'; renderView();">${t2.calendar_view || "Calendar"}</button>
                             </div>
                             ${todaysLessons.length > 0 ? `
-                            <div style="margin-bottom: 12px; padding: 10px; background: var(--system-gray6); border-radius: 12px;">
-                                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px;">${t2.todays_private_lessons || "Today's private lessons"}</div>
+                            <div class="teacher-accepted-today-card">
+                                <div class="teacher-accepted-today-heading">${t2.todays_private_lessons || "Today's private lessons"}</div>
                                 ${todaysLessons.map((l) => {
             const studentName = (state.students || []).find((s) => String(s.id) === String(l.student_id))?.name || l.student_id;
             const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
@@ -9552,8 +9587,12 @@
             const timeAndDuration = timeStr + (durationStr ? " \xB7 " + durationStr : "");
             const canCheckIn = l.status === "confirmed";
             const isPast = new Date(l.end_at_utc) < /* @__PURE__ */ new Date();
-            const exportOneBtn = l.start_at_utc && l.end_at_utc ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.downloadCalendarIcsOne('` + l.id + `', 'teacher')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : "";
-            return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border);">' + (l.status === "attended" ? '<span style="color: var(--system-green); font-size: 12px;"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t2.checked_in || "Checked in") + "</span>" : "<div><strong>" + (studentName || "").replace(/</g, "&lt;") + "</strong> &middot; " + timeAndDuration + '</div><div style="display: flex; gap: 6px; flex-wrap: wrap;">' + exportOneBtn + (canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + l.id + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (isPast && l.status === "confirmed" ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + l.id + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>") + "</div>";
+            const exportOneBtn2 = l.start_at_utc && l.end_at_utc ? `<button type="button" class="btn-ghost teacher-accepted-action-btn teacher-accepted-action-btn--export" onclick="window.downloadCalendarIcsOne('` + l.id + `', 'teacher')"><i data-lucide="calendar-plus" size="12"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : "";
+            if (l.status === "attended") {
+              return '<div class="teacher-accepted-today-row teacher-accepted-today-row--done"><span class="teacher-accepted-today-status"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t2.checked_in || "Checked in") + "</span></div>";
+            }
+            const actionsToday = exportOneBtn2 + (canCheckIn ? `<button type="button" class="btn-primary teacher-accepted-action-btn" onclick="window.markPrivateLessonAttended('` + l.id + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (isPast && l.status === "confirmed" ? `<button type="button" class="btn-secondary teacher-accepted-action-btn" onclick="window.markPrivateLessonNoShow('` + l.id + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "");
+            return '<div class="teacher-accepted-today-row"><div class="teacher-accepted-today-main"><strong>' + (studentName || "").replace(/</g, "&lt;") + '</strong><div class="teacher-accepted-today-meta">' + timeAndDuration + '</div></div><div class="teacher-accepted-today-actions">' + actionsToday + "</div></div>";
           }).join("")}
                             </div>
                             ` : ""}
@@ -9576,16 +9615,16 @@
             const canCheckIn = lesson && lesson.status === "confirmed" && !lesson.credit_deducted;
             const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < /* @__PURE__ */ new Date();
             const attended = lesson && lesson.status === "attended";
+            const exportList = lessonId && lesson.start_at_utc && lesson.end_at_utc ? `<button type="button" class="btn-ghost teacher-accepted-action-btn teacher-accepted-action-btn--export" onclick="window.downloadCalendarIcsOne('` + lessonId + `', 'teacher')"><i data-lucide="calendar-plus" size="12"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : "";
+            const listActions = exportList + (lessonId && canCheckIn ? `<button type="button" class="btn-primary teacher-accepted-action-btn" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary teacher-accepted-action-btn" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "");
             return `
-                                <div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;">
-                                    <i data-lucide="calendar" size="16" style="opacity: 0.5; flex-shrink: 0;"></i>
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 600; font-size: 14px;">${(studentName || "").replace(/</g, "&lt;")}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">${dateLabel} &middot; ${(timeAndDuration || "").replace(/</g, "&lt;")} ${attended ? ' &middot; <span style="color: var(--system-green);">' + (t2.checked_in || "Checked in") + "</span>" : ""}</div>
+                                <div class="teacher-accepted-class-row">
+                                    <i data-lucide="calendar" size="16" class="teacher-accepted-class-row-icon"></i>
+                                    <div class="teacher-accepted-class-main">
+                                        <div class="teacher-accepted-class-name">${(studentName || "").replace(/</g, "&lt;")}</div>
+                                        <div class="teacher-accepted-class-meta">${dateLabel} &middot; ${(timeAndDuration || "").replace(/</g, "&lt;")}${attended ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t2.checked_in || "Checked in") + "</span>" : ""}</div>
                                     </div>
-                                    ${lessonId && lesson.start_at_utc && lesson.end_at_utc ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.downloadCalendarIcsOne('` + lessonId + `', 'teacher')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle;"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : ""}
-                                    ${lessonId && canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : ""}
-                                    ${lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; flex-shrink: 0;" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : ""}
+                                    ${listActions ? '<div class="teacher-accepted-class-actions">' + listActions + "</div>" : ""}
                                 </div>`;
           }).join("")}
                             ` : (() => {
@@ -9642,12 +9681,15 @@
               const timeAndDuration = (timeStr || "") + (durationStr ? " \xB7 " + durationStr : "");
               const canCheckIn = lesson && lesson.status === "confirmed" && !lesson.credit_deducted;
               const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < /* @__PURE__ */ new Date();
-              return '<div class="teacher-accepted-class-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--system-gray6); border-radius: 12px; margin-bottom: 8px;"><i data-lucide="clock" size="16" style="opacity: 0.5; flex-shrink: 0;"></i><div style="flex: 1;"><div style="font-weight: 600; font-size: 14px;">' + (studentName || "").replace(/</g, "&lt;") + '</div><div style="font-size: 12px; color: var(--text-secondary);">' + (timeAndDuration || "").replace(/</g, "&lt;") + (lesson && lesson.status === "attended" ? " &middot; " + (t2.checked_in || "Checked in") : "") + "</div></div>" + (lessonId && canCheckIn ? `<button type="button" class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "") + "</div>";
+              const exportCal = lessonId && lesson && lesson.start_at_utc && lesson.end_at_utc ? `<button type="button" class="btn-ghost teacher-accepted-action-btn teacher-accepted-action-btn--export" onclick="window.downloadCalendarIcsOne('` + lessonId + `', 'teacher')"><i data-lucide="calendar-plus" size="12"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : "";
+              const calActions = exportCal + (lessonId && canCheckIn ? `<button type="button" class="btn-primary teacher-accepted-action-btn" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary teacher-accepted-action-btn" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "");
+              return '<div class="teacher-accepted-class-row"><i data-lucide="clock" size="16" class="teacher-accepted-class-row-icon"></i><div class="teacher-accepted-class-main"><div class="teacher-accepted-class-name">' + (studentName || "").replace(/</g, "&lt;") + '</div><div class="teacher-accepted-class-meta">' + (timeAndDuration || "").replace(/</g, "&lt;") + (lesson && lesson.status === "attended" ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t2.checked_in || "Checked in") + "</span>" : "") + "</div></div>" + (calActions ? '<div class="teacher-accepted-class-actions">' + calActions + "</div>" : "") + "</div>";
             }).join("")}
                                     </div>
                                     ` : ""}
                                 </div>`;
           })()}
+                            `}
                         </div>
                     </div>`;
         })() : ""}
@@ -9711,7 +9753,7 @@
                     ${state.loading && state.students.length === 0 ? `
                     <div class="students-loading">
                         <div class="spin" style="color: #5B8FD9;"><i data-lucide="loader-2" size="32"></i></div>
-                        <p>${t2.loading_students_msg}</p>
+                        <p>${t2.loading_private_teacher_dashboard_msg}</p>
                     </div>
                     ` : (() => {
           const _f = getFilteredStudents(state.adminStudentsSearch || "");
@@ -14057,15 +14099,12 @@ School: ${schoolName}`)) return;
     if (!schoolId || !state.allEnrollments?.length) return false;
     const enrollment = state.allEnrollments.find((e) => e.school_id === schoolId);
     if (!enrollment) return false;
-    const balance = enrollment.balance;
-    if (balance === null) return true;
-    if (typeof balance === "number" && balance > 0) return true;
-    const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
-    const now = /* @__PURE__ */ new Date();
-    return packs.some((p) => {
-      const exp = p?.expires_at ? new Date(p.expires_at) : null;
-      return exp && exp > now;
-    });
+    const eff = getEffectiveBalances(enrollment, /* @__PURE__ */ new Date());
+    if (eff.groupUnlimited) return true;
+    if ((eff.group ?? 0) > 0) return true;
+    if (eff.private > 0) return true;
+    if (eff.event > 0) return true;
+    return false;
   };
   window.getEffectivePrivateBalanceForSchool = (schoolId) => {
     if (!schoolId || !Array.isArray(state.allEnrollments)) return 0;
@@ -14074,10 +14113,15 @@ School: ${schoolName}`)) return;
     const now = /* @__PURE__ */ new Date();
     const fromBalance = Number(enrollment.balance_private) || 0;
     const packs = Array.isArray(enrollment.active_packs) ? enrollment.active_packs : [];
-    let sumPrivate = 0;
-    packs.forEach((p) => {
+    const activePacks = packs.filter((p) => {
       const exp = p?.expires_at ? new Date(p.expires_at) : null;
-      if (exp && exp > now) sumPrivate += Number(p.private_count) || 0;
+      return !exp || exp > now;
+    });
+    const packsFullyExpired = packs.length > 0 && activePacks.length === 0;
+    if (packsFullyExpired) return 0;
+    let sumPrivate = 0;
+    activePacks.forEach((p) => {
+      sumPrivate += Number(p.private_count) || 0;
     });
     return Math.max(0, Math.max(fromBalance, sumPrivate));
   };

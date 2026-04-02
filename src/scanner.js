@@ -1,6 +1,7 @@
 /**
  * QR scanner and attendance: startScanner, stopScanner, handleScan, confirmAttendance, updateStickyFooterVisibility.
  * Effective balance logic mirrors backend deduct_student_classes (effective = max(balance, sum(non-expired pack counts))).
+ * When every active_packs row is expired, stale mirrored balances on the student row are ignored (treat as 0).
  */
 import { supabaseClient } from './config.js';
 import { escapeHtml } from './config.js';
@@ -20,14 +21,27 @@ export function getEffectiveBalances(student, now = new Date()) {
         const exp = p.expires_at ? new Date(p.expires_at) : null;
         return !exp || exp > now;
     });
+    const hadAnyPack = packs.length > 0;
+    const anyActivePack = activePacks.length > 0;
+    /** All pack rows expired: do not use stale students.balance / balance_* still mirrored from old packs. */
+    const packsFullyExpired = hadAnyPack && !anyActivePack;
+
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
-    const groupUnlimited = student?.balance === null || student?.balance === undefined || hasUnlimitedPack;
+    const groupUnlimited = !packsFullyExpired && (student?.balance === null || student?.balance === undefined || hasUnlimitedPack);
     const sumGroup = activePacks.reduce((s, p) => s + (parseInt(p.count, 10) || 0), 0);
-    const group = groupUnlimited ? null : Math.max(student?.balance ?? 0, sumGroup);
+    let group;
+    if (groupUnlimited) {
+        group = null;
+    } else if (packsFullyExpired) {
+        group = 0;
+    } else {
+        group = Math.max(student?.balance ?? 0, sumGroup);
+    }
+
     const sumPrivate = activePacks.reduce((s, p) => s + (p.private_count || 0), 0);
-    const privateBal = Math.max(student?.balance_private ?? 0, sumPrivate);
+    const privateBal = packsFullyExpired ? 0 : Math.max(student?.balance_private ?? 0, sumPrivate);
     const sumEvents = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-    const eventBal = Math.max(student?.balance_events ?? 0, sumEvents);
+    const eventBal = packsFullyExpired ? 0 : Math.max(student?.balance_events ?? 0, sumEvents);
     return { group, groupUnlimited, private: privateBal, event: eventBal };
 }
 
