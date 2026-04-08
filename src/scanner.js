@@ -5,10 +5,90 @@
  */
 import { supabaseClient } from './config.js';
 import { escapeHtml } from './config.js';
-import { state, saveState } from './state.js';
+import { state } from './state.js';
 import { refreshSingleStudent } from './data.js';
+import { schoolHasDualGroupPrivateOffering } from './utils.js';
 
 let html5QrCode;
+
+/** Set during handleScan when showing today’s class registrations; used by confirmRegisteredScanBatch. */
+let scanBatchRegistrationIds = [];
+
+/**
+ * Shared HTML fragments for manual group/private/event deduction (QR scanner).
+ * @param {boolean} includePrivateLessonBlock - full manual screen includes today’s private lessons; registered+booking flow omits (already shown above).
+ */
+function buildManualDeductParts(student, t, ctx, includePrivateLessonBlock) {
+    const {
+        eff, isPT, hasDualScanMode, hasEventsEnabled, hasGroupLeft, hasPrivateLeft, hasEventsLeft,
+        effectivePrivate, effectiveEvents, todaysPrivateLessons
+    } = ctx;
+    const maxDeductGroup = eff.groupUnlimited ? 99 : Math.max(1, eff.group ?? 0);
+    const maxDeductPrivate = Math.max(1, effectivePrivate);
+    const showGroupDeduct = hasGroupLeft && (!isPT || hasDualScanMode);
+    const groupRow = showGroupDeduct ? `
+                <div style="margin-bottom: ${hasDualScanMode ? '0.75rem' : '0'};">
+                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
+                        <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('one_class')}</button>
+                        <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('two_classes')}</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
+                        <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                        <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t('deduct_btn')}</button>
+                    </div>
+                </div>` : '';
+
+    const privateDeductInner = `
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+                            <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('one_class')}</button>
+                            <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('two_classes')}</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
+                            <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t('deduct_btn')}</button>
+                        </div>`;
+    const privateRowPrimary = (isPT && !hasDualScanMode && hasPrivateLeft) ? `
+                <div style="margin-bottom: 0;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t('deduct_private_classes') || 'Deduct private classes'}</div>
+                    <div style="margin-top: 0.2rem;">${privateDeductInner}
+                    </div>
+                </div>` : '';
+    const privateRow = (hasDualScanMode && hasPrivateLeft) ? `
+                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
+                    <summary class="scan-private-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
+                        <span class="scan-private-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_private_classes') || 'Deduct private classes'}
+                    </summary>
+                    <div style="margin-top: 0.4rem;">${privateDeductInner}
+                    </div>
+                </details>` : '';
+
+    const eventRow = (hasEventsEnabled && hasEventsLeft) ? `
+                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
+                    <summary class="scan-event-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
+                        <span class="scan-event-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_one_event') || 'Deduct event'}
+                    </summary>
+                    <div style="margin-top: 0.4rem;">
+                        <button class="btn-primary w-full" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('deduct_one_event') || 'Deduct 1 event'}</button>
+                    </div>
+                </details>` : '';
+
+    const privateLessonBlock = includePrivateLessonBlock && todaysPrivateLessons.length > 0
+        ? todaysPrivateLessons.map((l) => {
+            const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            const checkedIn = l.status === 'attended';
+            return !checkedIn && l.status === 'confirmed'
+                ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t('private_lesson') || 'Private lesson'} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'}</button></div>`
+                : checkedIn
+                    ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t('checked_in') || 'Checked in'} – Private lesson ${timeStr}</div>`
+                    : '';
+        }).join('')
+        : '';
+
+    return { groupRow, privateRowPrimary, privateRow, eventRow, privateLessonBlock };
+}
 
 /**
  * Compute effective balances for group/private/event to match backend deduct_student_classes.
@@ -154,13 +234,28 @@ export async function handleScan(scannedId) {
     let todayRegs = [];
     if (regEnabled && supabaseClient && schoolId) {
         try {
-            await supabaseClient.rpc('process_expired_registrations', { p_school_id: schoolId });
+            const { error: expiredErr } = await supabaseClient.rpc('process_expired_registrations', { p_school_id: schoolId });
+            if (expiredErr) console.warn('process_expired_registrations:', expiredErr);
             const { data, error } = await supabaseClient.rpc('get_student_registrations_for_today', {
-                p_student_id: String(id),
+                p_student_id: String(student.id),
                 p_school_id: schoolId
             });
-            if (!error && data) {
-                todayRegs = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+            if (error) console.warn('get_student_registrations_for_today:', error);
+            if (!error && data != null) {
+                if (Array.isArray(data)) {
+                    todayRegs = data;
+                } else if (typeof data === 'string') {
+                    try {
+                        const parsed = JSON.parse(data);
+                        todayRegs = Array.isArray(parsed) ? parsed : [];
+                    } catch {
+                        todayRegs = [];
+                    }
+                } else if (typeof data === 'object' && data.id) {
+                    todayRegs = [data];
+                } else {
+                    todayRegs = [];
+                }
             }
         } catch (e) { console.warn('Error checking registrations:', e); }
     }
@@ -176,36 +271,59 @@ export async function handleScan(scannedId) {
     const now = new Date();
     const eff = getEffectiveBalances(student, now);
     const isPT = state.currentSchool?.profile_type === 'private_teacher';
-    const hasDualScanMode = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+    const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
     const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
     const hasGroupLeft = eff.groupUnlimited || (eff.group != null && eff.group > 0);
     const hasPrivateLeft = eff.private > 0;
-    const hasEventsLeft = eff.event > 0;
+    const hasEventsLeft = hasEventsEnabled && eff.event > 0;
     const effectivePrivate = eff.private;
     const effectiveEvents = eff.event;
     if (!state.scanDeductionType || (state.scanDeductionType !== 'group' && state.scanDeductionType !== 'private' && state.scanDeductionType !== 'event')) {
         state.scanDeductionType = isPT ? 'private' : 'group';
     }
-    const hasAnyBalance = hasGroupLeft || (hasDualScanMode && hasPrivateLeft) || (hasEventsEnabled && hasEventsLeft);
+    const privateCountsTowardPass = hasDualScanMode || isPT;
+    const hasAnyBalance = hasGroupLeft || (privateCountsTowardPass && hasPrivateLeft) || (hasEventsEnabled && hasEventsLeft);
     const hasValidPass = hasAnyBalance;
     const hasNoClasses = !hasAnyBalance;
 
     if (todayRegs.length > 0 && hasValidPass) {
-        const regsHtml = todayRegs.map(r => `
+        const regsHtml = todayRegs.map((r) => {
+            const noShowNote = r.status === 'no_show'
+                ? `<div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">${escapeHtml(t('scanner_no_show_mark_attended') || 'Marked absent (charged). Confirm if the student attended — no extra class will be deducted.')}</div>`
+                : '';
+            const pendingNote = r.status === 'pending'
+                ? `<div style="font-size: 0.7rem; color: var(--system-orange); margin-top: 0.35rem;">${escapeHtml(t('scanner_pending_mark_attended') || 'Pending request. Confirming marks attendance and uses one class from the package.')}</div>`
+                : '';
+            return `
             <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
                     <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--secondary);">${t('student_registered_for')}</span>
                 </div>
                 <div style="font-size: 0.95rem; font-weight: 600;">${escapeHtml(r.class_name)} <span class="text-muted">@ ${escapeHtml(r.class_time)}</span></div>
+                ${pendingNote}
+                ${noShowNote}
             </div>
-        `).join('');
+        `;
+        }).join('');
 
-        const regBtns = todayRegs.map(r => `
-            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}', '${escapeHtml(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
+        scanBatchRegistrationIds = todayRegs.map((r) => String(r.id));
+        const manualPartsForReg = buildManualDeductParts(student, t, {
+            eff, isPT, hasDualScanMode, hasEventsEnabled, hasGroupLeft, hasPrivateLeft, hasEventsLeft,
+            effectivePrivate, effectiveEvents, todaysPrivateLessons
+        }, false);
+
+        const regBtnsPerClass = todayRegs.length > 1
+            ? todayRegs.map((r) => `
+            <button class="btn-secondary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}', '${escapeHtml(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('confirm_attendance_registered')} – ${escapeHtml(r.class_name)}
             </button>
-        `).join('');
+        `).join('')
+            : '';
+
+        const perClassSection = todayRegs.length > 1
+            ? `<div style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${escapeHtml(t('scanner_pick_class_confirm') || 'Or confirm for one class only:')}</div>${regBtnsPerClass}`
+            : '';
 
         const privateLessonSection = todaysPrivateLessons.length > 0
             ? todaysPrivateLessons.map((l) => {
@@ -220,9 +338,11 @@ export async function handleScan(scannedId) {
             }).join('')
             : '';
 
-        const regBalanceLabel = hasDualScanMode
-            ? `${t('group_classes_remaining') || 'Group'}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
-            : `${t('remaining_classes')}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
+        const regBalanceLabel = (isPT && !hasDualScanMode)
+            ? `${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
+            : hasDualScanMode
+                ? `${t('group_classes_remaining') || 'Group'}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
+                : `${t('remaining_classes')}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml(student.name)}</h3>
@@ -234,10 +354,19 @@ export async function handleScan(scannedId) {
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
                     <i data-lucide="info" size="12" style="vertical-align: middle; margin-right: 4px;"></i>${t('class_will_deduct')}
                 </div>
-                ${regBtns}
-                <div style="border-top: 1px solid var(--border); margin-top: 0.4rem; padding-top: 0.4rem;">
-                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.25rem;">${t('no_manual_deduction')}</div>
-                </div>
+                <button type="button" class="btn-primary w-full" onclick="window.confirmRegisteredScanBatch('${escapeHtml(student.id)}')" style="padding: 0.65rem 0.85rem; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.35rem;">
+                    <i data-lucide="check" size="18" style="margin-right: 8px; vertical-align: middle;"></i>${t('confirm_attendance')}
+                </button>
+                ${perClassSection}
+                <details style="margin-top: 0.45rem; border-top: 1px solid var(--border); padding-top: 0.45rem;">
+                    <summary style="font-size: 0.72rem; cursor: pointer; color: var(--text-secondary); font-weight: 600; list-style: none;">${escapeHtml(t('scanner_manual_deduct_expand') || 'Manual deduction — only if there is no class booking today')}</summary>
+                    <div style="margin-top: 0.45rem;">
+                        ${manualPartsForReg.groupRow}
+                        ${manualPartsForReg.privateRowPrimary}
+                        ${manualPartsForReg.privateRow}
+                        ${manualPartsForReg.eventRow}
+                    </div>
+                </details>
                 <div style="text-align: center; margin-top: 0.5rem;">
                     <button type="button" onclick="window.cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t('cancel')}</button>
                 </div>
@@ -252,65 +381,16 @@ export async function handleScan(scannedId) {
             </div>
         `;
     } else if (hasValidPass) {
-        const maxDeductGroup = eff.groupUnlimited ? 99 : Math.max(1, eff.group ?? 0);
-        const maxDeductPrivate = Math.max(1, effectivePrivate);
+        scanBatchRegistrationIds = [];
         const balanceLabelDual = `${t('group_classes_remaining') || 'Group'}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? 0)} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         const balanceLabelSingle = `${t('remaining_classes')}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? 0)}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
-        const balanceLabel = hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
+        const balanceLabelPrivateOnly = `${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
+        const balanceLabel = (isPT && !hasDualScanMode) ? balanceLabelPrivateOnly : (hasDualScanMode ? balanceLabelDual : balanceLabelSingle);
 
-        const groupRow = hasGroupLeft ? `
-                <div style="margin-bottom: ${hasDualScanMode ? '0.75rem' : '0'};">
-                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t('deduct_group_classes') || 'Deduct group classes'}</div>` : ''}
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
-                        <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('one_class')}</button>
-                        <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('two_classes')}</button>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
-                        <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
-                        <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t('deduct_btn')}</button>
-                    </div>
-                </div>` : '';
-
-        const privateRow = (hasDualScanMode && hasPrivateLeft) ? `
-                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
-                    <summary class="scan-private-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
-                        <span class="scan-private-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_private_classes') || 'Deduct private classes'}
-                    </summary>
-                    <div style="margin-top: 0.4rem;">
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
-                            <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('one_class')}</button>
-                            <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('two_classes')}</button>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
-                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t('custom_classes_label')}:</label>
-                            <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t('deduct_btn')}</button>
-                        </div>
-                    </div>
-                </details>` : '';
-
-        const eventRow = (hasEventsEnabled && hasEventsLeft) ? `
-                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
-                    <summary class="scan-event-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
-                        <span class="scan-event-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">▶</span> ${t('deduct_one_event') || 'Deduct event'}
-                    </summary>
-                    <div style="margin-top: 0.4rem;">
-                        <button class="btn-primary w-full" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t('deduct_one_event') || 'Deduct 1 event'}</button>
-                    </div>
-                </details>` : '';
-
-        const privateLessonBlock = todaysPrivateLessons.length > 0
-            ? todaysPrivateLessons.map((l) => {
-                const timeStr = new Date(l.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-                const checkedIn = l.status === 'attended';
-                return !checkedIn && l.status === 'confirmed'
-                    ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t('private_lesson') || 'Private lesson'} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('check_in_btn') || 'Check in'}</button></div>`
-                    : checkedIn
-                        ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t('checked_in') || 'Checked in'} – Private lesson ${timeStr}</div>`
-                        : '';
-            }).join('')
-            : '';
+        const manualOnly = buildManualDeductParts(student, t, {
+            eff, isPT, hasDualScanMode, hasEventsEnabled, hasGroupLeft, hasPrivateLeft, hasEventsLeft,
+            effectivePrivate, effectiveEvents, todaysPrivateLessons
+        }, true);
 
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
@@ -322,10 +402,11 @@ export async function handleScan(scannedId) {
                         </div>
                     </div>
                 </div>
-                ${privateLessonBlock}
-                ${groupRow}
-                ${privateRow}
-                ${eventRow}
+                ${manualOnly.privateLessonBlock}
+                ${manualOnly.groupRow}
+                ${manualOnly.privateRowPrimary}
+                ${manualOnly.privateRow}
+                ${manualOnly.eventRow}
             </div>
         `;
     } else {
@@ -429,6 +510,65 @@ export async function confirmRegisteredAttendance(registrationId, studentId) {
         if (window.lucide) window.lucide.createIcons();
     } catch (e) {
         console.error('Error confirming registered attendance:', e);
+        resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <p style="color: var(--danger);">${escapeHtml(e.message || t('error_confirming_attendance'))}</p>
+                <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t('close')}</button>
+            </div>
+        `;
+    } finally {
+        state.scanDeductionLoading = false;
+    }
+}
+
+/** Confirm attendance for every registration listed in scanBatchRegistrationIds (same day, from handleScan). */
+export async function confirmRegisteredScanBatch(studentId) {
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) return;
+    if (state.scanDeductionLoading) return;
+    const ids = scanBatchRegistrationIds.slice();
+    if (!ids.length) return;
+
+    const t = new Proxy(window.t, {
+        get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop]
+    });
+    const resultEl = document.getElementById('inline-scan-result');
+
+    state.scanDeductionLoading = true;
+    resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t('scan_deducting')}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+
+    try {
+        for (let i = 0; i < ids.length; i++) {
+            const registrationId = ids[i];
+            const { error } = await supabaseClient.rpc('mark_registration_attended', {
+                p_registration_id: registrationId,
+                p_school_id: schoolId
+            });
+            if (error) throw error;
+        }
+        if (studentId) {
+            await refreshSingleStudent(studentId, schoolId);
+        }
+
+        resultEl.innerHTML = `
+            <div class="card" style="border-radius: 20px; padding: 1.5rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.8rem;">
+                    <i data-lucide="check" size="24" style="color: white;"></i>
+                </div>
+                <h3 style="font-size: 1rem; color: var(--secondary); margin: 0;">${t('attendance_success')}</h3>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.3rem 0 1rem;">${t('auto_deducted')}</p>
+                <button class="btn-primary w-full" onclick="window.cancelAttendance()" style="padding: 0.8rem;">${t('close')}</button>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        console.error('Error confirming batch attendance:', e);
         resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <p style="color: var(--danger);">${escapeHtml(e.message || t('error_confirming_attendance'))}</p>

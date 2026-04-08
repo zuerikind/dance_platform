@@ -5,7 +5,7 @@
 import { escapeHtml, supabaseClient, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
-import { formatPrice, formatClassTime, getPlanExpiryUseFixedDate } from './utils.js';
+import { formatPrice, formatClassTime, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering } from './utils.js';
 import { parseHashRoute, parseQueryAndHashForView, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
 import { getCapabilities, bootstrapAuth } from './auth.js';
 
@@ -56,6 +56,7 @@ if (typeof window !== 'undefined') {
     window.formatPrice = formatPrice;
     window.formatClassTime = formatClassTime;
     window.getPlanExpiryUseFixedDate = getPlanExpiryUseFixedDate;
+    window.schoolHasDualGroupPrivateOffering = schoolHasDualGroupPrivateOffering;
     window.DISCOVERY_COUNTRIES_CITIES = DISCOVERY_COUNTRIES_CITIES;
     window.DISCOVERY_COUNTRIES = DISCOVERY_COUNTRIES;
     window.applySchoolTheme = applySchoolTheme;

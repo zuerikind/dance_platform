@@ -90,7 +90,7 @@
     teacherAvailability: [],
     privateClassRequests: [],
     studentPrivateClassRequests: [],
-    studentPrivateClassesExpanded: false,
+    studentPrivateClassesExpanded: true,
     studentPrivateClassesView: "list",
     studentPrivateCalendarDate: null,
     studentPrivateCalendarSelectedDate: null,
@@ -268,6 +268,12 @@
   }
   function getPlanExpiryUseFixedDate() {
     return false;
+  }
+  function schoolHasDualGroupPrivateOffering(school, adminSettings) {
+    if (!school) return false;
+    const offeringOn = adminSettings?.private_classes_offering_enabled === "true";
+    if (school.profile_type === "private_teacher") return offeringOn;
+    return school.private_packages_enabled !== false && offeringOn;
   }
 
   // src/routing.js
@@ -1204,6 +1210,76 @@
 
   // src/scanner.js
   var html5QrCode;
+  var scanBatchRegistrationIds = [];
+  function buildManualDeductParts(student, t2, ctx, includePrivateLessonBlock) {
+    const {
+      eff,
+      isPT,
+      hasDualScanMode,
+      hasEventsEnabled,
+      hasGroupLeft,
+      hasPrivateLeft,
+      hasEventsLeft,
+      effectivePrivate,
+      effectiveEvents,
+      todaysPrivateLessons
+    } = ctx;
+    const maxDeductGroup = eff.groupUnlimited ? 99 : Math.max(1, eff.group ?? 0);
+    const maxDeductPrivate = Math.max(1, effectivePrivate);
+    const showGroupDeduct = hasGroupLeft && (!isPT || hasDualScanMode);
+    const groupRow = showGroupDeduct ? `
+                <div style="margin-bottom: ${hasDualScanMode ? "0.75rem" : "0"};">
+                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t2("deduct_group_classes") || "Deduct group classes"}</div>` : ""}
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
+                        <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
+                        <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
+                        <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t2("custom_classes_label")}:</label>
+                        <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml2(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
+                    </div>
+                </div>` : "";
+    const privateDeductInner = `
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+                            <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
+                            <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 2, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t2("custom_classes_label")}:</label>
+                            <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
+                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml2(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
+                        </div>`;
+    const privateRowPrimary = isPT && !hasDualScanMode && hasPrivateLeft ? `
+                <div style="margin-bottom: 0;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t2("deduct_private_classes") || "Deduct private classes"}</div>
+                    <div style="margin-top: 0.2rem;">${privateDeductInner}
+                    </div>
+                </div>` : "";
+    const privateRow = hasDualScanMode && hasPrivateLeft ? `
+                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
+                    <summary class="scan-private-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
+                        <span class="scan-private-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">\u25B6</span> ${t2("deduct_private_classes") || "Deduct private classes"}
+                    </summary>
+                    <div style="margin-top: 0.4rem;">${privateDeductInner}
+                    </div>
+                </details>` : "";
+    const eventRow = hasEventsEnabled && hasEventsLeft ? `
+                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
+                    <summary class="scan-event-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
+                        <span class="scan-event-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">\u25B6</span> ${t2("deduct_one_event") || "Deduct event"}
+                    </summary>
+                    <div style="margin-top: 0.4rem;">
+                        <button class="btn-primary w-full" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("deduct_one_event") || "Deduct 1 event"}</button>
+                    </div>
+                </details>` : "";
+    const privateLessonBlock = includePrivateLessonBlock && todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
+      const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
+      const checkedIn = l.status === "attended";
+      return !checkedIn && l.status === "confirmed" ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t2("private_lesson") || "Private lesson"} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"}</button></div>` : checkedIn ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
+    }).join("") : "";
+    return { groupRow, privateRowPrimary, privateRow, eventRow, privateLessonBlock };
+  }
   function getEffectiveBalances(student, now = /* @__PURE__ */ new Date()) {
     const packs = student?.active_packs || [];
     const activePacks = packs.filter((p) => {
@@ -1330,13 +1406,28 @@
     let todayRegs = [];
     if (regEnabled && supabaseClient && schoolId) {
       try {
-        await supabaseClient.rpc("process_expired_registrations", { p_school_id: schoolId });
+        const { error: expiredErr } = await supabaseClient.rpc("process_expired_registrations", { p_school_id: schoolId });
+        if (expiredErr) console.warn("process_expired_registrations:", expiredErr);
         const { data, error } = await supabaseClient.rpc("get_student_registrations_for_today", {
-          p_student_id: String(id),
+          p_student_id: String(student.id),
           p_school_id: schoolId
         });
-        if (!error && data) {
-          todayRegs = Array.isArray(data) ? data : typeof data === "string" ? JSON.parse(data) : [];
+        if (error) console.warn("get_student_registrations_for_today:", error);
+        if (!error && data != null) {
+          if (Array.isArray(data)) {
+            todayRegs = data;
+          } else if (typeof data === "string") {
+            try {
+              const parsed = JSON.parse(data);
+              todayRegs = Array.isArray(parsed) ? parsed : [];
+            } catch {
+              todayRegs = [];
+            }
+          } else if (typeof data === "object" && data.id) {
+            todayRegs = [data];
+          } else {
+            todayRegs = [];
+          }
         }
       } catch (e) {
         console.warn("Error checking registrations:", e);
@@ -1352,41 +1443,62 @@
     const now = /* @__PURE__ */ new Date();
     const eff = getEffectiveBalances(student, now);
     const isPT = state.currentSchool?.profile_type === "private_teacher";
-    const hasDualScanMode = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+    const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
     const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
     const hasGroupLeft = eff.groupUnlimited || eff.group != null && eff.group > 0;
     const hasPrivateLeft = eff.private > 0;
-    const hasEventsLeft = eff.event > 0;
+    const hasEventsLeft = hasEventsEnabled && eff.event > 0;
     const effectivePrivate = eff.private;
     const effectiveEvents = eff.event;
     if (!state.scanDeductionType || state.scanDeductionType !== "group" && state.scanDeductionType !== "private" && state.scanDeductionType !== "event") {
       state.scanDeductionType = isPT ? "private" : "group";
     }
-    const hasAnyBalance = hasGroupLeft || hasDualScanMode && hasPrivateLeft || hasEventsEnabled && hasEventsLeft;
+    const privateCountsTowardPass = hasDualScanMode || isPT;
+    const hasAnyBalance = hasGroupLeft || privateCountsTowardPass && hasPrivateLeft || hasEventsEnabled && hasEventsLeft;
     const hasValidPass = hasAnyBalance;
     const hasNoClasses = !hasAnyBalance;
     if (todayRegs.length > 0 && hasValidPass) {
-      const regsHtml = todayRegs.map((r) => `
+      const regsHtml = todayRegs.map((r) => {
+        const noShowNote = r.status === "no_show" ? `<div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">${escapeHtml2(t2("scanner_no_show_mark_attended") || "Marked absent (charged). Confirm if the student attended \u2014 no extra class will be deducted.")}</div>` : "";
+        const pendingNote = r.status === "pending" ? `<div style="font-size: 0.7rem; color: var(--system-orange); margin-top: 0.35rem;">${escapeHtml2(t2("scanner_pending_mark_attended") || "Pending request. Confirming marks attendance and uses one class from the package.")}</div>` : "";
+        return `
             <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
                     <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--secondary);">${t2("student_registered_for")}</span>
                 </div>
                 <div style="font-size: 0.95rem; font-weight: 600;">${escapeHtml2(r.class_name)} <span class="text-muted">@ ${escapeHtml2(r.class_time)}</span></div>
+                ${pendingNote}
+                ${noShowNote}
             </div>
-        `).join("");
-      const regBtns = todayRegs.map((r) => `
-            <button class="btn-primary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml2(r.id)}', '${escapeHtml2(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
+        `;
+      }).join("");
+      scanBatchRegistrationIds = todayRegs.map((r) => String(r.id));
+      const manualPartsForReg = buildManualDeductParts(student, t2, {
+        eff,
+        isPT,
+        hasDualScanMode,
+        hasEventsEnabled,
+        hasGroupLeft,
+        hasPrivateLeft,
+        hasEventsLeft,
+        effectivePrivate,
+        effectiveEvents,
+        todaysPrivateLessons
+      }, false);
+      const regBtnsPerClass = todayRegs.length > 1 ? todayRegs.map((r) => `
+            <button class="btn-secondary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml2(r.id)}', '${escapeHtml2(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("confirm_attendance_registered")} \u2013 ${escapeHtml2(r.class_name)}
             </button>
-        `).join("");
+        `).join("") : "";
+      const perClassSection = todayRegs.length > 1 ? `<div style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${escapeHtml2(t2("scanner_pick_class_confirm") || "Or confirm for one class only:")}</div>${regBtnsPerClass}` : "";
       const privateLessonSection = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
         const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
         const checkedIn = l.status === "attended";
         const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
         return checkInBtn;
       }).join("") : "";
-      const regBalanceLabel = hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
+      const regBalanceLabel = isPT && !hasDualScanMode ? `${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml2(student.name)}</h3>
@@ -1398,10 +1510,19 @@
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
                     <i data-lucide="info" size="12" style="vertical-align: middle; margin-right: 4px;"></i>${t2("class_will_deduct")}
                 </div>
-                ${regBtns}
-                <div style="border-top: 1px solid var(--border); margin-top: 0.4rem; padding-top: 0.4rem;">
-                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.25rem;">${t2("no_manual_deduction")}</div>
-                </div>
+                <button type="button" class="btn-primary w-full" onclick="window.confirmRegisteredScanBatch('${escapeHtml2(student.id)}')" style="padding: 0.65rem 0.85rem; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.35rem;">
+                    <i data-lucide="check" size="18" style="margin-right: 8px; vertical-align: middle;"></i>${t2("confirm_attendance")}
+                </button>
+                ${perClassSection}
+                <details style="margin-top: 0.45rem; border-top: 1px solid var(--border); padding-top: 0.45rem;">
+                    <summary style="font-size: 0.72rem; cursor: pointer; color: var(--text-secondary); font-weight: 600; list-style: none;">${escapeHtml2(t2("scanner_manual_deduct_expand") || "Manual deduction \u2014 only if there is no class booking today")}</summary>
+                    <div style="margin-top: 0.45rem;">
+                        ${manualPartsForReg.groupRow}
+                        ${manualPartsForReg.privateRowPrimary}
+                        ${manualPartsForReg.privateRow}
+                        ${manualPartsForReg.eventRow}
+                    </div>
+                </details>
                 <div style="text-align: center; margin-top: 0.5rem;">
                     <button type="button" onclick="window.cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t2("cancel")}</button>
                 </div>
@@ -1416,55 +1537,23 @@
             </div>
         `;
     } else if (hasValidPass) {
-      const maxDeductGroup = eff.groupUnlimited ? 99 : Math.max(1, eff.group ?? 0);
-      const maxDeductPrivate = Math.max(1, effectivePrivate);
+      scanBatchRegistrationIds = [];
       const balanceLabelDual = `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
       const balanceLabelSingle = `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
-      const balanceLabel = hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
-      const groupRow = hasGroupLeft ? `
-                <div style="margin-bottom: ${hasDualScanMode ? "0.75rem" : "0"};">
-                    ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t2("deduct_group_classes") || "Deduct group classes"}</div>` : ""}
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
-                        <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
-                        <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
-                        <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t2("custom_classes_label")}:</label>
-                        <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml2(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
-                    </div>
-                </div>` : "";
-      const privateRow = hasDualScanMode && hasPrivateLeft ? `
-                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
-                    <summary class="scan-private-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
-                        <span class="scan-private-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">\u25B6</span> ${t2("deduct_private_classes") || "Deduct private classes"}
-                    </summary>
-                    <div style="margin-top: 0.4rem;">
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
-                            <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
-                            <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 2, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
-                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t2("custom_classes_label")}:</label>
-                            <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml2(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
-                        </div>
-                    </div>
-                </details>` : "";
-      const eventRow = hasEventsEnabled && hasEventsLeft ? `
-                <details style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.4rem;">
-                    <summary class="scan-event-summary" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 0.35rem 0;">
-                        <span class="scan-event-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">\u25B6</span> ${t2("deduct_one_event") || "Deduct event"}
-                    </summary>
-                    <div style="margin-top: 0.4rem;">
-                        <button class="btn-primary w-full" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("deduct_one_event") || "Deduct 1 event"}</button>
-                    </div>
-                </details>` : "";
-      const privateLessonBlock = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
-        const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
-        const checkedIn = l.status === "attended";
-        return !checkedIn && l.status === "confirmed" ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t2("private_lesson") || "Private lesson"} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"}</button></div>` : checkedIn ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
-      }).join("") : "";
+      const balanceLabelPrivateOnly = `${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
+      const balanceLabel = isPT && !hasDualScanMode ? balanceLabelPrivateOnly : hasDualScanMode ? balanceLabelDual : balanceLabelSingle;
+      const manualOnly = buildManualDeductParts(student, t2, {
+        eff,
+        isPT,
+        hasDualScanMode,
+        hasEventsEnabled,
+        hasGroupLeft,
+        hasPrivateLeft,
+        hasEventsLeft,
+        effectivePrivate,
+        effectiveEvents,
+        todaysPrivateLessons
+      }, true);
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -1475,10 +1564,11 @@
                         </div>
                     </div>
                 </div>
-                ${privateLessonBlock}
-                ${groupRow}
-                ${privateRow}
-                ${eventRow}
+                ${manualOnly.privateLessonBlock}
+                ${manualOnly.groupRow}
+                ${manualOnly.privateRowPrimary}
+                ${manualOnly.privateRow}
+                ${manualOnly.eventRow}
             </div>
         `;
     } else {
@@ -1574,6 +1664,59 @@
       if (window.lucide) window.lucide.createIcons();
     } catch (e) {
       console.error("Error confirming registered attendance:", e);
+      resultEl.innerHTML = `
+            <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
+                <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
+                <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
+            </div>
+        `;
+    } finally {
+      state.scanDeductionLoading = false;
+    }
+  }
+  async function confirmRegisteredScanBatch(studentId) {
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) return;
+    if (state.scanDeductionLoading) return;
+    const ids = scanBatchRegistrationIds.slice();
+    if (!ids.length) return;
+    const t2 = new Proxy(window.t, {
+      get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
+    });
+    const resultEl = document.getElementById("inline-scan-result");
+    state.scanDeductionLoading = true;
+    resultEl.innerHTML = `
+        <div class="card" style="border-radius: 16px; padding: 1rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+            <div class="spin" style="color: var(--secondary); margin: 0 auto 0.6rem;"><i data-lucide="loader-2" size="32"></i></div>
+            <div style="font-weight: 600; font-size: 0.9rem;">${t2("scan_deducting")}</div>
+        </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+    try {
+      for (let i = 0; i < ids.length; i++) {
+        const registrationId = ids[i];
+        const { error } = await supabaseClient.rpc("mark_registration_attended", {
+          p_registration_id: registrationId,
+          p_school_id: schoolId
+        });
+        if (error) throw error;
+      }
+      if (studentId) {
+        await refreshSingleStudent(studentId, schoolId);
+      }
+      resultEl.innerHTML = `
+            <div class="card" style="border-radius: 20px; padding: 1.5rem; text-align: center; border: 2px solid var(--secondary); background: var(--background);">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.8rem;">
+                    <i data-lucide="check" size="24" style="color: white;"></i>
+                </div>
+                <h3 style="font-size: 1rem; color: var(--secondary); margin: 0;">${t2("attendance_success")}</h3>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.3rem 0 1rem;">${t2("auto_deducted")}</p>
+                <button class="btn-primary w-full" onclick="window.cancelAttendance()" style="padding: 0.8rem;">${t2("close")}</button>
+            </div>
+        `;
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      console.error("Error confirming batch attendance:", e);
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
@@ -1866,6 +2009,8 @@
       limit_classes_placeholder: "Classes (0 = Unlimited)",
       offer_private_classes: "Offer private classes",
       offer_private_classes_desc: "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.",
+      offer_group_classes_pt: "Offer group class packages",
+      offer_group_classes_pt_desc: "By default your studio uses private (1:1) packages. Turn this on to also sell group-class packages and track group and private balances separately.",
       offer_events: "Offer events",
       offer_events_desc: "Allow students to buy and use event tokens. When enabled, plans can include group, private, and event counts.",
       events: "Events",
@@ -2332,6 +2477,8 @@
       class_full: "Class Full",
       full_label: "Full",
       class_already_started: "Class already started",
+      registration_closed_for_day: "Registration for this day has closed.",
+      registration_closed_for_day_hint: "Sign-up is open until the end of the class day (midnight, Mexico City time). This date is no longer available for registration.",
       spots_left: "{n} spots left",
       only_n_spots: "Only {n} places left!",
       registered: "Registered",
@@ -2356,6 +2503,8 @@
       max_students: "Max Students",
       max_students_placeholder: "e.g. 20",
       confirm_attendance_registered: "Confirm Attendance",
+      scanner_pick_class_confirm: "Or confirm for one class only:",
+      scanner_manual_deduct_expand: "Manual deduction \u2014 only if there is no class booking today",
       class_will_deduct: "1 class will be deducted from their package",
       student_registered_for: "Registered for",
       register_success: "Successfully registered!",
@@ -2791,6 +2940,8 @@
       limit_classes_placeholder: "Clases (0 = Ilimitado)",
       offer_private_classes: "Ofrecer clases particulares",
       offer_private_classes_desc: "Permite que los alumnos compren y usen paquetes de clases particulares. Cuando est\xE1 activo, los planes pueden incluir clases en grupo, particulares o ambas.",
+      offer_group_classes_pt: "Ofrecer paquetes de clases grupales",
+      offer_group_classes_pt_desc: "Por defecto tus paquetes son de clases particulares. Activa esto para tambi\xE9n vender paquetes con clases grupales y llevar saldos de grupo y particulares por separado.",
       offer_events: "Ofrecer eventos",
       offer_events_desc: "Permite que los alumnos compren y usen tokens de eventos. Cuando est\xE1 activo, los planes pueden incluir grupo, particulares y eventos.",
       events: "Eventos",
@@ -3162,6 +3313,8 @@
       class_full: "Clase llena",
       full_label: "Llena",
       class_already_started: "La clase ya comenz\xF3",
+      registration_closed_for_day: "La inscripci\xF3n para este d\xEDa ya cerr\xF3.",
+      registration_closed_for_day_hint: "Puedes inscribirte hasta el final del d\xEDa de la clase (medianoche, hora Ciudad de M\xE9xico). Esta fecha ya no est\xE1 disponible para inscribirte.",
       spots_left: "{n} lugares disponibles",
       only_n_spots: "Solo quedan {n} lugares!",
       registered: "Registrado",
@@ -3186,6 +3339,8 @@
       max_students: "M\xE1x. alumnos",
       max_students_placeholder: "ej. 20",
       confirm_attendance_registered: "Confirmar asistencia",
+      scanner_pick_class_confirm: "O confirmar solo una clase:",
+      scanner_manual_deduct_expand: "Descuento manual \u2014 solo si no hay reserva para hoy",
       class_will_deduct: "Se descontar\xE1 1 clase de su paquete",
       student_registered_for: "Registrado en",
       register_success: "Registro exitoso!",
@@ -3685,6 +3840,8 @@
       limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
       offer_private_classes: "Privatunterricht anbieten",
       offer_private_classes_desc: "Erm\xF6glicht Sch\xFClern den Kauf und die Nutzung von Privatstunden-Paketen. Wenn aktiv, k\xF6nnen Pl\xE4ne Gruppen-, Privatstunden oder beides enthalten.",
+      offer_group_classes_pt: "Gruppenstunden-Pakete anbieten",
+      offer_group_classes_pt_desc: "Standardm\xE4\xDFig nutzt dein Studio Privatpakete. Schalte ein, um auch Gruppenpakete zu verkaufen und Gruppen- und Privatsaldi getrennt zu f\xFChren.",
       offer_events: "Events anbieten",
       offer_events_desc: "Erm\xF6glicht Sch\xFClern den Kauf und die Nutzung von Event-Tokens. Wenn aktiv, k\xF6nnen Pl\xE4ne Gruppen-, Privat- und Event-Anzahl enthalten.",
       events: "Events",
@@ -4032,6 +4189,8 @@
       class_full: "Kurs voll",
       full_label: "Voll",
       class_already_started: "Kurs hat bereits begonnen",
+      registration_closed_for_day: "Die Anmeldung f\xFCr diesen Tag ist beendet.",
+      registration_closed_for_day_hint: "Du kannst dich bis zum Ende des Kurstages anmelden (Mitternacht, Ortszeit Mexico City). Dieses Datum ist f\xFCr Anmeldungen nicht mehr offen.",
       spots_left: "{n} Pl\xE4tze frei",
       only_n_spots: "Nur noch {n} Pl\xE4tze!",
       registered: "Angemeldet",
@@ -4056,6 +4215,8 @@
       max_students: "Max. Teilnehmer",
       max_students_placeholder: "z.B. 20",
       confirm_attendance_registered: "Anwesenheit best\xE4tigen",
+      scanner_pick_class_confirm: "Oder nur f\xFCr eine Kursstunde best\xE4tigen:",
+      scanner_manual_deduct_expand: "Manueller Abzug \u2014 nur wenn heute keine Buchung besteht",
       class_will_deduct: "1 Kurs wird vom Paket abgezogen",
       student_registered_for: "Angemeldet f\xFCr",
       register_success: "Erfolgreich angemeldet!",
@@ -4447,6 +4608,7 @@
   window.handleScan = handleScan;
   window.cancelAttendance = cancelAttendance;
   window.confirmRegisteredAttendance = confirmRegisteredAttendance;
+  window.confirmRegisteredScanBatch = confirmRegisteredScanBatch;
   window.confirmAttendance = confirmAttendance;
   window.handleScannerPrivateCheckIn = handleScannerPrivateCheckIn;
   window.updateStickyFooterVisibility = updateStickyFooterVisibility;
@@ -6251,7 +6413,6 @@
       "revenueFilters": ["adminRevenueFiltersExpanded", "revenue-filters-content", "revenue-filters-expandable"],
       "settingsAdvanced": ["settingsAdvancedExpanded", "settings-advanced-content", "settings-advanced-expandable"],
       "settingsNotifications": ["settingsNotificationsExpanded", "settings-notifications-content", "settings-notifications-expandable"],
-      "studentPrivateClasses": ["studentPrivateClassesExpanded", "student-private-classes-content", "student-private-classes-expandable"],
       "teacherAcceptedClasses": ["teacherAcceptedClassesExpanded", "teacher-accepted-classes-content", "teacher-accepted-classes-expandable"]
     };
     const entry = map[key];
@@ -7614,10 +7775,10 @@
                 <div class="card" style="border-radius: 14px; border: 1px solid var(--border); overflow: hidden; padding: 1rem 1.25rem;">
                     ${school?.private_packages_enabled !== false ? `
                     <div class="admin-private-classes-toggle-card" style="margin-bottom: 1rem;">
-                        <div class="admin-private-contact-title">${t2.offer_private_classes || "Offer private classes"}</div>
-                        <p class="admin-private-contact-desc">${t2.offer_private_classes_desc || "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both."}</p>
+                        <div class="admin-private-contact-title">${school?.profile_type === "private_teacher" ? t2.offer_group_classes_pt || "Offer group class packages" : t2.offer_private_classes || "Offer private classes"}</div>
+                        <p class="admin-private-contact-desc">${school?.profile_type === "private_teacher" ? t2.offer_group_classes_pt_desc || "By default your studio uses private (1:1) packages. Turn this on to also sell group-class packages and track group and private balances separately." : t2.offer_private_classes_desc || "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both."}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
-                            <span style="font-size: 15px; font-weight: 600;">${t2.offer_private_classes || "Offer private classes"}</span>
+                            <span style="font-size: 15px; font-weight: 600;">${school?.profile_type === "private_teacher" ? t2.offer_group_classes_pt || "Offer group class packages" : t2.offer_private_classes || "Offer private classes"}</span>
                             <label class="toggle-switch" style="flex-shrink: 0;">
                                 <input type="checkbox" class="toggle-switch-input" ${state.adminSettings?.private_classes_offering_enabled === "true" ? "checked" : ""} onchange="window.togglePrivateClassesOffering(this.checked)">
                                 <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
@@ -7938,19 +8099,18 @@
             return (item.requested_date || "") >= todayStr;
           });
           const effectiveBalance = typeof window.getEffectivePrivateBalanceForSchool === "function" ? window.getEffectivePrivateBalanceForSchool(school.id) : 0;
-          const myClassesExpanded = state.studentPrivateClassesExpanded !== false;
           const studentClassesView = state.studentPrivateClassesView || "list";
           const forCalendarStudent = myClasses.map((item) => ({ ...item, requested_date: item.start_at_utc ? new Date(item.start_at_utc).toISOString().slice(0, 10) : item.requested_date, requested_time: item.start_at_utc ? new Date(item.start_at_utc).toTimeString().slice(0, 5) : item.requested_time || "" }));
           const policyText = t22.private_lesson_cancellation_policy || "If you cancel less than 4 hours before the class, one private credit will be deducted. If you don't attend and the teacher doesn't check you in, you will also lose one credit.";
           const studentListPart = state.loading ? `
-                        <div class="teacher-booking-loading" style="text-align: center; padding: 1.5rem 0; color: var(--text-secondary);">
-                            <div class="spin" style="margin: 0 auto 0.75rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="28"></i></div>
-                            <div style="font-size: 14px;">${t22.loading_dashboard || "Loading..."}</div>
+                        <div class="teacher-booking-loading" style="text-align: center; padding: 1.25rem 0; color: var(--text-secondary);">
+                            <div class="spin" style="margin: 0 auto 0.65rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="24"></i></div>
+                            <div style="font-size: 12px;">${t22.loading_dashboard || "Loading..."}</div>
                         </div>
-                        ` : myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, "&lt;")}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>`;
+                        ` : myClasses.length > 0 ? `<p class="student-private-policy-text">${policyText.replace(/</g, "&lt;")}</p><p class="student-private-ics-hint">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>` : `<p class="student-private-ics-hint">${(t22.export_calendar_ics_hint || "Add to Google Calendar, Apple Calendar, or any .ics app.").replace(/</g, "&lt;")}</p>`;
           const studentListRest = state.loading ? "" : myClasses.length === 0 ? `
-                        <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 14px;">
-                            <i data-lucide="inbox" size="24" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
+                        <div style="text-align: center; padding: 0.85rem 0; color: var(--text-secondary); font-size: 12px;">
+                            <i data-lucide="inbox" size="20" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
                             <div>${t22.no_private_classes_yet || "No accepted private classes yet"}</div>
                         </div>
                         ` : myClasses.map((item) => {
@@ -7965,10 +8125,10 @@
               return '<button type="button" class="btn-ghost" onclick="' + cw + "window.studentCancelPrivateLesson('" + item.id + `')">` + (t22.cancel_btn || "Cancel") + "</button>";
             })() : "";
             const exportOneLabel = (t22.export_to_calendar || "Export to your calendar").replace(/"/g, "&quot;");
-            const exportOneBtn = item.start_at_utc && item.end_at_utc ? `<button type="button" class="btn-ghost" onclick="window.downloadCalendarIcsOne('` + item.id + `', 'student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>` + exportOneLabel + "</button>" : "";
+            const exportOneBtn = item.start_at_utc && item.end_at_utc ? `<button type="button" class="btn-ghost" onclick="window.downloadCalendarIcsOne('` + item.id + `', 'student')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle; margin-right: 3px;"></i>` + exportOneLabel + "</button>" : "";
             return `
                             <div class="student-private-class-row">
-                                <i data-lucide="calendar" size="16" class="student-private-class-icon"></i>
+                                <i data-lucide="calendar" size="14" class="student-private-class-icon"></i>
                                 <div class="student-private-class-main">
                                     <div class="student-private-class-label">${dateLabel} &middot; ${(timeStr || "").replace(/</g, "&lt;")}${item.status === "attended" ? ' &middot; <span class="student-private-class-checked">' + (t22.checked_in || "Checked in") + "</span>" : ""}</div>
                                 </div>
@@ -7977,33 +8137,38 @@
           }).join("");
           const studentListHtml = studentListPart + studentListRest;
           const xClassesOfPackage = (n) => (t22.x_classes_of_package || "{n} classes of your package").replace("{n}", n);
-          html += `
-            <div class="teacher-booking-container">
-                <div class="teacher-booking-balance-block" style="margin-bottom: 1rem; padding: 14px 16px; background: var(--system-gray6); border-radius: 16px; border: 1px solid var(--border);">
-                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(t22.classes_remaining || "Classes remaining").replace(/</g, "&lt;")}: <strong>${effectiveBalance}</strong></div>
-                    ${upcomingClasses.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary);">${(t22.no_private_classes_yet || "No accepted private classes yet").replace(/</g, "&lt;")}</div>` : `<ul style="list-style: none; margin: 0; padding: 0;">${upcomingClasses.map((item) => {
+          const upcomingStripItems = upcomingClasses.map((item) => {
             const info = typeof window.privateClassInfoFromItem === "function" ? window.privateClassInfoFromItem(item) : { durationLabel: "1h", classes: 1 };
             const dateLabel = item.start_at_utc ? window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString() : window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date((item.requested_date || "") + "T00:00:00"), state.language) : item.requested_date || "";
             const timeStr = item.start_at_utc ? new Date(item.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : item.requested_time || "";
-            return `<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">${dateLabel} \xB7 ${(timeStr || "").replace(/</g, "&lt;")} \xB7 ${info.durationLabel} \xB7 <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
-          }).join("")}</ul>`}
+            return `<li class="student-private-upcoming-li">${dateLabel} \xB7 ${(timeStr || "").replace(/</g, "&lt;")} \xB7 ${info.durationLabel} \xB7 <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
+          }).join("");
+          const upcomingStripInner = upcomingClasses.length > 0 ? `<ul class="student-private-upcoming-list">${upcomingStripItems}</ul>` : myClasses.length === 0 ? `<p class="student-private-upcoming-note">${(t22.no_private_classes_yet || "No accepted private classes yet").replace(/</g, "&lt;")}</p>` : "";
+          html += `
+            <div class="teacher-booking-container">
+                <div class="student-private-classes-unified">
+                <div class="student-private-classes-balance-strip">
+                    <div class="student-private-balance-stat">
+                        <span class="student-private-balance-label">${(t22.classes_remaining || "Classes remaining").replace(/</g, "&lt;")}</span>
+                        <span class="student-private-balance-value">${effectiveBalance}</span>
+                    </div>
+                    ${upcomingStripInner}
                 </div>
-                <div class="student-private-classes-expandable ${myClassesExpanded ? "expanded" : ""}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
-                    <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
-                            <span style="font-weight: 700; font-size: 15px;">${t22.my_private_classes || "My private classes"}</span>
-                            ${myClasses.length > 0 ? `<span style="background: var(--control-selected-fill, var(--secondary)); color: var(--control-selected-text, #fff); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ""}
+                <div class="student-private-classes-expandable expanded student-private-classes-always-open">
+                    <div class="expandable-section-header student-private-panel-header student-private-panel-header-static">
+                        <div class="student-private-panel-toggle">
+                            <i data-lucide="calendar-check" size="16" style="opacity: 0.55;"></i>
+                            <span class="student-private-panel-title">${t22.my_private_classes || "My private classes"}</span>
+                            ${myClasses.length > 0 ? `<span class="student-private-count-badge">${myClasses.length}</span>` : ""}
                         </div>
-                        <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
-                            <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t22.export_all_to_calendar || "Export all to your calendar"}</button>
-                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        <div class="student-private-classes-header-actions">
+                            <button type="button" class="btn-ghost student-private-export-all-btn" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle; margin-right: 3px; flex-shrink: 0;"></i>${t22.export_all_to_calendar || "Export all to your calendar"}</button>
                         </div>
                     </div>
-                    <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? "" : "none"}; background: var(--bg);">
-                        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                            <button type="button" class="calendly-mode-btn ${studentClassesView === "list" ? "calendly-mode-btn-selected" : ""}" onclick="state.studentPrivateClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t22.list_view || "List"}</button>
-                            <button type="button" class="calendly-mode-btn ${studentClassesView === "calendar" ? "calendly-mode-btn-selected" : ""}" onclick="state.studentPrivateClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t22.calendar_view || "Calendar"}</button>
+                    <div id="student-private-classes-content" class="student-private-classes-body" style="background: var(--bg-card);">
+                        <div class="student-private-view-tabs" role="tablist">
+                            <button type="button" role="tab" class="student-private-view-tab ${studentClassesView === "list" ? "active" : ""}" onclick="state.studentPrivateClassesView='list'; renderView();">${t22.list_view || "List"}</button>
+                            <button type="button" role="tab" class="student-private-view-tab ${studentClassesView === "calendar" ? "active" : ""}" onclick="state.studentPrivateClassesView='calendar'; renderView();">${t22.calendar_view || "Calendar"}</button>
                         </div>
                         ${studentClassesView === "list" ? studentListHtml : (() => {
             const calDateStr = state.studentPrivateCalendarDate || (/* @__PURE__ */ new Date()).toISOString().slice(0, 7) + "-01";
@@ -8024,7 +8189,7 @@
             const selectedEvents = selectedDate ? forCalendarStudent.filter((r) => r.requested_date === selectedDate) || [] : [];
             const weekdays = state.language === "es" ? ["Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b", "Dom"] : state.language === "de" ? ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
             return `
-                            <div class="private-classes-calendar">
+                            <div class="private-classes-calendar student-private-calendar">
                                 <div class="private-classes-calendar-nav">
                                     <button type="button" class="private-classes-calendar-btn" onclick="state.studentPrivateCalendarDate='${prevMonth}'; renderView();"><i data-lucide="chevron-left" size="20"></i></button>
                                     <span class="private-classes-calendar-month">${monthLabel}</span>
@@ -8063,6 +8228,7 @@
                             </div>`;
           })()}
                     </div>
+                </div>
                 </div>
                 <div class="teacher-booking-card">
                     <div class="teacher-booking-header">
@@ -8226,7 +8392,7 @@
           const dateStr = window.formatClassDate(useDate);
           const classDateTime = /* @__PURE__ */ new Date(dateStr + "T" + (classObj.time || "23:59"));
           const nowMs = getVirtualNow().getTime();
-          const isOver = classDateTime.getTime() <= nowMs;
+          const isOver = isGroupClassRegistrationPastCutoff(dateStr);
           let maxCapacity = null;
           let registeredCount = 0;
           let spotsLeft = null;
@@ -8317,7 +8483,7 @@
         const buildRegButton = (c, info) => {
           if (!info) return "";
           if (info.isOver) {
-            return `<div class="class-reg-status"><div class="reg-past-note">${t2.class_already_started}</div></div>`;
+            return `<div class="class-reg-status"><div class="reg-past-note">${t2.registration_closed_for_day || t2.class_already_started}</div></div>`;
           }
           const occNoteHtml = (info.occurrenceMessage || "").replace(/</g, "&lt;");
           const specTitle = (info.displayTitle || "").replace(/</g, "&lt;");
@@ -8371,7 +8537,7 @@
         const buildTileReg = (c, info) => {
           if (!info) return "";
           if (info.isOver) {
-            return `<div class="tile-reg-past">${t2.class_already_started}</div>`;
+            return `<div class="tile-reg-past">${t2.registration_closed_for_day || t2.class_already_started}</div>`;
           }
           const occNoteT = (info.occurrenceMessage || "").replace(/</g, "&lt;");
           const specTitleT = (info.displayTitle || "").replace(/</g, "&lt;");
@@ -8660,17 +8826,22 @@
         const hasPrivateInPlan = (s) => s.limit_count_private != null && s.limit_count_private > 0;
         const hasEventsInPlan = (s) => s.limit_count_events != null && s.limit_count_events > 0;
         const isPT = state.currentSchool?.profile_type === "private_teacher";
-        const hasDualShop = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+        const hasDualShop = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsEnabledShop = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
         const visibleSubsShop = (state.subscriptions || []).filter((s) => {
           if (!hasEventsEnabledShop && hasEventsInPlan(s)) return false;
-          if (!hasDualShop && hasPrivateInPlan(s)) return false;
+          if (!isPT && !hasDualShop && hasPrivateInPlan(s)) return false;
           return true;
         });
         const hasGroupInPlan = (s) => s.limit_count != null && s.limit_count > 0;
-        const shopGroupOnly = visibleSubsShop.filter((s) => hasGroupInPlan(s) && !hasPrivateInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopPrivateOnly = visibleSubsShop.filter((s) => hasPrivateInPlan(s) && !hasGroupInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopMixed = visibleSubsShop.filter((s) => hasEventsInPlan(s) || hasGroupInPlan(s) && hasPrivateInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let shopGroupOnly = visibleSubsShop.filter((s) => hasGroupInPlan(s) && !hasPrivateInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let shopPrivateOnly = visibleSubsShop.filter((s) => hasPrivateInPlan(s) && !hasGroupInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let shopMixed = visibleSubsShop.filter((s) => hasEventsInPlan(s) || hasGroupInPlan(s) && hasPrivateInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        if (isPT && !hasDualShop) {
+          shopGroupOnly = [];
+          shopMixed = [];
+          shopPrivateOnly = [...visibleSubsShop].sort((a, b) => planSortKey(a) - planSortKey(b));
+        }
         html += `<h1>${t2.shop_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t2.select_plan_msg}</p>`;
         if (shopGroupOnly.length > 0) {
@@ -8795,21 +8966,21 @@
           const dataSource = enrollmentForSchool || { ...state.currentUser, school_id: currentSchoolId, balance: state.currentUser?.balance, balance_private: state.currentUser?.balance_private, active_packs: state.currentUser?.active_packs || [] };
           const eff = getEffectiveBalances(dataSource, now);
           const isPT = state.currentSchool?.profile_type === "private_teacher";
-          const hasDualScanMode = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+          const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
           const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
           const groupEffective = eff.group ?? 0;
           const groupVal = eff.groupUnlimited ? "\u221E" : String(Math.max(0, groupEffective));
           const parts = [];
-          if (isPT) {
+          if (isPT && !hasDualScanMode) {
             const privateRemaining = typeof window.getEffectivePrivateBalanceForSchool === "function" && currentSchoolId ? window.getEffectivePrivateBalanceForSchool(currentSchoolId) : Math.max(0, eff.private);
             parts.push({ label: t2.classes_remaining || t2.private_classes_remaining || "Classes remaining", value: String(privateRemaining) });
           } else {
             parts.push({ label: t2.group_classes_remaining || "Group", value: groupVal });
+            if (hasDualScanMode) parts.push({ label: t2.private_classes_remaining || "Private", value: String(eff.private) });
           }
-          if (hasDualScanMode && !isPT) parts.push({ label: t2.private_classes_remaining || "Private", value: String(eff.private) });
           if (hasEventsEnabled) parts.push({ label: t2.events_remaining || "Events", value: String(eff.event) });
           const groupNum = eff.groupUnlimited ? 1 : Math.max(0, groupEffective);
-          if (parts.length === 1 && (isPT ? eff.private <= 0 : groupNum <= 0)) {
+          if (parts.length === 1 && (isPT && !hasDualScanMode ? eff.private <= 0 : groupNum <= 0)) {
             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + (t2.classes_remaining || t2.remaining_classes) + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
           }
           if (parts.length === 1) {
@@ -9827,13 +9998,13 @@
         const allTime = !!state.adminRevenueAllTime;
         const settingsSchoolRev = state.schools && state.currentSchool?.id && state.schools.find((s) => s.id === state.currentSchool.id) || state.currentSchool;
         const isPTRev = settingsSchoolRev?.profile_type === "private_teacher";
-        const hasDualRev = isPTRev || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+        const hasDualRev = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsRev = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
         const hasPrivateInPlanRev = (s) => s.limit_count_private != null && s.limit_count_private > 0;
         const hasEventsInPlanRev = (s) => s.limit_count_events != null && s.limit_count_events > 0;
         let revenueSubs = (state.subscriptions || []).filter((s) => {
           if (!hasEventsRev && hasEventsInPlanRev(s)) return false;
-          if (!hasDualRev && hasPrivateInPlanRev(s)) return false;
+          if (!isPTRev && !hasDualRev && hasPrivateInPlanRev(s)) return false;
           return true;
         });
         const seenRevNames = /* @__PURE__ */ new Set();
@@ -10027,18 +10198,23 @@
         const lastAddedId = state.lastAddedSubscriptionId || "";
         const settingsSchool = state.schools && state.currentSchool?.id && state.schools.find((s) => s.id === state.currentSchool.id) || state.currentSchool;
         const isPT = settingsSchool?.profile_type === "private_teacher";
-        const hasDualAdmin = isPT || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+        const hasDualAdmin = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
         const visibleSubsAdmin = (Array.isArray(state.subscriptions) ? state.subscriptions : []).filter((s) => {
           if (!hasEventsEnabled && hasEventsInPlanSub(s)) return false;
-          if (!hasDualAdmin && hasPrivateInPlanSub(s)) return false;
+          if (!isPT && !hasDualAdmin && hasPrivateInPlanSub(s)) return false;
           return true;
         });
         const notLastAdded = (s) => s.id !== lastAddedId;
         const hasGroupInPlanSub = (s) => s.limit_count != null && s.limit_count > 0;
-        const adminGroupOnly = visibleSubsAdmin.filter((s) => notLastAdded(s) && hasGroupInPlanSub(s) && !hasPrivateInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminPrivateOnly = visibleSubsAdmin.filter((s) => notLastAdded(s) && hasPrivateInPlanSub(s) && !hasGroupInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminMixed = visibleSubsAdmin.filter((s) => notLastAdded(s) && (hasEventsInPlanSub(s) || hasGroupInPlanSub(s) && hasPrivateInPlanSub(s))).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let adminGroupOnly = visibleSubsAdmin.filter((s) => notLastAdded(s) && hasGroupInPlanSub(s) && !hasPrivateInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let adminPrivateOnly = visibleSubsAdmin.filter((s) => notLastAdded(s) && hasPrivateInPlanSub(s) && !hasGroupInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let adminMixed = visibleSubsAdmin.filter((s) => notLastAdded(s) && (hasEventsInPlanSub(s) || hasGroupInPlanSub(s) && hasPrivateInPlanSub(s))).sort((a, b) => planSortKey(a) - planSortKey(b));
+        if (isPT && !hasDualAdmin) {
+          adminGroupOnly = [];
+          adminMixed = [];
+          adminPrivateOnly = visibleSubsAdmin.filter(notLastAdded).sort((a, b) => planSortKey(a) - planSortKey(b));
+        }
         const lastAddedPlan = lastAddedId ? (state.subscriptions || []).find((s) => s.id === lastAddedId) : null;
         let discoveryPreviewInnerHtml = "";
         if (state.settingsDiscoveryExpanded && state.showDiscoveryPreview && state.currentSchool) {
@@ -10362,10 +10538,10 @@
                                 </div>` : ""}
                                 ${(() => {
           const isPT2 = state.currentSchool?.profile_type === "private_teacher";
-          const hasDual = isPT2 || state.adminSettings?.private_classes_offering_enabled === "true";
+          const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
           const hasEvents = state.adminSettings?.events_offering_enabled === "true";
           let out = "";
-          if (hasDual && isPT2) {
+          if (isPT2 && !hasDual) {
             out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ""}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t2.private_classes || "Private"}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -10426,10 +10602,10 @@
                                 </div>` : ""}
                                 ${(() => {
           const isPT2 = state.currentSchool?.profile_type === "private_teacher";
-          const hasDual = isPT2 || state.adminSettings?.private_classes_offering_enabled === "true";
+          const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
           const hasEvents = state.adminSettings?.events_offering_enabled === "true";
           let out = "";
-          if (hasDual && isPT2) {
+          if (isPT2 && !hasDual) {
             out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ""}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t2.private_classes || "Private"}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -10490,10 +10666,10 @@
                                 </div>` : ""}
                                 ${(() => {
           const isPT2 = state.currentSchool?.profile_type === "private_teacher";
-          const hasDual = isPT2 || state.adminSettings?.private_classes_offering_enabled === "true";
+          const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
           const hasEvents = true;
           let out = "";
-          if (hasDual && isPT2) {
+          if (isPT2 && !hasDual) {
             out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ""}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t2.private_classes || "Private"}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -10555,10 +10731,10 @@
                                 </div>` : ""}
                                 ${(() => {
             const isPT2 = state.currentSchool?.profile_type === "private_teacher";
-            const hasDual = isPT2 || state.adminSettings?.private_classes_offering_enabled === "true";
+            const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
             const hasEvents = state.adminSettings?.events_offering_enabled === "true";
             let out = "";
-            if (hasDual && isPT2) {
+            if (isPT2 && !hasDual) {
               out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${sub.limit_count_private ?? sub.limit_count ?? ""}" min="0" onchange="updateSub('${sub.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t2.private_classes || "Private"}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -10794,10 +10970,10 @@
                     ${state.currentSchool?.profile_type === "school" || state.currentSchool?.profile_type === "private_teacher" ? `
                     ${state.currentSchool?.private_packages_enabled !== false ? `
                     <div class="admin-private-classes-toggle-card">
-                        <div class="admin-private-contact-title">${t2.offer_private_classes || "Offer private classes"}</div>
-                        <p class="admin-private-contact-desc">${t2.offer_private_classes_desc || "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both."}</p>
+                        <div class="admin-private-contact-title">${state.currentSchool?.profile_type === "private_teacher" ? t2.offer_group_classes_pt || "Offer group class packages" : t2.offer_private_classes || "Offer private classes"}</div>
+                        <p class="admin-private-contact-desc">${state.currentSchool?.profile_type === "private_teacher" ? t2.offer_group_classes_pt_desc || "By default your studio uses private (1:1) packages. Turn this on to also sell group-class packages and track group and private balances separately." : t2.offer_private_classes_desc || "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both."}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
-                            <span style="font-size: 15px; font-weight: 600;">${t2.offer_private_classes || "Offer private classes"}</span>
+                            <span style="font-size: 15px; font-weight: 600;">${state.currentSchool?.profile_type === "private_teacher" ? t2.offer_group_classes_pt || "Offer group class packages" : t2.offer_private_classes || "Offer private classes"}</span>
                             <label class="toggle-switch" style="flex-shrink: 0;">
                                 <input type="checkbox" class="toggle-switch-input" ${state.adminSettings?.private_classes_offering_enabled === "true" ? "checked" : ""} onchange="window.togglePrivateClassesOffering(this.checked)">
                                 <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
@@ -11792,6 +11968,26 @@
     }
     return /* @__PURE__ */ new Date();
   }
+  function calendarDateStrInTimeZone(date, timeZone) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(date);
+    const y = parts.find((p) => p.type === "year").value;
+    const m = parts.find((p) => p.type === "month").value;
+    const d = parts.find((p) => p.type === "day").value;
+    return `${y}-${m}-${d}`;
+  }
+  function isGroupClassRegistrationPastCutoff(classDateStr) {
+    if (state.mockDate) {
+      const mock = String(state.mockDate).slice(0, 10);
+      return classDateStr < mock;
+    }
+    const todayMx = calendarDateStrInTimeZone(getVirtualNow(), "America/Mexico_City");
+    return classDateStr < todayMx;
+  }
   window.getMonthlyDates = (dayCode, anchorDateOrStr) => {
     const dayMap = { "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 0 };
     const dayAliases = { "Mo": 1, "Monday": 1, "Tu": 2, "Tuesday": 2, "We": 3, "Wednesday": 3, "Th": 4, "Thursday": 4, "Fr": 5, "Friday": 5, "Sa": 6, "Saturday": 6, "Su": 0, "Sunday": 0 };
@@ -11967,11 +12163,11 @@
     if (!targetDate || isNaN(targetDate.getTime())) return;
     const targetDateStr = optionalDateStr || window.formatClassDate(targetDate);
     const classDateTime = /* @__PURE__ */ new Date(targetDateStr + "T" + (classObj.time || "23:59"));
-    if (classDateTime.getTime() <= getVirtualNow().getTime()) {
+    if (isGroupClassRegistrationPastCutoff(targetDateStr)) {
       window.showMessageModal({
         icon: "warning",
-        title: t2("class_already_started"),
-        body: "",
+        title: t2("registration_closed_for_day") || t2("class_already_started"),
+        body: t2("registration_closed_for_day_hint") || "",
         primaryLabel: t2("got_it")
       });
       return;
@@ -15114,16 +15310,21 @@ School: ${schoolName}`)) return;
       }
       const now = /* @__PURE__ */ new Date();
       const eff = getEffectiveBalances(student, now);
-      const hasDualScanMode = state.currentSchool?.profile_type === "private_teacher" || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+      const isPtSchool = state.currentSchool?.profile_type === "private_teacher";
+      const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
       const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
       const t2 = typeof window.t === "function" ? window.t : (k) => k;
       const parts = [];
       const groupLabel = t2("group_classes_remaining") || "Group";
       const groupVal = eff.groupUnlimited ? "\u221E" : String(eff.group ?? 0);
-      parts.push(`${groupLabel}: ${groupVal}`);
-      if (hasDualScanMode) {
-        const privLabel = t2("private_classes_remaining") || "Private";
+      const privLabel = t2("private_classes_remaining") || "Private";
+      if (isPtSchool && !hasDualScanMode) {
         parts.push(`${privLabel}: ${eff.private}`);
+      } else {
+        parts.push(`${groupLabel}: ${groupVal}`);
+        if (hasDualScanMode) {
+          parts.push(`${privLabel}: ${eff.private}`);
+        }
       }
       if (hasEventsEnabled) {
         const evLabel = t2("events_remaining") || "Events";
@@ -16653,14 +16854,20 @@ School: ${schoolName}`)) return;
     const packs = s.active_packs || [];
     const now = /* @__PURE__ */ new Date();
     const eff = getEffectiveBalances(s, now);
-    const hasDualScanMode = state.currentSchool?.profile_type === "private_teacher" || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true";
+    const isPtSchool = state.currentSchool?.profile_type === "private_teacher";
+    const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
     const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
     const groupLabel = window.t("group_classes_remaining") || window.t("remaining_classes") || "Group";
     const groupVal = eff.groupUnlimited ? "\u221E" : String(eff.group ?? 0);
-    const parts = [`${groupLabel}: ${groupVal}`];
-    if (hasDualScanMode) {
-      const privLabel = window.t("private_classes_remaining") || "Private";
+    const privLabel = window.t("private_classes_remaining") || "Private";
+    const parts = [];
+    if (isPtSchool && !hasDualScanMode) {
       parts.push(`${privLabel}: ${eff.private}`);
+    } else {
+      parts.push(`${groupLabel}: ${groupVal}`);
+      if (hasDualScanMode) {
+        parts.push(`${privLabel}: ${eff.private}`);
+      }
     }
     if (hasEventsEnabled) {
       const evLabel = window.t("events_remaining") || "Events";
@@ -16819,7 +17026,7 @@ School: ${schoolName}`)) return;
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("group_classes_remaining") || t2("total_classes_label") || "Group classes"}</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? "" : s.balance}" placeholder="Ilimitado" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
-                ${state.currentSchool?.profile_type === "private_teacher" || state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === "true" ? `
+                ${state.currentSchool?.profile_type === "private_teacher" || schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings) ? `
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("private_classes_remaining") || "Private classes"}</label>
                     <input type="number" id="edit-student-balance-private" class="minimal-input" value="${s.balance_private ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
@@ -17062,6 +17269,7 @@ School: ${schoolName}`)) return;
     window.formatPrice = formatPrice;
     window.formatClassTime = formatClassTime;
     window.getPlanExpiryUseFixedDate = getPlanExpiryUseFixedDate;
+    window.schoolHasDualGroupPrivateOffering = schoolHasDualGroupPrivateOffering;
     window.DISCOVERY_COUNTRIES_CITIES = DISCOVERY_COUNTRIES_CITIES;
     window.DISCOVERY_COUNTRIES = DISCOVERY_COUNTRIES;
     window.applySchoolTheme = applySchoolTheme;

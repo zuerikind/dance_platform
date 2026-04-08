@@ -1,10 +1,10 @@
 import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
-import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate } from './utils.js';
+import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering } from './utils.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
 import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth } from './data.js';
-import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances } from './scanner.js';
+import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmRegisteredScanBatch, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances } from './scanner.js';
 
 const CALENDLY_FEATURE_ENABLED = false;
 
@@ -180,6 +180,8 @@ const DANCE_LOCALES = {
         limit_classes_placeholder: "Classes (0 = Unlimited)",
         offer_private_classes: "Offer private classes",
         offer_private_classes_desc: "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.",
+        offer_group_classes_pt: "Offer group class packages",
+        offer_group_classes_pt_desc: "By default your studio uses private (1:1) packages. Turn this on to also sell group-class packages and track group and private balances separately.",
         offer_events: "Offer events",
         offer_events_desc: "Allow students to buy and use event tokens. When enabled, plans can include group, private, and event counts.",
         events: "Events",
@@ -646,6 +648,9 @@ const DANCE_LOCALES = {
         class_full: "Class Full",
         full_label: "Full",
         class_already_started: "Class already started",
+        registration_closed_for_day: "Registration for this day has closed.",
+        registration_closed_for_day_hint:
+            "Sign-up is open until the end of the class day (midnight, Mexico City time). This date is no longer available for registration.",
         spots_left: "{n} spots left",
         only_n_spots: "Only {n} places left!",
         registered: "Registered",
@@ -670,6 +675,8 @@ const DANCE_LOCALES = {
         max_students: "Max Students",
         max_students_placeholder: "e.g. 20",
         confirm_attendance_registered: "Confirm Attendance",
+        scanner_pick_class_confirm: "Or confirm for one class only:",
+        scanner_manual_deduct_expand: "Manual deduction — only if there is no class booking today",
         class_will_deduct: "1 class will be deducted from their package",
         student_registered_for: "Registered for",
         register_success: "Successfully registered!",
@@ -1084,6 +1091,8 @@ const DANCE_LOCALES = {
         limit_classes_placeholder: "Clases (0 = Ilimitado)",
         offer_private_classes: "Ofrecer clases particulares",
         offer_private_classes_desc: "Permite que los alumnos compren y usen paquetes de clases particulares. Cuando está activo, los planes pueden incluir clases en grupo, particulares o ambas.",
+        offer_group_classes_pt: "Ofrecer paquetes de clases grupales",
+        offer_group_classes_pt_desc: "Por defecto tus paquetes son de clases particulares. Activa esto para también vender paquetes con clases grupales y llevar saldos de grupo y particulares por separado.",
         offer_events: "Ofrecer eventos",
         offer_events_desc: "Permite que los alumnos compren y usen tokens de eventos. Cuando está activo, los planes pueden incluir grupo, particulares y eventos.",
         events: "Eventos",
@@ -1455,6 +1464,9 @@ const DANCE_LOCALES = {
         class_full: "Clase llena",
         full_label: "Llena",
         class_already_started: "La clase ya comenzó",
+        registration_closed_for_day: "La inscripci\u00f3n para este d\u00eda ya cerr\u00f3.",
+        registration_closed_for_day_hint:
+            "Puedes inscribirte hasta el final del d\u00eda de la clase (medianoche, hora Ciudad de M\u00e9xico). Esta fecha ya no est\u00e1 disponible para inscribirte.",
         spots_left: "{n} lugares disponibles",
         only_n_spots: "Solo quedan {n} lugares!",
         registered: "Registrado",
@@ -1479,6 +1491,8 @@ const DANCE_LOCALES = {
         max_students: "Máx. alumnos",
         max_students_placeholder: "ej. 20",
         confirm_attendance_registered: "Confirmar asistencia",
+        scanner_pick_class_confirm: "O confirmar solo una clase:",
+        scanner_manual_deduct_expand: "Descuento manual — solo si no hay reserva para hoy",
         class_will_deduct: "Se descontará 1 clase de su paquete",
         student_registered_for: "Registrado en",
         register_success: "Registro exitoso!",
@@ -1966,6 +1980,8 @@ const DANCE_LOCALES = {
         limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
         offer_private_classes: "Privatunterricht anbieten",
         offer_private_classes_desc: "Ermöglicht Schülern den Kauf und die Nutzung von Privatstunden-Paketen. Wenn aktiv, können Pläne Gruppen-, Privatstunden oder beides enthalten.",
+        offer_group_classes_pt: "Gruppenstunden-Pakete anbieten",
+        offer_group_classes_pt_desc: "Standardmäßig nutzt dein Studio Privatpakete. Schalte ein, um auch Gruppenpakete zu verkaufen und Gruppen- und Privatsaldi getrennt zu führen.",
         offer_events: "Events anbieten",
         offer_events_desc: "Ermöglicht Schülern den Kauf und die Nutzung von Event-Tokens. Wenn aktiv, können Pläne Gruppen-, Privat- und Event-Anzahl enthalten.",
         events: "Events",
@@ -2313,6 +2329,9 @@ const DANCE_LOCALES = {
         class_full: "Kurs voll",
         full_label: "Voll",
         class_already_started: "Kurs hat bereits begonnen",
+        registration_closed_for_day: "Die Anmeldung f\u00fcr diesen Tag ist beendet.",
+        registration_closed_for_day_hint:
+            "Du kannst dich bis zum Ende des Kurstages anmelden (Mitternacht, Ortszeit Mexico City). Dieses Datum ist f\u00fcr Anmeldungen nicht mehr offen.",
         spots_left: "{n} Plätze frei",
         only_n_spots: "Nur noch {n} Plätze!",
         registered: "Angemeldet",
@@ -2337,6 +2356,8 @@ const DANCE_LOCALES = {
         max_students: "Max. Teilnehmer",
         max_students_placeholder: "z.B. 20",
         confirm_attendance_registered: "Anwesenheit bestätigen",
+        scanner_pick_class_confirm: "Oder nur für eine Kursstunde bestätigen:",
+        scanner_manual_deduct_expand: "Manueller Abzug — nur wenn heute keine Buchung besteht",
         class_will_deduct: "1 Kurs wird vom Paket abgezogen",
         student_registered_for: "Angemeldet für",
         register_success: "Erfolgreich angemeldet!",
@@ -2728,6 +2749,7 @@ window.stopScanner = stopScanner;
 window.handleScan = handleScan;
 window.cancelAttendance = cancelAttendance;
 window.confirmRegisteredAttendance = confirmRegisteredAttendance;
+window.confirmRegisteredScanBatch = confirmRegisteredScanBatch;
 window.confirmAttendance = confirmAttendance;
 window.handleScannerPrivateCheckIn = handleScannerPrivateCheckIn;
 window.updateStickyFooterVisibility = updateStickyFooterVisibility;
@@ -4352,7 +4374,6 @@ window.toggleExpandableNoRender = (key) => {
         'revenueFilters': ['adminRevenueFiltersExpanded', 'revenue-filters-content', 'revenue-filters-expandable'],
         'settingsAdvanced': ['settingsAdvancedExpanded', 'settings-advanced-content', 'settings-advanced-expandable'],
         'settingsNotifications': ['settingsNotificationsExpanded', 'settings-notifications-content', 'settings-notifications-expandable'],
-        'studentPrivateClasses': ['studentPrivateClassesExpanded', 'student-private-classes-content', 'student-private-classes-expandable'],
         'teacherAcceptedClasses': ['teacherAcceptedClassesExpanded', 'teacher-accepted-classes-content', 'teacher-accepted-classes-expandable']
     };
     const entry = map[key];
@@ -5724,10 +5745,10 @@ function _renderViewImpl() {
                 <div class="card" style="border-radius: 14px; border: 1px solid var(--border); overflow: hidden; padding: 1rem 1.25rem;">
                     ${school?.private_packages_enabled !== false ? `
                     <div class="admin-private-classes-toggle-card" style="margin-bottom: 1rem;">
-                        <div class="admin-private-contact-title">${t.offer_private_classes || 'Offer private classes'}</div>
-                        <p class="admin-private-contact-desc">${t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.'}</p>
+                        <div class="admin-private-contact-title">${school?.profile_type === 'private_teacher' ? (t.offer_group_classes_pt || 'Offer group class packages') : (t.offer_private_classes || 'Offer private classes')}</div>
+                        <p class="admin-private-contact-desc">${school?.profile_type === 'private_teacher' ? (t.offer_group_classes_pt_desc || 'By default your studio uses private (1:1) packages. Turn this on to also sell group-class packages and track group and private balances separately.') : (t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.')}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
-                            <span style="font-size: 15px; font-weight: 600;">${t.offer_private_classes || 'Offer private classes'}</span>
+                            <span style="font-size: 15px; font-weight: 600;">${school?.profile_type === 'private_teacher' ? (t.offer_group_classes_pt || 'Offer group class packages') : (t.offer_private_classes || 'Offer private classes')}</span>
                             <label class="toggle-switch" style="flex-shrink: 0;">
                                 <input type="checkbox" class="toggle-switch-input" ${(state.adminSettings?.private_classes_offering_enabled === 'true') ? 'checked' : ''} onchange="window.togglePrivateClassesOffering(this.checked)">
                                 <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
@@ -6051,19 +6072,18 @@ function _renderViewImpl() {
                 return (item.requested_date || '') >= todayStr;
             });
             const effectiveBalance = typeof window.getEffectivePrivateBalanceForSchool === 'function' ? window.getEffectivePrivateBalanceForSchool(school.id) : 0;
-            const myClassesExpanded = state.studentPrivateClassesExpanded !== false;
             const studentClassesView = state.studentPrivateClassesView || 'list';
             const forCalendarStudent = myClasses.map(item => ({ ...item, requested_date: item.start_at_utc ? new Date(item.start_at_utc).toISOString().slice(0, 10) : item.requested_date, requested_time: item.start_at_utc ? new Date(item.start_at_utc).toTimeString().slice(0, 5) : (item.requested_time || '') }));
             const policyText = t2.private_lesson_cancellation_policy || 'If you cancel less than 4 hours before the class, one private credit will be deducted. If you don\'t attend and the teacher doesn\'t check you in, you will also lose one credit.';
             const studentListPart = (state.loading ? `
-                        <div class="teacher-booking-loading" style="text-align: center; padding: 1.5rem 0; color: var(--text-secondary);">
-                            <div class="spin" style="margin: 0 auto 0.75rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="28"></i></div>
-                            <div style="font-size: 14px;">${t2.loading_dashboard || 'Loading...'}</div>
+                        <div class="teacher-booking-loading" style="text-align: center; padding: 1.25rem 0; color: var(--text-secondary);">
+                            <div class="spin" style="margin: 0 auto 0.65rem; color: var(--system-blue, #007AFF);"><i data-lucide="loader-2" size="24"></i></div>
+                            <div style="font-size: 12px;">${t2.loading_dashboard || 'Loading...'}</div>
                         </div>
-                        ` : myClasses.length > 0 ? `<p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${policyText.replace(/</g, '&lt;')}</p><p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>` : `<p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>`);
+                        ` : myClasses.length > 0 ? `<p class="student-private-policy-text">${policyText.replace(/</g, '&lt;')}</p><p class="student-private-ics-hint">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>` : `<p class="student-private-ics-hint">${(t2.export_calendar_ics_hint || 'Add to Google Calendar, Apple Calendar, or any .ics app.').replace(/</g, '&lt;')}</p>`);
             const studentListRest = (state.loading ? '' : myClasses.length === 0 ? `
-                        <div style="text-align: center; padding: 1rem 0; color: var(--text-secondary); font-size: 14px;">
-                            <i data-lucide="inbox" size="24" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
+                        <div style="text-align: center; padding: 0.85rem 0; color: var(--text-secondary); font-size: 12px;">
+                            <i data-lucide="inbox" size="20" style="opacity: 0.3; margin-bottom: 0.3rem;"></i>
                             <div>${t2.no_private_classes_yet || 'No accepted private classes yet'}</div>
                         </div>
                         ` : myClasses.map(item => {
@@ -6075,10 +6095,10 @@ function _renderViewImpl() {
                             const lateCancelWarning = canCancel && hoursUntil < 4 ? (t2.cancel_late_warning || 'Cancelling within 4 hours will use one private credit.') : '';
                             const cancelBtn = canCancel ? (function() { const cw = lateCancelWarning ? ("if(confirm('" + lateCancelWarning.replace(/'/g, "\\'") + "')) ") : ""; return "<button type=\"button\" class=\"btn-ghost\" onclick=\"" + cw + "window.studentCancelPrivateLesson('" + item.id + "')\">" + (t2.cancel_btn || "Cancel") + "</button>"; })() : "";
                             const exportOneLabel = (t2.export_to_calendar || "Export to your calendar").replace(/"/g, "&quot;");
-                            const exportOneBtn = (item.start_at_utc && item.end_at_utc) ? "<button type=\"button\" class=\"btn-ghost\" onclick=\"window.downloadCalendarIcsOne('" + item.id + "', 'student')\"><i data-lucide=\"calendar-plus\" size=\"14\" style=\"vertical-align: middle; margin-right: 4px;\"></i>" + exportOneLabel + "</button>" : "";
+                            const exportOneBtn = (item.start_at_utc && item.end_at_utc) ? "<button type=\"button\" class=\"btn-ghost\" onclick=\"window.downloadCalendarIcsOne('" + item.id + "', 'student')\"><i data-lucide=\"calendar-plus\" size=\"12\" style=\"vertical-align: middle; margin-right: 3px;\"></i>" + exportOneLabel + "</button>" : "";
                             return `
                             <div class="student-private-class-row">
-                                <i data-lucide="calendar" size="16" class="student-private-class-icon"></i>
+                                <i data-lucide="calendar" size="14" class="student-private-class-icon"></i>
                                 <div class="student-private-class-main">
                                     <div class="student-private-class-label">${dateLabel} &middot; ${(timeStr || '').replace(/</g, '&lt;')}${item.status === 'attended' ? ' &middot; <span class="student-private-class-checked">' + (t2.checked_in || 'Checked in') + '</span>' : ''}</div>
                                 </div>
@@ -6087,33 +6107,38 @@ function _renderViewImpl() {
                         }).join(''));
             const studentListHtml = studentListPart + studentListRest;
             const xClassesOfPackage = (n) => (t2.x_classes_of_package || '{n} classes of your package').replace('{n}', n);
-            html += `
-            <div class="teacher-booking-container">
-                <div class="teacher-booking-balance-block" style="margin-bottom: 1rem; padding: 14px 16px; background: var(--system-gray6); border-radius: 16px; border: 1px solid var(--border);">
-                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px;">${(t2.classes_remaining || 'Classes remaining').replace(/</g, '&lt;')}: <strong>${effectiveBalance}</strong></div>
-                    ${upcomingClasses.length === 0 ? `<div style="font-size: 13px; color: var(--text-secondary);">${(t2.no_private_classes_yet || 'No accepted private classes yet').replace(/</g, '&lt;')}</div>` : `<ul style="list-style: none; margin: 0; padding: 0;">${upcomingClasses.map(item => {
+            const upcomingStripItems = upcomingClasses.map((item) => {
                 const info = typeof window.privateClassInfoFromItem === 'function' ? window.privateClassInfoFromItem(item) : { durationLabel: '1h', classes: 1 };
                 const dateLabel = item.start_at_utc ? (window.formatShortDate ? window.formatShortDate(new Date(item.start_at_utc), state.language) : new Date(item.start_at_utc).toLocaleDateString()) : (window.formatShortDate ? window.formatShortDate(new Date((item.requested_date || '') + 'T00:00:00'), state.language) : item.requested_date || '');
                 const timeStr = item.start_at_utc ? new Date(item.start_at_utc).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : (item.requested_time || '');
-                return `<li style="padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">${dateLabel} · ${(timeStr || '').replace(/</g, '&lt;')} · ${info.durationLabel} · <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
-            }).join('')}</ul>`}
+                return `<li class="student-private-upcoming-li">${dateLabel} · ${(timeStr || '').replace(/</g, '&lt;')} · ${info.durationLabel} · <strong>${xClassesOfPackage(info.classes)}</strong></li>`;
+            }).join('');
+            const upcomingStripInner = upcomingClasses.length > 0 ? `<ul class="student-private-upcoming-list">${upcomingStripItems}</ul>` : myClasses.length === 0 ? `<p class="student-private-upcoming-note">${(t2.no_private_classes_yet || 'No accepted private classes yet').replace(/</g, '&lt;')}</p>` : '';
+            html += `
+            <div class="teacher-booking-container">
+                <div class="student-private-classes-unified">
+                <div class="student-private-classes-balance-strip">
+                    <div class="student-private-balance-stat">
+                        <span class="student-private-balance-label">${(t2.classes_remaining || 'Classes remaining').replace(/</g, '&lt;')}</span>
+                        <span class="student-private-balance-value">${effectiveBalance}</span>
+                    </div>
+                    ${upcomingStripInner}
                 </div>
-                <div class="student-private-classes-expandable ${myClassesExpanded ? 'expanded' : ''}" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
-                    <div class="expandable-section-header" onclick="toggleExpandableNoRender('studentPrivateClasses')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--system-gray6);">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="calendar-check" size="18" style="opacity: 0.6;"></i>
-                            <span style="font-weight: 700; font-size: 15px;">${t2.my_private_classes || 'My private classes'}</span>
-                            ${myClasses.length > 0 ? `<span style="background: var(--control-selected-fill, var(--secondary)); color: var(--control-selected-text, #fff); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${myClasses.length}</span>` : ''}
+                <div class="student-private-classes-expandable expanded student-private-classes-always-open">
+                    <div class="expandable-section-header student-private-panel-header student-private-panel-header-static">
+                        <div class="student-private-panel-toggle">
+                            <i data-lucide="calendar-check" size="16" style="opacity: 0.55;"></i>
+                            <span class="student-private-panel-title">${t2.my_private_classes || 'My private classes'}</span>
+                            ${myClasses.length > 0 ? `<span class="student-private-count-badge">${myClasses.length}</span>` : ''}
                         </div>
-                        <div class="student-private-classes-header-actions" onclick="event.stopPropagation();">
-                            <button type="button" class="btn-ghost" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="14" style="vertical-align: middle; margin-right: 4px;"></i>${t2.export_all_to_calendar || 'Export all to your calendar'}</button>
-                            <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+                        <div class="student-private-classes-header-actions">
+                            <button type="button" class="btn-ghost student-private-export-all-btn" onclick="window.downloadCalendarIcs('student')"><i data-lucide="calendar-plus" size="12" style="vertical-align: middle; margin-right: 3px; flex-shrink: 0;"></i>${t2.export_all_to_calendar || 'Export all to your calendar'}</button>
                         </div>
                     </div>
-                    <div id="student-private-classes-content" style="padding: 12px 16px; display: ${myClassesExpanded ? '' : 'none'}; background: var(--bg);">
-                        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                            <button type="button" class="calendly-mode-btn ${studentClassesView === 'list' ? 'calendly-mode-btn-selected' : ''}" onclick="state.studentPrivateClassesView='list'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t2.list_view || 'List'}</button>
-                            <button type="button" class="calendly-mode-btn ${studentClassesView === 'calendar' ? 'calendly-mode-btn-selected' : ''}" onclick="state.studentPrivateClassesView='calendar'; renderView();" style="padding: 6px 12px; font-size: 12px;">${t2.calendar_view || 'Calendar'}</button>
+                    <div id="student-private-classes-content" class="student-private-classes-body" style="background: var(--bg-card);">
+                        <div class="student-private-view-tabs" role="tablist">
+                            <button type="button" role="tab" class="student-private-view-tab ${studentClassesView === 'list' ? 'active' : ''}" onclick="state.studentPrivateClassesView='list'; renderView();">${t2.list_view || 'List'}</button>
+                            <button type="button" role="tab" class="student-private-view-tab ${studentClassesView === 'calendar' ? 'active' : ''}" onclick="state.studentPrivateClassesView='calendar'; renderView();">${t2.calendar_view || 'Calendar'}</button>
                         </div>
                         ${studentClassesView === 'list' ? studentListHtml : (() => {
                             const calDateStr = state.studentPrivateCalendarDate || (new Date().toISOString().slice(0, 7) + '-01');
@@ -6126,7 +6151,7 @@ function _renderViewImpl() {
                             const selectedEvents = selectedDate ? (forCalendarStudent.filter(r => r.requested_date === selectedDate) || []) : [];
                             const weekdays = state.language === 'es' ? ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] : state.language === 'de' ? ['Mo','Di','Mi','Do','Fr','Sa','So'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
                             return `
-                            <div class="private-classes-calendar">
+                            <div class="private-classes-calendar student-private-calendar">
                                 <div class="private-classes-calendar-nav">
                                     <button type="button" class="private-classes-calendar-btn" onclick="state.studentPrivateCalendarDate='${prevMonth}'; renderView();"><i data-lucide="chevron-left" size="20"></i></button>
                                     <span class="private-classes-calendar-month">${monthLabel}</span>
@@ -6165,6 +6190,7 @@ function _renderViewImpl() {
                             </div>`;
                         })()}
                     </div>
+                </div>
                 </div>
                 <div class="teacher-booking-card">
                     <div class="teacher-booking-header">
@@ -6310,7 +6336,7 @@ function _renderViewImpl() {
             const dateStr = window.formatClassDate(useDate);
             const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
             const nowMs = getVirtualNow().getTime();
-            const isOver = classDateTime.getTime() <= nowMs;
+            const isOver = isGroupClassRegistrationPastCutoff(dateStr);
             let maxCapacity = null;
             let registeredCount = 0;
             let spotsLeft = null;
@@ -6412,7 +6438,7 @@ function _renderViewImpl() {
         const buildRegButton = (c, info) => {
             if (!info) return '';
             if (info.isOver) {
-                return `<div class="class-reg-status"><div class="reg-past-note">${t.class_already_started}</div></div>`;
+                return `<div class="class-reg-status"><div class="reg-past-note">${t.registration_closed_for_day || t.class_already_started}</div></div>`;
             }
             const occNoteHtml = (info.occurrenceMessage || '').replace(/</g, '&lt;');
             const specTitle = (info.displayTitle || '').replace(/</g, '&lt;');
@@ -6468,7 +6494,7 @@ function _renderViewImpl() {
         const buildTileReg = (c, info) => {
             if (!info) return '';
             if (info.isOver) {
-                return `<div class="tile-reg-past">${t.class_already_started}</div>`;
+                return `<div class="tile-reg-past">${t.registration_closed_for_day || t.class_already_started}</div>`;
             }
             const occNoteT = (info.occurrenceMessage || '').replace(/</g, '&lt;');
             const specTitleT = (info.displayTitle || '').replace(/</g, '&lt;');
@@ -6777,17 +6803,22 @@ function _renderViewImpl() {
         const hasPrivateInPlan = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
         const hasEventsInPlan = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
         const isPT = state.currentSchool?.profile_type === 'private_teacher';
-        const hasDualShop = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+        const hasDualShop = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsEnabledShop = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
         const visibleSubsShop = (state.subscriptions || []).filter(s => {
             if (!hasEventsEnabledShop && hasEventsInPlan(s)) return false;
-            if (!hasDualShop && hasPrivateInPlan(s)) return false;
+            if (!isPT && !hasDualShop && hasPrivateInPlan(s)) return false;
             return true;
         });
         const hasGroupInPlan = (s) => (s.limit_count != null && s.limit_count > 0);
-        const shopGroupOnly = visibleSubsShop.filter(s => hasGroupInPlan(s) && !hasPrivateInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopPrivateOnly = visibleSubsShop.filter(s => hasPrivateInPlan(s) && !hasGroupInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const shopMixed = visibleSubsShop.filter(s => hasEventsInPlan(s) || (hasGroupInPlan(s) && hasPrivateInPlan(s))).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let shopGroupOnly = visibleSubsShop.filter(s => hasGroupInPlan(s) && !hasPrivateInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let shopPrivateOnly = visibleSubsShop.filter(s => hasPrivateInPlan(s) && !hasGroupInPlan(s) && !hasEventsInPlan(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let shopMixed = visibleSubsShop.filter(s => hasEventsInPlan(s) || (hasGroupInPlan(s) && hasPrivateInPlan(s))).sort((a, b) => planSortKey(a) - planSortKey(b));
+        if (isPT && !hasDualShop) {
+            shopGroupOnly = [];
+            shopMixed = [];
+            shopPrivateOnly = [...visibleSubsShop].sort((a, b) => planSortKey(a) - planSortKey(b));
+        }
         html += `<h1>${t.shop_title}</h1>`;
         html += `<p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1.1rem;">${t.select_plan_msg}</p>`;
         if (shopGroupOnly.length > 0) {
@@ -6914,21 +6945,21 @@ function _renderViewImpl() {
                         const dataSource = enrollmentForSchool || { ...state.currentUser, school_id: currentSchoolId, balance: state.currentUser?.balance, balance_private: state.currentUser?.balance_private, active_packs: state.currentUser?.active_packs || [] };
                         const eff = getEffectiveBalances(dataSource, now);
                         const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                        const hasDualScanMode = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+                        const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
                         const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
                         const groupEffective = eff.group ?? 0;
                         const groupVal = eff.groupUnlimited ? '∞' : String(Math.max(0, groupEffective));
                         const parts = [];
-                        if (isPT) {
+                        if (isPT && !hasDualScanMode) {
                             const privateRemaining = (typeof window.getEffectivePrivateBalanceForSchool === 'function' && currentSchoolId) ? window.getEffectivePrivateBalanceForSchool(currentSchoolId) : Math.max(0, eff.private);
                             parts.push({ label: t.classes_remaining || t.private_classes_remaining || 'Classes remaining', value: String(privateRemaining) });
                         } else {
                             parts.push({ label: t.group_classes_remaining || 'Group', value: groupVal });
+                            if (hasDualScanMode) parts.push({ label: t.private_classes_remaining || 'Private', value: String(eff.private) });
                         }
-                        if (hasDualScanMode && !isPT) parts.push({ label: t.private_classes_remaining || 'Private', value: String(eff.private) });
                         if (hasEventsEnabled) parts.push({ label: t.events_remaining || 'Events', value: String(eff.event) });
                         const groupNum = eff.groupUnlimited ? 1 : Math.max(0, groupEffective);
-                        if (parts.length === 1 && (isPT ? eff.private <= 0 : groupNum <= 0)) {
+                        if (parts.length === 1 && ((isPT && !hasDualScanMode) ? eff.private <= 0 : groupNum <= 0)) {
                             return '<div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.2rem; font-weight: 600; text-transform: uppercase;">' + (t.classes_remaining || t.remaining_classes) + '</div><div style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--primary);">0</div>';
                         }
                         if (parts.length === 1) {
@@ -7970,13 +8001,13 @@ function _renderViewImpl() {
         const allTime = !!state.adminRevenueAllTime;
         const settingsSchoolRev = (state.schools && state.currentSchool?.id && state.schools.find(s => s.id === state.currentSchool.id)) || state.currentSchool;
         const isPTRev = settingsSchoolRev?.profile_type === 'private_teacher';
-        const hasDualRev = isPTRev || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+        const hasDualRev = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsRev = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
         const hasPrivateInPlanRev = (s) => (s.limit_count_private != null && s.limit_count_private > 0);
         const hasEventsInPlanRev = (s) => (s.limit_count_events != null && s.limit_count_events > 0);
         let revenueSubs = (state.subscriptions || []).filter(s => {
             if (!hasEventsRev && hasEventsInPlanRev(s)) return false;
-            if (!hasDualRev && hasPrivateInPlanRev(s)) return false;
+            if (!isPTRev && !hasDualRev && hasPrivateInPlanRev(s)) return false;
             return true;
         });
         const seenRevNames = new Set();
@@ -8176,18 +8207,23 @@ function _renderViewImpl() {
         const lastAddedId = state.lastAddedSubscriptionId || '';
         const settingsSchool = (state.schools && state.currentSchool?.id && state.schools.find(s => s.id === state.currentSchool.id)) || state.currentSchool;
         const isPT = settingsSchool?.profile_type === 'private_teacher';
-        const hasDualAdmin = isPT || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+        const hasDualAdmin = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
         const visibleSubsAdmin = (Array.isArray(state.subscriptions) ? state.subscriptions : []).filter(s => {
             if (!hasEventsEnabled && hasEventsInPlanSub(s)) return false;
-            if (!hasDualAdmin && hasPrivateInPlanSub(s)) return false;
+            if (!isPT && !hasDualAdmin && hasPrivateInPlanSub(s)) return false;
             return true;
         });
         const notLastAdded = (s) => s.id !== lastAddedId;
         const hasGroupInPlanSub = (s) => (s.limit_count != null && s.limit_count > 0);
-        const adminGroupOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && hasGroupInPlanSub(s) && !hasPrivateInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminPrivateOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && hasPrivateInPlanSub(s) && !hasGroupInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
-        const adminMixed = visibleSubsAdmin.filter(s => notLastAdded(s) && (hasEventsInPlanSub(s) || (hasGroupInPlanSub(s) && hasPrivateInPlanSub(s)))).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let adminGroupOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && hasGroupInPlanSub(s) && !hasPrivateInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let adminPrivateOnly = visibleSubsAdmin.filter(s => notLastAdded(s) && hasPrivateInPlanSub(s) && !hasGroupInPlanSub(s) && !hasEventsInPlanSub(s)).sort((a, b) => planSortKey(a) - planSortKey(b));
+        let adminMixed = visibleSubsAdmin.filter(s => notLastAdded(s) && (hasEventsInPlanSub(s) || (hasGroupInPlanSub(s) && hasPrivateInPlanSub(s)))).sort((a, b) => planSortKey(a) - planSortKey(b));
+        if (isPT && !hasDualAdmin) {
+            adminGroupOnly = [];
+            adminMixed = [];
+            adminPrivateOnly = visibleSubsAdmin.filter(notLastAdded).sort((a, b) => planSortKey(a) - planSortKey(b));
+        }
         const lastAddedPlan = lastAddedId ? (state.subscriptions || []).find(s => s.id === lastAddedId) : null;
         let discoveryPreviewInnerHtml = '';
         if (state.settingsDiscoveryExpanded && state.showDiscoveryPreview && state.currentSchool) {
@@ -8502,10 +8538,10 @@ function _renderViewImpl() {
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                                    const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+                                    const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
                                     const hasEvents = state.adminSettings?.events_offering_enabled === 'true';
                                     let out = '';
-                                    if (hasDual && isPT) {
+                                    if (isPT && !hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -8566,10 +8602,10 @@ function _renderViewImpl() {
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                                    const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+                                    const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
                                     const hasEvents = state.adminSettings?.events_offering_enabled === 'true';
                                     let out = '';
-                                    if (hasDual && isPT) {
+                                    if (isPT && !hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -8630,10 +8666,10 @@ function _renderViewImpl() {
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                                    const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+                                    const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
                                     const hasEvents = true;
                                     let out = '';
-                                    if (hasDual && isPT) {
+                                    if (isPT && !hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${s.limit_count_private ?? s.limit_count ?? ''}" min="0" onchange="updateSub('${s.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -8695,10 +8731,10 @@ function _renderViewImpl() {
                                 </div>` : ''}
                                 ${(() => {
                                     const isPT = state.currentSchool?.profile_type === 'private_teacher';
-                                    const hasDual = isPT || (state.adminSettings?.private_classes_offering_enabled === 'true');
+                                    const hasDual = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
                                     const hasEvents = state.adminSettings?.events_offering_enabled === 'true';
                                     let out = '';
-                                    if (hasDual && isPT) {
+                                    if (isPT && !hasDual) {
                                         out = `<div style="flex: 1; min-width: 50px; display:flex; align-items:center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                     <i data-lucide="user" size="10" style="color: var(--text-secondary); opacity: 0.5; flex-shrink: 0;"></i>
                                     <input type="number" data-field="limit_count_private" value="${sub.limit_count_private ?? sub.limit_count ?? ''}" min="0" onchange="updateSub('${sub.id}', 'limit_count_private', this.value === '' ? '0' : this.value)" placeholder="${t.private_classes || 'Private'}" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -8906,10 +8942,10 @@ function _renderViewImpl() {
                     ${(state.currentSchool?.profile_type === 'school' || state.currentSchool?.profile_type === 'private_teacher') ? `
                     ${state.currentSchool?.private_packages_enabled !== false ? `
                     <div class="admin-private-classes-toggle-card">
-                        <div class="admin-private-contact-title">${t.offer_private_classes || 'Offer private classes'}</div>
-                        <p class="admin-private-contact-desc">${t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.'}</p>
+                        <div class="admin-private-contact-title">${state.currentSchool?.profile_type === 'private_teacher' ? (t.offer_group_classes_pt || 'Offer group class packages') : (t.offer_private_classes || 'Offer private classes')}</div>
+                        <p class="admin-private-contact-desc">${state.currentSchool?.profile_type === 'private_teacher' ? (t.offer_group_classes_pt_desc || 'By default your studio uses private (1:1) packages. Turn this on to also sell group-class packages and track group and private balances separately.') : (t.offer_private_classes_desc || 'Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.')}</p>
                         <div class="ios-list-item" style="justify-content: space-between; padding: 12px 0;">
-                            <span style="font-size: 15px; font-weight: 600;">${t.offer_private_classes || 'Offer private classes'}</span>
+                            <span style="font-size: 15px; font-weight: 600;">${state.currentSchool?.profile_type === 'private_teacher' ? (t.offer_group_classes_pt || 'Offer group class packages') : (t.offer_private_classes || 'Offer private classes')}</span>
                             <label class="toggle-switch" style="flex-shrink: 0;">
                                 <input type="checkbox" class="toggle-switch-input" ${(state.adminSettings?.private_classes_offering_enabled === 'true') ? 'checked' : ''} onchange="window.togglePrivateClassesOffering(this.checked)">
                                 <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
@@ -9950,6 +9986,30 @@ function getVirtualNow() {
     return new Date();
 }
 
+/** YYYY-MM-DD for the given instant in an IANA timezone (e.g. America/Mexico_City). */
+function calendarDateStrInTimeZone(date, timeZone) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).formatToParts(date);
+    const y = parts.find(p => p.type === 'year').value;
+    const m = parts.find(p => p.type === 'month').value;
+    const d = parts.find(p => p.type === 'day').value;
+    return `${y}-${m}-${d}`;
+}
+
+/** True when group-class registration must close: occurrence date is before "today" in CDMX (or before mock date when mocking). */
+function isGroupClassRegistrationPastCutoff(classDateStr) {
+    if (state.mockDate) {
+        const mock = String(state.mockDate).slice(0, 10);
+        return classDateStr < mock;
+    }
+    const todayMx = calendarDateStrInTimeZone(getVirtualNow(), 'America/Mexico_City');
+    return classDateStr < todayMx;
+}
+
 window.getMonthlyDates = (dayCode, anchorDateOrStr) => {
     const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
     const dayAliases = { 'Mo': 1, 'Monday': 1, 'Tu': 2, 'Tuesday': 2, 'We': 3, 'Wednesday': 3, 'Th': 4, 'Thursday': 4, 'Fr': 5, 'Friday': 5, 'Sa': 6, 'Saturday': 6, 'Su': 0, 'Sunday': 0 };
@@ -10134,11 +10194,11 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
     if (!targetDate || isNaN(targetDate.getTime())) return;
     const targetDateStr = optionalDateStr || window.formatClassDate(targetDate);
     const classDateTime = new Date(targetDateStr + 'T' + (classObj.time || '23:59'));
-    if (classDateTime.getTime() <= getVirtualNow().getTime()) {
+    if (isGroupClassRegistrationPastCutoff(targetDateStr)) {
         window.showMessageModal({
             icon: 'warning',
-            title: t('class_already_started'),
-            body: '',
+            title: t('registration_closed_for_day') || t('class_already_started'),
+            body: t('registration_closed_for_day_hint') || '',
             primaryLabel: t('got_it')
         });
         return;
@@ -13249,17 +13309,21 @@ window.updateManualPaymentStudentInfo = () => {
         }
         const now = new Date();
         const eff = getEffectiveBalances(student, now);
-        const hasDualScanMode = state.currentSchool?.profile_type === 'private_teacher'
-            || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+        const isPtSchool = state.currentSchool?.profile_type === 'private_teacher';
+        const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
         const t = typeof window.t === 'function' ? window.t : (k) => k;
         const parts = [];
         const groupLabel = t('group_classes_remaining') || 'Group';
         const groupVal = eff.groupUnlimited ? '∞' : String(eff.group ?? 0);
-        parts.push(`${groupLabel}: ${groupVal}`);
-        if (hasDualScanMode) {
-            const privLabel = t('private_classes_remaining') || 'Private';
+        const privLabel = t('private_classes_remaining') || 'Private';
+        if (isPtSchool && !hasDualScanMode) {
             parts.push(`${privLabel}: ${eff.private}`);
+        } else {
+            parts.push(`${groupLabel}: ${groupVal}`);
+            if (hasDualScanMode) {
+                parts.push(`${privLabel}: ${eff.private}`);
+            }
         }
         if (hasEventsEnabled) {
             const evLabel = t('events_remaining') || 'Events';
@@ -14768,15 +14832,20 @@ window.renderAdminStudentCard = (s) => {
     const packs = s.active_packs || [];
     const now = new Date();
     const eff = getEffectiveBalances(s, now);
-    const hasDualScanMode = state.currentSchool?.profile_type === 'private_teacher'
-        || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true');
+    const isPtSchool = state.currentSchool?.profile_type === 'private_teacher';
+    const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
     const hasEventsEnabled = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === 'true';
     const groupLabel = window.t('group_classes_remaining') || window.t('remaining_classes') || 'Group';
     const groupVal = eff.groupUnlimited ? '∞' : String(eff.group ?? 0);
-    const parts = [`${groupLabel}: ${groupVal}`];
-    if (hasDualScanMode) {
-        const privLabel = window.t('private_classes_remaining') || 'Private';
+    const privLabel = window.t('private_classes_remaining') || 'Private';
+    const parts = [];
+    if (isPtSchool && !hasDualScanMode) {
         parts.push(`${privLabel}: ${eff.private}`);
+    } else {
+        parts.push(`${groupLabel}: ${groupVal}`);
+        if (hasDualScanMode) {
+            parts.push(`${privLabel}: ${eff.private}`);
+        }
     }
     if (hasEventsEnabled) {
         const evLabel = window.t('events_remaining') || 'Events';
@@ -14953,7 +15022,7 @@ window.updateStudentPrompt = async (id) => {
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('group_classes_remaining') || t('total_classes_label') || 'Group classes'}</label>
                     <input type="number" id="edit-student-balance" class="minimal-input" value="${s.balance === null ? '' : s.balance}" placeholder="Ilimitado" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
-                ${(state.currentSchool?.profile_type === 'private_teacher' || (state.currentSchool?.private_packages_enabled !== false && state.adminSettings?.private_classes_offering_enabled === 'true')) ? `
+                ${(state.currentSchool?.profile_type === 'private_teacher' || schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings)) ? `
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t('private_classes_remaining') || 'Private classes'}</label>
                     <input type="number" id="edit-student-balance-private" class="minimal-input" value="${s.balance_private ?? 0}" min="0" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">

@@ -22,3 +22,15 @@ export function formatPrice(price, currency) {
 export function getPlanExpiryUseFixedDate() {
     return false;
 }
+
+/**
+ * True when the school should show separate group + private balances, shop sections, and scanner deductions.
+ * Private teachers: same admin_settings key means "also offer group class packages" (default off = private-only UX).
+ * Regular schools: requires private_packages_enabled and the same setting ("offer private class packages").
+ */
+export function schoolHasDualGroupPrivateOffering(school, adminSettings) {
+    if (!school) return false;
+    const offeringOn = adminSettings?.private_classes_offering_enabled === 'true';
+    if (school.profile_type === 'private_teacher') return offeringOn;
+    return school.private_packages_enabled !== false && offeringOn;
+}

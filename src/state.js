@@ -59,7 +59,7 @@ export let state = {
     teacherAvailability: [],
     privateClassRequests: [],
     studentPrivateClassRequests: [],
-    studentPrivateClassesExpanded: false,
+    studentPrivateClassesExpanded: true,
     studentPrivateClassesView: 'list',
     studentPrivateCalendarDate: null,
     studentPrivateCalendarSelectedDate: null,
