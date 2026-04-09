@@ -78,6 +78,11 @@ export async function refreshSingleStudent(studentId, schoolId) {
 }
 
 export async function fetchAllData() {
+    // Password recovery intentionally has no currentSchool; this function would otherwise
+    // force currentView to school-selection and replace the reset-password screen (see else if (!state.currentSchool) below).
+    if (state.authRecoveryMode || state.currentView === 'reset-password') {
+        return;
+    }
     if (!window.supabase || !supabaseClient) {
         state.loading = false;
         state.schools = [];

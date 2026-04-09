@@ -603,6 +603,9 @@
     }
   }
   async function fetchAllData() {
+    if (state.authRecoveryMode || state.currentView === "reset-password") {
+      return;
+    }
     if (!window.supabase || !supabaseClient) {
       state.loading = false;
       state.schools = [];
@@ -2233,6 +2236,7 @@
       forgot_password_link: "Forgot password?",
       forgot_password_title: "Reset your password",
       forgot_password_hint: "Enter the email you use to sign in. If an account exists, we will send a link to set a new password.",
+      forgot_password_email_label: "Email for reset",
       forgot_password_send: "Send reset link",
       forgot_password_success: "If an account exists for that email, we sent instructions. Check your inbox and spam folder.",
       forgot_password_invalid_email: "Please enter a valid email address.",
@@ -3127,6 +3131,7 @@
       forgot_password_link: "\xBFOlvidaste tu contrase\xF1a?",
       forgot_password_title: "Restablecer contrase\xF1a",
       forgot_password_hint: "Escribe el correo con el que inicias sesi\xF3n. Si existe una cuenta, enviaremos un enlace para elegir una contrase\xF1a nueva.",
+      forgot_password_email_label: "Correo para restablecer la contrase\xF1a",
       forgot_password_send: "Enviar enlace",
       forgot_password_success: "Si existe una cuenta con ese correo, enviamos instrucciones. Revisa tu bandeja y spam.",
       forgot_password_invalid_email: "Introduce un correo v\xE1lido.",
@@ -4043,6 +4048,7 @@
       forgot_password_link: "Passwort vergessen?",
       forgot_password_title: "Passwort zur\xFCcksetzen",
       forgot_password_hint: "Gib die E-Mail ein, mit der du dich anmeldest. Wenn ein Konto existiert, senden wir einen Link f\xFCr ein neues Passwort.",
+      forgot_password_email_label: "E-Mail f\xFCr Zur\xFCcksetzen",
       forgot_password_send: "Link senden",
       forgot_password_success: "Wenn ein Konto mit dieser E-Mail existiert, haben wir Anweisungen gesendet. Pr\xFCfe Posteingang und Spam.",
       forgot_password_invalid_email: "Bitte eine g\xFCltige E-Mail eingeben.",
@@ -8233,6 +8239,8 @@
                                     </p>
                                     <div id="auth-forgot-panel" class="hidden" style="margin-bottom: 1rem; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);">
                                         <p class="auth-hint" style="font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.4;">${(window.t("forgot_password_hint") || "").replace(/</g, "&lt;")}</p>
+                                        <label for="auth-forgot-email" style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 0.35rem;">${(window.t("forgot_password_email_label") || "Email for reset").replace(/</g, "&lt;")}</label>
+                                        <input type="email" id="auth-forgot-email" class="minimal-input" placeholder="${(window.t("email_placeholder") || "Email").replace(/"/g, "&quot;")}" autocomplete="email" inputmode="email" maxlength="254" style="margin-bottom: 0.75rem;">
                                         <button type="button" class="btn-auth-primary" onclick="window.requestPasswordResetFromAuthStudent()" style="width: 100%; padding: 12px; font-weight: 600; font-size: 0.9rem;">${(window.t("forgot_password_send") || "Send reset link").replace(/</g, "&lt;")}</button>
                                     </div>
                                 `}
@@ -13066,7 +13074,22 @@
   };
   window.toggleAuthForgotPasswordPanel = () => {
     const el = document.getElementById("auth-forgot-panel");
-    if (el) el.classList.toggle("hidden");
+    if (!el) return;
+    const opening = el.classList.contains("hidden");
+    el.classList.toggle("hidden");
+    if (opening) {
+      const main = document.getElementById("auth-email");
+      const forgot = document.getElementById("auth-forgot-email");
+      if (main && forgot && !String(forgot.value || "").trim()) {
+        forgot.value = String(main.value || "").trim();
+      }
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById("auth-forgot-email")?.focus();
+        } catch (_) {
+        }
+      });
+    }
   };
   window.requestPasswordReset = async (emailRaw) => {
     const t2 = (k) => window.t ? window.t(k) : k;
@@ -13098,8 +13121,11 @@
     alert(t2("forgot_password_success"));
   };
   window.requestPasswordResetFromAuthStudent = () => {
-    const emailEl = document.getElementById("auth-email");
-    window.requestPasswordReset(emailEl ? emailEl.value : "");
+    const forgotEl = document.getElementById("auth-forgot-email");
+    const mainEl = document.getElementById("auth-email");
+    const fromForgot = forgotEl ? String(forgotEl.value || "").trim() : "";
+    const fromMain = mainEl ? String(mainEl.value || "").trim() : "";
+    window.requestPasswordReset(fromForgot || fromMain);
   };
   window.requestPasswordResetFromAuthAdmin = () => {
     const emailEl = document.getElementById("admin-user-input");
@@ -17789,6 +17815,9 @@ School: ${schoolName}`)) return;
       if (e.key === "Enter") {
         const target = e.target;
         if (target.id === "dev-pass-input") window.submitDevLogin();
+        if (target.id === "auth-forgot-email") {
+          if (typeof window.requestPasswordResetFromAuthStudent === "function") window.requestPasswordResetFromAuthStudent();
+        }
         if (target.id === "auth-pass" || target.id === "auth-pass-confirm") {
           const isSignup = state.authMode === "signup";
           if (isSignup) window.signUpStudent();

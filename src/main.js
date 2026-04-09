@@ -162,6 +162,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         if (e.key === 'Enter') {
             const target = e.target;
             if (target.id === 'dev-pass-input') window.submitDevLogin();
+            if (target.id === 'auth-forgot-email') {
+                if (typeof window.requestPasswordResetFromAuthStudent === 'function') window.requestPasswordResetFromAuthStudent();
+            }
             if (target.id === 'auth-pass' || target.id === 'auth-pass-confirm') {
                 const isSignup = state.authMode === 'signup';
                 if (isSignup) window.signUpStudent(); else window.loginStudent();
