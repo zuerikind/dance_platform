@@ -4,6 +4,12 @@
   var SUPABASE_URL = "https://fziyybqhecfxhkagknvg.supabase.co";
   var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs";
   var supabaseClient = typeof window !== "undefined" && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  function getPasswordRecoveryRedirectUrl() {
+    if (typeof window === "undefined" || !window.location) return "";
+    const { origin, pathname } = window.location;
+    const p = pathname && pathname !== "/" ? pathname : "/";
+    return `${origin}${p.endsWith("/") ? p : p + "/"}`;
+  }
   var DISCOVERY_COUNTRIES_CITIES = {
     "Switzerland": ["Zurich", "Geneva", "Basel", "Bern", "Lausanne", "Winterthur", "Lucerne", "St. Gallen"],
     "Germany": ["Berlin", "Munich", "Hamburg", "Frankfurt", "Cologne", "Stuttgart", "D\xFCsseldorf", "Dortmund", "Essen", "Leipzig"],
@@ -143,7 +149,9 @@
     calendlyEventTypesList: [],
     calendlyEventTypesLoaded: false,
     calendlyEventTypesError: null,
-    teacherCalendlySelectionForBooking: null
+    teacherCalendlySelectionForBooking: null,
+    /** True while user must set a new password (email recovery link). Not persisted in saveState. */
+    authRecoveryMode: false
   };
   var SESSION_IDENTITY_KEY = "dance_session_identity";
   function saveState() {
@@ -274,6 +282,59 @@
     const offeringOn = adminSettings?.private_classes_offering_enabled === "true";
     if (school.profile_type === "private_teacher") return offeringOn;
     return school.private_packages_enabled !== false && offeringOn;
+  }
+  function syncActivePacksFieldSumToTarget(activePacks, field, targetSum) {
+    if (!Array.isArray(activePacks)) return [];
+    const target = Math.max(0, Math.floor(Number(targetSum)));
+    if (!Number.isFinite(target)) return activePacks.map((p) => ({ ...p }));
+    const packs = activePacks.map((p) => ({ ...p }));
+    const readVal = (p) => {
+      if (field === "count") {
+        if (p.count == null || p.count === "null") return null;
+        const n = parseInt(p.count, 10);
+        return Number.isFinite(n) ? n : 0;
+      }
+      if (field === "private_count") return Math.max(0, parseInt(p.private_count, 10) || 0);
+      if (field === "event_count") return Math.max(0, parseInt(p.event_count, 10) || 0);
+      return 0;
+    };
+    const writeVal = (p, v) => {
+      const n = Math.max(0, Math.floor(v));
+      if (field === "count") p.count = n;
+      else if (field === "private_count") p.private_count = n;
+      else p.event_count = n;
+    };
+    const entries = [];
+    packs.forEach((p, i) => {
+      const v = readVal(p);
+      if (field === "count" && v === null) return;
+      const exp = p.expires_at ? new Date(p.expires_at).getTime() : 0;
+      entries.push({ i, exp });
+    });
+    let sum = 0;
+    entries.forEach((e) => {
+      const v = readVal(packs[e.i]);
+      sum += v;
+    });
+    let diff = target - sum;
+    if (diff === 0) return packs;
+    entries.sort((a, b) => a.exp - b.exp);
+    if (diff > 0) {
+      const first = entries[0];
+      if (!first) return packs;
+      const cur = readVal(packs[first.i]);
+      writeVal(packs[first.i], cur + diff);
+      return packs;
+    }
+    let rem = -diff;
+    for (const e of entries) {
+      if (rem <= 0) break;
+      const cur = readVal(packs[e.i]);
+      const take = Math.min(cur, rem);
+      writeVal(packs[e.i], cur - take);
+      rem -= take;
+    }
+    return packs;
   }
 
   // src/routing.js
@@ -1306,6 +1367,14 @@
     const eventBal = packsFullyExpired ? 0 : Math.max(student?.balance_events ?? 0, sumEvents);
     return { group, groupUnlimited, private: privateBal, event: eventBal };
   }
+  function studentHasUsableClassCredits(student, now = /* @__PURE__ */ new Date()) {
+    const eff = getEffectiveBalances(student, now);
+    if (eff.groupUnlimited) return true;
+    if ((eff.group ?? 0) > 0) return true;
+    if ((eff.private ?? 0) > 0) return true;
+    if ((eff.event ?? 0) > 0) return true;
+    return false;
+  }
   async function startScanner() {
     try {
       const modal = document.getElementById("scanner-modal");
@@ -2161,6 +2230,18 @@
       discovery_register_subtitle: "Register as an independent dancer",
       discovery_login_title: "Sign in",
       discovery_login_subtitle: "Sign in to your dancer account",
+      forgot_password_link: "Forgot password?",
+      forgot_password_title: "Reset your password",
+      forgot_password_hint: "Enter the email you use to sign in. If an account exists, we will send a link to set a new password.",
+      forgot_password_send: "Send reset link",
+      forgot_password_success: "If an account exists for that email, we sent instructions. Check your inbox and spam folder.",
+      forgot_password_invalid_email: "Please enter a valid email address.",
+      forgot_password_placeholder_email: "Use the real email you sign in with (not a temporary @\u2026bailadmin.local address).",
+      reset_password_title: "Choose a new password",
+      reset_password_subtitle: "You signed in from a recovery link. Set a new password, then sign in again.",
+      reset_password_submit: "Update password",
+      reset_password_success: "Your password was updated. Sign in with your new password.",
+      reset_password_back: "Back to sign in",
       discovery_already_have_account: "Already have an account?",
       discovery_no_account: "Don't have an account?",
       discovery_confirm_email_banner: "Confirm your email to unlock reviews and adding schools.",
@@ -3043,6 +3124,18 @@
       discovery_register_subtitle: "Reg\xEDstrate como bailar\xEDn independiente",
       discovery_login_title: "Iniciar sesi\xF3n",
       discovery_login_subtitle: "Inicia sesi\xF3n en tu cuenta de bailar\xEDn",
+      forgot_password_link: "\xBFOlvidaste tu contrase\xF1a?",
+      forgot_password_title: "Restablecer contrase\xF1a",
+      forgot_password_hint: "Escribe el correo con el que inicias sesi\xF3n. Si existe una cuenta, enviaremos un enlace para elegir una contrase\xF1a nueva.",
+      forgot_password_send: "Enviar enlace",
+      forgot_password_success: "Si existe una cuenta con ese correo, enviamos instrucciones. Revisa tu bandeja y spam.",
+      forgot_password_invalid_email: "Introduce un correo v\xE1lido.",
+      forgot_password_placeholder_email: "Usa el correo real con el que inicias sesi\xF3n (no direcciones temporales @\u2026bailadmin.local).",
+      reset_password_title: "Elige una contrase\xF1a nueva",
+      reset_password_subtitle: "Entraste con un enlace de recuperaci\xF3n. Establece una contrase\xF1a nueva y vuelve a iniciar sesi\xF3n.",
+      reset_password_submit: "Actualizar contrase\xF1a",
+      reset_password_success: "Contrase\xF1a actualizada. Inicia sesi\xF3n con tu contrase\xF1a nueva.",
+      reset_password_back: "Volver al inicio de sesi\xF3n",
       discovery_already_have_account: "\xBFYa tienes cuenta?",
       discovery_no_account: "\xBFNo tienes cuenta?",
       discovery_confirm_email_banner: "Confirma tu correo para desbloquear rese\xF1as y agregar escuelas.",
@@ -3947,6 +4040,18 @@
       discovery_register_subtitle: "Als unabh\xE4ngiger T\xE4nzer registrieren",
       discovery_login_title: "Anmelden",
       discovery_login_subtitle: "Melde dich in deinem T\xE4nzerkonto an",
+      forgot_password_link: "Passwort vergessen?",
+      forgot_password_title: "Passwort zur\xFCcksetzen",
+      forgot_password_hint: "Gib die E-Mail ein, mit der du dich anmeldest. Wenn ein Konto existiert, senden wir einen Link f\xFCr ein neues Passwort.",
+      forgot_password_send: "Link senden",
+      forgot_password_success: "Wenn ein Konto mit dieser E-Mail existiert, haben wir Anweisungen gesendet. Pr\xFCfe Posteingang und Spam.",
+      forgot_password_invalid_email: "Bitte eine g\xFCltige E-Mail eingeben.",
+      forgot_password_placeholder_email: "Nutze die echte Anmelde-E-Mail (keine tempor\xE4re @\u2026bailadmin.local-Adresse).",
+      reset_password_title: "Neues Passwort w\xE4hlen",
+      reset_password_subtitle: "Du bist \xFCber einen Wiederherstellungslink eingeloggt. Setze ein neues Passwort und melde dich danach erneut an.",
+      reset_password_submit: "Passwort aktualisieren",
+      reset_password_success: "Passwort aktualisiert. Melde dich mit dem neuen Passwort an.",
+      reset_password_back: "Zur\xFCck zur Anmeldung",
       discovery_already_have_account: "Bereits ein Konto?",
       discovery_no_account: "Noch kein Konto?",
       discovery_confirm_email_banner: "Best\xE4tige deine E-Mail, um Bewertungen und das Hinzuf\xFCgen von Schulen freizuschalten.",
@@ -5644,6 +5749,13 @@
                 <div class="ios-list-item" style="padding: 10px 16px;"><input type="email" id="discovery-login-email" placeholder="${t2("email") || "Email"}" autocomplete="email" style="width: 100%; border: none; background: transparent; color: var(--text-primary); font-size: 16px; outline: none;"></div>
                 <div class="ios-list-item password-input-wrap" style="padding: 10px 16px;"><input type="password" id="discovery-login-password" placeholder="${t2("password") || "Password"}" autocomplete="current-password" style="width: 100%; border: none; background: transparent; color: var(--text-primary); font-size: 16px; outline: none; padding-right: 44px;"></div>
             </div>
+            <p style="text-align: right; font-size: 13px; margin: 0 0 0.75rem 0;">
+                <a href="#" onclick="event.preventDefault(); document.getElementById('discovery-forgot-panel') && document.getElementById('discovery-forgot-panel').classList.toggle('hidden');" style="color: var(--text-secondary); font-weight: 600; text-decoration: none;">${(t2("forgot_password_link") || "Forgot password?").replace(/</g, "&lt;")}</a>
+            </p>
+            <div id="discovery-forgot-panel" class="hidden" style="margin-bottom: 1rem; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);">
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.4;">${(t2("forgot_password_hint") || "").replace(/</g, "&lt;")}</p>
+                <button type="button" class="btn-secondary" onclick="window.requestPasswordReset((document.getElementById('discovery-login-email') && document.getElementById('discovery-login-email').value) || '')" style="width: 100%; padding: 12px; font-weight: 600; border-radius: 12px;">${(t2("forgot_password_send") || "Send reset link").replace(/</g, "&lt;")}</button>
+            </div>
             <button type="button" class="btn-primary" onclick="window.discoveryLogin()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px;">${t2("sign_in") || "Sign in"}</button>
             <p style="margin-top: 1rem; font-size: 14px; color: var(--text-secondary);">${t2("discovery_no_account") || "Don't have an account?"} <a href="#" onclick="event.preventDefault(); window.navigateDiscovery('/discovery/register');" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("sign_up") || "Sign up"}</a></p>
         </div></div>`;
@@ -6529,7 +6641,7 @@
     (function syncNavAndGlobalUI() {
       const isDevView = ["platform-dev-dashboard", "platform-school-details", "platform-dev-edit-discovery", "platform-dev-edit-school", "listing-suggestions-admin", "reviews-admin"].includes(view);
       const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
-      const isLanding = view === "school-selection" || view === "auth";
+      const isLanding = view === "school-selection" || view === "auth" || view === "reset-password";
       const isDiscoveryOnlyView = state._discoveryOnlyEdit || view === "discovery-profile-only" || view === "discovery-admin-pick-school" || view === "discovery-admin-auth";
       const showLogout = hasSession && (!isLanding || state.isPlatformDev);
       const showNav = hasSession && !isLanding && !isDevView && !isDiscoveryOnlyView;
@@ -6579,7 +6691,7 @@
           if (label) label.textContent = t2[labelKey] || labelFallback;
         });
       }
-      document.body.classList.toggle("landing-page", view === "school-selection");
+      document.body.classList.toggle("landing-page", view === "school-selection" || view === "reset-password");
       if (typeof window.updateStickyFooterVisibility === "function") {
         window.updateStickyFooterVisibility();
         requestAnimationFrame(() => {
@@ -7107,6 +7219,30 @@
       let html = `<div class="container ${view === "auth" ? "auth-view" : ""} ${isDevDashboardView ? "container-dev" : ""} ${isAdminSettingsView ? "container-settings" : ""} ${viewChanged ? "slide-in" : ""}">`;
       if (view === "school-selection") {
         html += renderSchoolSelection();
+      } else if (view === "reset-password") {
+        const tr = new Proxy(window.t, { get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop] });
+        html += `
+            <div class="auth-page-container" style="max-width: 420px; margin: 0 auto; padding: 2rem 1.25rem;">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">${(tr("reset_password_title") || "Choose a new password").replace(/</g, "&lt;")}</h1>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">${(tr("reset_password_subtitle") || "").replace(/</g, "&lt;")}</p>
+                </div>
+                <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
+                    <div class="password-input-wrap" style="margin-bottom: 1rem;">
+                        <input type="password" id="recovery-new-pass" class="minimal-input" placeholder="${(tr("password") || "Password").replace(/"/g, "&quot;")}" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                    </div>
+                    <div class="password-input-wrap" style="margin-bottom: 1rem;">
+                        <input type="password" id="recovery-confirm-pass" class="minimal-input" placeholder="${(tr("confirm_password_placeholder") || "Confirm password").replace(/"/g, "&quot;")}" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                    </div>
+                    <button type="button" data-action="submit-password-recovery" class="btn-auth-primary" onclick="window.submitPasswordRecovery()" style="width: 100%; padding: 14px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer;">
+                        ${(tr("reset_password_submit") || "Update password").replace(/</g, "&lt;")}
+                    </button>
+                    <p id="recovery-password-feedback" style="display: none;"></p>
+                </div>
+            </div>
+        `;
       } else if (view === "super-admin-dashboard" || view === "platform-dev-dashboard") {
         const isDev = view === "platform-dev-dashboard";
         const title = isDev ? t2.dev_dashboard_title : "Platform Super Admin";
@@ -8031,6 +8167,9 @@
                         <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${(window.t("admin_pass_placeholder") || "Password").replace(/"/g, "&quot;")}" autocomplete="current-password">
                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                     </div>
+                    <p style="text-align: right; font-size: 0.75rem; margin: 0 0 0.5rem 0;">
+                        <a href="#" onclick="event.preventDefault(); window.requestPasswordResetFromAuthAdmin();" style="color: var(--text-muted); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--border);">${(window.t("forgot_password_link") || "Forgot password?").replace(/</g, "&lt;")}</a>
+                    </p>
                     <button id="admin-login-button" type="button" class="btn-auth-primary" onclick="loginAdminWithCreds()" style="width: 100%; padding: 14px; font-weight: 600; background: var(--text-primary); color: var(--bg-body); border: none; border-radius: 12px; cursor: pointer;">
                         ${(window.t("admin_login_btn") || "Sign in").replace(/</g, "&lt;")}
                     </button>
@@ -8089,6 +8228,13 @@
                                         <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t("password")}">
                                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                                     </div>
+                                    <p style="text-align: right; font-size: 0.8rem; margin: 0.25rem 0 0.75rem 0;">
+                                        <a href="#" onclick="event.preventDefault(); window.toggleAuthForgotPasswordPanel();" style="color: var(--text-secondary); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--border);">${(window.t("forgot_password_link") || "Forgot password?").replace(/</g, "&lt;")}</a>
+                                    </p>
+                                    <div id="auth-forgot-panel" class="hidden" style="margin-bottom: 1rem; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);">
+                                        <p class="auth-hint" style="font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.4;">${(window.t("forgot_password_hint") || "").replace(/</g, "&lt;")}</p>
+                                        <button type="button" class="btn-auth-primary" onclick="window.requestPasswordResetFromAuthStudent()" style="width: 100%; padding: 12px; font-weight: 600; font-size: 0.9rem;">${(window.t("forgot_password_send") || "Send reset link").replace(/</g, "&lt;")}</button>
+                                    </div>
                                 `}
                             </div>
 
@@ -8113,6 +8259,9 @@
                                         <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${window.t("admin_pass_placeholder")}">
                                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                                     </div>
+                                    <p style="text-align: right; font-size: 0.75rem; margin: 0.35rem 0 0.5rem 0;">
+                                        <a href="#" onclick="event.preventDefault(); window.requestPasswordResetFromAuthAdmin();" style="color: var(--text-muted); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--border);">${(window.t("forgot_password_link") || "Forgot password?").replace(/</g, "&lt;")}</a>
+                                    </p>
                                     <button id="admin-login-button" class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">
                                         ${window.t("admin_login_btn")}
                                     </button>
@@ -8568,7 +8717,8 @@
             return `<div class="class-reg-status">${scheduleExceptionNoticeHtml(occKindLowerBtn, specTitle || "", specTime || "", occNoteHtml, true)}</div>`;
           }
           const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
-          const has4or8 = typeof window.has4or8Package === "function" ? window.has4or8Package(state.currentUser) : true;
+          const aureGroupEff = isAure ? getEffectiveBalances(state.currentUser, /* @__PURE__ */ new Date()) : null;
+          const aureHasGroupCredits = !!(aureGroupEff && (aureGroupEff.groupUnlimited || (aureGroupEff.group ?? 0) > 0));
           const isPrincipianteThu = isAure && (state.currentUser?.level || "") === "principiante" && c.day === "Thu";
           if (isPrincipianteThu) {
             return `<div class="class-reg-status"><div class="reg-badge reg-badge-blocked"><i data-lucide="alert-circle" size="14"></i> ${t2.aure_principiantes_no_thursday || "Principiantes cannot register for Thursday classes."}</div></div>`;
@@ -8581,8 +8731,9 @@
               spotsHtml = `<div class="reg-urgency">${(t2.only_n_spots || "").replace("{n}", info.spotsLeft)}</div>`;
             }
           }
-          const btnLabel = isAure && !has4or8 ? t2.clase_suelta_request || "Request clase suelta" : t2.register_for_class || "Register for this class";
-          const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')`;
+          const useSueltaOnly = isAure && !aureHasGroupCredits;
+          const btnLabel = useSueltaOnly ? t2.clase_suelta_request || "Request clase suelta" : t2.register_for_class || "Register for this class";
+          const btnHandler = useSueltaOnly ? `window.requestClaseSuelta(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')`;
           const infoBanner = !info.registrationClosed && occKindLowerBtn === "info" && occNoteHtml ? `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">${occNoteHtml}</div>` : "";
           return `
                 <div class="class-reg-status">
@@ -8620,7 +8771,8 @@
             return scheduleExceptionNoticeHtml(occKindLowerTile, specTitleT || "", specTimeT || "", occNoteT, false);
           }
           const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
-          const has4or8 = typeof window.has4or8Package === "function" ? window.has4or8Package(state.currentUser) : true;
+          const aureTileEff = isAure ? getEffectiveBalances(state.currentUser, /* @__PURE__ */ new Date()) : null;
+          const aureTileHasGroup = !!(aureTileEff && (aureTileEff.groupUnlimited || (aureTileEff.group ?? 0) > 0));
           const isPrincipianteThu = isAure && (state.currentUser?.level || "") === "principiante" && c.day === "Thu";
           if (isPrincipianteThu) {
             return `<div class="tile-reg-blocked-pill"><i data-lucide="alert-circle" size="12"></i> ${t2.aure_principiantes_no_thursday || "Not available"}</div>`;
@@ -8632,8 +8784,9 @@
           if (info.maxCapacity != null && info.spotsLeft <= 10) {
             urgency = `<div class="tile-reg-urgency">${(t2.spots_left || "").replace("{n}", info.spotsLeft)}</div>`;
           }
-          const btnLabel = isAure && !has4or8 ? t2.clase_suelta_request || "Request clase suelta" : t2.join_class || "Join";
-          const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')`;
+          const tileSueltaOnly = isAure && !aureTileHasGroup;
+          const btnLabel = tileSueltaOnly ? t2.clase_suelta_request || "Request clase suelta" : t2.join_class || "Join";
+          const btnHandler = tileSueltaOnly ? `window.requestClaseSuelta(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || "").replace(/'/g, "\\'")}', '${(info.dateStr || "").replace(/'/g, "\\'")}')`;
           const infoBannerT = !info.registrationClosed && occKindLowerTile === "info" && occNoteT ? `<div style="font-size:10px;color:var(--text-secondary);margin-bottom:6px;">${occNoteT}</div>` : "";
           return `<div class="tile-reg-actions">
                 ${infoBannerT}
@@ -12270,6 +12423,8 @@
     const has48 = typeof window.has4or8Package === "function" && window.has4or8Package(state.currentUser);
     const levelOk = !!(state.currentUser?.level || "").trim();
     const runSuelta = () => window.requestClaseSuelta(classId, className, targetDateStr);
+    const aureEff = isAure ? getEffectiveBalances(state.currentUser, /* @__PURE__ */ new Date()) : null;
+    const aureHasGroupCredits = !!(aureEff && (aureEff.groupUnlimited || (aureEff.group ?? 0) > 0));
     if (isAure) {
       if (has48 && !levelOk) {
         window.showMessageModal({ icon: "warning", title: t2("aure_level_must_be_set"), body: "", primaryLabel: t2("got_it") });
@@ -12277,6 +12432,23 @@
       }
       const dom = (/* @__PURE__ */ new Date(targetDateStr + "T12:00:00")).getDate();
       const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
+      if (dom >= 15 || !aureHasGroupCredits) {
+        window.showMessageModal({
+          icon: "success",
+          title: className || classObj.name,
+          body: t2("register_success_4h_note"),
+          primaryLabel: t2("clase_suelta_request"),
+          cancelLabel: t2("cancel"),
+          onPrimary: (close) => {
+            close();
+            runSuelta();
+          },
+          onCancel: (close) => {
+            close();
+          }
+        });
+        return;
+      }
       if (has48 && dom <= 14 && monthlyDates.length > 1) {
         const dayNames = { "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday" };
         const dayName = dayNames[classObj.day] || classObj.day;
@@ -12305,9 +12477,14 @@
         icon: "success",
         title: className || classObj.name,
         body: t2("register_success_4h_note"),
-        primaryLabel: t2("clase_suelta_request"),
+        primaryLabel: t2("register_confirm") || "Yes, register",
+        secondaryLabel: t2("clase_suelta_request") || "Request clase suelta",
         cancelLabel: t2("cancel"),
         onPrimary: (close) => {
+          close();
+          window.registerForClassSingle(classId, className, targetDateStr);
+        },
+        onSecondary: (close) => {
           close();
           runSuelta();
         },
@@ -12587,7 +12764,6 @@
         }
         if (activeOnly.length === 0 && s.paid) {
           s.package = null;
-          s.paid = false;
           s.package_expires_at = null;
           changed = true;
         } else if (activeOnly.length > 0) {
@@ -12606,6 +12782,11 @@
           s.package_expires_at = null;
           changed = true;
         }
+      }
+      const shouldPay = studentHasUsableClassCredits(s, now);
+      if (s.paid !== shouldPay) {
+        s.paid = shouldPay;
+        changed = true;
       }
       if (changed) {
         if (supabaseClient) {
@@ -12882,6 +13063,106 @@
         alert(t2("invalid_login"));
       }
     }
+  };
+  window.toggleAuthForgotPasswordPanel = () => {
+    const el = document.getElementById("auth-forgot-panel");
+    if (el) el.classList.toggle("hidden");
+  };
+  window.requestPasswordReset = async (emailRaw) => {
+    const t2 = (k) => window.t ? window.t(k) : k;
+    const email = (emailRaw || "").trim().toLowerCase();
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRe.test(email)) {
+      alert(t2("forgot_password_invalid_email"));
+      return;
+    }
+    if (email.endsWith("@temp.bailadmin.local") || email.endsWith("@admins.bailadmin.local") || email.endsWith("@platform.bailadmin.local")) {
+      alert(t2("forgot_password_placeholder_email"));
+      return;
+    }
+    if (!supabaseClient) {
+      alert(t2("error_generic") || "Not connected.");
+      return;
+    }
+    const redirectTo = getPasswordRecoveryRedirectUrl();
+    if (!redirectTo) {
+      alert(t2("error_generic") || "Not connected.");
+      return;
+    }
+    try {
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) console.warn("resetPasswordForEmail:", error?.message || error);
+    } catch (e) {
+      console.warn("resetPasswordForEmail:", e);
+    }
+    alert(t2("forgot_password_success"));
+  };
+  window.requestPasswordResetFromAuthStudent = () => {
+    const emailEl = document.getElementById("auth-email");
+    window.requestPasswordReset(emailEl ? emailEl.value : "");
+  };
+  window.requestPasswordResetFromAuthAdmin = () => {
+    const emailEl = document.getElementById("admin-user-input");
+    window.requestPasswordReset(emailEl ? emailEl.value : "");
+  };
+  window.submitPasswordRecovery = async () => {
+    const t2 = (k) => window.t ? window.t(k) : k;
+    const newPass = (document.getElementById("recovery-new-pass")?.value || "").trim();
+    const confirmPass = (document.getElementById("recovery-confirm-pass")?.value || "").trim();
+    const feedback = document.getElementById("recovery-password-feedback");
+    const showMsg = (msg, isError) => {
+      if (!feedback) return;
+      feedback.textContent = msg;
+      feedback.style.display = "block";
+      feedback.style.color = isError ? "var(--system-red)" : "var(--system-green)";
+      feedback.style.fontSize = "0.9rem";
+      feedback.style.marginTop = "1rem";
+    };
+    if (!newPass || !confirmPass) {
+      showMsg(t2("signup_require_fields") || "Please fill in both fields.", true);
+      return;
+    }
+    if (newPass.length < 6) {
+      showMsg(t2("password_too_short") || "Password must be at least 6 characters.", true);
+      return;
+    }
+    if (newPass !== confirmPass) {
+      showMsg(t2("signup_passwords_dont_match") || "Passwords do not match.", true);
+      return;
+    }
+    if (!supabaseClient) {
+      showMsg(t2("error_generic") || "Not connected.", true);
+      return;
+    }
+    const btn = document.querySelector('[data-action="submit-password-recovery"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = t2("saving_label") || "Saving\u2026";
+    }
+    const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = t2("reset_password_submit") || "Update password";
+    }
+    if (error) {
+      showMsg((error.message || t2("error_generic") || "Error. Try again.").replace(/</g, "&lt;"), true);
+      return;
+    }
+    try {
+      sessionStorage.removeItem("bailadmin_pw_recovery");
+    } catch (_) {
+    }
+    state.authRecoveryMode = false;
+    await supabaseClient.auth.signOut().catch(() => {
+    });
+    state.currentUser = null;
+    state.isAdmin = false;
+    state.isPlatformDev = false;
+    state.currentSchool = null;
+    state.currentView = "school-selection";
+    saveState();
+    alert(t2("reset_password_success"));
+    if (typeof window.renderView === "function") window.renderView();
   };
   window.deleteStudent = async (id) => {
     const t2 = new Proxy(window.t, {
@@ -15101,10 +15382,17 @@ School: ${schoolName}`)) return;
       balance: newBalance,
       balance_private: newBalancePrivate,
       balance_events: newBalanceEvents,
-      paid: !!pkg,
+      paid: false,
       active_packs: activePacks,
       package_expires_at: activePacks.length > 0 ? expiry.toISOString() : null
     };
+    updates.paid = studentHasUsableClassCredits({
+      ...student,
+      balance: updates.balance,
+      balance_private: updates.balance_private,
+      balance_events: updates.balance_events,
+      active_packs: updates.active_packs
+    });
     if (supabaseClient) {
       const { error: rpcError } = await supabaseClient.rpc("apply_student_package", {
         p_student_id: studentId,
@@ -17140,7 +17428,7 @@ School: ${schoolName}`)) return;
                             <div style="padding: 12px; border-bottom: 1px solid rgba(142,142,147,0.3); display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700; color: ${textColor};">${escapeHtml(p.name)}</div>
-                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${p.count == null || p.count === "null" ? "\u221E" : p.count} Clases \u2022 ${t2.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
+                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${p.count == null || p.count === "null" ? "\u221E" : p.count} Clases \u2022 ${t2("expires_label")}: ${new Date(p.expires_at).toLocaleDateString()}</div>
                                 </div>
                                 <button onclick="window.removeStudentPack('${escapeHtml(s.id)}', '${escapeHtml(p.id)}')" style="background: transparent; border: none; color: #ff3b30; padding: 8px; cursor: pointer; opacity: 0.5;">
                                     <i data-lucide="minus-circle" size="16"></i>
@@ -17185,12 +17473,12 @@ School: ${schoolName}`)) return;
     s.active_packs = s.active_packs.filter((p) => p.id !== packId);
     s.balance = s.active_packs.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
     if (s.active_packs.length === 0) {
-      s.paid = false;
       s.package = null;
       s.package_expires_at = null;
     } else {
       s.package_expires_at = s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
     }
+    s.paid = studentHasUsableClassCredits(s);
     if (supabaseClient) {
       const { error } = await supabaseClient.from("students").update({
         active_packs: s.active_packs,
@@ -17228,6 +17516,16 @@ School: ${schoolName}`)) return;
     const balanceEventsEl = document.getElementById("edit-student-balance-events");
     const balancePrivateVal = balancePrivateEl ? balancePrivateEl.value : null;
     const balanceEventsVal = balanceEventsEl ? balanceEventsEl.value : null;
+    const parsedBalance = balanceVal === "" ? null : parseInt(balanceVal, 10);
+    if (balanceVal !== "" && !Number.isFinite(parsedBalance)) {
+      alert(t2("invalid_price") || "Please enter a valid number.");
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        if (window.lucide) window.lucide.createIcons();
+      }
+      return;
+    }
     if (!newName) {
       alert("Nombre is required.");
       if (btn) {
@@ -17239,6 +17537,22 @@ School: ${schoolName}`)) return;
     }
     const schoolId = s.school_id || state.currentSchool?.id;
     if (supabaseClient && schoolId) {
+      const origPacks = Array.isArray(s.active_packs) ? s.active_packs : [];
+      let packsMut = origPacks.length ? JSON.parse(JSON.stringify(origPacks)) : [];
+      if (packsMut.length) {
+        if (parsedBalance !== null && Number.isFinite(parsedBalance)) {
+          packsMut = syncActivePacksFieldSumToTarget(packsMut, "count", parsedBalance);
+        }
+        if (balancePrivateEl) {
+          const pv = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
+          packsMut = syncActivePacksFieldSumToTarget(packsMut, "private_count", pv);
+        }
+        if (balanceEventsEl) {
+          const ev = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
+          packsMut = syncActivePacksFieldSumToTarget(packsMut, "event_count", ev);
+        }
+      }
+      const packsChanged = packsMut.length > 0 && JSON.stringify(packsMut) !== JSON.stringify(origPacks);
       const payload = {
         p_student_id: id,
         p_school_id: schoolId,
@@ -17246,11 +17560,12 @@ School: ${schoolName}`)) return;
         p_email: newEmail || null,
         p_phone: newPhone,
         p_password: newPassword || null,
-        p_balance: balanceVal === "" ? null : parseInt(balanceVal, 10),
+        p_balance: parsedBalance,
         p_package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
       };
       if (balancePrivateEl) payload.p_balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
       if (balanceEventsEl) payload.p_balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
+      if (packsChanged) payload.p_active_packs = packsMut;
       const { data: updatedRow, error } = await supabaseClient.rpc("update_student_details", payload);
       if (error) {
         alert("Error saving: " + error.message);
@@ -17281,9 +17596,10 @@ School: ${schoolName}`)) return;
           name: newName,
           email: newEmail || null,
           phone: newPhone,
-          balance: balanceVal === "" ? null : parseInt(balanceVal, 10),
+          balance: parsedBalance,
           package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
         };
+        if (packsChanged) updates.active_packs = packsMut;
         if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
         if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
         const studentInState = state.students.find((x) => x.id === id);
@@ -17391,8 +17707,40 @@ School: ${schoolName}`)) return;
         if (typeof window.renderView === "function") window.renderView();
       }
     });
+    const PW_RECOVERY_STORAGE = "bailadmin_pw_recovery";
     if (supabaseClient && supabaseClient.auth) {
       supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === "PASSWORD_RECOVERY" && session?.user) {
+          try {
+            sessionStorage.setItem(PW_RECOVERY_STORAGE, "1");
+          } catch (_) {
+          }
+          state.authRecoveryMode = true;
+          state.currentView = "reset-password";
+          state.currentUser = null;
+          state.isAdmin = false;
+          state.isPlatformDev = false;
+          saveState();
+          if (typeof window.renderView === "function") window.renderView();
+          return;
+        }
+        if (event === "INITIAL_SESSION" && session?.user && typeof window !== "undefined") {
+          const h = window.location.hash || "";
+          if (h.includes("type=recovery")) {
+            try {
+              sessionStorage.setItem(PW_RECOVERY_STORAGE, "1");
+            } catch (_) {
+            }
+            state.authRecoveryMode = true;
+            state.currentView = "reset-password";
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.isPlatformDev = false;
+            saveState();
+            if (typeof window.renderView === "function") window.renderView();
+            return;
+          }
+        }
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
           if (session?.user && state.isAdmin) {
             if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
@@ -17400,14 +17748,21 @@ School: ${schoolName}`)) return;
             state.auth.session = session;
           }
         }
-        if (event === "SIGNED_OUT" && (state.currentUser || state.isAdmin || state.isPlatformDev)) {
-          state.currentUser = null;
-          state.isAdmin = false;
-          state.isPlatformDev = false;
-          state.currentSchool = null;
-          state.currentView = "school-selection";
-          saveState();
-          if (typeof window.renderView === "function") window.renderView();
+        if (event === "SIGNED_OUT") {
+          try {
+            sessionStorage.removeItem(PW_RECOVERY_STORAGE);
+          } catch (_) {
+          }
+          state.authRecoveryMode = false;
+          if (state.currentUser || state.isAdmin || state.isPlatformDev) {
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.isPlatformDev = false;
+            state.currentSchool = null;
+            state.currentView = "school-selection";
+            saveState();
+            if (typeof window.renderView === "function") window.renderView();
+          }
         }
       });
     }
@@ -17438,6 +17793,9 @@ School: ${schoolName}`)) return;
           const isSignup = state.authMode === "signup";
           if (isSignup) window.signUpStudent();
           else window.loginStudent();
+        }
+        if (target.id === "recovery-new-pass" || target.id === "recovery-confirm-pass") {
+          if (typeof window.submitPasswordRecovery === "function") window.submitPasswordRecovery();
         }
         if (target.id === "admin-pass-input") window.loginAdminWithCreds();
       }
@@ -17548,7 +17906,7 @@ School: ${schoolName}`)) return;
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.isAdmin !== void 0) state.isAdmin = saved.isAdmin;
         if (saved.isPlatformDev !== void 0) state.isPlatformDev = saved.isPlatformDev;
-        if (saved.currentView && state.currentView !== "verify-email" && state.currentView !== "activate") state.currentView = saved.currentView;
+        if (saved.currentView && state.currentView !== "verify-email" && state.currentView !== "activate" && saved.currentView !== "reset-password") state.currentView = saved.currentView;
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved.currentSchool) state.currentSchool = saved.currentSchool;
@@ -17643,9 +18001,6 @@ School: ${schoolName}`)) return;
       if (typeof window.history !== "undefined" && window.history.scrollRestoration !== void 0) {
         window.history.scrollRestoration = "manual";
       }
-      window.renderView();
-      window.scrollTo(0, 0);
-      if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
       let sessRes = { data: { session: null } };
       try {
@@ -17661,6 +18016,24 @@ School: ${schoolName}`)) return;
         }
       }
       const hasSupabaseSession = !!sessRes?.data?.session?.user;
+      let inPwRecovery = false;
+      try {
+        inPwRecovery = sessionStorage.getItem(PW_RECOVERY_STORAGE) === "1";
+      } catch (_) {
+      }
+      if (!hasSupabaseSession && inPwRecovery) {
+        try {
+          sessionStorage.removeItem(PW_RECOVERY_STORAGE);
+        } catch (_) {
+        }
+        state.authRecoveryMode = false;
+        inPwRecovery = false;
+      }
+      if (hasSupabaseSession && inPwRecovery) {
+        state.authRecoveryMode = true;
+        state.currentView = "reset-password";
+        saveState();
+      }
       if (hasSupabaseSession && supabaseClient) await bootstrapAuth(supabaseClient);
       const hash = typeof window !== "undefined" && window.location.hash ? window.location.hash : "";
       const isCalendlyReturn = hash.includes("calendly=connected");
@@ -17679,19 +18052,21 @@ School: ${schoolName}`)) return;
           state.currentSchool = null;
           if (local) saveState();
         }
-      } else if (!hasAuthState && hasSupabaseSession && supabaseClient && sessRes?.data?.session?.user) {
+      } else if (!hasAuthState && hasSupabaseSession && supabaseClient && sessRes?.data?.session?.user && !state.authRecoveryMode) {
         const user = sessRes.data.session.user;
         state.currentUser = { id: user.id, email: user.email ?? user.user_metadata?.email ?? "", role: "student", school_id: null };
         state.isAdmin = false;
         state.isPlatformDev = false;
         const path2 = typeof window !== "undefined" && window.location?.pathname ? window.location.pathname : "";
-        const hash2 = typeof window !== "undefined" && window.location?.hash ? window.location.hash : "";
-        state._discoveryOnlyEdit = path2.includes("discovery") || hash2.includes("discovery");
+        const hashForDiscovery = typeof window !== "undefined" && window.location?.hash ? window.location.hash : "";
+        state._discoveryOnlyEdit = path2.includes("discovery") || hashForDiscovery.includes("discovery");
         setSessionIdentity();
         if (typeof window.fetchUserProfile === "function") await window.fetchUserProfile();
         saveState();
-        window.renderView();
       }
+      window.renderView();
+      window.scrollTo(0, 0);
+      if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
       window.checkInactivity();
       const hashBeforeParse = typeof window !== "undefined" && window.location.hash ? window.location.hash : "";
       const hasCalendlyInHash = hashBeforeParse.includes("calendly=connected") || hashBeforeParse.includes("calendly=error");

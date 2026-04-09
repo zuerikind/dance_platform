@@ -1,10 +1,10 @@
-import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID } from './config.js';
+import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID, getPasswordRecoveryRedirectUrl } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
-import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering } from './utils.js';
+import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering, syncActivePacksFieldSumToTarget } from './utils.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
 import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth } from './data.js';
-import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmRegisteredScanBatch, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances } from './scanner.js';
+import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmRegisteredScanBatch, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances, studentHasUsableClassCredits } from './scanner.js';
 
 const CALENDLY_FEATURE_ENABLED = false;
 
@@ -286,6 +286,18 @@ const DANCE_LOCALES = {
         discovery_register_subtitle: "Register as an independent dancer",
         discovery_login_title: "Sign in",
         discovery_login_subtitle: "Sign in to your dancer account",
+        forgot_password_link: "Forgot password?",
+        forgot_password_title: "Reset your password",
+        forgot_password_hint: "Enter the email you use to sign in. If an account exists, we will send a link to set a new password.",
+        forgot_password_send: "Send reset link",
+        forgot_password_success: "If an account exists for that email, we sent instructions. Check your inbox and spam folder.",
+        forgot_password_invalid_email: "Please enter a valid email address.",
+        forgot_password_placeholder_email: "Use the real email you sign in with (not a temporary @…bailadmin.local address).",
+        reset_password_title: "Choose a new password",
+        reset_password_subtitle: "You signed in from a recovery link. Set a new password, then sign in again.",
+        reset_password_submit: "Update password",
+        reset_password_success: "Your password was updated. Sign in with your new password.",
+        reset_password_back: "Back to sign in",
         discovery_already_have_account: "Already have an account?",
         discovery_no_account: "Don't have an account?",
         discovery_confirm_email_banner: "Confirm your email to unlock reviews and adding schools.",
@@ -1148,6 +1160,18 @@ const DANCE_LOCALES = {
         discovery_register_subtitle: "Regístrate como bailarín independiente",
         discovery_login_title: "Iniciar sesión",
         discovery_login_subtitle: "Inicia sesión en tu cuenta de bailarín",
+        forgot_password_link: "¿Olvidaste tu contraseña?",
+        forgot_password_title: "Restablecer contraseña",
+        forgot_password_hint: "Escribe el correo con el que inicias sesión. Si existe una cuenta, enviaremos un enlace para elegir una contraseña nueva.",
+        forgot_password_send: "Enviar enlace",
+        forgot_password_success: "Si existe una cuenta con ese correo, enviamos instrucciones. Revisa tu bandeja y spam.",
+        forgot_password_invalid_email: "Introduce un correo válido.",
+        forgot_password_placeholder_email: "Usa el correo real con el que inicias sesión (no direcciones temporales @…bailadmin.local).",
+        reset_password_title: "Elige una contraseña nueva",
+        reset_password_subtitle: "Entraste con un enlace de recuperación. Establece una contraseña nueva y vuelve a iniciar sesión.",
+        reset_password_submit: "Actualizar contraseña",
+        reset_password_success: "Contraseña actualizada. Inicia sesión con tu contraseña nueva.",
+        reset_password_back: "Volver al inicio de sesión",
         discovery_already_have_account: "¿Ya tienes cuenta?",
         discovery_no_account: "¿No tienes cuenta?",
         discovery_confirm_email_banner: "Confirma tu correo para desbloquear reseñas y agregar escuelas.",
@@ -2041,6 +2065,18 @@ const DANCE_LOCALES = {
         discovery_register_subtitle: "Als unabhängiger Tänzer registrieren",
         discovery_login_title: "Anmelden",
         discovery_login_subtitle: "Melde dich in deinem Tänzerkonto an",
+        forgot_password_link: "Passwort vergessen?",
+        forgot_password_title: "Passwort zurücksetzen",
+        forgot_password_hint: "Gib die E-Mail ein, mit der du dich anmeldest. Wenn ein Konto existiert, senden wir einen Link für ein neues Passwort.",
+        forgot_password_send: "Link senden",
+        forgot_password_success: "Wenn ein Konto mit dieser E-Mail existiert, haben wir Anweisungen gesendet. Prüfe Posteingang und Spam.",
+        forgot_password_invalid_email: "Bitte eine gültige E-Mail eingeben.",
+        forgot_password_placeholder_email: "Nutze die echte Anmelde-E-Mail (keine temporäre @…bailadmin.local-Adresse).",
+        reset_password_title: "Neues Passwort wählen",
+        reset_password_subtitle: "Du bist über einen Wiederherstellungslink eingeloggt. Setze ein neues Passwort und melde dich danach erneut an.",
+        reset_password_submit: "Passwort aktualisieren",
+        reset_password_success: "Passwort aktualisiert. Melde dich mit dem neuen Passwort an.",
+        reset_password_back: "Zurück zur Anmeldung",
         discovery_already_have_account: "Bereits ein Konto?",
         discovery_no_account: "Noch kein Konto?",
         discovery_confirm_email_banner: "Bestätige deine E-Mail, um Bewertungen und das Hinzufügen von Schulen freizuschalten.",
@@ -3652,6 +3688,13 @@ window.renderDiscoveryView = (path) => {
                 <div class="ios-list-item" style="padding: 10px 16px;"><input type="email" id="discovery-login-email" placeholder="${t('email') || 'Email'}" autocomplete="email" style="width: 100%; border: none; background: transparent; color: var(--text-primary); font-size: 16px; outline: none;"></div>
                 <div class="ios-list-item password-input-wrap" style="padding: 10px 16px;"><input type="password" id="discovery-login-password" placeholder="${t('password') || 'Password'}" autocomplete="current-password" style="width: 100%; border: none; background: transparent; color: var(--text-primary); font-size: 16px; outline: none; padding-right: 44px;"></div>
             </div>
+            <p style="text-align: right; font-size: 13px; margin: 0 0 0.75rem 0;">
+                <a href="#" onclick="event.preventDefault(); document.getElementById('discovery-forgot-panel') && document.getElementById('discovery-forgot-panel').classList.toggle('hidden');" style="color: var(--text-secondary); font-weight: 600; text-decoration: none;">${(t('forgot_password_link') || 'Forgot password?').replace(/</g, '&lt;')}</a>
+            </p>
+            <div id="discovery-forgot-panel" class="hidden" style="margin-bottom: 1rem; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);">
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.4;">${(t('forgot_password_hint') || '').replace(/</g, '&lt;')}</p>
+                <button type="button" class="btn-secondary" onclick="window.requestPasswordReset((document.getElementById('discovery-login-email') && document.getElementById('discovery-login-email').value) || '')" style="width: 100%; padding: 12px; font-weight: 600; border-radius: 12px;">${(t('forgot_password_send') || 'Send reset link').replace(/</g, '&lt;')}</button>
+            </div>
             <button type="button" class="btn-primary" onclick="window.discoveryLogin()" style="width: 100%; padding: 14px; font-weight: 600; border-radius: 12px;">${t('sign_in') || 'Sign in'}</button>
             <p style="margin-top: 1rem; font-size: 14px; color: var(--text-secondary);">${t('discovery_no_account') || "Don't have an account?"} <a href="#" onclick="event.preventDefault(); window.navigateDiscovery('/discovery/register');" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t('sign_up') || 'Sign up'}</a></p>
         </div></div>`;
@@ -4450,7 +4493,7 @@ function _renderViewImpl() {
     (function syncNavAndGlobalUI() {
       const isDevView = ['platform-dev-dashboard', 'platform-school-details', 'platform-dev-edit-discovery', 'platform-dev-edit-school', 'listing-suggestions-admin', 'reviews-admin'].includes(view);
       const hasSession = state.currentUser !== null || state.isAdmin || state.isPlatformDev;
-      const isLanding = view === 'school-selection' || view === 'auth';
+      const isLanding = view === 'school-selection' || view === 'auth' || view === 'reset-password';
       const isDiscoveryOnlyView = state._discoveryOnlyEdit || view === 'discovery-profile-only' || view === 'discovery-admin-pick-school' || view === 'discovery-admin-auth';
       const showLogout = hasSession && (!isLanding || state.isPlatformDev);
       const showNav = hasSession && !isLanding && !isDevView && !isDiscoveryOnlyView;
@@ -4502,7 +4545,7 @@ function _renderViewImpl() {
           if (label) label.textContent = t[labelKey] || labelFallback;
         });
       }
-      document.body.classList.toggle('landing-page', view === 'school-selection');
+      document.body.classList.toggle('landing-page', view === 'school-selection' || view === 'reset-password');
       if (typeof window.updateStickyFooterVisibility === 'function') {
         window.updateStickyFooterVisibility();
         requestAnimationFrame(() => { window.updateStickyFooterVisibility(); });
@@ -5064,6 +5107,31 @@ function _renderViewImpl() {
 
     if (view === 'school-selection') {
         html += renderSchoolSelection();
+    }
+    else if (view === 'reset-password') {
+        const tr = new Proxy(window.t, { get: (target, prop) => typeof prop === 'string' ? target(prop) : target[prop] });
+        html += `
+            <div class="auth-page-container" style="max-width: 420px; margin: 0 auto; padding: 2rem 1.25rem;">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">${(tr('reset_password_title') || 'Choose a new password').replace(/</g, '&lt;')}</h1>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.45;">${(tr('reset_password_subtitle') || '').replace(/</g, '&lt;')}</p>
+                </div>
+                <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
+                    <div class="password-input-wrap" style="margin-bottom: 1rem;">
+                        <input type="password" id="recovery-new-pass" class="minimal-input" placeholder="${(tr('password') || 'Password').replace(/"/g, '&quot;')}" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                    </div>
+                    <div class="password-input-wrap" style="margin-bottom: 1rem;">
+                        <input type="password" id="recovery-confirm-pass" class="minimal-input" placeholder="${(tr('confirm_password_placeholder') || 'Confirm password').replace(/"/g, '&quot;')}" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
+                    </div>
+                    <button type="button" data-action="submit-password-recovery" class="btn-auth-primary" onclick="window.submitPasswordRecovery()" style="width: 100%; padding: 14px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer;">
+                        ${(tr('reset_password_submit') || 'Update password').replace(/</g, '&lt;')}
+                    </button>
+                    <p id="recovery-password-feedback" style="display: none;"></p>
+                </div>
+            </div>
+        `;
     }
     else if (view === 'super-admin-dashboard' || view === 'platform-dev-dashboard') {
         const isDev = view === 'platform-dev-dashboard';
@@ -5950,6 +6018,9 @@ function _renderViewImpl() {
                         <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${(window.t('admin_pass_placeholder') || 'Password').replace(/"/g, '&quot;')}" autocomplete="current-password">
                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                     </div>
+                    <p style="text-align: right; font-size: 0.75rem; margin: 0 0 0.5rem 0;">
+                        <a href="#" onclick="event.preventDefault(); window.requestPasswordResetFromAuthAdmin();" style="color: var(--text-muted); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--border);">${(window.t('forgot_password_link') || 'Forgot password?').replace(/</g, '&lt;')}</a>
+                    </p>
                     <button id="admin-login-button" type="button" class="btn-auth-primary" onclick="loginAdminWithCreds()" style="width: 100%; padding: 14px; font-weight: 600; background: var(--text-primary); color: var(--bg-body); border: none; border-radius: 12px; cursor: pointer;">
                         ${(window.t('admin_login_btn') || 'Sign in').replace(/</g, '&lt;')}
                     </button>
@@ -6014,6 +6085,13 @@ function _renderViewImpl() {
                                         <input type="password" id="auth-pass" class="minimal-input" placeholder="${window.t('password')}">
                                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                                     </div>
+                                    <p style="text-align: right; font-size: 0.8rem; margin: 0.25rem 0 0.75rem 0;">
+                                        <a href="#" onclick="event.preventDefault(); window.toggleAuthForgotPasswordPanel();" style="color: var(--text-secondary); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--border);">${(window.t('forgot_password_link') || 'Forgot password?').replace(/</g, '&lt;')}</a>
+                                    </p>
+                                    <div id="auth-forgot-panel" class="hidden" style="margin-bottom: 1rem; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);">
+                                        <p class="auth-hint" style="font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.4;">${(window.t('forgot_password_hint') || '').replace(/</g, '&lt;')}</p>
+                                        <button type="button" class="btn-auth-primary" onclick="window.requestPasswordResetFromAuthStudent()" style="width: 100%; padding: 12px; font-weight: 600; font-size: 0.9rem;">${(window.t('forgot_password_send') || 'Send reset link').replace(/</g, '&lt;')}</button>
+                                    </div>
                                 `}
                             </div>
 
@@ -6038,6 +6116,9 @@ function _renderViewImpl() {
                                         <input type="password" id="admin-pass-input" class="minimal-input" placeholder="${window.t('admin_pass_placeholder')}">
                                         <button type="button" class="password-toggle-btn" onclick="window.togglePasswordVisibility(this)" aria-label="Show password"><i data-lucide="eye" size="20"></i></button>
                                     </div>
+                                    <p style="text-align: right; font-size: 0.75rem; margin: 0.35rem 0 0.5rem 0;">
+                                        <a href="#" onclick="event.preventDefault(); window.requestPasswordResetFromAuthAdmin();" style="color: var(--text-muted); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--border);">${(window.t('forgot_password_link') || 'Forgot password?').replace(/</g, '&lt;')}</a>
+                                    </p>
                                     <button id="admin-login-button" class="btn-auth-primary" onclick="loginAdminWithCreds()" style="background: var(--text-muted); padding: 1rem;">
                                         ${window.t('admin_login_btn')}
                                     </button>
@@ -6477,7 +6558,8 @@ function _renderViewImpl() {
                 return `<div class="class-reg-status">${scheduleExceptionNoticeHtml(occKindLowerBtn, specTitle || '', specTime || '', occNoteHtml, true)}</div>`;
             }
             const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
-            const has4or8 = typeof window.has4or8Package === 'function' ? window.has4or8Package(state.currentUser) : true;
+            const aureGroupEff = isAure ? getEffectiveBalances(state.currentUser, new Date()) : null;
+            const aureHasGroupCredits = !!(aureGroupEff && (aureGroupEff.groupUnlimited || (aureGroupEff.group ?? 0) > 0));
             const isPrincipianteThu = isAure && (state.currentUser?.level || '') === 'principiante' && c.day === 'Thu';
             if (isPrincipianteThu) {
                 return `<div class="class-reg-status"><div class="reg-badge reg-badge-blocked"><i data-lucide="alert-circle" size="14"></i> ${t.aure_principiantes_no_thursday || 'Principiantes cannot register for Thursday classes.'}</div></div>`;
@@ -6490,8 +6572,9 @@ function _renderViewImpl() {
                     spotsHtml = `<div class="reg-urgency">${(t.only_n_spots || '').replace('{n}', info.spotsLeft)}</div>`;
                 }
             }
-            const btnLabel = isAure && !has4or8 ? (t.clase_suelta_request || 'Request clase suelta') : (t.register_for_class || 'Register for this class');
-            const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')`;
+            const useSueltaOnly = isAure && !aureHasGroupCredits;
+            const btnLabel = useSueltaOnly ? (t.clase_suelta_request || 'Request clase suelta') : (t.register_for_class || 'Register for this class');
+            const btnHandler = useSueltaOnly ? `window.requestClaseSuelta(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')`;
             const infoBanner = !info.registrationClosed && occKindLowerBtn === 'info' && occNoteHtml ? `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">${occNoteHtml}</div>` : '';
             return `
                 <div class="class-reg-status">
@@ -6531,7 +6614,8 @@ function _renderViewImpl() {
                 return scheduleExceptionNoticeHtml(occKindLowerTile, specTitleT || '', specTimeT || '', occNoteT, false);
             }
             const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
-            const has4or8 = typeof window.has4or8Package === 'function' ? window.has4or8Package(state.currentUser) : true;
+            const aureTileEff = isAure ? getEffectiveBalances(state.currentUser, new Date()) : null;
+            const aureTileHasGroup = !!(aureTileEff && (aureTileEff.groupUnlimited || (aureTileEff.group ?? 0) > 0));
             const isPrincipianteThu = isAure && (state.currentUser?.level || '') === 'principiante' && c.day === 'Thu';
             if (isPrincipianteThu) {
                 return `<div class="tile-reg-blocked-pill"><i data-lucide="alert-circle" size="12"></i> ${t.aure_principiantes_no_thursday || 'Not available'}</div>`;
@@ -6543,8 +6627,9 @@ function _renderViewImpl() {
             if (info.maxCapacity != null && info.spotsLeft <= 10) {
                 urgency = `<div class="tile-reg-urgency">${(t.spots_left || '').replace('{n}', info.spotsLeft)}</div>`;
             }
-            const btnLabel = isAure && !has4or8 ? (t.clase_suelta_request || 'Request clase suelta') : (t.join_class || 'Join');
-            const btnHandler = isAure && !has4or8 ? `window.requestClaseSuelta(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')`;
+            const tileSueltaOnly = isAure && !aureTileHasGroup;
+            const btnLabel = tileSueltaOnly ? (t.clase_suelta_request || 'Request clase suelta') : (t.join_class || 'Join');
+            const btnHandler = tileSueltaOnly ? `window.requestClaseSuelta(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')` : `window.registerForClass(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}', '${(info.dateStr || '').replace(/'/g, "\\'")}')`;
             const infoBannerT = !info.registrationClosed && occKindLowerTile === 'info' && occNoteT ? `<div style="font-size:10px;color:var(--text-secondary);margin-bottom:6px;">${occNoteT}</div>` : '';
             return `<div class="tile-reg-actions">
                 ${infoBannerT}
@@ -10084,6 +10169,7 @@ window.getMonthlyDates = (dayCode, anchorDateOrStr) => {
     return dates;
 };
 
+/** Aure: true if an active pack is a 4- or 8-class week-style plan (monthly / week-bundle UX only). Not used to deny single-class registration for 3-packs etc. */
 window.has4or8Package = (user) => {
     if (!user) return false;
     const packs = Array.isArray(user.active_packs) ? user.active_packs : [];
@@ -10261,6 +10347,8 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
     const has48 = typeof window.has4or8Package === 'function' && window.has4or8Package(state.currentUser);
     const levelOk = !!((state.currentUser?.level || '').trim());
     const runSuelta = () => window.requestClaseSuelta(classId, className, targetDateStr);
+    const aureEff = isAure ? getEffectiveBalances(state.currentUser, new Date()) : null;
+    const aureHasGroupCredits = !!(aureEff && (aureEff.groupUnlimited || (aureEff.group ?? 0) > 0));
 
     if (isAure) {
         if (has48 && !levelOk) {
@@ -10269,6 +10357,20 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
         }
         const dom = new Date(targetDateStr + 'T12:00:00').getDate();
         const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
+
+        if (dom >= 15 || !aureHasGroupCredits) {
+            window.showMessageModal({
+                icon: 'success',
+                title: className || classObj.name,
+                body: t('register_success_4h_note'),
+                primaryLabel: t('clase_suelta_request'),
+                cancelLabel: t('cancel'),
+                onPrimary: (close) => { close(); runSuelta(); },
+                onCancel: (close) => { close(); }
+            });
+            return;
+        }
+
         if (has48 && dom <= 14 && monthlyDates.length > 1) {
             const dayNames = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday' };
             const dayName = dayNames[classObj.day] || classObj.day;
@@ -10291,13 +10393,19 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
             });
             return;
         }
+
         window.showMessageModal({
             icon: 'success',
             title: className || classObj.name,
             body: t('register_success_4h_note'),
-            primaryLabel: t('clase_suelta_request'),
+            primaryLabel: t('register_confirm') || 'Yes, register',
+            secondaryLabel: t('clase_suelta_request') || 'Request clase suelta',
             cancelLabel: t('cancel'),
-            onPrimary: (close) => { close(); runSuelta(); },
+            onPrimary: (close) => {
+                close();
+                window.registerForClassSingle(classId, className, targetDateStr);
+            },
+            onSecondary: (close) => { close(); runSuelta(); },
             onCancel: (close) => { close(); }
         });
         return;
@@ -10560,7 +10668,6 @@ window.checkExpirations = async () => {
             }
             if (activeOnly.length === 0 && s.paid) {
                 s.package = null;
-                s.paid = false;
                 s.package_expires_at = null;
                 changed = true;
             } else if (activeOnly.length > 0) {
@@ -10581,6 +10688,12 @@ window.checkExpirations = async () => {
                 s.package_expires_at = null;
                 changed = true;
             }
+        }
+
+        const shouldPay = studentHasUsableClassCredits(s, now);
+        if (s.paid !== shouldPay) {
+            s.paid = shouldPay;
+            changed = true;
         }
 
         if (changed) {
@@ -10870,6 +10983,101 @@ window.loginStudent = async () => {
             alert(t('invalid_login'));
         }
     }
+};
+
+window.toggleAuthForgotPasswordPanel = () => {
+    const el = document.getElementById('auth-forgot-panel');
+    if (el) el.classList.toggle('hidden');
+};
+
+window.requestPasswordReset = async (emailRaw) => {
+    const t = (k) => (window.t ? window.t(k) : k);
+    const email = (emailRaw || '').trim().toLowerCase();
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRe.test(email)) {
+        alert(t('forgot_password_invalid_email'));
+        return;
+    }
+    if (email.endsWith('@temp.bailadmin.local') || email.endsWith('@admins.bailadmin.local') || email.endsWith('@platform.bailadmin.local')) {
+        alert(t('forgot_password_placeholder_email'));
+        return;
+    }
+    if (!supabaseClient) {
+        alert(t('error_generic') || 'Not connected.');
+        return;
+    }
+    const redirectTo = getPasswordRecoveryRedirectUrl();
+    if (!redirectTo) {
+        alert(t('error_generic') || 'Not connected.');
+        return;
+    }
+    try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) console.warn('resetPasswordForEmail:', error?.message || error);
+    } catch (e) {
+        console.warn('resetPasswordForEmail:', e);
+    }
+    alert(t('forgot_password_success'));
+};
+
+window.requestPasswordResetFromAuthStudent = () => {
+    const emailEl = document.getElementById('auth-email');
+    window.requestPasswordReset(emailEl ? emailEl.value : '');
+};
+
+window.requestPasswordResetFromAuthAdmin = () => {
+    const emailEl = document.getElementById('admin-user-input');
+    window.requestPasswordReset(emailEl ? emailEl.value : '');
+};
+
+window.submitPasswordRecovery = async () => {
+    const t = (k) => (window.t ? window.t(k) : k);
+    const newPass = (document.getElementById('recovery-new-pass')?.value || '').trim();
+    const confirmPass = (document.getElementById('recovery-confirm-pass')?.value || '').trim();
+    const feedback = document.getElementById('recovery-password-feedback');
+    const showMsg = (msg, isError) => {
+        if (!feedback) return;
+        feedback.textContent = msg;
+        feedback.style.display = 'block';
+        feedback.style.color = isError ? 'var(--system-red)' : 'var(--system-green)';
+        feedback.style.fontSize = '0.9rem';
+        feedback.style.marginTop = '1rem';
+    };
+    if (!newPass || !confirmPass) {
+        showMsg(t('signup_require_fields') || 'Please fill in both fields.', true);
+        return;
+    }
+    if (newPass.length < 6) {
+        showMsg(t('password_too_short') || 'Password must be at least 6 characters.', true);
+        return;
+    }
+    if (newPass !== confirmPass) {
+        showMsg(t('signup_passwords_dont_match') || 'Passwords do not match.', true);
+        return;
+    }
+    if (!supabaseClient) {
+        showMsg(t('error_generic') || 'Not connected.', true);
+        return;
+    }
+    const btn = document.querySelector('[data-action="submit-password-recovery"]');
+    if (btn) { btn.disabled = true; btn.textContent = t('saving_label') || 'Saving…'; }
+    const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+    if (btn) { btn.disabled = false; btn.textContent = t('reset_password_submit') || 'Update password'; }
+    if (error) {
+        showMsg((error.message || t('error_generic') || 'Error. Try again.').replace(/</g, '&lt;'), true);
+        return;
+    }
+    try { sessionStorage.removeItem('bailadmin_pw_recovery'); } catch (_) {}
+    state.authRecoveryMode = false;
+    await supabaseClient.auth.signOut().catch(() => {});
+    state.currentUser = null;
+    state.isAdmin = false;
+    state.isPlatformDev = false;
+    state.currentSchool = null;
+    state.currentView = 'school-selection';
+    saveState();
+    alert(t('reset_password_success'));
+    if (typeof window.renderView === 'function') window.renderView();
 };
 
 window.deleteStudent = async (id) => {
@@ -13048,10 +13256,17 @@ window.activatePackage = async (studentId, packageName) => {
         balance: newBalance,
         balance_private: newBalancePrivate,
         balance_events: newBalanceEvents,
-        paid: !!pkg,
+        paid: false,
         active_packs: activePacks,
         package_expires_at: activePacks.length > 0 ? expiry.toISOString() : null
     };
+    updates.paid = studentHasUsableClassCredits({
+        ...student,
+        balance: updates.balance,
+        balance_private: updates.balance_private,
+        balance_events: updates.balance_events,
+        active_packs: updates.active_packs
+    });
 
     if (supabaseClient) {
         const { error: rpcError } = await supabaseClient.rpc('apply_student_package', {
@@ -15095,7 +15310,7 @@ window.updateStudentPrompt = async (id) => {
                             <div style="padding: 12px; border-bottom: 1px solid rgba(142,142,147,0.3); display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700; color: ${textColor};">${escapeHtml(p.name)}</div>
-                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${(p.count == null || p.count === 'null') ? '∞' : p.count} Clases • ${t.expires_label}: ${new Date(p.expires_at).toLocaleDateString()}</div>
+                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${(p.count == null || p.count === 'null') ? '∞' : p.count} Clases • ${t('expires_label')}: ${new Date(p.expires_at).toLocaleDateString()}</div>
                                 </div>
                                 <button onclick="window.removeStudentPack('${escapeHtml(s.id)}', '${escapeHtml(p.id)}')" style="background: transparent; border: none; color: #ff3b30; padding: 8px; cursor: pointer; opacity: 0.5;">
                                     <i data-lucide="minus-circle" size="16"></i>
@@ -15147,15 +15362,13 @@ window.removeStudentPack = async (studentId, packId) => {
     // Recalculate balance
     s.balance = s.active_packs.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
 
-    // Update paid status
     if (s.active_packs.length === 0) {
-        s.paid = false;
         s.package = null;
         s.package_expires_at = null;
     } else {
-        // Update next expiration date if the one removed was the soonest
         s.package_expires_at = s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
     }
+    s.paid = studentHasUsableClassCredits(s);
 
     if (supabaseClient) {
         const { error } = await supabaseClient
@@ -15204,6 +15417,13 @@ window.saveStudentDetails = async (id) => {
     const balancePrivateVal = balancePrivateEl ? balancePrivateEl.value : null;
     const balanceEventsVal = balanceEventsEl ? balanceEventsEl.value : null;
 
+    const parsedBalance = balanceVal === '' ? null : parseInt(balanceVal, 10);
+    if (balanceVal !== '' && !Number.isFinite(parsedBalance)) {
+        alert(t('invalid_price') || 'Please enter a valid number.');
+        if (btn) { btn.disabled = false; btn.textContent = originalText; if (window.lucide) window.lucide.createIcons(); }
+        return;
+    }
+
     if (!newName) {
         alert("Nombre is required.");
         if (btn) { btn.disabled = false; btn.textContent = originalText; if (window.lucide) window.lucide.createIcons(); }
@@ -15212,6 +15432,23 @@ window.saveStudentDetails = async (id) => {
 
     const schoolId = s.school_id || state.currentSchool?.id;
     if (supabaseClient && schoolId) {
+        const origPacks = Array.isArray(s.active_packs) ? s.active_packs : [];
+        let packsMut = origPacks.length ? JSON.parse(JSON.stringify(origPacks)) : [];
+        if (packsMut.length) {
+            if (parsedBalance !== null && Number.isFinite(parsedBalance)) {
+                packsMut = syncActivePacksFieldSumToTarget(packsMut, 'count', parsedBalance);
+            }
+            if (balancePrivateEl) {
+                const pv = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
+                packsMut = syncActivePacksFieldSumToTarget(packsMut, 'private_count', pv);
+            }
+            if (balanceEventsEl) {
+                const ev = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
+                packsMut = syncActivePacksFieldSumToTarget(packsMut, 'event_count', ev);
+            }
+        }
+        const packsChanged = packsMut.length > 0 && JSON.stringify(packsMut) !== JSON.stringify(origPacks);
+
         const payload = {
             p_student_id: id,
             p_school_id: schoolId,
@@ -15219,11 +15456,12 @@ window.saveStudentDetails = async (id) => {
             p_email: newEmail || null,
             p_phone: newPhone,
             p_password: newPassword || null,
-            p_balance: balanceVal === '' ? null : parseInt(balanceVal, 10),
+            p_balance: parsedBalance,
             p_package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
         };
         if (balancePrivateEl) payload.p_balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
         if (balanceEventsEl) payload.p_balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
+        if (packsChanged) payload.p_active_packs = packsMut;
         const { data: updatedRow, error } = await supabaseClient.rpc('update_student_details', payload);
         if (error) {
             alert("Error saving: " + error.message);
@@ -15250,9 +15488,10 @@ window.saveStudentDetails = async (id) => {
                 name: newName,
                 email: newEmail || null,
                 phone: newPhone,
-                balance: balanceVal === '' ? null : parseInt(balanceVal, 10),
+                balance: parsedBalance,
                 package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
             };
+            if (packsChanged) updates.active_packs = packsMut;
             if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
             if (balanceEventsEl) updates.balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
             const studentInState = state.students.find(x => x.id === id);

@@ -10,6 +10,19 @@ export const SUPABASE_URL = 'https://fziyybqhecfxhkagknvg.supabase.co';
 export const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs';
 export const supabaseClient = typeof window !== 'undefined' && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
+/**
+ * Base URL Supabase Auth uses for password-recovery redirects (`resetPasswordForEmail`).
+ *
+ * Ops checklist (Supabase Dashboard): Authentication → URL configuration → add this URL (and previews,
+ * e.g. Vercel) to Redirect URLs; confirm Auth email / SMTP is enabled for “Reset password” messages.
+ */
+export function getPasswordRecoveryRedirectUrl() {
+    if (typeof window === 'undefined' || !window.location) return '';
+    const { origin, pathname } = window.location;
+    const p = pathname && pathname !== '/' ? pathname : '/';
+    return `${origin}${p.endsWith('/') ? p : p + '/'}`;
+}
+
 export const DISCOVERY_COUNTRIES_CITIES = {
     'Switzerland': ['Zurich', 'Geneva', 'Basel', 'Bern', 'Lausanne', 'Winterthur', 'Lucerne', 'St. Gallen'],
     'Germany': ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Stuttgart', 'Düsseldorf', 'Dortmund', 'Essen', 'Leipzig'],

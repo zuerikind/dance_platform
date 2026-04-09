@@ -90,8 +90,35 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
     });
 
+    const PW_RECOVERY_STORAGE = 'bailadmin_pw_recovery';
+
     if (supabaseClient && supabaseClient.auth) {
         supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY' && session?.user) {
+                try { sessionStorage.setItem(PW_RECOVERY_STORAGE, '1'); } catch (_) {}
+                state.authRecoveryMode = true;
+                state.currentView = 'reset-password';
+                state.currentUser = null;
+                state.isAdmin = false;
+                state.isPlatformDev = false;
+                saveState();
+                if (typeof window.renderView === 'function') window.renderView();
+                return;
+            }
+            if (event === 'INITIAL_SESSION' && session?.user && typeof window !== 'undefined') {
+                const h = window.location.hash || '';
+                if (h.includes('type=recovery')) {
+                    try { sessionStorage.setItem(PW_RECOVERY_STORAGE, '1'); } catch (_) {}
+                    state.authRecoveryMode = true;
+                    state.currentView = 'reset-password';
+                    state.currentUser = null;
+                    state.isAdmin = false;
+                    state.isPlatformDev = false;
+                    saveState();
+                    if (typeof window.renderView === 'function') window.renderView();
+                    return;
+                }
+            }
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
                 if (session?.user && state.isAdmin) {
                     if (!state.auth) state.auth = { session: null, user: null, profile: null, loading: false, error: null };
@@ -99,14 +126,18 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
                     state.auth.session = session;
                 }
             }
-            if (event === 'SIGNED_OUT' && (state.currentUser || state.isAdmin || state.isPlatformDev)) {
-                state.currentUser = null;
-                state.isAdmin = false;
-                state.isPlatformDev = false;
-                state.currentSchool = null;
-                state.currentView = 'school-selection';
-                saveState();
-                if (typeof window.renderView === 'function') window.renderView();
+            if (event === 'SIGNED_OUT') {
+                try { sessionStorage.removeItem(PW_RECOVERY_STORAGE); } catch (_) {}
+                state.authRecoveryMode = false;
+                if (state.currentUser || state.isAdmin || state.isPlatformDev) {
+                    state.currentUser = null;
+                    state.isAdmin = false;
+                    state.isPlatformDev = false;
+                    state.currentSchool = null;
+                    state.currentView = 'school-selection';
+                    saveState();
+                    if (typeof window.renderView === 'function') window.renderView();
+                }
             }
         });
     }
@@ -134,6 +165,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (target.id === 'auth-pass' || target.id === 'auth-pass-confirm') {
                 const isSignup = state.authMode === 'signup';
                 if (isSignup) window.signUpStudent(); else window.loginStudent();
+            }
+            if (target.id === 'recovery-new-pass' || target.id === 'recovery-confirm-pass') {
+                if (typeof window.submitPasswordRecovery === 'function') window.submitPasswordRecovery();
             }
             if (target.id === 'admin-pass-input') window.loginAdminWithCreds();
         }
@@ -244,7 +278,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             if (saved.currentUser) state.currentUser = saved.currentUser;
             if (saved.isAdmin !== undefined) state.isAdmin = saved.isAdmin;
             if (saved.isPlatformDev !== undefined) state.isPlatformDev = saved.isPlatformDev;
-            if (saved.currentView && state.currentView !== 'verify-email' && state.currentView !== 'activate') state.currentView = saved.currentView;
+            if (saved.currentView && state.currentView !== 'verify-email' && state.currentView !== 'activate' && saved.currentView !== 'reset-password') state.currentView = saved.currentView;
             if (saved.scheduleView) state.scheduleView = saved.scheduleView;
             if (saved.lastActivity) state.lastActivity = saved.lastActivity;
             if (saved.currentSchool) state.currentSchool = saved.currentSchool;
@@ -343,9 +377,6 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         if (typeof window.history !== 'undefined' && window.history.scrollRestoration !== undefined) {
             window.history.scrollRestoration = 'manual';
         }
-        window.renderView();
-        window.scrollTo(0, 0);
-        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
         const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
         let sessRes = { data: { session: null } };
@@ -361,6 +392,18 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             }
         }
         const hasSupabaseSession = !!sessRes?.data?.session?.user;
+        let inPwRecovery = false;
+        try { inPwRecovery = sessionStorage.getItem(PW_RECOVERY_STORAGE) === '1'; } catch (_) {}
+        if (!hasSupabaseSession && inPwRecovery) {
+            try { sessionStorage.removeItem(PW_RECOVERY_STORAGE); } catch (_) {}
+            state.authRecoveryMode = false;
+            inPwRecovery = false;
+        }
+        if (hasSupabaseSession && inPwRecovery) {
+            state.authRecoveryMode = true;
+            state.currentView = 'reset-password';
+            saveState();
+        }
         if (hasSupabaseSession && supabaseClient) await bootstrapAuth(supabaseClient);
         const hash = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash : '';
         const isCalendlyReturn = hash.includes('calendly=connected');
@@ -379,19 +422,22 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
                 state.currentSchool = null;
                 if (local) saveState();
             }
-        } else if (!hasAuthState && hasSupabaseSession && supabaseClient && sessRes?.data?.session?.user) {
+        } else if (!hasAuthState && hasSupabaseSession && supabaseClient && sessRes?.data?.session?.user && !state.authRecoveryMode) {
             const user = sessRes.data.session.user;
             state.currentUser = { id: user.id, email: user.email ?? user.user_metadata?.email ?? '', role: 'student', school_id: null };
             state.isAdmin = false;
             state.isPlatformDev = false;
             const path = (typeof window !== 'undefined' && window.location?.pathname) ? window.location.pathname : '';
-            const hash = (typeof window !== 'undefined' && window.location?.hash) ? window.location.hash : '';
-            state._discoveryOnlyEdit = (path.includes('discovery') || hash.includes('discovery'));
+            const hashForDiscovery = (typeof window !== 'undefined' && window.location?.hash) ? window.location.hash : '';
+            state._discoveryOnlyEdit = (path.includes('discovery') || hashForDiscovery.includes('discovery'));
             setSessionIdentity();
             if (typeof window.fetchUserProfile === 'function') await window.fetchUserProfile();
             saveState();
-            window.renderView();
         }
+
+        window.renderView();
+        window.scrollTo(0, 0);
+        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
         window.checkInactivity();
 

@@ -112,7 +112,9 @@ export let state = {
     calendlyEventTypesList: [],
     calendlyEventTypesLoaded: false,
     calendlyEventTypesError: null,
-    teacherCalendlySelectionForBooking: null
+    teacherCalendlySelectionForBooking: null,
+    /** True while user must set a new password (email recovery link). Not persisted in saveState. */
+    authRecoveryMode: false
 };
 
 const SESSION_IDENTITY_KEY = 'dance_session_identity';

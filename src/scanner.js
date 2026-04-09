@@ -125,6 +125,16 @@ export function getEffectiveBalances(student, now = new Date()) {
     return { group, groupUnlimited, private: privateBal, event: eventBal };
 }
 
+/** Mirrors DB student_has_usable_class_credits: paid should be true iff student can consume any class credit. */
+export function studentHasUsableClassCredits(student, now = new Date()) {
+    const eff = getEffectiveBalances(student, now);
+    if (eff.groupUnlimited) return true;
+    if ((eff.group ?? 0) > 0) return true;
+    if ((eff.private ?? 0) > 0) return true;
+    if ((eff.event ?? 0) > 0) return true;
+    return false;
+}
+
 export async function startScanner() {
     try {
         const modal = document.getElementById('scanner-modal');
