@@ -379,6 +379,32 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
 
         const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
+        // Recovery links use hash fragments (#...type=recovery...). getSession() consumes the hash
+        // before onAuthStateChange(PASSWORD_RECOVERY) may run, so init would otherwise treat the
+        // session as a normal discovery login and leave currentView on school-selection (landing).
+        const hashBeforeSession = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash : '';
+        let isRecoveryFromUrl = false;
+        try {
+            const raw = hashBeforeSession.replace(/^#/, '');
+            if (raw.includes('type=recovery') || raw.includes('type%3Drecovery') || raw.includes('type%3drecovery')) {
+                isRecoveryFromUrl = true;
+            } else if (raw) {
+                const params = new URLSearchParams(raw);
+                if (params.get('type') === 'recovery') isRecoveryFromUrl = true;
+            }
+        } catch (_) {}
+        if (isRecoveryFromUrl) {
+            try { sessionStorage.setItem(PW_RECOVERY_STORAGE, '1'); } catch (_) {}
+            state.authRecoveryMode = true;
+            state.currentView = 'reset-password';
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.isPlatformDev = false;
+            state.currentSchool = null;
+            state._discoveryOnlyEdit = false;
+            saveState();
+        }
+
         let sessRes = { data: { session: null } };
         try {
             sessRes = supabaseClient ? await supabaseClient.auth.getSession() : sessRes;

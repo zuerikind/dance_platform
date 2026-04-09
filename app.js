@@ -18002,6 +18002,32 @@ School: ${schoolName}`)) return;
         window.history.scrollRestoration = "manual";
       }
       const hasAuthState = !!(state.currentUser || state.isAdmin || state.isPlatformDev);
+      const hashBeforeSession = typeof window !== "undefined" && window.location.hash ? window.location.hash : "";
+      let isRecoveryFromUrl = false;
+      try {
+        const raw = hashBeforeSession.replace(/^#/, "");
+        if (raw.includes("type=recovery") || raw.includes("type%3Drecovery") || raw.includes("type%3drecovery")) {
+          isRecoveryFromUrl = true;
+        } else if (raw) {
+          const params2 = new URLSearchParams(raw);
+          if (params2.get("type") === "recovery") isRecoveryFromUrl = true;
+        }
+      } catch (_) {
+      }
+      if (isRecoveryFromUrl) {
+        try {
+          sessionStorage.setItem(PW_RECOVERY_STORAGE, "1");
+        } catch (_) {
+        }
+        state.authRecoveryMode = true;
+        state.currentView = "reset-password";
+        state.currentUser = null;
+        state.isAdmin = false;
+        state.isPlatformDev = false;
+        state.currentSchool = null;
+        state._discoveryOnlyEdit = false;
+        saveState();
+      }
       let sessRes = { data: { session: null } };
       try {
         sessRes = supabaseClient ? await supabaseClient.auth.getSession() : sessRes;
