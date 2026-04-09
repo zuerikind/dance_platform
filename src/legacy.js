@@ -6684,7 +6684,6 @@ function _renderViewImpl() {
                     }
                 }
                 const dayDateStr = dayDate ? dayDate.toLocaleDateString(state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short' }) : '';
-                const isToday = dayStart && dayStart.getTime() === todayStart.getTime();
 
                 html += `
                     <div class="day-tile ${isPastDay ? 'day-tile-past' : ''}">

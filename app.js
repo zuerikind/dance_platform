@@ -1433,12 +1433,12 @@
         console.warn("Error checking registrations:", e);
       }
     }
-    const todayStart2 = /* @__PURE__ */ new Date();
-    todayStart2.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(todayStart2);
+    const todayStart = /* @__PURE__ */ new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
     todayEnd.setDate(todayEnd.getDate() + 1);
     const todaysPrivateLessons = (state.privateLessons || []).filter(
-      (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart2 && new Date(l.start_at_utc) < todayEnd && (l.status === "confirmed" || l.status === "attended")
+      (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd && (l.status === "confirmed" || l.status === "attended")
     );
     const now = /* @__PURE__ */ new Date();
     const eff = getEffectiveBalances(student, now);
@@ -8753,14 +8753,13 @@
                 const dayMx = registrationCalendarDateStrFromUiDate(dayDate);
                 isPastDay = !!(dayMx && todayMx && dayMx < todayMx);
               } else {
-                const todayStart2 = new Date(getTodayForMonthly());
-                todayStart2.setHours(0, 0, 0, 0);
-                const dayStart2 = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
-                isPastDay = dayStart2.getTime() < todayStart2.getTime();
+                const todayStart = new Date(getTodayForMonthly());
+                todayStart.setHours(0, 0, 0, 0);
+                const dayStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+                isPastDay = dayStart.getTime() < todayStart.getTime();
               }
             }
             const dayDateStr = dayDate ? dayDate.toLocaleDateString(state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US", { day: "numeric", month: "short" }) : "";
-            const isToday = dayStart && dayStart.getTime() === todayStart.getTime();
             html += `
                     <div class="day-tile ${isPastDay ? "day-tile-past" : ""}">
                         <div class="day-tile-header">
@@ -9787,11 +9786,11 @@
           const sortedAccepted = lessons.length > 0 ? [...lessons].sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime()) : [...acceptedReqs].sort((a, b) => (a.requested_date + a.requested_time).localeCompare(b.requested_date + b.requested_time));
           const viewMode = state.teacherAcceptedClassesView || "list";
           const expanded = state.teacherAcceptedClassesExpanded !== false;
-          const todayStart2 = /* @__PURE__ */ new Date();
-          todayStart2.setHours(0, 0, 0, 0);
-          const todayEnd = new Date(todayStart2);
+          const todayStart = /* @__PURE__ */ new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          const todayEnd = new Date(todayStart);
           todayEnd.setDate(todayEnd.getDate() + 1);
-          const todaysLessons = (state.privateLessons || []).filter((l) => (l.status === "confirmed" || l.status === "attended") && new Date(l.start_at_utc) >= todayStart2 && new Date(l.start_at_utc) < todayEnd);
+          const todaysLessons = (state.privateLessons || []).filter((l) => (l.status === "confirmed" || l.status === "attended") && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd);
           return `
                     <div class="teacher-accepted-classes-expandable ${expanded ? "expanded" : ""}">
                         <div class="teacher-accepted-panel-header">
