@@ -1433,12 +1433,12 @@
         console.warn("Error checking registrations:", e);
       }
     }
-    const todayStart = /* @__PURE__ */ new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(todayStart);
+    const todayStart2 = /* @__PURE__ */ new Date();
+    todayStart2.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart2);
     todayEnd.setDate(todayEnd.getDate() + 1);
     const todaysPrivateLessons = (state.privateLessons || []).filter(
-      (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd && (l.status === "confirmed" || l.status === "attended")
+      (l) => String(l.student_id) === String(student.id) && new Date(l.start_at_utc) >= todayStart2 && new Date(l.start_at_utc) < todayEnd && (l.status === "confirmed" || l.status === "attended")
     );
     const now = /* @__PURE__ */ new Date();
     const eff = getEffectiveBalances(student, now);
@@ -1457,8 +1457,23 @@
     const hasAnyBalance = hasGroupLeft || privateCountsTowardPass && hasPrivateLeft || hasEventsEnabled && hasEventsLeft;
     const hasValidPass = hasAnyBalance;
     const hasNoClasses = !hasAnyBalance;
-    if (todayRegs.length > 0 && hasValidPass) {
-      const regsHtml = todayRegs.map((r) => {
+    const isActionableRegistration = (r) => {
+      const st = r.status;
+      return st === "registered" || st === "pending" || st === "no_show" && !!r.deducted;
+    };
+    const actionableRegs = todayRegs.filter(isActionableRegistration);
+    const attendedTodayRegs = todayRegs.filter((r) => r.status === "attended");
+    const scanBalanceLabel = isPT && !hasDualScanMode ? `${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
+    if (actionableRegs.length > 0 && hasValidPass) {
+      const attendedAlreadyHtml = attendedTodayRegs.length > 0 ? `<div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); margin: 0 0 0.4rem;">${escapeHtml2(t2("scanner_already_checked_in_header") || "Already checked in")}</div>${attendedTodayRegs.map((r) => `
+            <div style="background: rgba(52, 199, 89, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 0.55rem 0.75rem; margin-bottom: 0.45rem;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
+                    <span style="font-size: 0.88rem; font-weight: 600;">${escapeHtml2(r.class_name)} <span class="text-muted">@ ${escapeHtml2(r.class_time)}</span></span>
+                </div>
+                <div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.25rem;">${escapeHtml2(t2("scanner_class_marked_attended") || "Attendance already recorded.")}</div>
+            </div>`).join("")}` : "";
+      const regsHtml = actionableRegs.map((r) => {
         const noShowNote = r.status === "no_show" ? `<div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">${escapeHtml2(t2("scanner_no_show_mark_attended") || "Marked absent (charged). Confirm if the student attended \u2014 no extra class will be deducted.")}</div>` : "";
         const pendingNote = r.status === "pending" ? `<div style="font-size: 0.7rem; color: var(--system-orange); margin-top: 0.35rem;">${escapeHtml2(t2("scanner_pending_mark_attended") || "Pending request. Confirming marks attendance and uses one class from the package.")}</div>` : "";
         return `
@@ -1473,7 +1488,7 @@
             </div>
         `;
       }).join("");
-      scanBatchRegistrationIds = todayRegs.map((r) => String(r.id));
+      scanBatchRegistrationIds = actionableRegs.map((r) => String(r.id));
       const manualPartsForReg = buildManualDeductParts(student, t2, {
         eff,
         isPT,
@@ -1486,25 +1501,25 @@
         effectiveEvents,
         todaysPrivateLessons
       }, false);
-      const regBtnsPerClass = todayRegs.length > 1 ? todayRegs.map((r) => `
+      const regBtnsPerClass = actionableRegs.length > 1 ? actionableRegs.map((r) => `
             <button class="btn-secondary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml2(r.id)}', '${escapeHtml2(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("confirm_attendance_registered")} \u2013 ${escapeHtml2(r.class_name)}
             </button>
         `).join("") : "";
-      const perClassSection = todayRegs.length > 1 ? `<div style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${escapeHtml2(t2("scanner_pick_class_confirm") || "Or confirm for one class only:")}</div>${regBtnsPerClass}` : "";
+      const perClassSection = actionableRegs.length > 1 ? `<div style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${escapeHtml2(t2("scanner_pick_class_confirm") || "Or confirm for one class only:")}</div>${regBtnsPerClass}` : "";
       const privateLessonSection = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
         const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
         const checkedIn = l.status === "attended";
         const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
         return checkInBtn;
       }).join("") : "";
-      const regBalanceLabel = isPT && !hasDualScanMode ? `${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml2(student.name)}</h3>
                 <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.6rem;">
-                    ${regBalanceLabel}
+                    ${scanBalanceLabel}
                 </div>
+                ${attendedAlreadyHtml}
                 ${regsHtml}
                 ${privateLessonSection ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${t2("private_lesson") || "Private lesson"}</div>${privateLessonSection}` : ""}
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
@@ -1523,6 +1538,37 @@
                         ${manualPartsForReg.eventRow}
                     </div>
                 </details>
+                <div style="text-align: center; margin-top: 0.5rem;">
+                    <button type="button" onclick="window.cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t2("cancel")}</button>
+                </div>
+            </div>
+        `;
+    } else if (attendedTodayRegs.length > 0 && actionableRegs.length === 0) {
+      scanBatchRegistrationIds = [];
+      const attendedOnlyCards = attendedTodayRegs.map((r) => `
+            <div class="scanner-checkin-done-class">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="check-circle" size="14" style="color: var(--system-green); flex-shrink: 0;"></i>
+                    <span class="scanner-checkin-done-class-label">${escapeHtml2(r.class_name)} <span class="text-muted">@ ${escapeHtml2(r.class_time)}</span></span>
+                </div>
+            </div>`).join("");
+      const bannerText = (t2("scanner_already_confirmed_one_message") || "{name} is already checked in \u2014 you confirmed their attendance. Scanning again will not deduct another class.").replace(/\{name\}/g, escapeHtml2(student.name));
+      const doneBtnLabel = t2("scanner_already_confirmed_done_button") || "Already confirmed";
+      resultEl.innerHTML = `
+            <div class="card scanner-checkin-done-card" style="border-radius: 16px; padding: 0.85rem; text-align: left;">
+                <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 0.65rem;">
+                    ${scanBalanceLabel}
+                </div>
+                <div class="scanner-checkin-done-panel">
+                    <div class="scanner-checkin-done-icon-wrap">
+                        <i data-lucide="check-circle" size="30"></i>
+                    </div>
+                    <p class="scanner-checkin-done-message">${bannerText}</p>
+                    ${attendedOnlyCards}
+                </div>
+                <button type="button" class="scanner-checkin-done-btn w-full" disabled aria-disabled="true">
+                    <i data-lucide="check-circle" size="18"></i>${escapeHtml2(doneBtnLabel)}
+                </button>
                 <div style="text-align: center; margin-top: 0.5rem;">
                     <button type="button" onclick="window.cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t2("cancel")}</button>
                 </div>
@@ -2505,6 +2551,10 @@
       confirm_attendance_registered: "Confirm Attendance",
       scanner_pick_class_confirm: "Or confirm for one class only:",
       scanner_manual_deduct_expand: "Manual deduction \u2014 only if there is no class booking today",
+      scanner_already_confirmed_one_message: "{name} is already checked in \u2014 you confirmed their attendance. Scanning again will not deduct another class.",
+      scanner_already_confirmed_done_button: "Already confirmed",
+      scanner_already_checked_in_header: "Already checked in",
+      scanner_class_marked_attended: "Attendance already recorded.",
       class_will_deduct: "1 class will be deducted from their package",
       student_registered_for: "Registered for",
       register_success: "Successfully registered!",
@@ -3341,6 +3391,10 @@
       confirm_attendance_registered: "Confirmar asistencia",
       scanner_pick_class_confirm: "O confirmar solo una clase:",
       scanner_manual_deduct_expand: "Descuento manual \u2014 solo si no hay reserva para hoy",
+      scanner_already_confirmed_one_message: "{name} ya est\xE1 registrado: confirmaste su asistencia. Si escaneas otra vez, no se descontar\xE1 otra clase.",
+      scanner_already_confirmed_done_button: "Asistencia ya confirmada",
+      scanner_already_checked_in_header: "Ya registr\xF3 asistencia",
+      scanner_class_marked_attended: "Asistencia ya registrada.",
       class_will_deduct: "Se descontar\xE1 1 clase de su paquete",
       student_registered_for: "Registrado en",
       register_success: "Registro exitoso!",
@@ -4217,6 +4271,10 @@
       confirm_attendance_registered: "Anwesenheit best\xE4tigen",
       scanner_pick_class_confirm: "Oder nur f\xFCr eine Kursstunde best\xE4tigen:",
       scanner_manual_deduct_expand: "Manueller Abzug \u2014 nur wenn heute keine Buchung besteht",
+      scanner_already_confirmed_one_message: "{name} ist bereits eingecheckt \u2013 du hast die Anwesenheit best\xE4tigt. Ein erneuter Scan zieht keine weitere Stunde ab.",
+      scanner_already_confirmed_done_button: "Bereits best\xE4tigt",
+      scanner_already_checked_in_header: "Bereits eingecheckt",
+      scanner_class_marked_attended: "Anwesenheit bereits erfasst.",
       class_will_deduct: "1 Kurs wird vom Paket abgezogen",
       student_registered_for: "Angemeldet f\xFCr",
       register_success: "Erfolgreich angemeldet!",
@@ -8389,7 +8447,7 @@
           if (state.isAdmin) return null;
           const useDate = dateOverride != null ? new Date(dateOverride) : window.getNextClassDate(classObj.day);
           if (!useDate) return null;
-          const dateStr = window.formatClassDate(useDate);
+          const dateStr = registrationCalendarDateStrFromUiDate(useDate);
           const classDateTime = /* @__PURE__ */ new Date(dateStr + "T" + (classObj.time || "23:59"));
           const nowMs = getVirtualNow().getTime();
           const isOver = isGroupClassRegistrationPastCutoff(dateStr);
@@ -8688,10 +8746,19 @@
             const aliases = dayAliases[dayKey];
             const dayClasses = state.classes.filter((c) => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
             const dayDate = window.getScheduleWeekDate(dayKey);
-            const todayStart = new Date(getTodayForMonthly());
-            todayStart.setHours(0, 0, 0, 0);
-            const dayStart = dayDate ? new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate()) : null;
-            const isPastDay = regEnabled && dayStart && dayStart.getTime() < todayStart.getTime();
+            let isPastDay = false;
+            if (regEnabled && dayDate) {
+              if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+                const todayMx = calendarDateStrInTimeZone(getVirtualNow(), "America/Mexico_City");
+                const dayMx = registrationCalendarDateStrFromUiDate(dayDate);
+                isPastDay = !!(dayMx && todayMx && dayMx < todayMx);
+              } else {
+                const todayStart2 = new Date(getTodayForMonthly());
+                todayStart2.setHours(0, 0, 0, 0);
+                const dayStart2 = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+                isPastDay = dayStart2.getTime() < todayStart2.getTime();
+              }
+            }
             const dayDateStr = dayDate ? dayDate.toLocaleDateString(state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US", { day: "numeric", month: "short" }) : "";
             const isToday = dayStart && dayStart.getTime() === todayStart.getTime();
             html += `
@@ -9720,11 +9787,11 @@
           const sortedAccepted = lessons.length > 0 ? [...lessons].sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime()) : [...acceptedReqs].sort((a, b) => (a.requested_date + a.requested_time).localeCompare(b.requested_date + b.requested_time));
           const viewMode = state.teacherAcceptedClassesView || "list";
           const expanded = state.teacherAcceptedClassesExpanded !== false;
-          const todayStart = /* @__PURE__ */ new Date();
-          todayStart.setHours(0, 0, 0, 0);
-          const todayEnd = new Date(todayStart);
+          const todayStart2 = /* @__PURE__ */ new Date();
+          todayStart2.setHours(0, 0, 0, 0);
+          const todayEnd = new Date(todayStart2);
           todayEnd.setDate(todayEnd.getDate() + 1);
-          const todaysLessons = (state.privateLessons || []).filter((l) => (l.status === "confirmed" || l.status === "attended") && new Date(l.start_at_utc) >= todayStart && new Date(l.start_at_utc) < todayEnd);
+          const todaysLessons = (state.privateLessons || []).filter((l) => (l.status === "confirmed" || l.status === "attended") && new Date(l.start_at_utc) >= todayStart2 && new Date(l.start_at_utc) < todayEnd);
           return `
                     <div class="teacher-accepted-classes-expandable ${expanded ? "expanded" : ""}">
                         <div class="teacher-accepted-panel-header">
@@ -11342,7 +11409,14 @@
     let targetDay = dayMap[dayCode];
     if (targetDay === void 0) targetDay = dayAliases[dayCode];
     if (targetDay === void 0) return null;
-    const now = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly() : /* @__PURE__ */ new Date();
+    let now;
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      const mx = calendarDateStrInTimeZone(/* @__PURE__ */ new Date(), "America/Mexico_City");
+      const [yy, mm, dd] = mx.split("-").map((x) => parseInt(x, 10));
+      now = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    } else {
+      now = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly() : /* @__PURE__ */ new Date();
+    }
     const today = now.getDay();
     let daysUntil = targetDay - today;
     if (daysUntil < 0) daysUntil += 7;
@@ -11361,7 +11435,12 @@
     return `${y}-${m}-${day}`;
   };
   window.getCurrentWeekMonday = () => {
-    const now = getTodayForMonthly();
+    let now = getTodayForMonthly();
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      const mx = calendarDateStrInTimeZone(/* @__PURE__ */ new Date(), "America/Mexico_City");
+      const [yy, mm, dd] = mx.split("-").map((x) => parseInt(x, 10));
+      now = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    }
     const day = now.getDay();
     const diff = day === 0 ? -6 : 1 - day;
     const monday = new Date(now);
@@ -11419,6 +11498,11 @@
   window.isDayPastInCurrentWeek = (dayCode) => {
     const dayDate = window.getCurrentWeekDate(dayCode);
     if (!dayDate) return false;
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      const todayMx = calendarDateStrInTimeZone(getVirtualNow(), "America/Mexico_City");
+      const dayMx = registrationCalendarDateStrFromUiDate(dayDate);
+      return !!(dayMx && todayMx && dayMx < todayMx);
+    }
     const today = new Date(getTodayForMonthly());
     today.setHours(0, 0, 0, 0);
     return dayDate < today;
@@ -11466,7 +11550,7 @@
     const dates = /* @__PURE__ */ new Set();
     const weekRange = window.getCurrentWeekRange();
     for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
-      dates.add(window.formatClassDate(d));
+      dates.add(registrationCalendarDateStrFromUiDate(d));
     }
     const scheduleOffset = state && state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
     if (scheduleOffset !== 0) {
@@ -11475,12 +11559,12 @@
       const displayEnd = new Date(displayMonday);
       displayEnd.setDate(displayMonday.getDate() + 6);
       for (let d = new Date(displayMonday); d <= displayEnd; d.setDate(d.getDate() + 1)) {
-        dates.add(window.formatClassDate(d));
+        dates.add(registrationCalendarDateStrFromUiDate(d));
       }
     }
     (state.classes || []).forEach((c) => {
       const nextDate = window.getNextClassDate(c.day);
-      if (nextDate) dates.add(window.formatClassDate(nextDate));
+      if (nextDate) dates.add(registrationCalendarDateStrFromUiDate(nextDate));
     });
     const dateArr = [...dates];
     const availabilityPromises = dateArr.map(async (dateStr) => {
@@ -11549,7 +11633,7 @@
     const dates = /* @__PURE__ */ new Set();
     const weekRange = window.getCurrentWeekRange();
     for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
-      dates.add(window.formatClassDate(d));
+      dates.add(registrationCalendarDateStrFromUiDate(d));
     }
     const scheduleOffset = state && state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
     if (scheduleOffset !== 0) {
@@ -11558,12 +11642,12 @@
       const displayEnd = new Date(displayMonday);
       displayEnd.setDate(displayMonday.getDate() + 6);
       for (let d = new Date(displayMonday); d <= displayEnd; d.setDate(d.getDate() + 1)) {
-        dates.add(window.formatClassDate(d));
+        dates.add(registrationCalendarDateStrFromUiDate(d));
       }
     }
     (state.classes || []).forEach((c) => {
       const nextDate = window.getNextClassDate(c.day);
-      if (nextDate) dates.add(window.formatClassDate(nextDate));
+      if (nextDate) dates.add(registrationCalendarDateStrFromUiDate(nextDate));
     });
     const dateArr = [...dates].sort();
     if (dateArr.length === 0) {
@@ -11980,6 +12064,17 @@
     const d = parts.find((p) => p.type === "day").value;
     return `${y}-${m}-${d}`;
   }
+  function registrationCalendarDateStrFromUiDate(date) {
+    if (!date || isNaN(date.getTime())) return "";
+    if (state.mockDate || state.currentSchool?.id !== AURE_SCHOOL_ID) {
+      return window.formatClassDate(date);
+    }
+    const y = date.getFullYear();
+    const mo = date.getMonth();
+    const d = date.getDate();
+    const anchor = new Date(y, mo, d, 12, 0, 0, 0);
+    return calendarDateStrInTimeZone(anchor, "America/Mexico_City");
+  }
   function isGroupClassRegistrationPastCutoff(classDateStr) {
     if (state.mockDate) {
       const mock = String(state.mockDate).slice(0, 10);
@@ -12003,7 +12098,7 @@
     for (let d = 1; d <= lastDay; d++) {
       const dt = new Date(year, month, d);
       if (dt.getDay() === targetDay && dt >= anchorDay) {
-        dates.push(window.formatClassDate(dt));
+        dates.push(registrationCalendarDateStrFromUiDate(dt));
       }
     }
     return dates;
@@ -12038,7 +12133,7 @@
     if (!classObj) return;
     const nextDate = optionalDateStr ? /* @__PURE__ */ new Date(optionalDateStr + "T00:00:00") : window.getNextClassDate(classObj.day);
     if (!nextDate || isNaN(nextDate.getTime())) return;
-    const dateStr = optionalDateStr || window.formatClassDate(nextDate);
+    const dateStr = optionalDateStr || registrationCalendarDateStrFromUiDate(nextDate);
     try {
       const { data, error } = await supabaseClient.rpc("register_for_class", {
         p_student_id: String(studentId),
@@ -12161,7 +12256,7 @@
     if (!classObj) return;
     const targetDate = optionalDateStr ? /* @__PURE__ */ new Date(optionalDateStr + "T00:00:00") : window.getNextClassDate(classObj.day);
     if (!targetDate || isNaN(targetDate.getTime())) return;
-    const targetDateStr = optionalDateStr || window.formatClassDate(targetDate);
+    const targetDateStr = optionalDateStr || registrationCalendarDateStrFromUiDate(targetDate);
     const classDateTime = /* @__PURE__ */ new Date(targetDateStr + "T" + (classObj.time || "23:59"));
     if (isGroupClassRegistrationPastCutoff(targetDateStr)) {
       window.showMessageModal({
@@ -12279,7 +12374,7 @@
     if (!classObj) return;
     const nextDate = optionalDateStr ? /* @__PURE__ */ new Date(optionalDateStr + "T00:00:00") : window.getNextClassDate(classObj.day);
     if (!nextDate || isNaN(nextDate.getTime())) return;
-    const dateStr = optionalDateStr || window.formatClassDate(nextDate);
+    const dateStr = optionalDateStr || registrationCalendarDateStrFromUiDate(nextDate);
     try {
       const { data, error } = await supabaseClient.rpc("request_clase_suelta", {
         p_student_id: String(studentId),

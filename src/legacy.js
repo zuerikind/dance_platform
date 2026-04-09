@@ -677,6 +677,10 @@ const DANCE_LOCALES = {
         confirm_attendance_registered: "Confirm Attendance",
         scanner_pick_class_confirm: "Or confirm for one class only:",
         scanner_manual_deduct_expand: "Manual deduction — only if there is no class booking today",
+        scanner_already_confirmed_one_message: "{name} is already checked in — you confirmed their attendance. Scanning again will not deduct another class.",
+        scanner_already_confirmed_done_button: "Already confirmed",
+        scanner_already_checked_in_header: "Already checked in",
+        scanner_class_marked_attended: "Attendance already recorded.",
         class_will_deduct: "1 class will be deducted from their package",
         student_registered_for: "Registered for",
         register_success: "Successfully registered!",
@@ -1493,6 +1497,10 @@ const DANCE_LOCALES = {
         confirm_attendance_registered: "Confirmar asistencia",
         scanner_pick_class_confirm: "O confirmar solo una clase:",
         scanner_manual_deduct_expand: "Descuento manual — solo si no hay reserva para hoy",
+        scanner_already_confirmed_one_message: "{name} ya está registrado: confirmaste su asistencia. Si escaneas otra vez, no se descontará otra clase.",
+        scanner_already_confirmed_done_button: "Asistencia ya confirmada",
+        scanner_already_checked_in_header: "Ya registró asistencia",
+        scanner_class_marked_attended: "Asistencia ya registrada.",
         class_will_deduct: "Se descontará 1 clase de su paquete",
         student_registered_for: "Registrado en",
         register_success: "Registro exitoso!",
@@ -2358,6 +2366,10 @@ const DANCE_LOCALES = {
         confirm_attendance_registered: "Anwesenheit bestätigen",
         scanner_pick_class_confirm: "Oder nur für eine Kursstunde bestätigen:",
         scanner_manual_deduct_expand: "Manueller Abzug — nur wenn heute keine Buchung besteht",
+        scanner_already_confirmed_one_message: "{name} ist bereits eingecheckt – du hast die Anwesenheit bestätigt. Ein erneuter Scan zieht keine weitere Stunde ab.",
+        scanner_already_confirmed_done_button: "Bereits bestätigt",
+        scanner_already_checked_in_header: "Bereits eingecheckt",
+        scanner_class_marked_attended: "Anwesenheit bereits erfasst.",
         class_will_deduct: "1 Kurs wird vom Paket abgezogen",
         student_registered_for: "Angemeldet für",
         register_success: "Erfolgreich angemeldet!",
@@ -6333,7 +6345,7 @@ function _renderViewImpl() {
             if (state.isAdmin) return null;
             const useDate = dateOverride != null ? new Date(dateOverride) : window.getNextClassDate(classObj.day);
             if (!useDate) return null;
-            const dateStr = window.formatClassDate(useDate);
+            const dateStr = registrationCalendarDateStrFromUiDate(useDate);
             const classDateTime = new Date(dateStr + 'T' + (classObj.time || '23:59'));
             const nowMs = getVirtualNow().getTime();
             const isOver = isGroupClassRegistrationPastCutoff(dateStr);
@@ -6658,10 +6670,19 @@ function _renderViewImpl() {
                 const aliases = dayAliases[dayKey];
                 const dayClasses = state.classes.filter(c => aliases.includes(c.day)).sort((a, b) => a.time.localeCompare(b.time));
                 const dayDate = window.getScheduleWeekDate(dayKey);
-                const todayStart = new Date(getTodayForMonthly());
-                todayStart.setHours(0, 0, 0, 0);
-                const dayStart = dayDate ? new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate()) : null;
-                const isPastDay = regEnabled && dayStart && dayStart.getTime() < todayStart.getTime();
+                let isPastDay = false;
+                if (regEnabled && dayDate) {
+                    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+                        const todayMx = calendarDateStrInTimeZone(getVirtualNow(), 'America/Mexico_City');
+                        const dayMx = registrationCalendarDateStrFromUiDate(dayDate);
+                        isPastDay = !!(dayMx && todayMx && dayMx < todayMx);
+                    } else {
+                        const todayStart = new Date(getTodayForMonthly());
+                        todayStart.setHours(0, 0, 0, 0);
+                        const dayStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+                        isPastDay = dayStart.getTime() < todayStart.getTime();
+                    }
+                }
                 const dayDateStr = dayDate ? dayDate.toLocaleDateString(state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short' }) : '';
                 const isToday = dayStart && dayStart.getTime() === todayStart.getTime();
 
@@ -9324,7 +9345,14 @@ window.getNextClassDate = (dayCode) => {
     let targetDay = dayMap[dayCode];
     if (targetDay === undefined) targetDay = dayAliases[dayCode];
     if (targetDay === undefined) return null;
-    const now = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly() : new Date();
+    let now;
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+        const mx = calendarDateStrInTimeZone(new Date(), 'America/Mexico_City');
+        const [yy, mm, dd] = mx.split('-').map((x) => parseInt(x, 10));
+        now = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    } else {
+        now = typeof window.getTodayForMonthly === 'function' ? window.getTodayForMonthly() : new Date();
+    }
     const today = now.getDay(); // 0=Sun
     let daysUntil = targetDay - today;
     if (daysUntil < 0) daysUntil += 7;
@@ -9348,7 +9376,12 @@ window.formatClassDate = (date) => {
 
 // Returns the Monday of the current week (Mon-Sun week). Uses mockDate when set (e.g. ?mockDate=2026-02-04).
 window.getCurrentWeekMonday = () => {
-    const now = getTodayForMonthly();
+    let now = getTodayForMonthly();
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+        const mx = calendarDateStrInTimeZone(new Date(), 'America/Mexico_City');
+        const [yy, mm, dd] = mx.split('-').map((x) => parseInt(x, 10));
+        now = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    }
     const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
     const diff = day === 0 ? -6 : 1 - day; // if Sunday, go back 6 days; else go to Monday
     const monday = new Date(now);
@@ -9418,6 +9451,11 @@ window.getWeekStartDateStr = (dateStr) => {
 window.isDayPastInCurrentWeek = (dayCode) => {
     const dayDate = window.getCurrentWeekDate(dayCode);
     if (!dayDate) return false;
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+        const todayMx = calendarDateStrInTimeZone(getVirtualNow(), 'America/Mexico_City');
+        const dayMx = registrationCalendarDateStrFromUiDate(dayDate);
+        return !!(dayMx && todayMx && dayMx < todayMx);
+    }
     const today = new Date(getTodayForMonthly());
     today.setHours(0, 0, 0, 0);
     return dayDate < today;
@@ -9472,7 +9510,7 @@ window.loadClassAvailability = async () => {
     const dates = new Set();
     const weekRange = window.getCurrentWeekRange();
     for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
-        dates.add(window.formatClassDate(d));
+        dates.add(registrationCalendarDateStrFromUiDate(d));
     }
     const scheduleOffset = (state && (state.scheduleWeekOffset != null)) ? state.scheduleWeekOffset : 0;
     if (scheduleOffset !== 0) {
@@ -9481,12 +9519,12 @@ window.loadClassAvailability = async () => {
         const displayEnd = new Date(displayMonday);
         displayEnd.setDate(displayMonday.getDate() + 6);
         for (let d = new Date(displayMonday); d <= displayEnd; d.setDate(d.getDate() + 1)) {
-            dates.add(window.formatClassDate(d));
+            dates.add(registrationCalendarDateStrFromUiDate(d));
         }
     }
     (state.classes || []).forEach(c => {
         const nextDate = window.getNextClassDate(c.day);
-        if (nextDate) dates.add(window.formatClassDate(nextDate));
+        if (nextDate) dates.add(registrationCalendarDateStrFromUiDate(nextDate));
     });
 
     // Fetch all availability in parallel (was sequential – major speedup)
@@ -9565,7 +9603,7 @@ window.loadScheduleGroupClassExceptions = async () => {
     const dates = new Set();
     const weekRange = window.getCurrentWeekRange();
     for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
-        dates.add(window.formatClassDate(d));
+        dates.add(registrationCalendarDateStrFromUiDate(d));
     }
     const scheduleOffset = state && state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
     if (scheduleOffset !== 0) {
@@ -9574,12 +9612,12 @@ window.loadScheduleGroupClassExceptions = async () => {
         const displayEnd = new Date(displayMonday);
         displayEnd.setDate(displayMonday.getDate() + 6);
         for (let d = new Date(displayMonday); d <= displayEnd; d.setDate(d.getDate() + 1)) {
-            dates.add(window.formatClassDate(d));
+            dates.add(registrationCalendarDateStrFromUiDate(d));
         }
     }
     (state.classes || []).forEach(c => {
         const nextDate = window.getNextClassDate(c.day);
-        if (nextDate) dates.add(window.formatClassDate(nextDate));
+        if (nextDate) dates.add(registrationCalendarDateStrFromUiDate(nextDate));
     });
     const dateArr = [...dates].sort();
     if (dateArr.length === 0) {
@@ -10000,6 +10038,22 @@ function calendarDateStrInTimeZone(date, timeZone) {
     return `${y}-${m}-${d}`;
 }
 
+/**
+ * Aure: schedule cell date string for RPC keys + cutoff, aligned with America/Mexico_City (same as register_for_class).
+ * Other schools: device-local calendar (formatClassDate).
+ */
+function registrationCalendarDateStrFromUiDate(date) {
+    if (!date || isNaN(date.getTime())) return '';
+    if (state.mockDate || state.currentSchool?.id !== AURE_SCHOOL_ID) {
+        return window.formatClassDate(date);
+    }
+    const y = date.getFullYear();
+    const mo = date.getMonth();
+    const d = date.getDate();
+    const anchor = new Date(y, mo, d, 12, 0, 0, 0);
+    return calendarDateStrInTimeZone(anchor, 'America/Mexico_City');
+}
+
 /** True when group-class registration must close: occurrence date is before "today" in CDMX (or before mock date when mocking). */
 function isGroupClassRegistrationPastCutoff(classDateStr) {
     if (state.mockDate) {
@@ -10025,7 +10079,7 @@ window.getMonthlyDates = (dayCode, anchorDateOrStr) => {
     for (let d = 1; d <= lastDay; d++) {
         const dt = new Date(year, month, d);
         if (dt.getDay() === targetDay && dt >= anchorDay) {
-            dates.push(window.formatClassDate(dt));
+            dates.push(registrationCalendarDateStrFromUiDate(dt));
         }
     }
     return dates;
@@ -10064,7 +10118,7 @@ window.registerForClassSingle = async (classId, className, optionalDateStr) => {
     if (!classObj) return;
     const nextDate = optionalDateStr ? new Date(optionalDateStr + 'T00:00:00') : window.getNextClassDate(classObj.day);
     if (!nextDate || isNaN(nextDate.getTime())) return;
-    const dateStr = optionalDateStr || window.formatClassDate(nextDate);
+    const dateStr = optionalDateStr || registrationCalendarDateStrFromUiDate(nextDate);
 
     try {
         const { data, error } = await supabaseClient.rpc('register_for_class', {
@@ -10192,7 +10246,7 @@ window.registerForClass = async (classId, className, optionalDateStr) => {
 
     const targetDate = optionalDateStr ? new Date(optionalDateStr + 'T00:00:00') : window.getNextClassDate(classObj.day);
     if (!targetDate || isNaN(targetDate.getTime())) return;
-    const targetDateStr = optionalDateStr || window.formatClassDate(targetDate);
+    const targetDateStr = optionalDateStr || registrationCalendarDateStrFromUiDate(targetDate);
     const classDateTime = new Date(targetDateStr + 'T' + (classObj.time || '23:59'));
     if (isGroupClassRegistrationPastCutoff(targetDateStr)) {
         window.showMessageModal({
@@ -10305,7 +10359,7 @@ window.requestClaseSuelta = async (classId, className, optionalDateStr) => {
     if (!classObj) return;
     const nextDate = optionalDateStr ? new Date(optionalDateStr + 'T00:00:00') : window.getNextClassDate(classObj.day);
     if (!nextDate || isNaN(nextDate.getTime())) return;
-    const dateStr = optionalDateStr || window.formatClassDate(nextDate);
+    const dateStr = optionalDateStr || registrationCalendarDateStrFromUiDate(nextDate);
 
     try {
         const { data, error } = await supabaseClient.rpc('request_clase_suelta', {

@@ -2734,6 +2734,154 @@ body.dark-mode .bottom-nav .nav-item.active {
     overflow-y: auto;
 }
 
+/*
+ * Scanner rescan: “already checked in”. Uses neutrals + system green only — avoids
+ * Aure’s burgundy --secondary on large green washes (muddy contrast).
+ */
+.scanner-checkin-done-card.card {
+    border-width: 1px;
+    border-color: var(--border-color);
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.07);
+}
+body[data-school-theme="aure"] .scanner-checkin-done-card.card {
+    background: rgba(255, 255, 255, 0.42);
+    border-color: rgba(76, 47, 60, 0.14);
+    box-shadow: 0 8px 24px rgba(54, 35, 44, 0.07);
+}
+body.dark-mode[data-school-theme="aure"] .scanner-checkin-done-card.card,
+[data-theme="dark"][data-school-theme="aure"] .scanner-checkin-done-card.card {
+    background: rgba(45, 34, 43, 0.58);
+    border-color: rgba(221, 188, 204, 0.14);
+}
+
+.dark-mode .scanner-checkin-done-card.card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+}
+
+.scanner-checkin-done-panel {
+    background: var(--system-gray6);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--system-green);
+    border-radius: 14px;
+    padding: 1rem 0.85rem 1.05rem;
+    text-align: center;
+}
+body[data-school-theme="aure"] .scanner-checkin-done-panel {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(76, 47, 60, 0.12);
+    border-left-color: var(--system-green);
+}
+.dark-mode .scanner-checkin-done-panel {
+    background: rgba(44, 44, 46, 0.92);
+    border-color: rgba(255, 255, 255, 0.08);
+    border-left-color: var(--system-green);
+}
+body.dark-mode[data-school-theme="aure"] .scanner-checkin-done-panel,
+[data-theme="dark"][data-school-theme="aure"] .scanner-checkin-done-panel {
+    background: rgba(62, 47, 58, 0.88);
+    border-color: rgba(221, 188, 204, 0.14);
+    border-left-color: var(--system-green);
+}
+
+.scanner-checkin-done-icon-wrap {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 0.65rem;
+    border-radius: 50%;
+    background: rgba(52, 199, 89, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.scanner-checkin-done-icon-wrap [data-lucide],
+.scanner-checkin-done-icon-wrap svg {
+    color: var(--system-green);
+    stroke: var(--system-green);
+}
+
+.scanner-checkin-done-message {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.45;
+    letter-spacing: -0.02em;
+}
+
+.scanner-checkin-done-class {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.45rem 0.65rem;
+    margin-top: 0.55rem;
+    text-align: left;
+}
+body[data-school-theme="aure"] .scanner-checkin-done-class {
+    background: rgba(255, 255, 255, 0.65);
+    border-color: rgba(76, 47, 60, 0.1);
+}
+.dark-mode .scanner-checkin-done-class {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode[data-school-theme="aure"] .scanner-checkin-done-class,
+[data-theme="dark"][data-school-theme="aure"] .scanner-checkin-done-class {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(221, 188, 204, 0.12);
+}
+
+.scanner-checkin-done-class-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.scanner-checkin-done-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.65rem 0.85rem;
+    margin-top: 0.75rem;
+    border-radius: 40px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1px solid var(--border-color);
+    cursor: not-allowed;
+    pointer-events: none;
+    background: var(--system-gray5);
+    color: var(--text-secondary);
+    box-shadow: none;
+}
+.scanner-checkin-done-btn [data-lucide],
+.scanner-checkin-done-btn svg {
+    color: var(--system-green);
+    stroke: var(--system-green);
+    flex-shrink: 0;
+}
+
+.dark-mode .scanner-checkin-done-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+body[data-school-theme="aure"] .scanner-checkin-done-btn {
+    background: rgba(255, 255, 255, 0.45);
+    color: var(--text-primary);
+    border-color: rgba(76, 47, 60, 0.18);
+}
+body.dark-mode[data-school-theme="aure"] .scanner-checkin-done-btn,
+[data-theme="dark"][data-school-theme="aure"] .scanner-checkin-done-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    border-color: rgba(221, 188, 204, 0.2);
+}
+
 /* Registration answers modal: ensure content is visible (fixes invisible-content bug) */
 #registration-answers-body {
     visibility: visible !important;

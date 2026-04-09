@@ -286,8 +286,32 @@ export async function handleScan(scannedId) {
     const hasValidPass = hasAnyBalance;
     const hasNoClasses = !hasAnyBalance;
 
-    if (todayRegs.length > 0 && hasValidPass) {
-        const regsHtml = todayRegs.map((r) => {
+    const isActionableRegistration = (r) => {
+        const st = r.status;
+        return st === 'registered' || st === 'pending' || (st === 'no_show' && !!r.deducted);
+    };
+    const actionableRegs = todayRegs.filter(isActionableRegistration);
+    const attendedTodayRegs = todayRegs.filter((r) => r.status === 'attended');
+
+    const scanBalanceLabel = (isPT && !hasDualScanMode)
+        ? `${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
+        : hasDualScanMode
+            ? `${t('group_classes_remaining') || 'Group'}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
+            : `${t('remaining_classes')}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
+
+    if (actionableRegs.length > 0 && hasValidPass) {
+        const attendedAlreadyHtml = attendedTodayRegs.length > 0
+            ? `<div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); margin: 0 0 0.4rem;">${escapeHtml(t('scanner_already_checked_in_header') || 'Already checked in')}</div>${attendedTodayRegs.map((r) => `
+            <div style="background: rgba(52, 199, 89, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 0.55rem 0.75rem; margin-bottom: 0.45rem;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
+                    <span style="font-size: 0.88rem; font-weight: 600;">${escapeHtml(r.class_name)} <span class="text-muted">@ ${escapeHtml(r.class_time)}</span></span>
+                </div>
+                <div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.25rem;">${escapeHtml(t('scanner_class_marked_attended') || 'Attendance already recorded.')}</div>
+            </div>`).join('')}`
+            : '';
+
+        const regsHtml = actionableRegs.map((r) => {
             const noShowNote = r.status === 'no_show'
                 ? `<div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">${escapeHtml(t('scanner_no_show_mark_attended') || 'Marked absent (charged). Confirm if the student attended — no extra class will be deducted.')}</div>`
                 : '';
@@ -307,21 +331,21 @@ export async function handleScan(scannedId) {
         `;
         }).join('');
 
-        scanBatchRegistrationIds = todayRegs.map((r) => String(r.id));
+        scanBatchRegistrationIds = actionableRegs.map((r) => String(r.id));
         const manualPartsForReg = buildManualDeductParts(student, t, {
             eff, isPT, hasDualScanMode, hasEventsEnabled, hasGroupLeft, hasPrivateLeft, hasEventsLeft,
             effectivePrivate, effectiveEvents, todaysPrivateLessons
         }, false);
 
-        const regBtnsPerClass = todayRegs.length > 1
-            ? todayRegs.map((r) => `
+        const regBtnsPerClass = actionableRegs.length > 1
+            ? actionableRegs.map((r) => `
             <button class="btn-secondary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}', '${escapeHtml(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
                 <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t('confirm_attendance_registered')} – ${escapeHtml(r.class_name)}
             </button>
         `).join('')
             : '';
 
-        const perClassSection = todayRegs.length > 1
+        const perClassSection = actionableRegs.length > 1
             ? `<div style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${escapeHtml(t('scanner_pick_class_confirm') || 'Or confirm for one class only:')}</div>${regBtnsPerClass}`
             : '';
 
@@ -338,17 +362,13 @@ export async function handleScan(scannedId) {
             }).join('')
             : '';
 
-        const regBalanceLabel = (isPT && !hasDualScanMode)
-            ? `${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
-            : hasDualScanMode
-                ? `${t('group_classes_remaining') || 'Group'}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)} | ${t('private_classes_remaining') || 'Private'}: ${effectivePrivate}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`
-                : `${t('remaining_classes')}: ${eff.groupUnlimited ? t('unlimited') : (eff.group ?? student.balance ?? 0)}${hasEventsEnabled ? ' | ' + (t('events_remaining') || 'Events') + ': ' + effectiveEvents : ''}`;
         resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml(student.name)}</h3>
                 <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.6rem;">
-                    ${regBalanceLabel}
+                    ${scanBalanceLabel}
                 </div>
+                ${attendedAlreadyHtml}
                 ${regsHtml}
                 ${privateLessonSection ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${t('private_lesson') || 'Private lesson'}</div>${privateLessonSection}` : ''}
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
@@ -367,6 +387,37 @@ export async function handleScan(scannedId) {
                         ${manualPartsForReg.eventRow}
                     </div>
                 </details>
+                <div style="text-align: center; margin-top: 0.5rem;">
+                    <button type="button" onclick="window.cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t('cancel')}</button>
+                </div>
+            </div>
+        `;
+    } else if (attendedTodayRegs.length > 0 && actionableRegs.length === 0) {
+        scanBatchRegistrationIds = [];
+        const attendedOnlyCards = attendedTodayRegs.map((r) => `
+            <div class="scanner-checkin-done-class">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="check-circle" size="14" style="color: var(--system-green); flex-shrink: 0;"></i>
+                    <span class="scanner-checkin-done-class-label">${escapeHtml(r.class_name)} <span class="text-muted">@ ${escapeHtml(r.class_time)}</span></span>
+                </div>
+            </div>`).join('');
+        const bannerText = (t('scanner_already_confirmed_one_message') || '{name} is already checked in — you confirmed their attendance. Scanning again will not deduct another class.').replace(/\{name\}/g, escapeHtml(student.name));
+        const doneBtnLabel = t('scanner_already_confirmed_done_button') || 'Already confirmed';
+        resultEl.innerHTML = `
+            <div class="card scanner-checkin-done-card" style="border-radius: 16px; padding: 0.85rem; text-align: left;">
+                <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 0.65rem;">
+                    ${scanBalanceLabel}
+                </div>
+                <div class="scanner-checkin-done-panel">
+                    <div class="scanner-checkin-done-icon-wrap">
+                        <i data-lucide="check-circle" size="30"></i>
+                    </div>
+                    <p class="scanner-checkin-done-message">${bannerText}</p>
+                    ${attendedOnlyCards}
+                </div>
+                <button type="button" class="scanner-checkin-done-btn w-full" disabled aria-disabled="true">
+                    <i data-lucide="check-circle" size="18"></i>${escapeHtml(doneBtnLabel)}
+                </button>
                 <div style="text-align: center; margin-top: 0.5rem;">
                     <button type="button" onclick="window.cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t('cancel')}</button>
                 </div>
