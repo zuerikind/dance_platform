@@ -8871,8 +8871,14 @@
         if (state.scheduleView === "list") {
           html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">`;
           const daysOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          const listDayOrderIndex = (day) => {
+            let i = daysOrder.indexOf(day);
+            if (i >= 0) return i;
+            const aliasMap = { Mo: 0, Monday: 0, Tu: 1, Tuesday: 1, We: 2, Wednesday: 2, Th: 3, Thursday: 3, Fr: 4, Friday: 4, Sa: 5, Saturday: 5, Su: 6, Sunday: 6 };
+            return aliasMap[day] != null ? aliasMap[day] : 99;
+          };
           const sortedClasses = [...state.classes].sort((a, b) => {
-            const dayDiff = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
+            const dayDiff = listDayOrderIndex(a.day) - listDayOrderIndex(b.day);
             if (dayDiff !== 0) return dayDiff;
             return a.time.localeCompare(b.time);
           });
@@ -8910,7 +8916,7 @@
             let isPastDay = false;
             if (regEnabled && dayDate) {
               if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
-                const todayMx = calendarDateStrInTimeZone(getVirtualNow(), "America/Mexico_City");
+                const todayMx = calendarDateStrInTimeZone(getVirtualNow(), AURE_SCHEDULE_TZ);
                 const dayMx = registrationCalendarDateStrFromUiDate(dayDate);
                 isPastDay = !!(dayMx && todayMx && dayMx < todayMx);
               } else {
@@ -11569,19 +11575,19 @@
     let targetDay = dayMap[dayCode];
     if (targetDay === void 0) targetDay = dayAliases[dayCode];
     if (targetDay === void 0) return null;
-    let now;
     if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
-      const mx = calendarDateStrInTimeZone(/* @__PURE__ */ new Date(), "America/Mexico_City");
-      const [yy, mm, dd] = mx.split("-").map((x) => parseInt(x, 10));
-      now = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
-    } else {
-      now = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly() : /* @__PURE__ */ new Date();
+      const mxToday = calendarDateStrInTimeZone(getVirtualNow(), AURE_SCHEDULE_TZ);
+      const [y, m, d] = mxToday.split("-").map((x) => parseInt(x, 10));
+      const today2 = gregorianWeekdaySun0FromYmd(y, m, d);
+      let daysUntil2 = targetDay - today2;
+      if (daysUntil2 < 0) daysUntil2 += 7;
+      const resultYmd = addDaysToYmdStr(mxToday, daysUntil2);
+      return mexicoZonedWallToDate(resultYmd, 0, 0);
     }
+    const now = typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly() : /* @__PURE__ */ new Date();
     const today = now.getDay();
     let daysUntil = targetDay - today;
     if (daysUntil < 0) daysUntil += 7;
-    if (daysUntil === 0) {
-    }
     const result = new Date(now);
     result.setDate(result.getDate() + daysUntil);
     return result;
@@ -11595,12 +11601,15 @@
     return `${y}-${m}-${day}`;
   };
   window.getCurrentWeekMonday = () => {
-    let now = getTodayForMonthly();
     if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
-      const mx = calendarDateStrInTimeZone(/* @__PURE__ */ new Date(), "America/Mexico_City");
-      const [yy, mm, dd] = mx.split("-").map((x) => parseInt(x, 10));
-      now = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+      const mx = calendarDateStrInTimeZone(getVirtualNow(), AURE_SCHEDULE_TZ);
+      const [y, m, d] = mx.split("-").map((x) => parseInt(x, 10));
+      const dow = gregorianWeekdaySun0FromYmd(y, m, d);
+      const diff2 = dow === 0 ? -6 : 1 - dow;
+      const monYmd = addDaysToYmdStr(mx, diff2);
+      return mexicoZonedWallToDate(monYmd, 0, 0);
     }
+    const now = getTodayForMonthly();
     const day = now.getDay();
     const diff = day === 0 ? -6 : 1 - day;
     const monday = new Date(now);
@@ -11615,12 +11624,22 @@
     if (offset === void 0) offset = dayAliasMap[dayCode];
     if (offset === void 0) return null;
     const monday = window.getCurrentWeekMonday();
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      const monYmd = calendarDateStrInTimeZone(monday, AURE_SCHEDULE_TZ);
+      const resultYmd = addDaysToYmdStr(monYmd, offset);
+      return mexicoZonedWallToDate(resultYmd, 0, 0);
+    }
     const result = new Date(monday);
     result.setDate(monday.getDate() + offset);
     return result;
   };
   window.getCurrentWeekRange = () => {
     const monday = window.getCurrentWeekMonday();
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      const monYmd = calendarDateStrInTimeZone(monday, AURE_SCHEDULE_TZ);
+      const sunYmd = addDaysToYmdStr(monYmd, 6);
+      return { start: monday, end: mexicoZonedWallToDate(sunYmd, 0, 0) };
+    }
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     return { start: monday, end: sunday };
@@ -11629,6 +11648,12 @@
     const base = window.getCurrentWeekRange();
     const offset = state && state.scheduleWeekOffset != null ? state.scheduleWeekOffset : 0;
     if (offset === 0) return base;
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      const monYmd = calendarDateStrInTimeZone(base.start, AURE_SCHEDULE_TZ);
+      const shiftedYmd = addDaysToYmdStr(monYmd, offset * 7);
+      const sunYmd = addDaysToYmdStr(shiftedYmd, 6);
+      return { start: mexicoZonedWallToDate(shiftedYmd, 0, 0), end: mexicoZonedWallToDate(sunYmd, 0, 0) };
+    }
     const monday = new Date(base.start);
     monday.setDate(monday.getDate() + offset * 7);
     const sunday = new Date(monday);
@@ -11642,6 +11667,11 @@
     if (offset === void 0) offset = dayAliasMap[dayCode];
     if (offset === void 0) return null;
     const weekRange = window.getScheduleWeekRange();
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      const startYmd = calendarDateStrInTimeZone(weekRange.start, AURE_SCHEDULE_TZ);
+      const resultYmd = addDaysToYmdStr(startYmd, offset);
+      return mexicoZonedWallToDate(resultYmd, 0, 0);
+    }
     const result = new Date(weekRange.start);
     result.setDate(weekRange.start.getDate() + offset);
     return result;
@@ -11659,7 +11689,7 @@
     const dayDate = window.getCurrentWeekDate(dayCode);
     if (!dayDate) return false;
     if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
-      const todayMx = calendarDateStrInTimeZone(getVirtualNow(), "America/Mexico_City");
+      const todayMx = calendarDateStrInTimeZone(getVirtualNow(), AURE_SCHEDULE_TZ);
       const dayMx = registrationCalendarDateStrFromUiDate(dayDate);
       return !!(dayMx && todayMx && dayMx < todayMx);
     }
@@ -12224,23 +12254,65 @@
     const d = parts.find((p) => p.type === "day").value;
     return `${y}-${m}-${d}`;
   }
+  var AURE_SCHEDULE_TZ = "America/Mexico_City";
+  function gregorianWeekdaySun0FromYmd(y, month, day) {
+    return new Date(Date.UTC(y, month - 1, day, 12, 0, 0)).getUTCDay();
+  }
+  function addDaysToYmdStr(ymd, deltaDays) {
+    const parts = String(ymd || "").split("-").map((x) => parseInt(x, 10));
+    if (parts.length < 3 || parts.some((n) => Number.isNaN(n))) return "";
+    const [y, m, d] = parts;
+    const u = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    u.setUTCDate(u.getUTCDate() + deltaDays);
+    const yy = u.getUTCFullYear();
+    const mm = String(u.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(u.getUTCDate()).padStart(2, "0");
+    return `${yy}-${mm}-${dd}`;
+  }
+  function mexicoZonedWallToDate(mxYmd, hour = 0, minute = 0) {
+    const [y, mo, da] = String(mxYmd || "").split("-").map((x) => parseInt(x, 10));
+    if (!y || Number.isNaN(mo) || Number.isNaN(da)) return /* @__PURE__ */ new Date(NaN);
+    let t2 = Date.UTC(y, mo - 1, da, 12, 0, 0);
+    for (let i = 0; i < 96; i++) {
+      if (calendarDateStrInTimeZone(new Date(t2), AURE_SCHEDULE_TZ) === mxYmd) break;
+      t2 += 36e5;
+    }
+    const wallFmt = new Intl.DateTimeFormat("en-GB", {
+      timeZone: AURE_SCHEDULE_TZ,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
+    for (let k = 0; k < 400; k++) {
+      if (calendarDateStrInTimeZone(new Date(t2), AURE_SCHEDULE_TZ) !== mxYmd) {
+        t2 += 6e4;
+        continue;
+      }
+      const parts = wallFmt.formatToParts(new Date(t2));
+      const h = parseInt(parts.find((p) => p.type === "hour").value, 10);
+      const mi = parseInt(parts.find((p) => p.type === "minute").value, 10);
+      const secPart = parts.find((p) => p.type === "second");
+      const s = secPart ? parseInt(secPart.value, 10) : 0;
+      if (h === hour && mi === minute && s === 0) return new Date(t2);
+      const deltaMin = (hour - h) * 60 + (minute - mi);
+      t2 += deltaMin * 6e4 - s * 1e3;
+    }
+    return new Date(t2);
+  }
   function registrationCalendarDateStrFromUiDate(date) {
     if (!date || isNaN(date.getTime())) return "";
     if (state.mockDate || state.currentSchool?.id !== AURE_SCHOOL_ID) {
       return window.formatClassDate(date);
     }
-    const y = date.getFullYear();
-    const mo = date.getMonth();
-    const d = date.getDate();
-    const anchor = new Date(y, mo, d, 12, 0, 0, 0);
-    return calendarDateStrInTimeZone(anchor, "America/Mexico_City");
+    return calendarDateStrInTimeZone(date, AURE_SCHEDULE_TZ);
   }
   function isGroupClassRegistrationPastCutoff(classDateStr) {
     if (state.mockDate) {
       const mock = String(state.mockDate).slice(0, 10);
       return classDateStr < mock;
     }
-    const todayMx = calendarDateStrInTimeZone(getVirtualNow(), "America/Mexico_City");
+    const todayMx = calendarDateStrInTimeZone(getVirtualNow(), AURE_SCHEDULE_TZ);
     return classDateStr < todayMx;
   }
   window.getMonthlyDates = (dayCode, anchorDateOrStr) => {
@@ -12249,6 +12321,28 @@
     let targetDay = dayMap[dayCode];
     if (targetDay === void 0) targetDay = dayAliases[dayCode];
     if (targetDay === void 0) return [];
+    if (!state.mockDate && state.currentSchool?.id === AURE_SCHOOL_ID) {
+      let anchorMx;
+      if (!anchorDateOrStr) {
+        anchorMx = calendarDateStrInTimeZone(getVirtualNow(), AURE_SCHEDULE_TZ);
+      } else if (typeof anchorDateOrStr === "string") {
+        anchorMx = String(anchorDateOrStr).slice(0, 10);
+      } else {
+        anchorMx = calendarDateStrInTimeZone(anchorDateOrStr, AURE_SCHEDULE_TZ);
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(anchorMx)) return [];
+      const [ay, am0] = anchorMx.split("-").map((x) => parseInt(x, 10));
+      const lastDay2 = new Date(Date.UTC(ay, am0, 0)).getUTCDate();
+      const dates2 = [];
+      for (let d = 1; d <= lastDay2; d++) {
+        const ymd = `${ay}-${String(am0).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        if (ymd < anchorMx) continue;
+        if (gregorianWeekdaySun0FromYmd(ay, am0, d) === targetDay) {
+          dates2.push(registrationCalendarDateStrFromUiDate(mexicoZonedWallToDate(ymd, 12, 0)));
+        }
+      }
+      return dates2;
+    }
     const anchor = anchorDateOrStr ? typeof anchorDateOrStr === "string" ? /* @__PURE__ */ new Date(anchorDateOrStr + "T00:00:00") : anchorDateOrStr : getTodayForMonthly();
     const year = anchor.getFullYear();
     const month = anchor.getMonth();
