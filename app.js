@@ -9834,6 +9834,7 @@
             const statusLabel = effectiveStatus === "attended" ? t2.attended : effectiveStatus === "no_show" ? t2.auto_deducted || "No show" : effectiveStatus === "cancelled" ? t2.cancelled || "Cancelled" : effectiveStatus === "pending" ? t2.aure_pending_badge || "Pending" : t2.registered;
             const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t2.monthly_badge || "Monthly") + "</span>" : "";
             const displayName = (state.students || []).find((st) => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || "\u2014";
+            const rowStateClass = effectiveStatus === "attended" ? " admin-reg-student-row--attended" : effectiveStatus === "no_show" ? " admin-reg-student-row--no-show" : "";
             const rowStyle = effectiveStatus === "cancelled" ? " opacity: 0.7;" : "";
             const canMarkAttendance = effectiveStatus === "registered" || effectiveStatus === "attended" || effectiveStatus === "no_show";
             const attendanceActions = canMarkAttendance ? `<span class="admin-reg-student-actions" style="display:flex;gap:6px;align-items:center;">
@@ -9841,7 +9842,7 @@
                                 <button type="button" class="admin-reg-attendance-btn ${effectiveStatus === "no_show" ? "btn-primary" : "btn-secondary"}" title="${t2.no_show || "No-show"}" aria-label="${t2.no_show || "No-show"}" onclick="event.stopPropagation(); window.setRegistrationAttendance('${s.id}', false)"><i data-lucide="x" size="12"></i></button>
                             </span>` : "";
             const pendingActions = isAure2 && s.status === "pending" ? `<span class="admin-reg-student-actions"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t2.aure_approve || "Approve"}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t2.aure_reject || "Reject"}</button></span>` : "";
-            return `<div class="admin-reg-student-row" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div></div>`;
+            return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div>`;
           };
           return `
                     <div class="admin-reg-section ${state.adminRegExpanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">

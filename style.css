@@ -6043,14 +6043,28 @@ body.dark-mode .day-tile-today {
 .admin-reg-students {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .admin-reg-student-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
-  padding: 5px 0;
+  padding: 6px 10px 6px 8px;
+  margin: 0 2px;
   min-width: 0;
+  border-radius: 10px;
+}
+.admin-reg-student-row--attended {
+  background: rgba(52, 199, 89, 0.14);
+}
+.admin-reg-student-row--no-show {
+  background: rgba(255, 59, 48, 0.12);
+}
+.dark-mode .admin-reg-student-row--attended {
+  background: rgba(52, 199, 89, 0.2);
+}
+.dark-mode .admin-reg-student-row--no-show {
+  background: rgba(255, 59, 48, 0.2);
 }
 .admin-reg-student-icon {
   flex: 0 0 auto;
@@ -6103,6 +6117,7 @@ body.dark-mode .day-tile-today {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  align-self: center;
 }
 .admin-reg-student-actions {
   margin-left: 0;
