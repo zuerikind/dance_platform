@@ -111,6 +111,9 @@ const DANCE_LOCALES = {
         valid_for_days: "Valid for {days} days",
         nav_memberships: "Memberships",
         pending_payments: "Pending Payments",
+        memberships_current_classes: "Current classes",
+        memberships_last_approved_date: "Last approved",
+        memberships_never_approved: "Never",
         approve: "Approve",
         reject: "Reject",
         transfer: "Transfer",
@@ -1039,6 +1042,9 @@ const DANCE_LOCALES = {
         valid_for_days: "Válido por {days} días",
         nav_memberships: "Membresías",
         pending_payments: "Pagos Pendientes",
+        memberships_current_classes: "Clases actuales",
+        memberships_last_approved_date: "Última aprobación",
+        memberships_never_approved: "Nunca",
         approve: "Aprobar",
         reject: "Rechazar",
         nav_revenue: 'Ganancias',
@@ -1945,6 +1951,9 @@ const DANCE_LOCALES = {
         valid_for_days: "Gültig für {days} Tage",
         nav_memberships: "Mitgliedschaften",
         pending_payments: "Ausstehende Zahlungen",
+        memberships_current_classes: "Aktuelle Klassen",
+        memberships_last_approved_date: "Letzte Genehmigung",
+        memberships_never_approved: "Noch nie",
         approve: "Bestätigen",
         reject: "Ablehnen",
         nav_revenue: 'Einnahmen',
@@ -7704,20 +7713,32 @@ function _renderViewImpl() {
                         if (isAure && s.status === 'pending') return false;
                         return true;
                     };
-                    const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.filter(countsTowardRegistradosLine).length, 0);
+                    const getEffectiveAttendanceStatus = (reg) => {
+                        const draft = state.adminRegAttendanceDraft || {};
+                        return draft[reg?.id] || reg?.status;
+                    };
+                    const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.filter((s) => countsTowardRegistradosLine({ ...s, status: getEffectiveAttendanceStatus(s) })).length, 0);
                     state.adminRegTab = state.adminRegTab || 'registered';
                     const pendingList = (weekRegs || []).filter(r => r.status === 'pending').sort((a, b) => (a.class_date || '').localeCompare(b.class_date || '') || (a.class_time || '').localeCompare(b.class_time || '') || ((a.student_name || '').localeCompare(b.student_name || '')));
                     const getLevelLabel = (lev) => !lev || lev === '' ? (t.aure_level_not_set || 'Not set') : lev === 'principiante' ? (t.aure_level_principiante || 'Principiante') : lev === 'avanzada' ? (t.aure_level_avanzada || 'Avanzada') : lev;
                     const renderStudentRow = (s) => {
-                        const statusIcon = s.status === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : s.status === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : s.status === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : s.status === 'pending' ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
-                        const statusLabel = s.status === 'attended' ? t.attended : s.status === 'no_show' ? (t.auto_deducted || 'No show') : s.status === 'cancelled' ? (t.cancelled || 'Cancelled') : s.status === 'pending' ? (t.aure_pending_badge || 'Pending') : t.registered;
+                        const effectiveStatus = getEffectiveAttendanceStatus(s);
+                        const statusIcon = effectiveStatus === 'attended' ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : effectiveStatus === 'no_show' ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : effectiveStatus === 'cancelled' ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : effectiveStatus === 'pending' ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
+                        const statusLabel = effectiveStatus === 'attended' ? t.attended : effectiveStatus === 'no_show' ? (t.auto_deducted || 'No show') : effectiveStatus === 'cancelled' ? (t.cancelled || 'Cancelled') : effectiveStatus === 'pending' ? (t.aure_pending_badge || 'Pending') : t.registered;
                         const monthlyTag = s.is_monthly ? '<span style="font-size: 0.55rem; background: var(--system-blue, #007aff); color: white; padding: 1px 5px; border-radius: 6px; font-weight: 700; margin-left: 4px;">' + (t.monthly_badge || 'Monthly') + '</span>' : '';
                         const displayName = (state.students || []).find(st => String(st.id) === String(s.student_id))?.name || s.student_name || s.student_id || '—';
-                        const rowStyle = s.status === 'cancelled' ? ' opacity: 0.7;' : '';
+                        const rowStyle = effectiveStatus === 'cancelled' ? ' opacity: 0.7;' : '';
+                        const canMarkAttendance = effectiveStatus === 'registered' || effectiveStatus === 'attended' || effectiveStatus === 'no_show';
+                        const attendanceActions = canMarkAttendance
+                            ? `<span class="admin-reg-student-actions" style="display:flex;gap:6px;align-items:center;">
+                                <button type="button" class="admin-reg-attendance-btn ${effectiveStatus === 'attended' ? 'btn-primary' : 'btn-secondary'}" title="${t.attended || 'Attended'}" aria-label="${t.attended || 'Attended'}" onclick="event.stopPropagation(); window.setRegistrationAttendance('${s.id}', true)"><i data-lucide="check" size="12"></i></button>
+                                <button type="button" class="admin-reg-attendance-btn ${effectiveStatus === 'no_show' ? 'btn-primary' : 'btn-secondary'}" title="${t.no_show || 'No-show'}" aria-label="${t.no_show || 'No-show'}" onclick="event.stopPropagation(); window.setRegistrationAttendance('${s.id}', false)"><i data-lucide="x" size="12"></i></button>
+                            </span>`
+                            : '';
                         const pendingActions = isAure && s.status === 'pending'
                             ? `<span class="admin-reg-student-actions"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t.aure_approve || 'Approve'}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t.aure_reject || 'Reject'}</button></span>`
                             : '';
-                        return `<div class="admin-reg-student-row" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><span class="admin-reg-student-name">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span><span class="admin-reg-student-status">${statusLabel}</span>${pendingActions}</div>`;
+                        return `<div class="admin-reg-student-row" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div></div>`;
                     };
 
                     return `
@@ -7800,10 +7821,26 @@ function _renderViewImpl() {
                                             const dateShort = dateObj.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
                                             const dateLabel = window.formatShortDate(dateObj, state.language);
                                             const maxCap = (state.classes || []).find(cl => cl.id === g.students[0]?.class_id)?.max_capacity;
-                                            const registeredCount = g.students.filter(countsTowardRegistradosLine).length;
+                                            const registeredCount = g.students.filter((s) => countsTowardRegistradosLine({ ...s, status: getEffectiveAttendanceStatus(s) })).length;
                                             const capLabel = maxCap ? `${registeredCount} / ${maxCap}` : `${registeredCount}`;
-                                            const registeredStudents = g.students.filter(s => s.status === 'registered' || s.status === 'attended' || s.status === 'no_show' || s.status === 'pending');
-                                            const cancelledStudents = g.students.filter(s => s.status === 'cancelled');
+                                            const attendanceSortPriority = (status) => {
+                                                if (status === 'attended') return 0;
+                                                if (status === 'no_show') return 1;
+                                                if (status === 'registered') return 2;
+                                                if (status === 'pending') return 3;
+                                                return 4;
+                                            };
+                                            const registeredStudents = g.students
+                                                .filter(s => {
+                                                    const st = getEffectiveAttendanceStatus(s);
+                                                    return st === 'registered' || st === 'attended' || st === 'no_show' || st === 'pending';
+                                                })
+                                                .sort((a, b) => {
+                                                    const p = attendanceSortPriority(getEffectiveAttendanceStatus(a)) - attendanceSortPriority(getEffectiveAttendanceStatus(b));
+                                                    if (p !== 0) return p;
+                                                    return String(a.student_name || '').localeCompare(String(b.student_name || ''));
+                                                });
+                                            const cancelledStudents = g.students.filter(s => getEffectiveAttendanceStatus(s) === 'cancelled');
                                             const cardKey = (g.students[0]?.class_id || '') + '_' + (g.class_date || '');
                                             const segmentExpanded = state.adminRegSegmentExpanded[cardKey];
                                             const cancelledExpanded = state.adminRegCancelledExpanded && state.adminRegCancelledExpanded[cardKey];
@@ -8057,6 +8094,14 @@ function _renderViewImpl() {
         `;
     } else if (view === 'admin-memberships') {
         const pending = state.paymentRequests.filter(r => r.status === 'pending');
+        const latestApprovedByStudent = (state.paymentRequests || []).reduce((acc, r) => {
+            if (r.status !== 'approved' || !r.student_id || !r.created_at) return acc;
+            const key = String(r.student_id);
+            const ts = Date.parse(r.created_at);
+            if (!Number.isFinite(ts)) return acc;
+            if (!acc[key] || ts > acc[key]) acc[key] = ts;
+            return acc;
+        }, {});
         html += `
             <div class="ios-header" style="background: transparent;">
                 <div class="ios-large-title">${t.nav_memberships}</div>
@@ -8071,6 +8116,17 @@ function _renderViewImpl() {
             <div class="ios-list">
                 ${pending.length > 0 ? pending.map(req => {
             const studentName = req.external_student_name || (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
+            const student = req.student_id ? (state.students || []).find(s => String(s.id) === String(req.student_id)) : null;
+            const isPtSchool = state.currentSchool?.profile_type === 'private_teacher';
+            const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
+            const effective = student ? getEffectiveBalances(student, new Date()) : null;
+            const currentClasses = effective
+                ? (isPtSchool && !hasDualScanMode ? String(effective.private ?? 0) : (effective.groupUnlimited ? '∞' : String(effective.group ?? 0)))
+                : '—';
+            const latestApprovedTs = req.student_id ? latestApprovedByStudent[String(req.student_id)] : null;
+            const lastApprovedDate = latestApprovedTs
+                ? new Date(latestApprovedTs).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+                : (t.memberships_never_approved || 'Never');
             const payActionId = state.paymentRequestActionId;
             const payActionStatus = state.paymentRequestActionStatus;
             const isThisProcessing = payActionId === req.id;
@@ -8091,6 +8147,16 @@ function _renderViewImpl() {
                                             <i data-lucide="${req.payment_method === 'cash' ? 'banknote' : 'send'}" size="10"></i> ${t[req.payment_method] || req.payment_method}
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--system-gray6); border-radius: 10px; padding: 10px 12px;">
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t.memberships_current_classes || 'Current classes'}</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${currentClasses}</div>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t.memberships_last_approved_date || 'Last approved'}</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${lastApprovedDate}</div>
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -10672,6 +10738,95 @@ window.approveClaseSuelta = async (registrationId) => {
         if (typeof renderView === 'function') renderView();
         alert((e && e.message) || t('register_error'));
     }
+};
+
+window._applyRegistrationAttendanceToCachedMonths = (registrationId, targetStatus) => {
+    const monthsMap = state.adminWeekRegistrationsByMonth || {};
+    Object.keys(monthsMap).forEach((monthKey) => {
+        const rows = monthsMap[monthKey];
+        if (!Array.isArray(rows)) return;
+        for (const row of rows) {
+            if (String(row?.id) === String(registrationId)) {
+                row.status = targetStatus;
+                row.deducted = true;
+            }
+        }
+    });
+};
+
+window.flushRegistrationAttendanceDraft = async () => {
+    if (!supabaseClient) return;
+    const schoolId = state.currentSchool?.id || state.currentUser?.school_id || null;
+    if (!schoolId) return;
+    if (state.adminRegAttendanceSaving) {
+        if (state.adminRegAttendanceSaveTimer) clearTimeout(state.adminRegAttendanceSaveTimer);
+        state.adminRegAttendanceSaveTimer = setTimeout(() => {
+            window.flushRegistrationAttendanceDraft?.();
+        }, 500);
+        return;
+    }
+    const t = typeof window.t === 'function' ? window.t : (k) => k;
+    const draft = state.adminRegAttendanceDraft || {};
+    const ids = Object.keys(draft);
+    if (ids.length === 0) return;
+
+    state.adminRegAttendanceSaving = true;
+    const batch = {};
+    ids.forEach((id) => {
+        batch[id] = draft[id];
+    });
+
+    let firstError = null;
+    let shouldRender = false;
+    for (const registrationId of ids) {
+        const targetStatus = batch[registrationId];
+        try {
+            const { error } = await supabaseClient.rpc('admin_set_registration_attendance', {
+                p_registration_id: registrationId,
+                p_school_id: schoolId,
+                p_present: targetStatus === 'attended'
+            });
+            if (error) throw error;
+            window._applyRegistrationAttendanceToCachedMonths?.(registrationId, targetStatus);
+            if (state.adminRegAttendanceDraft?.[registrationId] === targetStatus) {
+                delete state.adminRegAttendanceDraft[registrationId];
+            }
+            shouldRender = true;
+        } catch (e) {
+            console.error('Set attendance error:', e);
+            if (!firstError) firstError = e;
+            if (state.adminRegAttendanceDraft?.[registrationId] === targetStatus) {
+                delete state.adminRegAttendanceDraft[registrationId];
+                shouldRender = true;
+            }
+        }
+    }
+
+    state.adminRegAttendanceSaving = false;
+    if (shouldRender && typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
+    if (firstError) {
+        alert((firstError && firstError.message) || t('error_confirming_attendance') || 'Error confirming attendance');
+    }
+    if (Object.keys(state.adminRegAttendanceDraft || {}).length > 0) {
+        if (state.adminRegAttendanceSaveTimer) clearTimeout(state.adminRegAttendanceSaveTimer);
+        state.adminRegAttendanceSaveTimer = setTimeout(() => {
+            window.flushRegistrationAttendanceDraft?.();
+        }, 500);
+    }
+};
+
+window.setRegistrationAttendance = (registrationId, isPresent) => {
+    const nextStatus = isPresent ? 'attended' : 'no_show';
+    state.adminRegAttendanceDraft = state.adminRegAttendanceDraft || {};
+    state.adminRegAttendanceDraft[registrationId] = nextStatus;
+    if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
+
+    if (state.adminRegAttendanceSaveTimer) {
+        clearTimeout(state.adminRegAttendanceSaveTimer);
+    }
+    state.adminRegAttendanceSaveTimer = setTimeout(() => {
+        window.flushRegistrationAttendanceDraft?.();
+    }, 900);
 };
 
 window.rejectClaseSuelta = async (registrationId) => {
@@ -13564,6 +13719,7 @@ window.processPaymentRequest = async (id, status) => {
     if (state.paymentRequestActionId) return;
     const req = state.paymentRequests.find(r => r.id === id);
     if (!req) return;
+    const prevStatus = req.status;
 
     state.paymentRequestActionId = id;
     state.paymentRequestActionStatus = status;
@@ -13571,26 +13727,55 @@ window.processPaymentRequest = async (id, status) => {
 
     try {
         if (supabaseClient) {
-            const { error: rpcError } = await supabaseClient.rpc('update_payment_request_status', { p_request_id: id, p_status: status });
-            if (rpcError) {
-                const { error: tableError } = await supabaseClient.from('payment_requests').update({ status }).eq('id', id);
-                if (tableError) {
-                    alert("Error processing: " + (tableError.message || rpcError.message));
-                    return;
-                }
+            let processedByNewRpc = false;
+            const { data: processResult, error: processError } = await supabaseClient.rpc('process_payment_request_once', { p_request_id: id, p_status: status });
+            if (!processError) {
+                processedByNewRpc = true;
+                const resultStatus = processResult && typeof processResult === 'object'
+                    ? (processResult.current_status || req.status || status)
+                    : (req.status || status);
+                req.status = resultStatus;
+                saveState();
+                renderView();
             }
-            req.status = status;
-            saveState();
-            renderView();
 
-            if (status === 'approved' && req.student_id && req.sub_name && req.school_id) {
-                const { error: activateError } = await supabaseClient.rpc('activate_package_for_student', {
-                    p_student_id: String(req.student_id),
-                    p_sub_name: String(req.sub_name),
-                    p_school_id: req.school_id
-                });
-                if (activateError) {
-                    await window.activatePackage(req.student_id, req.sub_name);
+            if (!processedByNewRpc) {
+                const { error: rpcError } = await supabaseClient.rpc('update_payment_request_status', { p_request_id: id, p_status: status });
+                let transitioned = false;
+
+                if (!rpcError) {
+                    transitioned = prevStatus === 'pending' && status !== prevStatus;
+                } else {
+                    const { data: updatedRows, error: tableError } = await supabaseClient
+                        .from('payment_requests')
+                        .update({ status })
+                        .eq('id', id)
+                        .eq('status', 'pending')
+                        .select('id');
+                    if (tableError) {
+                        alert("Error processing: " + (tableError.message || rpcError.message || processError.message));
+                        return;
+                    }
+                    transitioned = Array.isArray(updatedRows) && updatedRows.length > 0;
+                    if (!transitioned) {
+                        await fetchAllData();
+                        return;
+                    }
+                }
+
+                req.status = status;
+                saveState();
+                renderView();
+
+                if (status === 'approved' && transitioned && req.student_id && req.sub_name && req.school_id) {
+                    const { error: activateError } = await supabaseClient.rpc('activate_package_for_student', {
+                        p_student_id: String(req.student_id),
+                        p_sub_name: String(req.sub_name),
+                        p_school_id: req.school_id
+                    });
+                    if (activateError) {
+                        await window.activatePackage(req.student_id, req.sub_name);
+                    }
                 }
             }
         }

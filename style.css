@@ -994,39 +994,12 @@ body.dark-mode[data-school-theme="aure"] .admin-students-tabs .btn-tab.active,
     .container.container-settings button {
         max-width: 100%;
     }
-    /* Admin registros: long status text (e.g. auto-discount) must not squeeze the name — stack on narrow viewports. */
-    .admin-reg-student-row {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        align-items: start;
-        column-gap: 8px;
-        row-gap: 4px;
-    }
-    .admin-reg-student-icon {
-        grid-column: 1;
-        grid-row: 1;
-    }
-    .admin-reg-student-name {
-        grid-column: 2;
-        grid-row: 1;
-        min-width: 0;
-        flex: none;
-    }
+    /* Admin registros on narrow viewports: keep controls on the same top line, let status wrap below. */
     .admin-reg-student-status {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        margin-left: 0 !important;
         max-width: 100%;
         white-space: normal;
         line-height: 1.25;
         overflow-wrap: anywhere;
-    }
-    .admin-reg-student-actions {
-        grid-column: 1 / -1;
-        grid-row: 3;
-        margin-left: 0;
-        width: 100%;
-        justify-content: flex-start;
     }
 }
 
@@ -5564,6 +5537,84 @@ select.filter-control {
   border-color: rgba(255, 59, 48, 0.3);
 }
 
+/* QR / student ID: stacked cancel actions (full width, no overlap) */
+.qr-reg-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+}
+.qr-reg-cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--system-gray6);
+  color: var(--text-primary);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.qr-reg-cancel-btn:hover {
+  background: rgba(255, 59, 48, 0.08);
+  border-color: rgba(255, 59, 48, 0.35);
+  color: #ff3b30;
+}
+.dark-mode .qr-reg-cancel-btn {
+  background: rgba(142, 142, 147, 0.12);
+}
+.qr-reg-cancel-all-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.qr-reg-cancel-all-btn:hover {
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.06);
+  border-color: rgba(255, 59, 48, 0.15);
+}
+.qr-past-class-card {
+  border: 1px solid var(--border);
+}
+.qr-past-status-icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-past-status-icon--attended {
+  background: rgba(52, 199, 89, 0.18);
+  color: var(--system-green);
+}
+.qr-past-status-icon--nostow {
+  background: rgba(142, 142, 147, 0.14);
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
 /* --- Deadline note --- */
 .reg-deadline-note {
   font-size: 0.68rem;
@@ -5996,35 +6047,91 @@ body.dark-mode .day-tile-today {
 }
 .admin-reg-student-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
-  padding: 4px 0;
+  padding: 5px 0;
   min-width: 0;
 }
 .admin-reg-student-icon {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+  font-size: 0;
+}
+.admin-reg-student-icon svg,
+.admin-reg-student-icon i {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px;
+  min-height: 14px;
+}
+.admin-reg-student-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.admin-reg-student-top {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
 }
 .admin-reg-student-name {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 500;
   flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
+  line-height: 1.3;
 }
 .admin-reg-student-status {
-  font-size: 0.65rem;
+  font-size: 0.64rem;
   color: var(--text-secondary);
   text-transform: uppercase;
-  margin-left: auto;
+  margin-left: 0;
   white-space: nowrap;
+  display: block;
+  margin-top: 2px;
+  line-height: 1.15;
+}
+.admin-reg-student-controls {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 .admin-reg-student-actions {
-  margin-left: 6px;
+  margin-left: 0;
   display: inline-flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+.admin-reg-attendance-btn {
+  width: 34px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  flex: 0 0 34px !important;
+}
+.admin-reg-attendance-btn i,
+.admin-reg-attendance-btn svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+.admin-reg-attendance-btn.btn-secondary {
+  border: 1px solid var(--border) !important;
+  background: var(--system-gray6) !important;
 }
 
 /* Day-of-week boxes (all schools with class registration) */
