@@ -6126,10 +6126,10 @@ body.dark-mode .day-tile-today {
   flex-wrap: nowrap;
 }
 .admin-reg-attendance-btn {
-  width: 34px !important;
-  height: 18px !important;
-  min-height: 18px !important;
-  max-height: 18px !important;
+  width: 46px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
   padding: 0 !important;
   border-radius: 999px !important;
   display: inline-flex !important;
@@ -6137,7 +6137,7 @@ body.dark-mode .day-tile-today {
   justify-content: center !important;
   line-height: 1 !important;
   box-sizing: border-box !important;
-  flex: 0 0 34px !important;
+  flex: 0 0 46px !important;
 }
 .admin-reg-attendance-btn i,
 .admin-reg-attendance-btn svg {
