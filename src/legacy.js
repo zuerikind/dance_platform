@@ -8138,12 +8138,12 @@ function _renderViewImpl() {
                         <div class="ios-list-item ${payLoading ? 'admin-reg-request-card-loading' : ''}" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
                             <div style="display: flex; gap: 12px; align-items: center;">
                                 <div style="width: 40px; height: 40px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-secondary);">
-                                    ${studentName.charAt(0).toUpperCase()}
+                                    ${escapeHtml(studentName).charAt(0).toUpperCase()}
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="font-weight: 600; font-size: 17px;">${studentName}</div>
+                                    <div style="font-weight: 600; font-size: 17px;">${escapeHtml(studentName)}</div>
                                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                        <div style="font-size: 13px; color: var(--text-secondary);">${req.sub_name} • ${formatPrice(req.price, state.currentSchool?.currency || 'MXN')}</div>
+                                        <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(req.sub_name)} • ${formatPrice(req.price, state.currentSchool?.currency || 'MXN')}</div>
                                         <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
                                             <i data-lucide="${req.payment_method === 'cash' ? 'banknote' : 'send'}" size="10"></i> ${t[req.payment_method] || req.payment_method}
                                         </div>
@@ -8334,9 +8334,9 @@ function _renderViewImpl() {
             return `
                         <div class="ios-list-item admin-revenue-item" style="padding: 16px; align-items: center;">
                             <div class="admin-revenue-item-main" style="flex: 1;">
-                                <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${studentName}</div>
+                                <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${escapeHtml(studentName)}</div>
                                 <div class="admin-revenue-item-meta" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-                                    ${req.sub_name} • ${new Date(req.created_at).toLocaleDateString()}
+                                    ${escapeHtml(req.sub_name)} • ${new Date(req.created_at).toLocaleDateString()}
                                     <span style="font-size: 9px; opacity: 0.6; text-transform: uppercase; font-weight: 700; background: var(--system-gray6); padding: 1px 6px; border-radius: 4px;">${t[req.payment_method] || req.payment_method}</span>
                                 </div>
                             </div>
