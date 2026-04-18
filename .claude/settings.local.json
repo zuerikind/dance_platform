@@ -22,7 +22,8 @@
       "WebSearch",
       "Bash(npx get-shit-done-cc:*)",
       "Bash(wc:*)",
-      "Bash(find /c/dev/dance_platform/src -name \"*.js\" -type f -exec wc -l {} +)"
+      "Bash(find /c/dev/dance_platform/src -name \"*.js\" -type f -exec wc -l {} +)",
+      "Bash(node -e \":*)"
     ]
   }
 }

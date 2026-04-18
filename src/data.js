@@ -2,7 +2,7 @@
  * Data loading from Supabase: fetchAllData, fetchPlatformData, fetchDiscoveryData.
  * Uses state/saveState and calls window.renderView, window.checkExpirations, etc.
  */
-import { supabaseClient, AURE_SCHOOL_ID } from './config.js';
+import { supabaseClient, AURE_SCHOOL_ID, CALENDLY_FEATURE_ENABLED } from './config.js';
 
 function isAureSubdomain() {
     if (typeof window === 'undefined' || !window.location || !window.location.hostname) return false;
@@ -21,10 +21,10 @@ function formatLocalClassDate(date) {
     return `${y}-${m}-${day}`;
 }
 
-const CALENDLY_FEATURE_ENABLED = false;
 const FETCH_THROTTLE_MS = 1500;
 let _lastFetchEndTime = 0;
 let _fetchScheduledTimer = null;
+let _fetchInFlight = null;
 
 export function resetFetchThrottle() {
     _lastFetchEndTime = 0;
@@ -102,6 +102,8 @@ export async function fetchAllData() {
         }, FETCH_THROTTLE_MS - (now - _lastFetchEndTime));
         return;
     }
+    if (_fetchInFlight) return _fetchInFlight;
+    _fetchInFlight = (async () => {
     state.loading = true;
     if (state.currentView !== 'auth' && typeof window.renderView === 'function') window.renderView();
 
@@ -336,7 +338,7 @@ export async function fetchAllData() {
                     const { data: curAdmin } = await supabaseClient.rpc('get_current_admin', { p_school_id: sid });
                     const row = Array.isArray(curAdmin) && curAdmin.length > 0 ? curAdmin[0] : curAdmin;
                     if (row && typeof row === 'object') state.currentAdmin = row;
-                } catch (_) { /* ignore */ }
+                } catch (e) { console.warn('RPC failed:', e.message); }
             }
             // Store admin email reliably from all available sources for notifications preview.
             // Priority: authenticated session email > login-typed email (already in _adminEmail) > DB row email.
@@ -353,39 +355,39 @@ export async function fetchAllData() {
             try {
                 const { data: availData } = await supabaseClient.rpc('get_teacher_availability', { p_school_id: sid });
                 state.teacherAvailability = Array.isArray(availData) ? availData : [];
-            } catch (_) { state.teacherAvailability = []; }
+            } catch (e) { console.warn('RPC failed:', e.message); state.teacherAvailability = []; }
             if (state.isAdmin) {
                 try {
                     const { data: pcrData } = await supabaseClient.rpc('get_private_class_requests_for_school', { p_school_id: sid });
                     state.privateClassRequests = Array.isArray(pcrData) ? pcrData : [];
-                } catch (_) { state.privateClassRequests = []; }
+                } catch (e) { console.warn('RPC failed:', e.message); state.privateClassRequests = []; }
                 try {
                     const fromUtc = new Date().toISOString();
                     const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
                     const { data: lessonsData } = await supabaseClient.rpc('get_private_lessons_for_school', { p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
                     state.privateLessons = Array.isArray(lessonsData) ? lessonsData : [];
-                } catch (_) { state.privateLessons = []; }
+                } catch (e) { console.warn('RPC failed:', e.message); state.privateLessons = []; }
                 try {
                     const { data: settingsData } = await supabaseClient.rpc('get_teacher_availability_settings', { p_school_id: sid });
                     state.teacherAvailabilitySettings = settingsData && typeof settingsData === 'object' ? settingsData : null;
-                } catch (_) { state.teacherAvailabilitySettings = null; }
+                } catch (e) { console.warn('RPC failed:', e.message); state.teacherAvailabilitySettings = null; }
                 try {
                     const fromUtc = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
                     const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
                     const { data: blockedData } = await supabaseClient.rpc('get_teacher_blocked_times', { p_school_id: sid, p_start_utc: fromUtc, p_end_utc: toUtc });
                     state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
-                } catch (_) { state.teacherBlockedTimes = []; }
+                } catch (e) { console.warn('RPC failed:', e.message); state.teacherBlockedTimes = []; }
                 if (CALENDLY_FEATURE_ENABLED) {
                     try {
                         const { data: connData } = await supabaseClient.from('calendly_connections').select('id').eq('school_id', sid).maybeSingle();
                         state.calendlyConnected = !!(connData && connData.id);
                         state.calendlyEventTypesLoaded = false;
                         state.calendlyEventTypesError = null;
-                    } catch (_) { state.calendlyConnected = false; }
+                    } catch (e) { console.warn('RPC failed:', e.message); state.calendlyConnected = false; }
                     try {
                         const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
                         state.calendlyEventTypeSelection = selData && typeof selData === 'object' ? selData : null;
-                    } catch (_) { state.calendlyEventTypeSelection = null; }
+                    } catch (e) { console.warn('RPC failed:', e.message); state.calendlyEventTypeSelection = null; }
                 } else {
                     state.calendlyConnected = false;
                     state.calendlyEventTypesLoaded = false;
@@ -415,7 +417,8 @@ export async function fetchAllData() {
                         const arr = Array.isArray(gceData) ? gceData : (typeof gceData === 'string' ? JSON.parse(gceData) : []);
                         state.groupClassExceptions = arr;
                     }
-                } catch (_) {
+                } catch (e) {
+                    console.warn('RPC failed:', e.message);
                     state.groupClassExceptions = [];
                 }
             }
@@ -424,13 +427,13 @@ export async function fetchAllData() {
             try {
                 const { data: pcrStudent } = await supabaseClient.from('private_class_requests').select('*').eq('school_id', sid).eq('student_id', String(state.currentUser.id)).eq('status', 'accepted').order('requested_date', { ascending: true });
                 state.studentPrivateClassRequests = Array.isArray(pcrStudent) ? pcrStudent : [];
-            } catch (_) { state.studentPrivateClassRequests = []; }
+            } catch (e) { console.warn('RPC failed:', e.message); state.studentPrivateClassRequests = []; }
             try {
                 const fromUtc = new Date().toISOString();
                 const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
                 const { data: studentLessons } = await supabaseClient.rpc('get_student_private_lessons', { p_student_id: String(state.currentUser.id), p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
                 state.studentPrivateLessons = Array.isArray(studentLessons) ? studentLessons : [];
-            } catch (_) { state.studentPrivateLessons = []; }
+            } catch (e) { console.warn('RPC failed:', e.message); state.studentPrivateLessons = []; }
             try {
                 const [summaryRes, reviewsRes] = await Promise.all([
                     supabaseClient.rpc('get_reviews_summary', { p_target_type: 'school', p_target_id: sid }),
@@ -439,7 +442,8 @@ export async function fetchAllData() {
                 const sumRow = summaryRes?.data && Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes?.data;
                 state.teacherBookingReviewsSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : null;
                 state.teacherBookingReviews = Array.isArray(reviewsRes?.data) ? reviewsRes.data : [];
-            } catch (_) {
+            } catch (e) {
+                console.warn('RPC failed:', e.message);
                 state.teacherBookingReviewsSummary = null;
                 state.teacherBookingReviews = [];
             }
@@ -447,14 +451,14 @@ export async function fetchAllData() {
                 try {
                     const { data: selData } = await supabaseClient.rpc('get_calendly_event_type_selection', { p_school_id: sid });
                     state.teacherCalendlySelectionForBooking = selData && typeof selData === 'object' ? selData : null;
-                } catch (_) { state.teacherCalendlySelectionForBooking = null; }
+                } catch (e) { console.warn('RPC failed:', e.message); state.teacherCalendlySelectionForBooking = null; }
             } else {
                 state.teacherCalendlySelectionForBooking = null;
             }
             try {
                 const { data: settingsData } = await supabaseClient.rpc('get_teacher_availability_settings', { p_school_id: sid });
                 state.teacherAvailabilitySettings = settingsData && typeof settingsData === 'object' ? settingsData : null;
-            } catch (_) { state.teacherAvailabilitySettings = null; }
+            } catch (e) { console.warn('RPC failed:', e.message); state.teacherAvailabilitySettings = null; }
         } else {
             state.studentPrivateClassRequests = [];
             state.studentPrivateLessons = [];
@@ -569,6 +573,8 @@ export async function fetchAllData() {
             setTimeout(() => fetchAllData(), 100);
         }
     }
+    })().finally(() => { _fetchInFlight = null; });
+    return _fetchInFlight;
 }
 
 /**

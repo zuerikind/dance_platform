@@ -2,14 +2,13 @@
  * Entry point. Bundled to app.js so index.html keeps one script tag.
  * Attaches core modules to window for HTML and legacy, runs legacy, then init and event listeners.
  */
-import { escapeHtml, supabaseClient, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID } from './config.js';
+import { escapeHtml, supabaseClient, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID, CALENDLY_FEATURE_ENABLED } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering } from './utils.js';
 import { parseHashRoute, parseQueryAndHashForView, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
 import { getCapabilities, bootstrapAuth } from './auth.js';
 
-const CALENDLY_FEATURE_ENABLED = false;
 const SCHOOL_THEME_BY_ID = {
     [AURE_SCHOOL_ID]: 'aure'
 };

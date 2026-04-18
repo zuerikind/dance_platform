@@ -1,6 +1,7 @@
 (() => {
   // src/config.js
   var AURE_SCHOOL_ID = "38e570f9-5ca0-435e-8e99-70ebb5ae3b64";
+  var CALENDLY_FEATURE_ENABLED = false;
   var SUPABASE_URL = "https://fziyybqhecfxhkagknvg.supabase.co";
   var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXl5YnFoZWNmeGhrYWdrbnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MDYwNDAsImV4cCI6MjA4NTk4MjA0MH0.wX7oIivqTbfBTMsIwI9zDgKk5x8P4mW3M543OgzwqCs";
   var supabaseClient = typeof window !== "undefined" && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
@@ -551,10 +552,10 @@
     const day = String(d.getDate()).padStart(2, "0");
     return `${y}-${m}-${day}`;
   }
-  var CALENDLY_FEATURE_ENABLED = false;
   var FETCH_THROTTLE_MS = 1500;
   var _lastFetchEndTime = 0;
   var _fetchScheduledTimer = null;
+  var _fetchInFlight = null;
   function resetFetchThrottle() {
     _lastFetchEndTime = 0;
   }
@@ -625,119 +626,140 @@
       }, FETCH_THROTTLE_MS - (now - _lastFetchEndTime));
       return;
     }
-    state.loading = true;
-    if (state.currentView !== "auth" && typeof window.renderView === "function") window.renderView();
-    try {
-      const { data: schoolsData, error: schoolsError } = await supabaseClient.from("schools").select("*").order("name");
-      if (schoolsError) console.error("Schools fetch error:", schoolsError);
-      state.schoolsLoadError = schoolsError || null;
-      state.schools = schoolsData ?? [];
-      if (state._calendlyReturnSchoolId && !state.currentSchool) {
-        const calSchool = (state.schools || []).find((s) => s.id === state._calendlyReturnSchoolId);
-        state.currentSchool = calSchool ? { ...calSchool } : { id: state._calendlyReturnSchoolId, name: "School" };
-      }
-      if (state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
-        const { data: detail } = await supabaseClient.rpc("discovery_school_detail_by_id", { p_school_id: state.currentSchool.id });
-        if (detail && typeof detail === "object" && detail.id) {
-          const schoolPart = { id: detail.id, name: detail.name, discovery_slug: detail.discovery_slug, country: detail.country, city: detail.city, address: detail.address, discovery_description: detail.discovery_description, discovery_genres: detail.discovery_genres, discovery_levels: detail.discovery_levels, logo_url: detail.logo_url, teacher_photo_url: detail.teacher_photo_url, gallery_urls: detail.gallery_urls, discovery_locations: detail.discovery_locations, currency: detail.currency, active: detail.active };
-          state.currentSchool = { ...state.currentSchool, ...schoolPart };
-          state._discoveryLocationsSchoolId = null;
-          state.discoveryLocations = Array.isArray(detail.discovery_locations) ? detail.discovery_locations.map((l) => ({ name: l.name || "", address: l.address || "", description: l.description || "", image_urls: Array.isArray(l.image_urls) ? [...l.image_urls] : [] })) : [];
+    if (_fetchInFlight) return _fetchInFlight;
+    _fetchInFlight = (async () => {
+      state.loading = true;
+      if (state.currentView !== "auth" && typeof window.renderView === "function") window.renderView();
+      try {
+        const { data: schoolsData, error: schoolsError } = await supabaseClient.from("schools").select("*").order("name");
+        if (schoolsError) console.error("Schools fetch error:", schoolsError);
+        state.schoolsLoadError = schoolsError || null;
+        state.schools = schoolsData ?? [];
+        if (state._calendlyReturnSchoolId && !state.currentSchool) {
+          const calSchool = (state.schools || []).find((s) => s.id === state._calendlyReturnSchoolId);
+          state.currentSchool = calSchool ? { ...calSchool } : { id: state._calendlyReturnSchoolId, name: "School" };
         }
-      }
-      if (!state.currentSchool && supabaseClient) {
-        const { data: discEnabled } = await supabaseClient.rpc("discovery_is_enabled");
-        state.discoveryEnabled = !!discEnabled;
-      }
-      if (!state.isPlatformDev && !state._discoveryOnlyEdit && state.currentSchool && !state.schools.some((s) => s.id === state.currentSchool.id)) {
-        if (state.currentSchool.id === AURE_SCHOOL_ID && isAureSubdomain()) {
-          const aureSchool = state.schools.find((s) => s.id === AURE_SCHOOL_ID);
-          state.currentSchool = aureSchool ? { ...aureSchool } : { id: AURE_SCHOOL_ID, name: "AUR\xC9", discovery_slug: "aure" };
-        } else {
-          state.currentSchool = null;
-          state.currentUser = null;
-          state.isAdmin = false;
+        if (state._discoveryOnlyEdit && state.currentSchool?.id && supabaseClient) {
+          const { data: detail } = await supabaseClient.rpc("discovery_school_detail_by_id", { p_school_id: state.currentSchool.id });
+          if (detail && typeof detail === "object" && detail.id) {
+            const schoolPart = { id: detail.id, name: detail.name, discovery_slug: detail.discovery_slug, country: detail.country, city: detail.city, address: detail.address, discovery_description: detail.discovery_description, discovery_genres: detail.discovery_genres, discovery_levels: detail.discovery_levels, logo_url: detail.logo_url, teacher_photo_url: detail.teacher_photo_url, gallery_urls: detail.gallery_urls, discovery_locations: detail.discovery_locations, currency: detail.currency, active: detail.active };
+            state.currentSchool = { ...state.currentSchool, ...schoolPart };
+            state._discoveryLocationsSchoolId = null;
+            state.discoveryLocations = Array.isArray(detail.discovery_locations) ? detail.discovery_locations.map((l) => ({ name: l.name || "", address: l.address || "", description: l.description || "", image_urls: Array.isArray(l.image_urls) ? [...l.image_urls] : [] })) : [];
+          }
+        }
+        if (!state.currentSchool && supabaseClient) {
+          const { data: discEnabled } = await supabaseClient.rpc("discovery_is_enabled");
+          state.discoveryEnabled = !!discEnabled;
+        }
+        if (!state.isPlatformDev && !state._discoveryOnlyEdit && state.currentSchool && !state.schools.some((s) => s.id === state.currentSchool.id)) {
+          if (state.currentSchool.id === AURE_SCHOOL_ID && isAureSubdomain()) {
+            const aureSchool = state.schools.find((s) => s.id === AURE_SCHOOL_ID);
+            state.currentSchool = aureSchool ? { ...aureSchool } : { id: AURE_SCHOOL_ID, name: "AUR\xC9", discovery_slug: "aure" };
+          } else {
+            state.currentSchool = null;
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.currentView = "school-selection";
+            saveState();
+          }
+        }
+        if (state.currentView === "school-selection" && typeof window.renderView === "function") window.renderView();
+        if (state.isPlatformDev) {
+          await fetchPlatformData();
+          if (!state.currentSchool) {
+            state.loading = false;
+            if (typeof window.renderView === "function") window.renderView();
+            return;
+          }
+        } else if (!state.currentSchool) {
           state.currentView = "school-selection";
-          saveState();
-        }
-      }
-      if (state.currentView === "school-selection" && typeof window.renderView === "function") window.renderView();
-      if (state.isPlatformDev) {
-        await fetchPlatformData();
-        if (!state.currentSchool) {
           state.loading = false;
           if (typeof window.renderView === "function") window.renderView();
           return;
         }
-      } else if (!state.currentSchool) {
-        state.currentView = "school-selection";
-        state.loading = false;
-        if (typeof window.renderView === "function") window.renderView();
-        return;
-      }
-      if (state.currentUser && !state.isAdmin && state.currentUser.school_id) {
-        if (state.currentSchool.id !== state.currentUser.school_id) {
-          const enrolledSchool = state.schools.find((s) => s.id === state.currentUser.school_id);
-          if (enrolledSchool) state.currentSchool = enrolledSchool;
-        }
-      }
-      const sid = state.currentUser && !state.isAdmin && state.currentUser.school_id ? state.currentUser.school_id : state.currentSchool.id;
-      const isStudent = state.currentUser && !state.isAdmin;
-      let studentsQuery;
-      if (state.isAdmin || state.isPlatformDev) {
-        studentsQuery = supabaseClient.rpc("get_school_students", { p_school_id: sid }).then((r) => ({ data: r.data || [], error: r.error }));
-      } else if (state.currentUser && state.currentUser.user_id) {
-        studentsQuery = supabaseClient.rpc("get_student_by_user_id", {
-          p_user_id: state.currentUser.user_id,
-          p_school_id: state.currentUser.school_id
-        }).then((r) => ({ data: r.data || [], error: r.error }));
-      } else {
-        studentsQuery = Promise.resolve({ data: [], error: null });
-      }
-      const classesPromise = isStudent ? supabaseClient.rpc("get_school_classes", { p_school_id: sid }).then((r) => ({ data: r.data || [], error: r.error })) : supabaseClient.from("classes").select("*").eq("school_id", sid).order("id");
-      const subsPromise = isStudent ? supabaseClient.rpc("get_school_subscriptions", { p_school_id: sid }).then((r) => ({ data: r.data || [], error: r.error })) : supabaseClient.from("subscriptions").select("*").eq("school_id", sid).order("name");
-      const allEnrollmentsPromise = isStudent && state.currentUser?.user_id ? supabaseClient.rpc("get_all_student_enrollments", { p_user_id: state.currentUser.user_id }).then((r) => ({ data: r.data })) : Promise.resolve({ data: null });
-      const [classesRes, subsRes, studentsRes, requestsRes, settingsRes, adminsRes, allEnrollmentsRes] = await Promise.all([
-        classesPromise,
-        subsPromise,
-        studentsQuery,
-        supabaseClient.from("payment_requests").select("*, students(name)").eq("school_id", sid).order("created_at", { ascending: false }),
-        supabaseClient.from("admin_settings").select("*").eq("school_id", sid),
-        supabaseClient.from("admins").select("*").eq("school_id", sid).order("username"),
-        allEnrollmentsPromise
-      ]);
-      if (classesRes.data && classesRes.data.length > 0) {
-        state.classes = classesRes.data;
-      } else if (state.isAdmin && supabaseClient) {
-        const { data: rpcClasses } = await supabaseClient.rpc("get_school_classes", { p_school_id: sid });
-        if (rpcClasses && Array.isArray(rpcClasses)) state.classes = rpcClasses;
-      }
-      if (subsRes.data && subsRes.data.length > 0) {
-        state.subscriptions = subsRes.data;
-      } else if (state.isAdmin && supabaseClient) {
-        const { data: rpcSubs } = await supabaseClient.rpc("get_school_subscriptions", { p_school_id: sid });
-        if (rpcSubs && Array.isArray(rpcSubs)) state.subscriptions = rpcSubs;
-      }
-      if (isStudent) {
-        const { data: settingsJson } = await supabaseClient.rpc("get_school_admin_settings", { p_school_id: sid });
-        if (settingsJson && typeof settingsJson === "object") state.adminSettings = settingsJson;
-      }
-      if (studentsRes.data && studentsRes.data.length > 0) {
-        if (window._debugBalanceJump && state._lastSavedStudentId) {
-          const prev = state.students.find((s) => String(s.id) === String(state._lastSavedStudentId));
-          const next = (studentsRes.data || []).find((s) => String(s.id) === String(state._lastSavedStudentId));
-          console.log("[fetchAllData] Overwriting state.students (studentsRes). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
-          delete state._lastSavedStudentId;
-        }
-        state.students = mergeStudentBalances(studentsRes.data, state.students);
-        if (state.currentUser && !state.isAdmin) {
-          const updatedMe = state.students.find((s) => s.id === state.currentUser.id);
-          if (updatedMe) {
-            state.currentUser = { ...updatedMe, role: "student" };
-            saveState();
+        if (state.currentUser && !state.isAdmin && state.currentUser.school_id) {
+          if (state.currentSchool.id !== state.currentUser.school_id) {
+            const enrolledSchool = state.schools.find((s) => s.id === state.currentUser.school_id);
+            if (enrolledSchool) state.currentSchool = enrolledSchool;
           }
         }
-        if (state.isAdmin && sid && supabaseClient) {
+        const sid = state.currentUser && !state.isAdmin && state.currentUser.school_id ? state.currentUser.school_id : state.currentSchool.id;
+        const isStudent = state.currentUser && !state.isAdmin;
+        let studentsQuery;
+        if (state.isAdmin || state.isPlatformDev) {
+          studentsQuery = supabaseClient.rpc("get_school_students", { p_school_id: sid }).then((r) => ({ data: r.data || [], error: r.error }));
+        } else if (state.currentUser && state.currentUser.user_id) {
+          studentsQuery = supabaseClient.rpc("get_student_by_user_id", {
+            p_user_id: state.currentUser.user_id,
+            p_school_id: state.currentUser.school_id
+          }).then((r) => ({ data: r.data || [], error: r.error }));
+        } else {
+          studentsQuery = Promise.resolve({ data: [], error: null });
+        }
+        const classesPromise = isStudent ? supabaseClient.rpc("get_school_classes", { p_school_id: sid }).then((r) => ({ data: r.data || [], error: r.error })) : supabaseClient.from("classes").select("*").eq("school_id", sid).order("id");
+        const subsPromise = isStudent ? supabaseClient.rpc("get_school_subscriptions", { p_school_id: sid }).then((r) => ({ data: r.data || [], error: r.error })) : supabaseClient.from("subscriptions").select("*").eq("school_id", sid).order("name");
+        const allEnrollmentsPromise = isStudent && state.currentUser?.user_id ? supabaseClient.rpc("get_all_student_enrollments", { p_user_id: state.currentUser.user_id }).then((r) => ({ data: r.data })) : Promise.resolve({ data: null });
+        const [classesRes, subsRes, studentsRes, requestsRes, settingsRes, adminsRes, allEnrollmentsRes] = await Promise.all([
+          classesPromise,
+          subsPromise,
+          studentsQuery,
+          supabaseClient.from("payment_requests").select("*, students(name)").eq("school_id", sid).order("created_at", { ascending: false }),
+          supabaseClient.from("admin_settings").select("*").eq("school_id", sid),
+          supabaseClient.from("admins").select("*").eq("school_id", sid).order("username"),
+          allEnrollmentsPromise
+        ]);
+        if (classesRes.data && classesRes.data.length > 0) {
+          state.classes = classesRes.data;
+        } else if (state.isAdmin && supabaseClient) {
+          const { data: rpcClasses } = await supabaseClient.rpc("get_school_classes", { p_school_id: sid });
+          if (rpcClasses && Array.isArray(rpcClasses)) state.classes = rpcClasses;
+        }
+        if (subsRes.data && subsRes.data.length > 0) {
+          state.subscriptions = subsRes.data;
+        } else if (state.isAdmin && supabaseClient) {
+          const { data: rpcSubs } = await supabaseClient.rpc("get_school_subscriptions", { p_school_id: sid });
+          if (rpcSubs && Array.isArray(rpcSubs)) state.subscriptions = rpcSubs;
+        }
+        if (isStudent) {
+          const { data: settingsJson } = await supabaseClient.rpc("get_school_admin_settings", { p_school_id: sid });
+          if (settingsJson && typeof settingsJson === "object") state.adminSettings = settingsJson;
+        }
+        if (studentsRes.data && studentsRes.data.length > 0) {
+          if (window._debugBalanceJump && state._lastSavedStudentId) {
+            const prev = state.students.find((s) => String(s.id) === String(state._lastSavedStudentId));
+            const next = (studentsRes.data || []).find((s) => String(s.id) === String(state._lastSavedStudentId));
+            console.log("[fetchAllData] Overwriting state.students (studentsRes). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
+            delete state._lastSavedStudentId;
+          }
+          state.students = mergeStudentBalances(studentsRes.data, state.students);
+          if (state.currentUser && !state.isAdmin) {
+            const updatedMe = state.students.find((s) => s.id === state.currentUser.id);
+            if (updatedMe) {
+              state.currentUser = { ...updatedMe, role: "student" };
+              saveState();
+            }
+          }
+          if (state.isAdmin && sid && supabaseClient) {
+            const { data: activationStatus } = await supabaseClient.rpc("get_school_students_activation_status", { p_school_id: sid });
+            state.studentActivationStatus = {};
+            if (activationStatus && Array.isArray(activationStatus)) {
+              activationStatus.forEach((row) => {
+                if (row && row.student_id) state.studentActivationStatus[row.student_id] = { linked: !!row.linked, invited_at: row.invited_at || null };
+              });
+            }
+          }
+        } else if (state.isAdmin && supabaseClient) {
+          const { data: rpcStudents } = await supabaseClient.rpc("get_school_students", { p_school_id: sid });
+          if (rpcStudents && Array.isArray(rpcStudents)) {
+            if (window._debugBalanceJump && state._lastSavedStudentId) {
+              const prev = state.students.find((s) => String(s.id) === String(state._lastSavedStudentId));
+              const next = (rpcStudents || []).find((s) => String(s.id) === String(state._lastSavedStudentId));
+              console.log("[fetchAllData] Overwriting state.students (rpcStudents). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
+              delete state._lastSavedStudentId;
+            }
+            state.students = mergeStudentBalances(rpcStudents, state.students);
+          }
           const { data: activationStatus } = await supabaseClient.rpc("get_school_students_activation_status", { p_school_id: sid });
           state.studentActivationStatus = {};
           if (activationStatus && Array.isArray(activationStatus)) {
@@ -745,357 +767,356 @@
               if (row && row.student_id) state.studentActivationStatus[row.student_id] = { linked: !!row.linked, invited_at: row.invited_at || null };
             });
           }
-        }
-      } else if (state.isAdmin && supabaseClient) {
-        const { data: rpcStudents } = await supabaseClient.rpc("get_school_students", { p_school_id: sid });
-        if (rpcStudents && Array.isArray(rpcStudents)) {
-          if (window._debugBalanceJump && state._lastSavedStudentId) {
-            const prev = state.students.find((s) => String(s.id) === String(state._lastSavedStudentId));
-            const next = (rpcStudents || []).find((s) => String(s.id) === String(state._lastSavedStudentId));
-            console.log("[fetchAllData] Overwriting state.students (rpcStudents). For saved student", state._lastSavedStudentId, "prev balance=", prev?.balance, "\u2192 new balance=", next?.balance);
-            delete state._lastSavedStudentId;
+        } else if (isStudent && state.currentUser) {
+          const schoolId = state.currentUser.school_id || sid;
+          let myRow = null;
+          if (state.currentUser.user_id) {
+            const { data } = await supabaseClient.rpc("get_student_by_user_id", { p_user_id: state.currentUser.user_id, p_school_id: schoolId });
+            if (data && Array.isArray(data) && data.length > 0) myRow = data;
           }
-          state.students = mergeStudentBalances(rpcStudents, state.students);
+          if (!myRow) {
+            const { data } = await supabaseClient.rpc("get_student_by_id", { p_student_id: state.currentUser.id, p_school_id: schoolId });
+            if (data && Array.isArray(data) && data.length > 0) myRow = data;
+          }
+          if (myRow && myRow.length > 0) {
+            const row = myRow[0];
+            state.students = [row];
+            state.currentUser = { ...row, role: "student" };
+            saveState();
+          } else {
+            state.students = [{ ...state.currentUser }];
+          }
         }
-        const { data: activationStatus } = await supabaseClient.rpc("get_school_students_activation_status", { p_school_id: sid });
-        state.studentActivationStatus = {};
-        if (activationStatus && Array.isArray(activationStatus)) {
-          activationStatus.forEach((row) => {
-            if (row && row.student_id) state.studentActivationStatus[row.student_id] = { linked: !!row.linked, invited_at: row.invited_at || null };
+        if (isStudent && state.currentUser && supabaseClient) {
+          const schoolId = state.currentUser.school_id || sid;
+          let freshRow = null;
+          if (state.currentUser.user_id) {
+            const { data } = await supabaseClient.rpc("get_student_by_user_id", { p_user_id: state.currentUser.user_id, p_school_id: schoolId });
+            if (data && Array.isArray(data) && data.length > 0) freshRow = data;
+          }
+          if (!freshRow) {
+            const { data } = await supabaseClient.rpc("get_student_by_id", { p_student_id: String(state.currentUser.id), p_school_id: schoolId });
+            if (data && Array.isArray(data) && data.length > 0) freshRow = data;
+          }
+          if (freshRow && freshRow.length > 0) {
+            const row = freshRow[0];
+            state.currentUser = { ...row, role: "student" };
+            const idx = state.students.findIndex((s) => s.id === row.id || String(s.id) === String(row.id));
+            if (idx >= 0) state.students[idx] = row;
+            else state.students = [row];
+            saveState();
+          }
+        }
+        if (requestsRes.data && requestsRes.data.length > 0) {
+          state.paymentRequests = requestsRes.data;
+        } else if (state.isAdmin && supabaseClient) {
+          const { data: reqsRpc } = await supabaseClient.rpc("get_school_payment_requests", { p_school_id: sid });
+          if (reqsRpc && Array.isArray(reqsRpc)) state.paymentRequests = reqsRpc;
+        }
+        if (settingsRes.data && settingsRes.data.length > 0) {
+          const settingsObj = {};
+          settingsRes.data.forEach((item) => {
+            settingsObj[item.key] = item.value;
           });
+          state.adminSettings = settingsObj;
+        } else if (state.isAdmin && supabaseClient) {
+          const { data: settingsJson } = await supabaseClient.rpc("get_school_admin_settings", { p_school_id: sid });
+          if (settingsJson && typeof settingsJson === "object") state.adminSettings = settingsJson;
         }
-      } else if (isStudent && state.currentUser) {
-        const schoolId = state.currentUser.school_id || sid;
-        let myRow = null;
-        if (state.currentUser.user_id) {
-          const { data } = await supabaseClient.rpc("get_student_by_user_id", { p_user_id: state.currentUser.user_id, p_school_id: schoolId });
-          if (data && Array.isArray(data) && data.length > 0) myRow = data;
+        if (adminsRes.data && adminsRes.data.length > 0) {
+          state.admins = adminsRes.data;
+        } else if (state.isAdmin && supabaseClient) {
+          const { data: rpcAdmins } = await supabaseClient.rpc("get_school_admins", { p_school_id: sid });
+          if (rpcAdmins && Array.isArray(rpcAdmins)) state.admins = rpcAdmins;
         }
-        if (!myRow) {
-          const { data } = await supabaseClient.rpc("get_student_by_id", { p_student_id: state.currentUser.id, p_school_id: schoolId });
-          if (data && Array.isArray(data) && data.length > 0) myRow = data;
+        if (state.isAdmin && supabaseClient) {
+          const { data: sessionData } = await supabaseClient.auth.getSession();
+          const uid = sessionData?.session?.user?.id;
+          const sessionEmail = sessionData?.session?.user?.email || state.auth?.user?.email || state._adminEmail || "";
+          const admins = state.admins || [];
+          state.schoolAdminLinked = !!(uid && admins.some((a) => a.user_id === uid));
+          state.currentAdmin = admins.find((a) => a.user_id === uid) || null;
+          if (!state.currentAdmin && sessionEmail) {
+            const isFake = (e) => e.includes("@admins.bailadmin.local") || e.includes("@temp.bailadmin.local");
+            if (!isFake(sessionEmail)) {
+              state.currentAdmin = admins.find((a) => a.email && a.email.toLowerCase() === sessionEmail.toLowerCase()) || null;
+            }
+          }
+          if (!state.currentAdmin && sid) {
+            try {
+              const { data: curAdmin } = await supabaseClient.rpc("get_current_admin", { p_school_id: sid });
+              const row = Array.isArray(curAdmin) && curAdmin.length > 0 ? curAdmin[0] : curAdmin;
+              if (row && typeof row === "object") state.currentAdmin = row;
+            } catch (e) {
+              console.warn("RPC failed:", e.message);
+            }
+          }
+          const isFakeEmail = (e) => !e || e.includes("@admins.bailadmin.local") || e.includes("@temp.bailadmin.local");
+          const adminRowEmail = state.currentAdmin?.email || "";
+          state._adminEmail = !isFakeEmail(sessionEmail) ? sessionEmail : !isFakeEmail(adminRowEmail) ? adminRowEmail : "";
         }
-        if (myRow && myRow.length > 0) {
-          const row = myRow[0];
-          state.students = [row];
-          state.currentUser = { ...row, role: "student" };
-          saveState();
+        const currentSchoolObj = state.schools.find((s) => s.id === sid) || state.currentSchool;
+        if (currentSchoolObj?.profile_type === "private_teacher" && supabaseClient) {
+          state.groupClassExceptions = [];
+          try {
+            const { data: availData } = await supabaseClient.rpc("get_teacher_availability", { p_school_id: sid });
+            state.teacherAvailability = Array.isArray(availData) ? availData : [];
+          } catch (e) {
+            console.warn("RPC failed:", e.message);
+            state.teacherAvailability = [];
+          }
+          if (state.isAdmin) {
+            try {
+              const { data: pcrData } = await supabaseClient.rpc("get_private_class_requests_for_school", { p_school_id: sid });
+              state.privateClassRequests = Array.isArray(pcrData) ? pcrData : [];
+            } catch (e) {
+              console.warn("RPC failed:", e.message);
+              state.privateClassRequests = [];
+            }
+            try {
+              const fromUtc = (/* @__PURE__ */ new Date()).toISOString();
+              const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
+              const { data: lessonsData } = await supabaseClient.rpc("get_private_lessons_for_school", { p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
+              state.privateLessons = Array.isArray(lessonsData) ? lessonsData : [];
+            } catch (e) {
+              console.warn("RPC failed:", e.message);
+              state.privateLessons = [];
+            }
+            try {
+              const { data: settingsData } = await supabaseClient.rpc("get_teacher_availability_settings", { p_school_id: sid });
+              state.teacherAvailabilitySettings = settingsData && typeof settingsData === "object" ? settingsData : null;
+            } catch (e) {
+              console.warn("RPC failed:", e.message);
+              state.teacherAvailabilitySettings = null;
+            }
+            try {
+              const fromUtc = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3).toISOString();
+              const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
+              const { data: blockedData } = await supabaseClient.rpc("get_teacher_blocked_times", { p_school_id: sid, p_start_utc: fromUtc, p_end_utc: toUtc });
+              state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
+            } catch (e) {
+              console.warn("RPC failed:", e.message);
+              state.teacherBlockedTimes = [];
+            }
+            if (CALENDLY_FEATURE_ENABLED) {
+              try {
+                const { data: connData } = await supabaseClient.from("calendly_connections").select("id").eq("school_id", sid).maybeSingle();
+                state.calendlyConnected = !!(connData && connData.id);
+                state.calendlyEventTypesLoaded = false;
+                state.calendlyEventTypesError = null;
+              } catch (e) {
+                console.warn("RPC failed:", e.message);
+                state.calendlyConnected = false;
+              }
+              try {
+                const { data: selData } = await supabaseClient.rpc("get_calendly_event_type_selection", { p_school_id: sid });
+                state.calendlyEventTypeSelection = selData && typeof selData === "object" ? selData : null;
+              } catch (e) {
+                console.warn("RPC failed:", e.message);
+                state.calendlyEventTypeSelection = null;
+              }
+            } else {
+              state.calendlyConnected = false;
+              state.calendlyEventTypesLoaded = false;
+              state.calendlyEventTypesError = null;
+              state.calendlyEventTypeSelection = null;
+            }
+          }
         } else {
-          state.students = [{ ...state.currentUser }];
-        }
-      }
-      if (isStudent && state.currentUser && supabaseClient) {
-        const schoolId = state.currentUser.school_id || sid;
-        let freshRow = null;
-        if (state.currentUser.user_id) {
-          const { data } = await supabaseClient.rpc("get_student_by_user_id", { p_user_id: state.currentUser.user_id, p_school_id: schoolId });
-          if (data && Array.isArray(data) && data.length > 0) freshRow = data;
-        }
-        if (!freshRow) {
-          const { data } = await supabaseClient.rpc("get_student_by_id", { p_student_id: String(state.currentUser.id), p_school_id: schoolId });
-          if (data && Array.isArray(data) && data.length > 0) freshRow = data;
-        }
-        if (freshRow && freshRow.length > 0) {
-          const row = freshRow[0];
-          state.currentUser = { ...row, role: "student" };
-          const idx = state.students.findIndex((s) => s.id === row.id || String(s.id) === String(row.id));
-          if (idx >= 0) state.students[idx] = row;
-          else state.students = [row];
-          saveState();
-        }
-      }
-      if (requestsRes.data && requestsRes.data.length > 0) {
-        state.paymentRequests = requestsRes.data;
-      } else if (state.isAdmin && supabaseClient) {
-        const { data: reqsRpc } = await supabaseClient.rpc("get_school_payment_requests", { p_school_id: sid });
-        if (reqsRpc && Array.isArray(reqsRpc)) state.paymentRequests = reqsRpc;
-      }
-      if (settingsRes.data && settingsRes.data.length > 0) {
-        const settingsObj = {};
-        settingsRes.data.forEach((item) => {
-          settingsObj[item.key] = item.value;
-        });
-        state.adminSettings = settingsObj;
-      } else if (state.isAdmin && supabaseClient) {
-        const { data: settingsJson } = await supabaseClient.rpc("get_school_admin_settings", { p_school_id: sid });
-        if (settingsJson && typeof settingsJson === "object") state.adminSettings = settingsJson;
-      }
-      if (adminsRes.data && adminsRes.data.length > 0) {
-        state.admins = adminsRes.data;
-      } else if (state.isAdmin && supabaseClient) {
-        const { data: rpcAdmins } = await supabaseClient.rpc("get_school_admins", { p_school_id: sid });
-        if (rpcAdmins && Array.isArray(rpcAdmins)) state.admins = rpcAdmins;
-      }
-      if (state.isAdmin && supabaseClient) {
-        const { data: sessionData } = await supabaseClient.auth.getSession();
-        const uid = sessionData?.session?.user?.id;
-        const sessionEmail = sessionData?.session?.user?.email || state.auth?.user?.email || state._adminEmail || "";
-        const admins = state.admins || [];
-        state.schoolAdminLinked = !!(uid && admins.some((a) => a.user_id === uid));
-        state.currentAdmin = admins.find((a) => a.user_id === uid) || null;
-        if (!state.currentAdmin && sessionEmail) {
-          const isFake = (e) => e.includes("@admins.bailadmin.local") || e.includes("@temp.bailadmin.local");
-          if (!isFake(sessionEmail)) {
-            state.currentAdmin = admins.find((a) => a.email && a.email.toLowerCase() === sessionEmail.toLowerCase()) || null;
-          }
-        }
-        if (!state.currentAdmin && sid) {
-          try {
-            const { data: curAdmin } = await supabaseClient.rpc("get_current_admin", { p_school_id: sid });
-            const row = Array.isArray(curAdmin) && curAdmin.length > 0 ? curAdmin[0] : curAdmin;
-            if (row && typeof row === "object") state.currentAdmin = row;
-          } catch (_) {
-          }
-        }
-        const isFakeEmail = (e) => !e || e.includes("@admins.bailadmin.local") || e.includes("@temp.bailadmin.local");
-        const adminRowEmail = state.currentAdmin?.email || "";
-        state._adminEmail = !isFakeEmail(sessionEmail) ? sessionEmail : !isFakeEmail(adminRowEmail) ? adminRowEmail : "";
-      }
-      const currentSchoolObj = state.schools.find((s) => s.id === sid) || state.currentSchool;
-      if (currentSchoolObj?.profile_type === "private_teacher" && supabaseClient) {
-        state.groupClassExceptions = [];
-        try {
-          const { data: availData } = await supabaseClient.rpc("get_teacher_availability", { p_school_id: sid });
-          state.teacherAvailability = Array.isArray(availData) ? availData : [];
-        } catch (_) {
           state.teacherAvailability = [];
+          state.privateClassRequests = [];
+          state.privateLessons = [];
+          state.teacherAvailabilitySettings = null;
+          state.teacherBlockedTimes = [];
+          state.calendlyConnected = false;
+          state.calendlyEventTypeSelection = null;
+          state.groupClassExceptions = [];
+          if (state.isAdmin && supabaseClient) {
+            try {
+              const d0 = /* @__PURE__ */ new Date();
+              d0.setDate(d0.getDate() - 7);
+              const d1 = /* @__PURE__ */ new Date();
+              d1.setDate(d1.getDate() + 180);
+              const pStart = formatLocalClassDate(d0);
+              const pEnd = formatLocalClassDate(d1);
+              const { data: gceData } = await supabaseClient.rpc("get_group_class_exceptions", { p_school_id: sid, p_start_date: pStart, p_end_date: pEnd });
+              if (gceData != null) {
+                const arr = Array.isArray(gceData) ? gceData : typeof gceData === "string" ? JSON.parse(gceData) : [];
+                state.groupClassExceptions = arr;
+              }
+            } catch (e) {
+              console.warn("RPC failed:", e.message);
+              state.groupClassExceptions = [];
+            }
+          }
         }
-        if (state.isAdmin) {
+        if (isStudent && state.currentSchool?.profile_type === "private_teacher" && state.currentUser?.id && supabaseClient && sid) {
           try {
-            const { data: pcrData } = await supabaseClient.rpc("get_private_class_requests_for_school", { p_school_id: sid });
-            state.privateClassRequests = Array.isArray(pcrData) ? pcrData : [];
-          } catch (_) {
-            state.privateClassRequests = [];
+            const { data: pcrStudent } = await supabaseClient.from("private_class_requests").select("*").eq("school_id", sid).eq("student_id", String(state.currentUser.id)).eq("status", "accepted").order("requested_date", { ascending: true });
+            state.studentPrivateClassRequests = Array.isArray(pcrStudent) ? pcrStudent : [];
+          } catch (e) {
+            console.warn("RPC failed:", e.message);
+            state.studentPrivateClassRequests = [];
           }
           try {
             const fromUtc = (/* @__PURE__ */ new Date()).toISOString();
             const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
-            const { data: lessonsData } = await supabaseClient.rpc("get_private_lessons_for_school", { p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
-            state.privateLessons = Array.isArray(lessonsData) ? lessonsData : [];
-          } catch (_) {
-            state.privateLessons = [];
+            const { data: studentLessons } = await supabaseClient.rpc("get_student_private_lessons", { p_student_id: String(state.currentUser.id), p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
+            state.studentPrivateLessons = Array.isArray(studentLessons) ? studentLessons : [];
+          } catch (e) {
+            console.warn("RPC failed:", e.message);
+            state.studentPrivateLessons = [];
+          }
+          try {
+            const [summaryRes, reviewsRes] = await Promise.all([
+              supabaseClient.rpc("get_reviews_summary", { p_target_type: "school", p_target_id: sid }),
+              supabaseClient.rpc("get_reviews_public", { p_target_type: "school", p_target_id: sid, p_limit: 3, p_offset: 0 })
+            ]);
+            const sumRow = summaryRes?.data && Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes?.data;
+            state.teacherBookingReviewsSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : null;
+            state.teacherBookingReviews = Array.isArray(reviewsRes?.data) ? reviewsRes.data : [];
+          } catch (e) {
+            console.warn("RPC failed:", e.message);
+            state.teacherBookingReviewsSummary = null;
+            state.teacherBookingReviews = [];
+          }
+          if (CALENDLY_FEATURE_ENABLED) {
+            try {
+              const { data: selData } = await supabaseClient.rpc("get_calendly_event_type_selection", { p_school_id: sid });
+              state.teacherCalendlySelectionForBooking = selData && typeof selData === "object" ? selData : null;
+            } catch (e) {
+              console.warn("RPC failed:", e.message);
+              state.teacherCalendlySelectionForBooking = null;
+            }
+          } else {
+            state.teacherCalendlySelectionForBooking = null;
           }
           try {
             const { data: settingsData } = await supabaseClient.rpc("get_teacher_availability_settings", { p_school_id: sid });
             state.teacherAvailabilitySettings = settingsData && typeof settingsData === "object" ? settingsData : null;
-          } catch (_) {
+          } catch (e) {
+            console.warn("RPC failed:", e.message);
             state.teacherAvailabilitySettings = null;
           }
-          try {
-            const fromUtc = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3).toISOString();
-            const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
-            const { data: blockedData } = await supabaseClient.rpc("get_teacher_blocked_times", { p_school_id: sid, p_start_utc: fromUtc, p_end_utc: toUtc });
-            state.teacherBlockedTimes = Array.isArray(blockedData) ? blockedData : [];
-          } catch (_) {
-            state.teacherBlockedTimes = [];
-          }
-          if (CALENDLY_FEATURE_ENABLED) {
-            try {
-              const { data: connData } = await supabaseClient.from("calendly_connections").select("id").eq("school_id", sid).maybeSingle();
-              state.calendlyConnected = !!(connData && connData.id);
-              state.calendlyEventTypesLoaded = false;
-              state.calendlyEventTypesError = null;
-            } catch (_) {
-              state.calendlyConnected = false;
-            }
-            try {
-              const { data: selData } = await supabaseClient.rpc("get_calendly_event_type_selection", { p_school_id: sid });
-              state.calendlyEventTypeSelection = selData && typeof selData === "object" ? selData : null;
-            } catch (_) {
-              state.calendlyEventTypeSelection = null;
-            }
-          } else {
-            state.calendlyConnected = false;
-            state.calendlyEventTypesLoaded = false;
-            state.calendlyEventTypesError = null;
-            state.calendlyEventTypeSelection = null;
-          }
-        }
-      } else {
-        state.teacherAvailability = [];
-        state.privateClassRequests = [];
-        state.privateLessons = [];
-        state.teacherAvailabilitySettings = null;
-        state.teacherBlockedTimes = [];
-        state.calendlyConnected = false;
-        state.calendlyEventTypeSelection = null;
-        state.groupClassExceptions = [];
-        if (state.isAdmin && supabaseClient) {
-          try {
-            const d0 = /* @__PURE__ */ new Date();
-            d0.setDate(d0.getDate() - 7);
-            const d1 = /* @__PURE__ */ new Date();
-            d1.setDate(d1.getDate() + 180);
-            const pStart = formatLocalClassDate(d0);
-            const pEnd = formatLocalClassDate(d1);
-            const { data: gceData } = await supabaseClient.rpc("get_group_class_exceptions", { p_school_id: sid, p_start_date: pStart, p_end_date: pEnd });
-            if (gceData != null) {
-              const arr = Array.isArray(gceData) ? gceData : typeof gceData === "string" ? JSON.parse(gceData) : [];
-              state.groupClassExceptions = arr;
-            }
-          } catch (_) {
-            state.groupClassExceptions = [];
-          }
-        }
-      }
-      if (isStudent && state.currentSchool?.profile_type === "private_teacher" && state.currentUser?.id && supabaseClient && sid) {
-        try {
-          const { data: pcrStudent } = await supabaseClient.from("private_class_requests").select("*").eq("school_id", sid).eq("student_id", String(state.currentUser.id)).eq("status", "accepted").order("requested_date", { ascending: true });
-          state.studentPrivateClassRequests = Array.isArray(pcrStudent) ? pcrStudent : [];
-        } catch (_) {
+        } else {
           state.studentPrivateClassRequests = [];
-        }
-        try {
-          const fromUtc = (/* @__PURE__ */ new Date()).toISOString();
-          const toUtc = new Date(Date.now() + 90 * 24 * 60 * 60 * 1e3).toISOString();
-          const { data: studentLessons } = await supabaseClient.rpc("get_student_private_lessons", { p_student_id: String(state.currentUser.id), p_school_id: sid, p_from_utc: fromUtc, p_to_utc: toUtc });
-          state.studentPrivateLessons = Array.isArray(studentLessons) ? studentLessons : [];
-        } catch (_) {
           state.studentPrivateLessons = [];
-        }
-        try {
-          const [summaryRes, reviewsRes] = await Promise.all([
-            supabaseClient.rpc("get_reviews_summary", { p_target_type: "school", p_target_id: sid }),
-            supabaseClient.rpc("get_reviews_public", { p_target_type: "school", p_target_id: sid, p_limit: 3, p_offset: 0 })
-          ]);
-          const sumRow = summaryRes?.data && Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes?.data;
-          state.teacherBookingReviewsSummary = sumRow ? { review_count: sumRow.review_count || 0, avg_rating: sumRow.avg_rating != null ? Number(sumRow.avg_rating) : null } : null;
-          state.teacherBookingReviews = Array.isArray(reviewsRes?.data) ? reviewsRes.data : [];
-        } catch (_) {
           state.teacherBookingReviewsSummary = null;
           state.teacherBookingReviews = [];
-        }
-        if (CALENDLY_FEATURE_ENABLED) {
-          try {
-            const { data: selData } = await supabaseClient.rpc("get_calendly_event_type_selection", { p_school_id: sid });
-            state.teacherCalendlySelectionForBooking = selData && typeof selData === "object" ? selData : null;
-          } catch (_) {
-            state.teacherCalendlySelectionForBooking = null;
-          }
-        } else {
           state.teacherCalendlySelectionForBooking = null;
+          if (!state.isAdmin) state.teacherAvailabilitySettings = null;
         }
-        try {
-          const { data: settingsData } = await supabaseClient.rpc("get_teacher_availability_settings", { p_school_id: sid });
-          state.teacherAvailabilitySettings = settingsData && typeof settingsData === "object" ? settingsData : null;
-        } catch (_) {
-          state.teacherAvailabilitySettings = null;
+        if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
+          state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };
         }
-      } else {
-        state.studentPrivateClassRequests = [];
-        state.studentPrivateLessons = [];
-        state.teacherBookingReviewsSummary = null;
-        state.teacherBookingReviews = [];
-        state.teacherCalendlySelectionForBooking = null;
-        if (!state.isAdmin) state.teacherAvailabilitySettings = null;
-      }
-      if (currentSchoolObj && state.currentSchool && state.currentSchool.id === currentSchoolObj.id) {
-        state.currentSchool = { ...state.currentSchool, ...currentSchoolObj };
-      }
-      if (state._calendlyReturnSchoolId && state.schools && state.schools.length) {
-        const calSchool = state.schools.find((s) => s.id === state._calendlyReturnSchoolId);
-        if (calSchool) state.currentSchool = { ...state.currentSchool, ...calSchool };
-        delete state._calendlyReturnSchoolId;
-      }
-      if (isStudent && allEnrollmentsRes?.data != null) {
-        const allEnroll = allEnrollmentsRes.data;
-        state.allEnrollments = Array.isArray(allEnroll) ? allEnroll : typeof allEnroll === "string" ? JSON.parse(allEnroll) : [];
-      } else if (isStudent) {
-        state.allEnrollments = [];
-      }
-      if (isStudent && state.currentUser?.id && supabaseClient && sid) {
-        try {
-          const { data: compData, error: compErr } = await supabaseClient.rpc("competition_get_for_student", { p_student_id: String(state.currentUser.id), p_school_id: sid });
-          if (compErr) {
+        if (state._calendlyReturnSchoolId && state.schools && state.schools.length) {
+          const calSchool = state.schools.find((s) => s.id === state._calendlyReturnSchoolId);
+          if (calSchool) state.currentSchool = { ...state.currentSchool, ...calSchool };
+          delete state._calendlyReturnSchoolId;
+        }
+        if (isStudent && allEnrollmentsRes?.data != null) {
+          const allEnroll = allEnrollmentsRes.data;
+          state.allEnrollments = Array.isArray(allEnroll) ? allEnroll : typeof allEnroll === "string" ? JSON.parse(allEnroll) : [];
+        } else if (isStudent) {
+          state.allEnrollments = [];
+        }
+        if (isStudent && state.currentUser?.id && supabaseClient && sid) {
+          try {
+            const { data: compData, error: compErr } = await supabaseClient.rpc("competition_get_for_student", { p_student_id: String(state.currentUser.id), p_school_id: sid });
+            if (compErr) {
+              state.currentCompetitionForStudent = null;
+              state.studentCompetitionRegistration = null;
+            } else {
+              const comp = Array.isArray(compData) && compData.length > 0 ? compData[0] : null;
+              state.currentCompetitionForStudent = comp || null;
+              if (comp) {
+                const { data: regData } = await supabaseClient.rpc("competition_registration_get", { p_competition_id: comp.id, p_student_id: String(state.currentUser.id) });
+                state.studentCompetitionRegistration = Array.isArray(regData) && regData.length > 0 ? regData[0] : null;
+              } else state.studentCompetitionRegistration = null;
+            }
+          } catch (_) {
             state.currentCompetitionForStudent = null;
             state.studentCompetitionRegistration = null;
-          } else {
-            const comp = Array.isArray(compData) && compData.length > 0 ? compData[0] : null;
-            state.currentCompetitionForStudent = comp || null;
-            if (comp) {
-              const { data: regData } = await supabaseClient.rpc("competition_registration_get", { p_competition_id: comp.id, p_student_id: String(state.currentUser.id) });
-              state.studentCompetitionRegistration = Array.isArray(regData) && regData.length > 0 ? regData[0] : null;
-            } else state.studentCompetitionRegistration = null;
           }
-        } catch (_) {
+        } else {
           state.currentCompetitionForStudent = null;
           state.studentCompetitionRegistration = null;
         }
-      } else {
-        state.currentCompetitionForStudent = null;
-        state.studentCompetitionRegistration = null;
-      }
-      if (state.isAdmin && sid && supabaseClient) {
-        try {
-          const { data: compList, error: compListErr } = await supabaseClient.rpc("competition_list_for_admin", { p_school_id: sid });
-          state.competitions = !compListErr && Array.isArray(compList) ? compList : [];
-          if (state.competitionTab === "registrations" && state.competitionId && typeof window.fetchCompetitionRegistrations === "function") {
-            state.currentCompetition = state.competitions.find((c) => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;
-            await window.fetchCompetitionRegistrations(state.competitionId);
+        if (state.isAdmin && sid && supabaseClient) {
+          try {
+            const { data: compList, error: compListErr } = await supabaseClient.rpc("competition_list_for_admin", { p_school_id: sid });
+            state.competitions = !compListErr && Array.isArray(compList) ? compList : [];
+            if (state.competitionTab === "registrations" && state.competitionId && typeof window.fetchCompetitionRegistrations === "function") {
+              state.currentCompetition = state.competitions.find((c) => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;
+              await window.fetchCompetitionRegistrations(state.competitionId);
+            }
+          } catch (_) {
+            state.competitions = [];
           }
-        } catch (_) {
-          state.competitions = [];
         }
-      }
-      if (typeof window.checkExpirations === "function") await window.checkExpirations();
-      if (sid && supabaseClient && state.currentSchool?.class_registration_enabled) {
-        try {
-          if (!state.mockDate) {
-            await supabaseClient.rpc("process_expired_registrations", { p_school_id: sid });
+        if (typeof window.checkExpirations === "function") await window.checkExpirations();
+        if (sid && supabaseClient && state.currentSchool?.class_registration_enabled) {
+          try {
+            if (!state.mockDate) {
+              await supabaseClient.rpc("process_expired_registrations", { p_school_id: sid });
+            }
+          } catch (e) {
+            console.warn("process_expired_registrations error:", e);
           }
-        } catch (e) {
-          console.warn("process_expired_registrations error:", e);
-        }
-        if (isStudent && state.currentUser?.id && state.currentView === "schedule") {
-          state.classRegLoaded = false;
-          if (typeof window.loadClassAvailability === "function") {
+          if (isStudent && state.currentUser?.id && state.currentView === "schedule") {
+            state.classRegLoaded = false;
+            if (typeof window.loadClassAvailability === "function") {
+              window.loadClassAvailability().then(() => {
+                if (typeof window.shouldDeferRender === "function" && window.shouldDeferRender()) {
+                  if (typeof window.scheduleDeferredRender === "function") window.scheduleDeferredRender();
+                } else {
+                  if (typeof window.renderView === "function") window.renderView();
+                  if (window.lucide) window.lucide.createIcons();
+                }
+              }).catch(() => {
+              });
+            }
+          }
+          if (state.isAdmin && state.currentView === "admin-memberships" && typeof window.loadClassAvailability === "function") {
             window.loadClassAvailability().then(() => {
-              if (typeof window.shouldDeferRender === "function" && window.shouldDeferRender()) {
-                if (typeof window.scheduleDeferredRender === "function") window.scheduleDeferredRender();
-              } else {
-                if (typeof window.renderView === "function") window.renderView();
-                if (window.lucide) window.lucide.createIcons();
-              }
+              if (state.currentView === "admin-memberships" && typeof window.renderView === "function") window.renderView();
             }).catch(() => {
             });
           }
         }
-        if (state.isAdmin && state.currentView === "admin-memberships" && typeof window.loadClassAvailability === "function") {
-          window.loadClassAvailability().then(() => {
-            if (state.currentView === "admin-memberships" && typeof window.renderView === "function") window.renderView();
-          }).catch(() => {
-          });
+        if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
+          const updated = state.students.find((s) => s.id === state.currentUser.id);
+          if (updated) state.currentUser = { ...updated, role: "student" };
+        }
+        state.loading = false;
+        _lastFetchEndTime = Date.now();
+        if (state.currentView !== "auth") {
+          if (typeof window.shouldDeferRender === "function" && window.shouldDeferRender()) {
+            if (typeof window.scheduleDeferredRender === "function") window.scheduleDeferredRender();
+          } else if (typeof window.renderView === "function") window.renderView();
+        }
+        if (window._fetchAllDataNeeded) {
+          window._fetchAllDataNeeded = false;
+          setTimeout(() => fetchAllData(), 100);
+        }
+      } catch (err) {
+        state.loading = false;
+        _lastFetchEndTime = Date.now();
+        console.error("Error fetching data:", err);
+        if (state.currentView !== "auth") {
+          if (typeof window.shouldDeferRender === "function" && window.shouldDeferRender()) {
+            if (typeof window.scheduleDeferredRender === "function") window.scheduleDeferredRender();
+          } else if (typeof window.renderView === "function") window.renderView();
+        }
+        if (window._fetchAllDataNeeded) {
+          window._fetchAllDataNeeded = false;
+          setTimeout(() => fetchAllData(), 100);
         }
       }
-      if (state.currentUser && !state.isAdmin && state.students?.length > 0) {
-        const updated = state.students.find((s) => s.id === state.currentUser.id);
-        if (updated) state.currentUser = { ...updated, role: "student" };
-      }
-      state.loading = false;
-      _lastFetchEndTime = Date.now();
-      if (state.currentView !== "auth") {
-        if (typeof window.shouldDeferRender === "function" && window.shouldDeferRender()) {
-          if (typeof window.scheduleDeferredRender === "function") window.scheduleDeferredRender();
-        } else if (typeof window.renderView === "function") window.renderView();
-      }
-      if (window._fetchAllDataNeeded) {
-        window._fetchAllDataNeeded = false;
-        setTimeout(() => fetchAllData(), 100);
-      }
-    } catch (err) {
-      state.loading = false;
-      _lastFetchEndTime = Date.now();
-      console.error("Error fetching data:", err);
-      if (state.currentView !== "auth") {
-        if (typeof window.shouldDeferRender === "function" && window.shouldDeferRender()) {
-          if (typeof window.scheduleDeferredRender === "function") window.scheduleDeferredRender();
-        } else if (typeof window.renderView === "function") window.renderView();
-      }
-      if (window._fetchAllDataNeeded) {
-        window._fetchAllDataNeeded = false;
-        setTimeout(() => fetchAllData(), 100);
-      }
-    }
+    })().finally(() => {
+      _fetchInFlight = null;
+    });
+    return _fetchInFlight;
   }
   async function fetchAdminRegistrationsForMonth(schoolId, monthStr) {
     if (!supabaseClient || !schoolId || !monthStr) return [];
@@ -1950,8 +1971,260 @@
     el.classList.toggle("sticky-footer-visible", atBottom || noScroll);
   }
 
+  // src/views/payments.js
+  function renderAdminMemberships(t2) {
+    const pending = state.paymentRequests.filter((r) => r.status === "pending");
+    const latestApprovedByStudent = (state.paymentRequests || []).reduce((acc, r) => {
+      if (r.status !== "approved" || !r.student_id || !r.created_at) return acc;
+      const key = String(r.student_id);
+      const ts = Date.parse(r.created_at);
+      if (!Number.isFinite(ts)) return acc;
+      if (!acc[key] || ts > acc[key]) acc[key] = ts;
+      return acc;
+    }, {});
+    return `
+        <div class="ios-header" style="background: transparent;">
+            <div class="ios-large-title">${t2.nav_memberships}</div>
+        </div>
+
+        <div style="padding: 0 1.2rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.pending_payments}</span>
+            <button type="button" onclick="fetchAllData()" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px;" title="${t2.refresh_btn}">
+                <i data-lucide="refresh-cw" size="14"></i> ${t2.refresh_btn}
+            </button>
+        </div>
+        <div class="ios-list">
+            ${pending.length > 0 ? pending.map((req) => {
+      const studentName = req.external_student_name || req.students && req.students.name || state.students.find((s) => s.id === req.student_id)?.name || t2.unknown_student;
+      const student = req.student_id ? (state.students || []).find((s) => String(s.id) === String(req.student_id)) : null;
+      const isPtSchool = state.currentSchool?.profile_type === "private_teacher";
+      const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
+      const effective = student ? getEffectiveBalances(student, /* @__PURE__ */ new Date()) : null;
+      const currentClasses = effective ? isPtSchool && !hasDualScanMode ? String(effective.private ?? 0) : effective.groupUnlimited ? "\u221E" : String(effective.group ?? 0) : "\u2014";
+      const latestApprovedTs = req.student_id ? latestApprovedByStudent[String(req.student_id)] : null;
+      const lastApprovedDate = latestApprovedTs ? new Date(latestApprovedTs).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : t2.memberships_never_approved || "Never";
+      const payActionId = state.paymentRequestActionId;
+      const payActionStatus = state.paymentRequestActionStatus;
+      const isThisProcessing = payActionId === req.id;
+      const isApproving = isThisProcessing && payActionStatus === "approved";
+      const isRejecting = isThisProcessing && payActionStatus === "rejected";
+      const payLoading = isApproving || isRejecting;
+      return `
+                    <div class="ios-list-item ${payLoading ? "admin-reg-request-card-loading" : ""}" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <div style="width: 40px; height: 40px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-secondary);">
+                                ${escapeHtml2(studentName).charAt(0).toUpperCase()}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 17px;">${escapeHtml2(studentName)}</div>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml2(req.sub_name)} \u2022 ${formatPrice(req.price, state.currentSchool?.currency || "MXN")}</div>
+                                    <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                                        <i data-lucide="${req.payment_method === "cash" ? "banknote" : "send"}" size="10"></i> ${t2[req.payment_method] || req.payment_method}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--system-gray6); border-radius: 10px; padding: 10px 12px;">
+                            <div style="min-width: 0;">
+                                <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t2.memberships_current_classes || "Current classes"}</div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${currentClasses}</div>
+                            </div>
+                            <div style="min-width: 0;">
+                                <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t2.memberships_last_approved_date || "Last approved"}</div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${lastApprovedDate}</div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            ${payLoading ? `<span class="admin-reg-request-loading" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px;"><i data-lucide="loader-2" size="16" class="spin"></i> ${isApproving ? t2.aure_accepting || "Accepting\u2026" : t2.aure_rejecting || "Rejecting\u2026"}</span>` : `
+                            <button class="btn-secondary" onclick="processPaymentRequest(${req.id}, 'rejected')" style="background: rgba(255, 59, 48, 0.1); color: var(--system-red); border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                                ${t2.reject}
+                            </button>
+                            <button class="btn-primary" onclick="processPaymentRequest(${req.id}, 'approved')" style="background: var(--system-green); color: white; border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                                ${t2.approve}
+                            </button>`}
+                        </div>
+                    </div>
+                `;
+    }).join("") : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2.5rem; flex-direction: column; gap: 12px;">
+                <i data-lucide="check-circle" size="32" style="opacity: 0.2;"></i>
+                <span style="font-size: 15px; font-weight: 500; opacity: 0.6;">${t2.no_pending_msg}</span>
+            </div>`}
+        </div>
+    `;
+  }
+  function renderAdminRevenue(t2) {
+    const now = /* @__PURE__ */ new Date();
+    const allTime = !!state.adminRevenueAllTime;
+    const settingsSchoolRev = state.schools && state.currentSchool?.id && state.schools.find((s) => s.id === state.currentSchool.id) || state.currentSchool;
+    const isPTRev = settingsSchoolRev?.profile_type === "private_teacher";
+    const hasDualRev = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
+    const hasEventsRev = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
+    const hasPrivateInPlanRev = (s) => s.limit_count_private != null && s.limit_count_private > 0;
+    const hasEventsInPlanRev = (s) => s.limit_count_events != null && s.limit_count_events > 0;
+    let revenueSubs = (state.subscriptions || []).filter((s) => {
+      if (!hasEventsRev && hasEventsInPlanRev(s)) return false;
+      if (!isPTRev && !hasDualRev && hasPrivateInPlanRev(s)) return false;
+      return true;
+    });
+    const seenRevNames = /* @__PURE__ */ new Set();
+    revenueSubs = revenueSubs.filter((s) => {
+      const k = String(s.name || "").trim().toLowerCase();
+      if (!k || seenRevNames.has(k)) return false;
+      seenRevNames.add(k);
+      return true;
+    });
+    let pkgFilter = state.adminRevenuePackageFilter;
+    if (pkgFilter && !revenueSubs.some((s) => String(s.name || "").trim() === String(pkgFilter).trim())) {
+      state.adminRevenuePackageFilter = null;
+      pkgFilter = null;
+    }
+    let defaultStart;
+    let defaultEnd;
+    let dateStart;
+    let dateEnd;
+    if (allTime) {
+      defaultStart = "";
+      defaultEnd = "";
+      dateStart = /* @__PURE__ */ new Date(0);
+      dateEnd = /* @__PURE__ */ new Date();
+      dateEnd.setHours(23, 59, 59, 999);
+    } else {
+      defaultStart = state.adminRevenueDateStart || window.formatClassDate(new Date(now.getFullYear(), now.getMonth(), 1));
+      defaultEnd = state.adminRevenueDateEnd || window.formatClassDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+      dateStart = state.adminRevenueDateStart ? /* @__PURE__ */ new Date(state.adminRevenueDateStart + "T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
+      dateEnd = state.adminRevenueDateEnd ? /* @__PURE__ */ new Date(state.adminRevenueDateEnd + "T23:59:59.999") : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
+    const statusFilter = state.adminRevenueStatusFilter;
+    const methodFilter = state.adminRevenueMethodFilter;
+    let filteredPayments = [...state.paymentRequests || []];
+    filteredPayments = filteredPayments.filter((r) => {
+      const d = new Date(r.created_at);
+      if (d < dateStart || d > dateEnd) return false;
+      if (pkgFilter && (r.sub_name || "").toLowerCase().trim() !== String(pkgFilter).toLowerCase().trim()) return false;
+      if (statusFilter && r.status !== statusFilter) return false;
+      if (methodFilter && r.payment_method !== methodFilter) return false;
+      return true;
+    });
+    filteredPayments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const periodTotal = filteredPayments.filter((r) => r.status === "approved").reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+    const totalHistorical = (state.paymentRequests || []).filter((r) => r.status === "approved").reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+    const isCurrentMonth = !allTime && !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
+    const revenueSummaryTitle = allTime ? t2.revenue_total_all_time || "All-time total" : isCurrentMonth && !pkgFilter ? t2.monthly_total || "This Month Total" : t2.period_total || "Total for period";
+    return `
+        <div class="ios-header admin-revenue-header" style="background: transparent;">
+            <div class="admin-revenue-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <div class="ios-large-title">${t2.nav_revenue}</div>
+                <button
+                    type="button"
+                    class="btn-primary admin-revenue-add-btn"
+                    onclick="window.openManualPaymentModal()"
+                    style="padding: 0.55rem 1.1rem; font-size: 13px; font-weight: 650; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); white-space: nowrap;"
+                >
+                    <i data-lucide="plus" size="16"></i>
+                    <span>${t2.add_manual_payment || "Add manual payment"}</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="revenue-filters-expandable ${state.adminRevenueFiltersExpanded ? "expanded" : ""}" style="margin: 0 1.2rem; border-bottom: 1px solid var(--border);">
+            <div class="revenue-filters-header" onclick="toggleExpandableNoRender('revenueFilters')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
+                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.filters_label || "Filters"}</span>
+                <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+            </div>
+            <div id="revenue-filters-content" style="display: ${state.adminRevenueFiltersExpanded ? "" : "none"}; padding-bottom: 12px;">
+                <div class="filter-bar">
+                    <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateStart=this.value||null; renderView();">
+                    <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateEnd=this.value||null; renderView();">
+                    <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueAllTime=false; state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
+                        <i data-lucide="calendar" size="14"></i> ${t2.filter_this_month || "This Month"}
+                    </button>
+                    <button type="button" class="filter-btn" onclick="state.adminRevenueAllTime=true; state.adminRevenueDateStart=null; state.adminRevenueDateEnd=null; renderView();">
+                        <i data-lucide="infinity" size="14"></i> ${t2.filter_all_time || "All time"}
+                    </button>
+                </div>
+                <div class="filter-bar">
+                    <span class="filter-select-wrap">
+                        <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
+                            <option value="">${t2.filter_all || "All"} ${(t2.filter_package_type || "packages").toLowerCase()}</option>
+                            ${revenueSubs.map((sub) => `<option value="${(sub.name || "").replace(/"/g, "&quot;")}" ${String(pkgFilter || "").trim() === String(sub.name || "").trim() ? "selected" : ""}>${(sub.name || "").replace(/</g, "&lt;")}</option>`).join("")}
+                        </select>
+                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                    </span>
+                    <span class="filter-select-wrap">
+                        <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
+                            <option value="" ${!statusFilter ? "selected" : ""}>${t2.filter_all || "All"} ${(t2.filter_status || "status").toLowerCase()}</option>
+                            <option value="approved" ${statusFilter === "approved" ? "selected" : ""}>${t2.approved}</option>
+                            <option value="rejected" ${statusFilter === "rejected" ? "selected" : ""}>${t2.rejected}</option>
+                            <option value="pending" ${statusFilter === "pending" ? "selected" : ""}>${t2.pending}</option>
+                        </select>
+                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                    </span>
+                    <span class="filter-select-wrap">
+                        <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
+                            <option value="" ${!methodFilter ? "selected" : ""}>${t2.filter_all || "All"} ${(t2.filter_method || "method").toLowerCase()}</option>
+                            <option value="transfer" ${methodFilter === "transfer" ? "selected" : ""}>${t2.transfer}</option>
+                            <option value="cash" ${methodFilter === "cash" ? "selected" : ""}>${t2.cash}</option>
+                        </select>
+                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
+                    </span>
+                    <span class="filter-count">${(t2.filter_result_payments || "{count} payments").replace("{count}", filteredPayments.length)}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-revenue-page">
+        <div class="admin-revenue-summary-wrap" style="padding: 0 1.2rem; margin-bottom: 2rem;">
+            <div class="admin-revenue-summary-card" style="background: var(--text-primary); padding: 2rem; border-radius: 24px; color: var(--bg-body); box-shadow: 0 15px 35px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+                <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${revenueSummaryTitle}</div>
+                <div class="admin-revenue-summary-total" style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(periodTotal, state.currentSchool?.currency || "MXN")}</div>
+
+                <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
+                    <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">${t2.historical_total_label}: ${formatPrice(totalHistorical, state.currentSchool?.currency || "MXN")} </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-revenue-list-label" style="padding: 0 1.2rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+            ${t2.all_payments}
+        </div>
+        <div class="ios-list admin-revenue-list">
+            ${state.loading && state.paymentRequests.length === 0 ? `
+                <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                    <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
+                    <p style="font-size: 15px; font-weight: 500;">${t2.loading || "Loading..."}</p>
+                </div>
+            ` : filteredPayments.length > 0 ? filteredPayments.map((req) => {
+      const studentName = req.external_student_name || req.students && req.students.name || state.students.find((s) => s.id === req.student_id)?.name || t2.unknown_student;
+      const statusColor = req.status === "approved" ? "var(--system-green)" : req.status === "rejected" ? "var(--system-red)" : "var(--system-blue)";
+      const statusLabel = t2[req.status] || req.status;
+      return `
+                    <div class="ios-list-item admin-revenue-item" style="padding: 16px; align-items: center;">
+                        <div class="admin-revenue-item-main" style="flex: 1;">
+                            <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${escapeHtml2(studentName)}</div>
+                            <div class="admin-revenue-item-meta" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                                ${escapeHtml2(req.sub_name)} \u2022 ${new Date(req.created_at).toLocaleDateString()}
+                                <span style="font-size: 9px; opacity: 0.6; text-transform: uppercase; font-weight: 700; background: var(--system-gray6); padding: 1px 6px; border-radius: 4px;">${t2[req.payment_method] || req.payment_method}</span>
+                            </div>
+                        </div>
+                        <div class="admin-revenue-item-amount-wrap" style="text-align: right; margin-right: 12px;">
+                            <div class="admin-revenue-item-amount" style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">${formatPrice(req.price, state.currentSchool?.currency || "MXN")}</div>
+                            <div style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; letter-spacing: 0.02em;">${statusLabel}</div>
+                        </div>
+                        <button onclick="window.removePaymentRequest('${req.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6;" title="${t2.delete_payment_confirm || "Delete"}">
+                            <i data-lucide="trash-2" size="18"></i>
+                        </button>
+                    </div>
+                `;
+    }).join("") : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">${t2.no_data_msg}</div>`}
+        </div>
+        </div>
+    `;
+  }
+
   // src/legacy.js
-  var CALENDLY_FEATURE_ENABLED2 = false;
   async function postEdgeFunction(functionName, accessToken, jsonBody) {
     const base = (SUPABASE_URL || "").replace(/\/$/, "");
     const key = SUPABASE_KEY || "";
@@ -8312,7 +8585,7 @@
           const daySchedules = state._teacherBookingSlots || [];
           const t22 = DANCE_LOCALES[state.language || "en"];
           const hasPackage = typeof window.studentHasPackageWithSchool === "function" ? window.studentHasPackageWithSchool(school.id) : true;
-          const useCalendlyForBooking = !CALENDLY_FEATURE_ENABLED2 ? false : state.adminSettings?.use_calendly_for_booking === "true" || state.adminSettings?.use_calendly_for_booking !== "false" && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
+          const useCalendlyForBooking = !CALENDLY_FEATURE_ENABLED ? false : state.adminSettings?.use_calendly_for_booking === "true" || state.adminSettings?.use_calendly_for_booking !== "false" && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
           const myLessons = (state.studentPrivateLessons || []).filter((l) => l.status === "confirmed" || l.status === "attended").sort((a, b) => new Date(a.start_at_utc).getTime() - new Date(b.start_at_utc).getTime());
           const myClassesFallback = (state.studentPrivateClassRequests || []).filter((r) => r.status === "accepted");
           const myClasses = myLessons.length > 0 ? myLessons : myClassesFallback;
@@ -8561,7 +8834,7 @@
                 </div>
             </div>
             `;
-          const useCalendlyEmbed = !CALENDLY_FEATURE_ENABLED2 ? false : (state.adminSettings?.use_calendly_for_booking === "true" || state.adminSettings?.use_calendly_for_booking !== "false" && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url)) && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
+          const useCalendlyEmbed = !CALENDLY_FEATURE_ENABLED ? false : (state.adminSettings?.use_calendly_for_booking === "true" || state.adminSettings?.use_calendly_for_booking !== "false" && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url)) && !!(state.teacherCalendlySelectionForBooking && state.teacherCalendlySelectionForBooking.scheduling_url);
           const needsLoad = !state._teacherBookingSlots?.length || state._teacherBookingLoadedWeek !== (state._teacherBookingWeekStart || "");
           const hasPkg = typeof window.studentHasPackageWithSchool === "function" ? window.studentHasPackageWithSchool(state.currentSchool?.id) : true;
           if (state.currentSchool?.id && state.currentSchool?.profile_type === "private_teacher" && supabaseClient && needsLoad && hasPkg && !useCalendlyEmbed) {
@@ -9708,7 +9981,7 @@
                         ` : ""}
                     </div>
                 </div>
-                ${state.currentSchool?.profile_type === "private_teacher" && (!CALENDLY_FEATURE_ENABLED2 || state.adminSettings?.use_calendly_for_booking === "false") ? (() => {
+                ${state.currentSchool?.profile_type === "private_teacher" && (!CALENDLY_FEATURE_ENABLED || state.adminSettings?.use_calendly_for_booking === "false") ? (() => {
           const allRequests = state.privateClassRequests || [];
           const pendingRequests = allRequests.filter((r) => r.status === "pending");
           const durationLabel = (mins) => mins === 60 ? "1h" : mins === 90 ? "1.5h" : mins === 120 ? "2h" : mins === 30 ? "30 min" : mins === 45 ? "45 min" : mins != null ? mins + " min" : "";
@@ -10206,254 +10479,9 @@
             </div>
         `;
       } else if (view === "admin-memberships") {
-        const pending = state.paymentRequests.filter((r) => r.status === "pending");
-        const latestApprovedByStudent = (state.paymentRequests || []).reduce((acc, r) => {
-          if (r.status !== "approved" || !r.student_id || !r.created_at) return acc;
-          const key = String(r.student_id);
-          const ts = Date.parse(r.created_at);
-          if (!Number.isFinite(ts)) return acc;
-          if (!acc[key] || ts > acc[key]) acc[key] = ts;
-          return acc;
-        }, {});
-        html += `
-            <div class="ios-header" style="background: transparent;">
-                <div class="ios-large-title">${t2.nav_memberships}</div>
-            </div>
-            
-            <div style="padding: 0 1.2rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.pending_payments}</span>
-                <button type="button" onclick="fetchAllData()" style="background: var(--system-gray6); border: none; border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px;" title="${t2.refresh_btn}">
-                    <i data-lucide="refresh-cw" size="14"></i> ${t2.refresh_btn}
-                </button>
-            </div>
-            <div class="ios-list">
-                ${pending.length > 0 ? pending.map((req) => {
-          const studentName = req.external_student_name || req.students && req.students.name || state.students.find((s) => s.id === req.student_id)?.name || t2.unknown_student;
-          const student = req.student_id ? (state.students || []).find((s) => String(s.id) === String(req.student_id)) : null;
-          const isPtSchool = state.currentSchool?.profile_type === "private_teacher";
-          const hasDualScanMode = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
-          const effective = student ? getEffectiveBalances(student, /* @__PURE__ */ new Date()) : null;
-          const currentClasses = effective ? isPtSchool && !hasDualScanMode ? String(effective.private ?? 0) : effective.groupUnlimited ? "\u221E" : String(effective.group ?? 0) : "\u2014";
-          const latestApprovedTs = req.student_id ? latestApprovedByStudent[String(req.student_id)] : null;
-          const lastApprovedDate = latestApprovedTs ? new Date(latestApprovedTs).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : t2.memberships_never_approved || "Never";
-          const payActionId = state.paymentRequestActionId;
-          const payActionStatus = state.paymentRequestActionStatus;
-          const isThisProcessing = payActionId === req.id;
-          const isApproving = isThisProcessing && payActionStatus === "approved";
-          const isRejecting = isThisProcessing && payActionStatus === "rejected";
-          const payLoading = isApproving || isRejecting;
-          return `
-                        <div class="ios-list-item ${payLoading ? "admin-reg-request-card-loading" : ""}" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
-                            <div style="display: flex; gap: 12px; align-items: center;">
-                                <div style="width: 40px; height: 40px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-secondary);">
-                                    ${escapeHtml(studentName).charAt(0).toUpperCase()}
-                                </div>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; font-size: 17px;">${escapeHtml(studentName)}</div>
-                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                        <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(req.sub_name)} \u2022 ${formatPrice(req.price, state.currentSchool?.currency || "MXN")}</div>
-                                        <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
-                                            <i data-lucide="${req.payment_method === "cash" ? "banknote" : "send"}" size="10"></i> ${t2[req.payment_method] || req.payment_method}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--system-gray6); border-radius: 10px; padding: 10px 12px;">
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t2.memberships_current_classes || "Current classes"}</div>
-                                    <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${currentClasses}</div>
-                                </div>
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t2.memberships_last_approved_date || "Last approved"}</div>
-                                    <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${lastApprovedDate}</div>
-                                </div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                ${payLoading ? `<span class="admin-reg-request-loading" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px;"><i data-lucide="loader-2" size="16" class="spin"></i> ${isApproving ? t2.aure_accepting || "Accepting\u2026" : t2.aure_rejecting || "Rejecting\u2026"}</span>` : `
-                                <button class="btn-secondary" onclick="processPaymentRequest(${req.id}, 'rejected')" style="background: rgba(255, 59, 48, 0.1); color: var(--system-red); border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
-                                    ${t2.reject}
-                                </button>
-                                <button class="btn-primary" onclick="processPaymentRequest(${req.id}, 'approved')" style="background: var(--system-green); color: white; border-radius: 12px; border: none; font-size: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%;">
-                                    ${t2.approve}
-                                </button>`}
-                            </div>
-                        </div>
-                    `;
-        }).join("") : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2.5rem; flex-direction: column; gap: 12px;">
-                    <i data-lucide="check-circle" size="32" style="opacity: 0.2;"></i>
-                    <span style="font-size: 15px; font-weight: 500; opacity: 0.6;">${t2.no_pending_msg}</span>
-                </div>`}
-            </div>
-        `;
+        html += renderAdminMemberships(t2);
       } else if (view === "admin-revenue") {
-        const now = /* @__PURE__ */ new Date();
-        const allTime = !!state.adminRevenueAllTime;
-        const settingsSchoolRev = state.schools && state.currentSchool?.id && state.schools.find((s) => s.id === state.currentSchool.id) || state.currentSchool;
-        const isPTRev = settingsSchoolRev?.profile_type === "private_teacher";
-        const hasDualRev = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
-        const hasEventsRev = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
-        const hasPrivateInPlanRev = (s) => s.limit_count_private != null && s.limit_count_private > 0;
-        const hasEventsInPlanRev = (s) => s.limit_count_events != null && s.limit_count_events > 0;
-        let revenueSubs = (state.subscriptions || []).filter((s) => {
-          if (!hasEventsRev && hasEventsInPlanRev(s)) return false;
-          if (!isPTRev && !hasDualRev && hasPrivateInPlanRev(s)) return false;
-          return true;
-        });
-        const seenRevNames = /* @__PURE__ */ new Set();
-        revenueSubs = revenueSubs.filter((s) => {
-          const k = String(s.name || "").trim().toLowerCase();
-          if (!k || seenRevNames.has(k)) return false;
-          seenRevNames.add(k);
-          return true;
-        });
-        let pkgFilter = state.adminRevenuePackageFilter;
-        if (pkgFilter && !revenueSubs.some((s) => String(s.name || "").trim() === String(pkgFilter).trim())) {
-          state.adminRevenuePackageFilter = null;
-          pkgFilter = null;
-        }
-        let defaultStart;
-        let defaultEnd;
-        let dateStart;
-        let dateEnd;
-        if (allTime) {
-          defaultStart = "";
-          defaultEnd = "";
-          dateStart = /* @__PURE__ */ new Date(0);
-          dateEnd = /* @__PURE__ */ new Date();
-          dateEnd.setHours(23, 59, 59, 999);
-        } else {
-          defaultStart = state.adminRevenueDateStart || window.formatClassDate(new Date(now.getFullYear(), now.getMonth(), 1));
-          defaultEnd = state.adminRevenueDateEnd || window.formatClassDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-          dateStart = state.adminRevenueDateStart ? /* @__PURE__ */ new Date(state.adminRevenueDateStart + "T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
-          dateEnd = state.adminRevenueDateEnd ? /* @__PURE__ */ new Date(state.adminRevenueDateEnd + "T23:59:59.999") : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        }
-        const statusFilter = state.adminRevenueStatusFilter;
-        const methodFilter = state.adminRevenueMethodFilter;
-        let filteredPayments = [...state.paymentRequests || []];
-        filteredPayments = filteredPayments.filter((r) => {
-          const d = new Date(r.created_at);
-          if (d < dateStart || d > dateEnd) return false;
-          if (pkgFilter && (r.sub_name || "").toLowerCase().trim() !== String(pkgFilter).toLowerCase().trim()) return false;
-          if (statusFilter && r.status !== statusFilter) return false;
-          if (methodFilter && r.payment_method !== methodFilter) return false;
-          return true;
-        });
-        filteredPayments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        const periodTotal = filteredPayments.filter((r) => r.status === "approved").reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
-        const totalHistorical = (state.paymentRequests || []).filter((r) => r.status === "approved").reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
-        const isCurrentMonth = !allTime && !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
-        const revenueSummaryTitle = allTime ? t2.revenue_total_all_time || "All-time total" : isCurrentMonth && !pkgFilter ? t2.monthly_total || "This Month Total" : t2.period_total || "Total for period";
-        html += `
-            <div class="ios-header admin-revenue-header" style="background: transparent;">
-                <div class="admin-revenue-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                    <div class="ios-large-title">${t2.nav_revenue}</div>
-                    <button
-                        type="button"
-                        class="btn-primary admin-revenue-add-btn"
-                        onclick="window.openManualPaymentModal()"
-                        style="padding: 0.55rem 1.1rem; font-size: 13px; font-weight: 650; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); white-space: nowrap;"
-                    >
-                        <i data-lucide="plus" size="16"></i>
-                        <span>${t2.add_manual_payment || "Add manual payment"}</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="revenue-filters-expandable ${state.adminRevenueFiltersExpanded ? "expanded" : ""}" style="margin: 0 1.2rem; border-bottom: 1px solid var(--border);">
-                <div class="revenue-filters-header" onclick="toggleExpandableNoRender('revenueFilters')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
-                    <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t2.filters_label || "Filters"}</span>
-                    <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
-                </div>
-                <div id="revenue-filters-content" style="display: ${state.adminRevenueFiltersExpanded ? "" : "none"}; padding-bottom: 12px;">
-                    <div class="filter-bar">
-                        <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateStart=this.value||null; renderView();">
-                        <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateEnd=this.value||null; renderView();">
-                        <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueAllTime=false; state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
-                            <i data-lucide="calendar" size="14"></i> ${t2.filter_this_month || "This Month"}
-                        </button>
-                        <button type="button" class="filter-btn" onclick="state.adminRevenueAllTime=true; state.adminRevenueDateStart=null; state.adminRevenueDateEnd=null; renderView();">
-                            <i data-lucide="infinity" size="14"></i> ${t2.filter_all_time || "All time"}
-                        </button>
-                    </div>
-                    <div class="filter-bar">
-                        <span class="filter-select-wrap">
-                            <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
-                                <option value="">${t2.filter_all || "All"} ${(t2.filter_package_type || "packages").toLowerCase()}</option>
-                                ${revenueSubs.map((sub) => `<option value="${(sub.name || "").replace(/"/g, "&quot;")}" ${String(pkgFilter || "").trim() === String(sub.name || "").trim() ? "selected" : ""}>${(sub.name || "").replace(/</g, "&lt;")}</option>`).join("")}
-                            </select>
-                            <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                        </span>
-                        <span class="filter-select-wrap">
-                            <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
-                                <option value="" ${!statusFilter ? "selected" : ""}>${t2.filter_all || "All"} ${(t2.filter_status || "status").toLowerCase()}</option>
-                                <option value="approved" ${statusFilter === "approved" ? "selected" : ""}>${t2.approved}</option>
-                                <option value="rejected" ${statusFilter === "rejected" ? "selected" : ""}>${t2.rejected}</option>
-                                <option value="pending" ${statusFilter === "pending" ? "selected" : ""}>${t2.pending}</option>
-                            </select>
-                            <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                        </span>
-                        <span class="filter-select-wrap">
-                            <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
-                                <option value="" ${!methodFilter ? "selected" : ""}>${t2.filter_all || "All"} ${(t2.filter_method || "method").toLowerCase()}</option>
-                                <option value="transfer" ${methodFilter === "transfer" ? "selected" : ""}>${t2.transfer}</option>
-                                <option value="cash" ${methodFilter === "cash" ? "selected" : ""}>${t2.cash}</option>
-                            </select>
-                            <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                        </span>
-                        <span class="filter-count">${(t2.filter_result_payments || "{count} payments").replace("{count}", filteredPayments.length)}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="admin-revenue-page">
-            <div class="admin-revenue-summary-wrap" style="padding: 0 1.2rem; margin-bottom: 2rem;">
-                <div class="admin-revenue-summary-card" style="background: var(--text-primary); padding: 2rem; border-radius: 24px; color: var(--bg-body); box-shadow: 0 15px 35px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
-                    <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${revenueSummaryTitle}</div>
-                    <div class="admin-revenue-summary-total" style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(periodTotal, state.currentSchool?.currency || "MXN")}</div>
-                    
-                    <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
-                        <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">${t2.historical_total_label}: ${formatPrice(totalHistorical, state.currentSchool?.currency || "MXN")} </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="admin-revenue-list-label" style="padding: 0 1.2rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
-                ${t2.all_payments}
-            </div>
-            <div class="ios-list admin-revenue-list">
-                ${state.loading && state.paymentRequests.length === 0 ? `
-                    <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
-                        <div class="spin" style="margin-bottom: 1rem; color: var(--system-blue);"><i data-lucide="loader-2" size="32"></i></div>
-                        <p style="font-size: 15px; font-weight: 500;">${t2.loading || "Loading..."}</p>
-                    </div>
-                ` : filteredPayments.length > 0 ? filteredPayments.map((req) => {
-          const studentName = req.external_student_name || req.students && req.students.name || state.students.find((s) => s.id === req.student_id)?.name || t2.unknown_student;
-          const statusColor = req.status === "approved" ? "var(--system-green)" : req.status === "rejected" ? "var(--system-red)" : "var(--system-blue)";
-          const statusLabel = t2[req.status] || req.status;
-          return `
-                        <div class="ios-list-item admin-revenue-item" style="padding: 16px; align-items: center;">
-                            <div class="admin-revenue-item-main" style="flex: 1;">
-                                <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${escapeHtml(studentName)}</div>
-                                <div class="admin-revenue-item-meta" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-                                    ${escapeHtml(req.sub_name)} \u2022 ${new Date(req.created_at).toLocaleDateString()}
-                                    <span style="font-size: 9px; opacity: 0.6; text-transform: uppercase; font-weight: 700; background: var(--system-gray6); padding: 1px 6px; border-radius: 4px;">${t2[req.payment_method] || req.payment_method}</span>
-                                </div>
-                            </div>
-                            <div class="admin-revenue-item-amount-wrap" style="text-align: right; margin-right: 12px;">
-                                <div class="admin-revenue-item-amount" style="font-weight: 700; font-size: 17px; margin-bottom: 4px;">${formatPrice(req.price, state.currentSchool?.currency || "MXN")}</div>
-                                <div style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; letter-spacing: 0.02em;">${statusLabel}</div>
-                            </div>
-                            <button onclick="window.removePaymentRequest('${req.id}')" style="background: none; border: none; color: var(--system-red); padding: 8px; opacity: 0.6;" title="${t2.delete_payment_confirm || "Delete"}">
-                                <i data-lucide="trash-2" size="18"></i>
-                            </button>
-                        </div>
-                    `;
-        }).join("") : `<div class="ios-list-item" style="color: var(--text-secondary); text-align: center; justify-content: center; padding: 2rem;">${t2.no_data_msg}</div>`}
-            </div>
-            </div>
-        `;
+        html += renderAdminRevenue(t2);
       } else if (view === "admin-scanner") {
         html += `
             <div class="ios-header">
@@ -10615,7 +10643,7 @@
                     </div>
                 </div>
             </div>
-            ${CALENDLY_FEATURE_ENABLED2 ? `
+            ${CALENDLY_FEATURE_ENABLED ? `
             <!-- CALENDLY -->
             <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
                 ${t2.calendly_title || "Calendly"}
@@ -11607,7 +11635,7 @@
       }
     } catch (e) {
       console.error("Render error:", e);
-      if (root) root.innerHTML = '<div class="container" style="padding:2rem;text-align:center;"><p style="color:var(--text-muted);">Something went wrong. <a href="#" onclick="location.reload()" style="color:var(--text-primary); text-decoration:none; font-weight:600;">Reload</a>.</p></div>';
+      if (root) root.innerHTML = '<div class="container" style="padding:2rem;text-align:center;"><p style="color:var(--text-muted);">Something went wrong \u2014 <a href="#" onclick="location.reload()" style="color:var(--text-primary); text-decoration:none; font-weight:600;">tap to reload</a>.</p></div>';
       const lucideLib = window.lucide || typeof globalThis !== "undefined" && globalThis.lucide;
       if (lucideLib && typeof lucideLib.createIcons === "function") lucideLib.createIcons();
     }
@@ -17923,7 +17951,6 @@ School: ${schoolName}`)) return;
   };
 
   // src/main.js
-  var CALENDLY_FEATURE_ENABLED3 = false;
   var SCHOOL_THEME_BY_ID = {
     [AURE_SCHOOL_ID]: "aure"
   };
@@ -18413,7 +18440,7 @@ School: ${schoolName}`)) return;
         window.fetchAllData().then(() => {
           window.renderView();
           if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
-          if (CALENDLY_FEATURE_ENABLED3 && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
+          if (CALENDLY_FEATURE_ENABLED && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
         });
       }
       if (saved.currentView && saved.currentView.startsWith("admin-competition") && !window.location.hash) {
@@ -18458,7 +18485,7 @@ School: ${schoolName}`)) return;
       window.renderView();
       window.scrollTo(0, 0);
       if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
-      if (CALENDLY_FEATURE_ENABLED3 && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
+      if (CALENDLY_FEATURE_ENABLED && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
       window.addEventListener("popstate", () => {
         const path2 = (window.location.pathname || "").replace(/\/$/, "") || "/";
         if (path2 === "/discovery" || path2.startsWith("/discovery/")) {
@@ -18481,12 +18508,12 @@ School: ${schoolName}`)) return;
             window.fetchAllData().then(() => {
               window.renderView();
               window.scrollTo(0, 0);
-              if (CALENDLY_FEATURE_ENABLED3 && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
+              if (CALENDLY_FEATURE_ENABLED && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
             });
           } else {
             window.renderView();
             window.scrollTo(0, 0);
-            if (CALENDLY_FEATURE_ENABLED3 && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
+            if (CALENDLY_FEATURE_ENABLED && state.currentView === "admin-settings" && state.calendlyConnected && (!state.calendlyEventTypesList || !state.calendlyEventTypesList.length) && typeof window.loadCalendlyEventTypes === "function") window.loadCalendlyEventTypes();
           }
           if (state.currentView === "admin-competition-jack-and-jill" && state.competitionTab === "registrations" && state.competitionId && supabaseClient) {
             state.currentCompetition = (state.competitions || []).find((c) => c.id === state.competitionId || String(c.id) === String(state.competitionId)) || null;
