@@ -395,6 +395,10 @@
         return false;
       }
       const schoolId = segments[2];
+      if (!state.isPlatformDev && state.currentUser?.school_id && state.currentUser.school_id !== schoolId) {
+        if (typeof window !== "undefined") window.location.hash = "";
+        return false;
+      }
       const competitionId = segments[5] || null;
       state.competitionSchoolId = schoolId;
       state.competitionId = competitionId;

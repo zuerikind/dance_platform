@@ -70,6 +70,13 @@ export function parseHashRoute() {
             return false;
         }
         const schoolId = segments[2];
+        // Guard: a logged-in admin can only access their own school's competition routes.
+        // Platform devs bypass this. Unauthenticated users (null currentUser) pass through
+        // and will receive empty data from RLS-protected RPCs — no state is mutated here for them.
+        if (!state.isPlatformDev && state.currentUser?.school_id && state.currentUser.school_id !== schoolId) {
+            if (typeof window !== 'undefined') window.location.hash = '';
+            return false;
+        }
         const competitionId = segments[5] || null;
         state.competitionSchoolId = schoolId;
         state.competitionId = competitionId;

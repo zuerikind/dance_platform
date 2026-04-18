@@ -45,3 +45,8 @@ verify_jwt = false
 # signature verification inside the function.
 [functions.stripe-webhook]
 verify_jwt = false
+
+# calendly-webhook is called by Calendly (no Supabase JWT). Auth is via CALENDLY_WEBHOOK_SECRET
+# signature verification inside the function. Secret is required — see index.ts.
+[functions.calendly-webhook]
+verify_jwt = false

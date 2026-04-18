@@ -1,5 +1,5 @@
 // Calendly webhook: invitee.created (create booking, idempotent deduct) and invitee.canceled (cancel, idempotent refund).
-// POST only. Optional: verify Calendly-Callback-Signature or shared secret header.
+// POST only. Required: verify shared secret via CALENDLY_WEBHOOK_SECRET env var.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -40,17 +40,22 @@ Deno.serve(async (req) => {
     const secret =
       Deno.env.get('CALENDLY_WEBHOOK_SHARED_SECRET') ||
       Deno.env.get('CALENDLY_WEBHOOK_SECRET');
-    if (secret) {
-      const provided =
-        req.headers.get('x-bailadmin-secret') ||
-        req.headers.get('calendly-webhook-secret') ||
-        req.headers.get('x-calendly-webhook-secret');
-      if (provided !== secret) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    if (!secret) {
+      console.error('calendly-webhook: CALENDLY_WEBHOOK_SECRET is not configured — request rejected');
+      return new Response(JSON.stringify({ error: 'Webhook secret not configured on server' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const provided =
+      req.headers.get('x-bailadmin-secret') ||
+      req.headers.get('calendly-webhook-secret') ||
+      req.headers.get('x-calendly-webhook-secret');
+    if (provided !== secret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const body = (await req.json().catch(() => null)) as WebhookPayload | null;
