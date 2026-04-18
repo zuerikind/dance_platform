@@ -35,7 +35,7 @@
     "Other": []
   };
   var DISCOVERY_COUNTRIES = Object.keys(DISCOVERY_COUNTRIES_CITIES).sort();
-  function escapeHtml2(str) {
+  function escapeHtml(str) {
     if (str == null) return "";
     const s = String(str);
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -1320,24 +1320,24 @@
                 <div style="margin-bottom: ${hasDualScanMode ? "0.75rem" : "0"};">
                     ${hasDualScanMode ? `<div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">${t2("deduct_group_classes") || "Deduct group classes"}</div>` : ""}
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
-                        <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
-                        <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
+                        <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
+                        <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 2, 'group')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
                         <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t2("custom_classes_label")}:</label>
                         <input type="number" id="scan-custom-count-group" min="1" max="${maxDeductGroup}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml2(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
+                        <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-group'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml(student.id)}', n, 'group'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
                     </div>
                 </div>` : "";
     const privateDeductInner = `
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
-                            <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
-                            <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 2, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
+                            <button class="btn-primary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("one_class")}</button>
+                            <button class="btn-secondary" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 2, 'private')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("two_classes")}</button>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem;">
                             <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">${t2("custom_classes_label")}:</label>
                             <input type="number" id="scan-custom-count-private" min="1" max="${maxDeductPrivate}" placeholder="0" style="flex:1; max-width: 70px; padding: 0.4rem 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" inputmode="numeric">
-                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml2(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
+                            <button class="btn-primary" onclick="var el = document.getElementById('scan-custom-count-private'); var n = parseInt(el && el.value ? el.value : 0, 10); if (n >= 1) window.confirmAttendance('${escapeHtml(student.id)}', n, 'private'); else alert(window.t('deduct_invalid_amount'));" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">${t2("deduct_btn")}</button>
                         </div>`;
     const privateRowPrimary = isPT && !hasDualScanMode && hasPrivateLeft ? `
                 <div style="margin-bottom: 0;">
@@ -1359,13 +1359,13 @@
                         <span class="scan-event-arrow" style="opacity: 0.7; display: inline-block; transition: transform 0.2s;">\u25B6</span> ${t2("deduct_one_event") || "Deduct event"}
                     </summary>
                     <div style="margin-top: 0.4rem;">
-                        <button class="btn-primary w-full" onclick="window.confirmAttendance('${escapeHtml2(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("deduct_one_event") || "Deduct 1 event"}</button>
+                        <button class="btn-primary w-full" onclick="window.confirmAttendance('${escapeHtml(student.id)}', 1, 'event')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;">${t2("deduct_one_event") || "Deduct 1 event"}</button>
                     </div>
                 </details>` : "";
     const privateLessonBlock = includePrivateLessonBlock && todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
       const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
       const checkedIn = l.status === "attended";
-      return !checkedIn && l.status === "confirmed" ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t2("private_lesson") || "Private lesson"} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"}</button></div>` : checkedIn ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
+      return !checkedIn && l.status === "confirmed" ? `<div style="margin-top: 0.5rem;"><div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.25rem;">${t2("private_lesson") || "Private lesson"} ${timeStr}</div><button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"}</button></div>` : checkedIn ? `<div style="margin-top: 0.5rem; background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
     }).join("") : "";
     return { groupRow, privateRowPrimary, privateRow, eventRow, privateLessonBlock };
   }
@@ -1488,7 +1488,7 @@
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <h2 style="color: var(--danger); font-size: 1rem;">${t2("scan_fail")}</h2>
-                <p style="margin-top:0.3rem">${t2("not_found_msg")}: [${escapeHtml2(id.substring(0, 8))}...]</p>
+                <p style="margin-top:0.3rem">${t2("not_found_msg")}: [${escapeHtml(id.substring(0, 8))}...]</p>
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
         `;
@@ -1562,24 +1562,24 @@
     const attendedTodayRegs = todayRegs.filter((r) => r.status === "attended");
     const scanBalanceLabel = isPT && !hasDualScanMode ? `${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : hasDualScanMode ? `${t2("group_classes_remaining") || "Group"}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0} | ${t2("private_classes_remaining") || "Private"}: ${effectivePrivate}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}` : `${t2("remaining_classes")}: ${eff.groupUnlimited ? t2("unlimited") : eff.group ?? student.balance ?? 0}${hasEventsEnabled ? " | " + (t2("events_remaining") || "Events") + ": " + effectiveEvents : ""}`;
     if (actionableRegs.length > 0 && hasValidPass) {
-      const attendedAlreadyHtml = attendedTodayRegs.length > 0 ? `<div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); margin: 0 0 0.4rem;">${escapeHtml2(t2("scanner_already_checked_in_header") || "Already checked in")}</div>${attendedTodayRegs.map((r) => `
+      const attendedAlreadyHtml = attendedTodayRegs.length > 0 ? `<div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); margin: 0 0 0.4rem;">${escapeHtml(t2("scanner_already_checked_in_header") || "Already checked in")}</div>${attendedTodayRegs.map((r) => `
             <div style="background: rgba(52, 199, 89, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 0.55rem 0.75rem; margin-bottom: 0.45rem;">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
-                    <span style="font-size: 0.88rem; font-weight: 600;">${escapeHtml2(r.class_name)} <span class="text-muted">@ ${escapeHtml2(r.class_time)}</span></span>
+                    <span style="font-size: 0.88rem; font-weight: 600;">${escapeHtml(r.class_name)} <span class="text-muted">@ ${escapeHtml(r.class_time)}</span></span>
                 </div>
-                <div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.25rem;">${escapeHtml2(t2("scanner_class_marked_attended") || "Attendance already recorded.")}</div>
+                <div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.25rem;">${escapeHtml(t2("scanner_class_marked_attended") || "Attendance already recorded.")}</div>
             </div>`).join("")}` : "";
       const regsHtml = actionableRegs.map((r) => {
-        const noShowNote = r.status === "no_show" ? `<div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">${escapeHtml2(t2("scanner_no_show_mark_attended") || "Marked absent (charged). Confirm if the student attended \u2014 no extra class will be deducted.")}</div>` : "";
-        const pendingNote = r.status === "pending" ? `<div style="font-size: 0.7rem; color: var(--system-orange); margin-top: 0.35rem;">${escapeHtml2(t2("scanner_pending_mark_attended") || "Pending request. Confirming marks attendance and uses one class from the package.")}</div>` : "";
+        const noShowNote = r.status === "no_show" ? `<div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">${escapeHtml(t2("scanner_no_show_mark_attended") || "Marked absent (charged). Confirm if the student attended \u2014 no extra class will be deducted.")}</div>` : "";
+        const pendingNote = r.status === "pending" ? `<div style="font-size: 0.7rem; color: var(--system-orange); margin-top: 0.35rem;">${escapeHtml(t2("scanner_pending_mark_attended") || "Pending request. Confirming marks attendance and uses one class from the package.")}</div>` : "";
         return `
             <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
                     <i data-lucide="check-circle" size="14" style="color: var(--secondary);"></i>
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--secondary);">${t2("student_registered_for")}</span>
                 </div>
-                <div style="font-size: 0.95rem; font-weight: 600;">${escapeHtml2(r.class_name)} <span class="text-muted">@ ${escapeHtml2(r.class_time)}</span></div>
+                <div style="font-size: 0.95rem; font-weight: 600;">${escapeHtml(r.class_name)} <span class="text-muted">@ ${escapeHtml(r.class_time)}</span></div>
                 ${pendingNote}
                 ${noShowNote}
             </div>
@@ -1599,20 +1599,20 @@
         todaysPrivateLessons
       }, false);
       const regBtnsPerClass = actionableRegs.length > 1 ? actionableRegs.map((r) => `
-            <button class="btn-secondary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml2(r.id)}', '${escapeHtml2(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
-                <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("confirm_attendance_registered")} \u2013 ${escapeHtml2(r.class_name)}
+            <button class="btn-secondary w-full" onclick="window.confirmRegisteredAttendance('${escapeHtml(r.id)}', '${escapeHtml(student.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;">
+                <i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("confirm_attendance_registered")} \u2013 ${escapeHtml(r.class_name)}
             </button>
         `).join("") : "";
-      const perClassSection = actionableRegs.length > 1 ? `<div style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${escapeHtml2(t2("scanner_pick_class_confirm") || "Or confirm for one class only:")}</div>${regBtnsPerClass}` : "";
+      const perClassSection = actionableRegs.length > 1 ? `<div style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin: 0.5rem 0 0.25rem;">${escapeHtml(t2("scanner_pick_class_confirm") || "Or confirm for one class only:")}</div>${regBtnsPerClass}` : "";
       const privateLessonSection = todaysPrivateLessons.length > 0 ? todaysPrivateLessons.map((l) => {
         const timeStr = new Date(l.start_at_utc).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" });
         const checkedIn = l.status === "attended";
-        const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml2(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
+        const checkInBtn = !checkedIn && l.status === "confirmed" ? `<button class="btn-primary w-full" onclick="window.handleScannerPrivateCheckIn('${escapeHtml(l.id)}')" style="padding: 0.5rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.35rem;"><i data-lucide="check" size="14" style="margin-right: 6px;"></i> ${t2("check_in_btn") || "Check in"} \u2013 Private lesson ${timeStr}</button>` : checkedIn ? `<div style="background: rgba(52, 199, 89, 0.1); border: 1px solid var(--secondary); border-radius: 12px; padding: 0.5rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--secondary);"><i data-lucide="check-circle" size="14" style="vertical-align: middle; margin-right: 6px;"></i>${t2("checked_in") || "Checked in"} \u2013 Private lesson ${timeStr}</div>` : "";
         return checkInBtn;
       }).join("") : "";
       resultEl.innerHTML = `
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
-                <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml2(student.name)}</h3>
+                <h3 style="font-size: 0.95rem; margin:0 0 0.4rem;">${escapeHtml(student.name)}</h3>
                 <div style="font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.6rem;">
                     ${scanBalanceLabel}
                 </div>
@@ -1622,12 +1622,12 @@
                 <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: center; margin: 0.4rem 0;">
                     <i data-lucide="info" size="12" style="vertical-align: middle; margin-right: 4px;"></i>${t2("class_will_deduct")}
                 </div>
-                <button type="button" class="btn-primary w-full" onclick="window.confirmRegisteredScanBatch('${escapeHtml2(student.id)}')" style="padding: 0.65rem 0.85rem; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.35rem;">
+                <button type="button" class="btn-primary w-full" onclick="window.confirmRegisteredScanBatch('${escapeHtml(student.id)}')" style="padding: 0.65rem 0.85rem; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.35rem;">
                     <i data-lucide="check" size="18" style="margin-right: 8px; vertical-align: middle;"></i>${t2("confirm_attendance")}
                 </button>
                 ${perClassSection}
                 <details style="margin-top: 0.45rem; border-top: 1px solid var(--border); padding-top: 0.45rem;">
-                    <summary style="font-size: 0.72rem; cursor: pointer; color: var(--text-secondary); font-weight: 600; list-style: none;">${escapeHtml2(t2("scanner_manual_deduct_expand") || "Manual deduction \u2014 only if there is no class booking today")}</summary>
+                    <summary style="font-size: 0.72rem; cursor: pointer; color: var(--text-secondary); font-weight: 600; list-style: none;">${escapeHtml(t2("scanner_manual_deduct_expand") || "Manual deduction \u2014 only if there is no class booking today")}</summary>
                     <div style="margin-top: 0.45rem;">
                         ${manualPartsForReg.groupRow}
                         ${manualPartsForReg.privateRowPrimary}
@@ -1646,10 +1646,10 @@
             <div class="scanner-checkin-done-class">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <i data-lucide="check-circle" size="14" style="color: var(--system-green); flex-shrink: 0;"></i>
-                    <span class="scanner-checkin-done-class-label">${escapeHtml2(r.class_name)} <span class="text-muted">@ ${escapeHtml2(r.class_time)}</span></span>
+                    <span class="scanner-checkin-done-class-label">${escapeHtml(r.class_name)} <span class="text-muted">@ ${escapeHtml(r.class_time)}</span></span>
                 </div>
             </div>`).join("");
-      const bannerText = (t2("scanner_already_confirmed_one_message") || "{name} is already checked in \u2014 you confirmed their attendance. Scanning again will not deduct another class.").replace(/\{name\}/g, escapeHtml2(student.name));
+      const bannerText = (t2("scanner_already_confirmed_one_message") || "{name} is already checked in \u2014 you confirmed their attendance. Scanning again will not deduct another class.").replace(/\{name\}/g, escapeHtml(student.name));
       const doneBtnLabel = t2("scanner_already_confirmed_done_button") || "Already confirmed";
       resultEl.innerHTML = `
             <div class="card scanner-checkin-done-card" style="border-radius: 16px; padding: 0.85rem; text-align: left;">
@@ -1664,7 +1664,7 @@
                     ${attendedOnlyCards}
                 </div>
                 <button type="button" class="scanner-checkin-done-btn w-full" disabled aria-disabled="true">
-                    <i data-lucide="check-circle" size="18"></i>${escapeHtml2(doneBtnLabel)}
+                    <i data-lucide="check-circle" size="18"></i>${escapeHtml(doneBtnLabel)}
                 </button>
                 <div style="text-align: center; margin-top: 0.5rem;">
                     <button type="button" onclick="window.cancelAttendance()" style="background: none; border: none; color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; opacity: 0.8;">${t2("cancel")}</button>
@@ -1674,7 +1674,7 @@
     } else if (hasNoClasses) {
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--system-orange); background: rgba(255, 149, 0, 0.1); padding: 1rem; text-align: center;">
-                <h3 style="font-size: 1rem; margin:0;">${escapeHtml2(student.name)}</h3>
+                <h3 style="font-size: 1rem; margin:0;">${escapeHtml(student.name)}</h3>
                 <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0.75rem 0;">${t2("no_classes_buy_package")}</p>
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
@@ -1701,7 +1701,7 @@
             <div class="card" style="border-radius: 16px; padding: 0.85rem; text-align: left; border: 2px solid var(--secondary); background: var(--background);">
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
-                        <h3 style="font-size: 0.95rem; margin:0;">${escapeHtml2(student.name)}</h3>
+                        <h3 style="font-size: 0.95rem; margin:0;">${escapeHtml(student.name)}</h3>
                         <div style="font-size: 0.85rem; font-weight: 700; color: var(--secondary);">
                             ${balanceLabel}
                         </div>
@@ -1718,7 +1718,7 @@
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
                 <h2 style="color: var(--danger); font-size: 1rem;">${t2("scan_fail")}</h2>
-                <p style="margin-top:0.3rem">${escapeHtml2(student.name)}</p>
+                <p style="margin-top:0.3rem">${escapeHtml(student.name)}</p>
                 <p style="font-size:0.75rem; color:var(--danger)">${t2("inactive")}</p>
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
@@ -1747,7 +1747,7 @@
       console.error("Error checking in private lesson:", e);
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
+                <p style="color: var(--danger);">${escapeHtml(e.message || t2("error_confirming_attendance"))}</p>
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
         `;
@@ -1809,7 +1809,7 @@
       console.error("Error confirming registered attendance:", e);
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
+                <p style="color: var(--danger);">${escapeHtml(e.message || t2("error_confirming_attendance"))}</p>
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
         `;
@@ -1862,7 +1862,7 @@
       console.error("Error confirming batch attendance:", e);
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
+                <p style="color: var(--danger);">${escapeHtml(e.message || t2("error_confirming_attendance"))}</p>
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
         `;
@@ -1944,7 +1944,7 @@
       console.error("Error confirming attendance:", e);
       resultEl.innerHTML = `
             <div class="card" style="border-color: var(--danger); background: rgba(251, 113, 133, 0.1); padding: 1rem;">
-                <p style="color: var(--danger);">${escapeHtml2(e.message || t2("error_confirming_attendance"))}</p>
+                <p style="color: var(--danger);">${escapeHtml(e.message || t2("error_confirming_attendance"))}</p>
                 <button class="btn-primary mt-2 w-full" onclick="window.cancelAttendance()">${t2("close")}</button>
             </div>
         `;
@@ -2017,12 +2017,12 @@
                     <div class="ios-list-item ${payLoading ? "admin-reg-request-card-loading" : ""}" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 20px;">
                         <div style="display: flex; gap: 12px; align-items: center;">
                             <div style="width: 40px; height: 40px; background: var(--system-gray6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-secondary);">
-                                ${escapeHtml2(studentName).charAt(0).toUpperCase()}
+                                ${escapeHtml(studentName).charAt(0).toUpperCase()}
                             </div>
                             <div style="flex: 1;">
-                                <div style="font-weight: 600; font-size: 17px;">${escapeHtml2(studentName)}</div>
+                                <div style="font-weight: 600; font-size: 17px;">${escapeHtml(studentName)}</div>
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml2(req.sub_name)} \u2022 ${formatPrice(req.price, state.currentSchool?.currency || "MXN")}</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(req.sub_name)} \u2022 ${formatPrice(req.price, state.currentSchool?.currency || "MXN")}</div>
                                     <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
                                         <i data-lucide="${req.payment_method === "cash" ? "banknote" : "send"}" size="10"></i> ${t2[req.payment_method] || req.payment_method}
                                     </div>
@@ -2207,9 +2207,9 @@
       return `
                     <div class="ios-list-item admin-revenue-item" style="padding: 16px; align-items: center;">
                         <div class="admin-revenue-item-main" style="flex: 1;">
-                            <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${escapeHtml2(studentName)}</div>
+                            <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${escapeHtml(studentName)}</div>
                             <div class="admin-revenue-item-meta" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-                                ${escapeHtml2(req.sub_name)} \u2022 ${new Date(req.created_at).toLocaleDateString()}
+                                ${escapeHtml(req.sub_name)} \u2022 ${new Date(req.created_at).toLocaleDateString()}
                                 <span style="font-size: 9px; opacity: 0.6; text-transform: uppercase; font-weight: 700; background: var(--system-gray6); padding: 1px 6px; border-radius: 4px;">${t2[req.payment_method] || req.payment_method}</span>
                             </div>
                         </div>
@@ -5412,11 +5412,22 @@
       const res = await fetch(fnUrl, { method: "POST", headers, body: JSON.stringify({ token }) });
       const data = await res.json().catch(() => ({}));
       if (data.requires_login) {
-        const schoolName2 = (data.school_name || "").replace(/</g, "&lt;");
-        const masked = (data.masked_email || "").replace(/</g, "&lt;");
-        const goLogin = "event.preventDefault(); state.activateToken='" + String(token).replace(/'/g, "\\'") + "'; state.discoveryPath='/discovery/login'; history.pushState({},'','/discovery/login'); renderView();";
-        const goRegister = "event.preventDefault(); state.activateToken='" + String(token).replace(/'/g, "\\'") + "'; state.discoveryPath='/discovery/register'; history.pushState({},'','/discovery/register'); renderView();";
-        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem; max-width: 400px;"><h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${t2("activate_title") || "Link your account"}</h2><p class="text-muted" style="margin-bottom: 1.25rem;">${t2("activate_requires_login") || "Create an account or sign in to link with"}: <strong>${schoolName2 || "your school"}</strong>${masked ? ` (${masked})` : ""}.</p><button type="button" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 0.5rem; border-radius: 12px; font-weight: 600;" onclick="${goLogin}">${t2("sign_in") || "Sign in"}</button><button type="button" class="btn-secondary" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600;" onclick="${goRegister}">${t2("sign_up") || "Sign up"}</button></div></div>`;
+        const schoolName2 = escapeHtml(data.school_name);
+        const masked = escapeHtml(data.masked_email);
+        window._pendingActivateToken = String(token);
+        window._handleActivateLogin = function() {
+          state.activateToken = window._pendingActivateToken;
+          state.discoveryPath = "/discovery/login";
+          history.pushState({}, "", "/discovery/login");
+          renderView();
+        };
+        window._handleActivateRegister = function() {
+          state.activateToken = window._pendingActivateToken;
+          state.discoveryPath = "/discovery/register";
+          history.pushState({}, "", "/discovery/register");
+          renderView();
+        };
+        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem; max-width: 400px;"><h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${t2("activate_title") || "Link your account"}</h2><p class="text-muted" style="margin-bottom: 1.25rem;">${t2("activate_requires_login") || "Create an account or sign in to link with"}: <strong>${schoolName2 || "your school"}</strong>${masked ? ` (${masked})` : ""}.</p><button type="button" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 0.5rem; border-radius: 12px; font-weight: 600;" onclick="window._handleActivateLogin()">${t2("sign_in") || "Sign in"}</button><button type="button" class="btn-secondary" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600;" onclick="window._handleActivateRegister()">${t2("sign_up") || "Sign up"}</button></div></div>`;
         if (window.lucide) window.lucide.createIcons();
         return;
       }
@@ -5426,7 +5437,7 @@
         return;
       }
       state.activateToken = null;
-      const schoolName = (data.school?.name || "").replace(/</g, "&lt;");
+      const schoolName = escapeHtml(data.school?.name);
       root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p style="color: var(--system-green); font-weight: 600;">${t2("activate_success") || "Account linked!"}</p><p class="text-muted" style="margin-top: 0.5rem;">${schoolName ? t2("activate_success_school") || "You are now linked with " + schoolName : ""}</p><a href="/" style="display: inline-block; margin-top: 1rem; color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("activate_go_dashboard") || "Go to dashboard"}</a></div></div>`;
       if (window.lucide) window.lucide.createIcons();
       window.history.replaceState({}, "", window.location.pathname || "/");
@@ -5652,7 +5663,7 @@
         return `<div class="review-categories-inline" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);"><div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 6px;">${(t2("discovery_review_show_categories") || "Categories").replace(/</g, "&lt;")}</div>${rows.join("")}</div>`;
       };
       el.innerHTML = avgLine + `<ul class="profile-my-reviews-list" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">${reviews.map((r) => {
-        const name = (r.target_name || r.target_id || "").toString().replace(/</g, "&lt;");
+        const name = escapeHtml(r.target_name || r.target_id);
         const date = r.created_at ? new Date(r.created_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "";
         const stars = typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall + "/5";
         const statusLabel = r.status === "flagged" ? t2("reviews_admin_flag_label") || "Pending review" : r.status === "published" ? t2("published") || "Published" : r.status || "";
@@ -6082,7 +6093,7 @@
       const teacherPhotoUrl = detail.teacher_photo_url || detail.school?.teacher_photo_url || "";
       const locations = detail.discovery_locations || detail.school?.discovery_locations || [];
       const locationsList = Array.isArray(locations) ? locations : [];
-      const displayName = name ? String(name).replace(/</g, "&lt;") : placeholder;
+      const displayName = name ? escapeHtml(name) : placeholder;
       const displayLoc = location ? String(location).replace(/</g, "&lt;") : placeholder;
       const displayDesc = desc ? String(desc).replace(/</g, "&lt;").replace(/\n/g, "<br>") : placeholder;
       const resendLabelDetail = _resendVerificationSending ? t2("resend_sending") || "Sending\u2026" : Date.now() >= (_resendVerificationCooldownUntil || 0) ? t2("resend_verification") || "Resend email" : t2("resend_cooldown") || "Sent. Wait 60s";
@@ -7572,7 +7583,7 @@
           const linked = !!st.user_id;
           const schoolName = getSchoolName(st.school_id);
           return `<div class="ios-list-item" style="padding: 12px 16px; display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; flex-wrap: wrap;">
-                                <div><span style="font-weight: 700;">${(st.name || st.id || "").replace(/</g, "&lt;")}</span><span style="font-size: 11px; color: var(--text-secondary); margin-left: 8px;">${schoolName}</span></div>
+                                <div><span style="font-weight: 700;">${escapeHtml(st.name || st.id)}</span><span style="font-size: 11px; color: var(--text-secondary); margin-left: 8px;">${schoolName}</span></div>
                                 <div style="font-size: 10px; font-family: monospace; color: var(--text-secondary); max-width: 180px; overflow: hidden; text-overflow: ellipsis;">${linked ? (st.user_id || "").substring(0, 8) + "\u2026" : "\u2014"}</div>
                                 <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; ${linked ? "background: rgba(52, 199, 89, 0.15); color: var(--system-green);" : "background: rgba(255, 59, 48, 0.15); color: var(--system-red);"}">${linked ? t2.dev_audit_linked || "Linked" : t2.dev_audit_not_linked || "Not linked"}</span>
                             </div>`;
@@ -7855,7 +7866,7 @@
                         </div>
                         <div class="platform-school-hero">
                             <div class="platform-school-hero-icon"><i data-lucide="building-2" size="36"></i></div>
-                            <h1 class="platform-school-title">${(school.name || "").replace(/</g, "&lt;")}</h1>
+                            <h1 class="platform-school-title">${escapeHtml(school.name)}</h1>
                             <div class="platform-school-id">${String(schoolId).slice(0, 8)}\u2026</div>
                             <button class="platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},events_packages_enabled:${eventsPkgsEnabled},private_packages_enabled:${privatePkgsEnabled},monthly_registration_enabled:${monthlyRegEnabled},currency:'${(school.currency || "MXN").replace(/'/g, "\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();">
                                 <i data-lucide="shield-check" size="20"></i> ${t2.dev_enter_as_admin}
@@ -8044,7 +8055,7 @@
                 </button>
                 <div>
                     <div style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t2.dev_edit_school_info || "Edit school info"}</div>
-                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${(school.name || "").replace(/</g, "&lt;")}</div>
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${escapeHtml(school.name)}</div>
                 </div>
             </div>
             <div style="padding: 1.2rem;">
@@ -8076,7 +8087,7 @@
                 </button>
                 <div>
                     <div style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t2.dev_edit_discovery_profile || "Edit discovery profile"}</div>
-                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${(school.name || "").replace(/</g, "&lt;")}</div>
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${escapeHtml(school.name)}</div>
                 </div>
             </div>
             <div style="padding: 0 1.2rem 2rem;">
@@ -8190,7 +8201,7 @@
                 </button>
                 <div>
                     <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);">${t2.dev_edit_discovery_profile || "Edit discovery profile"}</div>
-                    <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${(school.name || "").replace(/</g, "&lt;")}</div>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${escapeHtml(school.name)}</div>
                 </div>
             </div>
             <div style="padding: 0 1.2rem 2rem;">
@@ -8443,7 +8454,7 @@
         }).join("")}</div>` : `<p style="color: var(--text-muted); margin-bottom: 1rem;">${(t2("discovery_no_schools") || "No studios listed.").replace(/</g, "&lt;")}</p><button type="button" class="btn-primary" onclick="state._discoveryOnlyEdit=false; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ state.currentView=null; renderView(); });">${(t2("discovery_back") || "Back to discovery").replace(/</g, "&lt;")}</button>`}
             </div>`;
       } else if (view === "discovery-admin-auth") {
-        const schoolName = (state.currentSchool?.name || "").replace(/</g, "&lt;");
+        const schoolName = escapeHtml(state.currentSchool?.name);
         html += `
             <div class="auth-page-container" style="max-width: 420px; margin: 0 auto; padding: 2rem 1.25rem;">
                 <button type="button" onclick="state._discoveryOnlyEdit=false; state.currentView='discovery-admin-pick-school'; state.discoveryPath=null; saveState(); renderView();" style="background: none; border: none; padding: 0; font-size: 13px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 1.5rem;">
@@ -9915,7 +9926,7 @@
                 const lev = s.level || "";
                 return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
                                     <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || "").charAt(0).toUpperCase()}</div>
-                                    <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${(s.name || s.email || s.id || "").toString().replace(/</g, "&lt;")}</div><div style="font-size: 12px; color: var(--text-secondary);">${(s.email || "").toString().replace(/</g, "&lt;")}</div></div>
+                                    <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${escapeHtml(s.name || s.email || s.id)}</div><div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(s.email)}</div></div>
                                     <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${String(s.id).replace(/'/g, "\\'")}', this.value)">
                                         <option value="" ${lev === "" ? "selected" : ""}>${t2.aure_level_not_set || "Not set"}</option>
                                         <option value="principiante" ${lev === "principiante" ? "selected" : ""}>${t2.aure_level_principiante || "Principiante"}</option>
@@ -9996,7 +10007,7 @@
             const durationStr = r.duration_minutes != null ? durationLabel(r.duration_minutes) : "";
             return `<div class="pcr-card">
                             <div class="pcr-card-header">
-                                <span class="pcr-card-name">${(studentName || "").replace(/</g, "&lt;")}</span>
+                                <span class="pcr-card-name">${escapeHtml(studentName)}</span>
                                 <span class="pcr-card-status ${r.status}">${r.status}</span>
                             </div>
                             <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
@@ -10119,7 +10130,7 @@
                                 <button type="button" class="admin-reg-attendance-btn ${effectiveStatus === "no_show" ? "btn-primary" : "btn-secondary"}" title="${t2.no_show || "No-show"}" aria-label="${t2.no_show || "No-show"}" onclick="event.stopPropagation(); window.setRegistrationAttendance('${s.id}', false)"><i data-lucide="x" size="12"></i></button>
                             </span>` : "";
             const pendingActions = isAure2 && s.status === "pending" ? `<span class="admin-reg-student-actions"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t2.aure_approve || "Approve"}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t2.aure_reject || "Reject"}</button></span>` : "";
-            return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${(displayName || "").replace(/</g, "&lt;")}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div>`;
+            return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${escapeHtml(displayName)}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div>`;
           };
           return `
                     <div class="admin-reg-section ${state.adminRegExpanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
@@ -10169,7 +10180,7 @@
             return `
                                     <div class="admin-reg-request-card ${isLoading ? "admin-reg-request-card-loading" : ""}">
                                         <div class="admin-reg-request-main">
-                                            <div class="admin-reg-request-name">${(displayName || "").replace(/</g, "&lt;")}</div>
+                                            <div class="admin-reg-request-name">${escapeHtml(displayName)}</div>
                                             <div class="admin-reg-request-meta"><span class="admin-reg-request-level">${t2.aure_level_label || "Level"}: ${(levelLabel || "").replace(/</g, "&lt;")}</span></div>
                                             <div class="admin-reg-request-class">${(r.class_name || "").replace(/</g, "&lt;")} \xB7 ${dateLabel} \xB7 ${r.class_time || ""}</div>
                                         </div>
@@ -10307,7 +10318,7 @@
               return '<div class="teacher-accepted-today-row teacher-accepted-today-row--done"><span class="teacher-accepted-today-status"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t2.checked_in || "Checked in") + "</span></div>";
             }
             const actionsToday = exportOneBtn2 + (canCheckIn ? `<button type="button" class="btn-primary teacher-accepted-action-btn" onclick="window.markPrivateLessonAttended('` + l.id + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (isPast && l.status === "confirmed" ? `<button type="button" class="btn-secondary teacher-accepted-action-btn" onclick="window.markPrivateLessonNoShow('` + l.id + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "");
-            return '<div class="teacher-accepted-today-row"><div class="teacher-accepted-today-main"><strong>' + (studentName || "").replace(/</g, "&lt;") + '</strong><div class="teacher-accepted-today-meta">' + timeAndDuration + '</div></div><div class="teacher-accepted-today-actions">' + actionsToday + "</div></div>";
+            return '<div class="teacher-accepted-today-row"><div class="teacher-accepted-today-main"><strong>' + escapeHtml(studentName) + '</strong><div class="teacher-accepted-today-meta">' + timeAndDuration + '</div></div><div class="teacher-accepted-today-actions">' + actionsToday + "</div></div>";
           }).join("")}
                             </div>
                             ` : ""}
@@ -10336,8 +10347,8 @@
                                 <div class="teacher-accepted-class-row">
                                     <i data-lucide="calendar" size="16" class="teacher-accepted-class-row-icon"></i>
                                     <div class="teacher-accepted-class-main">
-                                        <div class="teacher-accepted-class-name">${(studentName || "").replace(/</g, "&lt;")}</div>
-                                        <div class="teacher-accepted-class-meta">${dateLabel} &middot; ${(timeAndDuration || "").replace(/</g, "&lt;")}${attended ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t2.checked_in || "Checked in") + "</span>" : ""}</div>
+                                        <div class="teacher-accepted-class-name">${escapeHtml(studentName)}</div>
+                                        <div class="teacher-accepted-class-meta">${dateLabel} &middot; ${escapeHtml(timeAndDuration)}${attended ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t2.checked_in || "Checked in") + "</span>" : ""}</div>
                                     </div>
                                     ${listActions ? '<div class="teacher-accepted-class-actions">' + listActions + "</div>" : ""}
                                 </div>`;
@@ -10398,7 +10409,7 @@
               const isPast = lesson && lesson.end_at_utc && new Date(lesson.end_at_utc) < /* @__PURE__ */ new Date();
               const exportCal = lessonId && lesson && lesson.start_at_utc && lesson.end_at_utc ? `<button type="button" class="btn-ghost teacher-accepted-action-btn teacher-accepted-action-btn--export" onclick="window.downloadCalendarIcsOne('` + lessonId + `', 'teacher')"><i data-lucide="calendar-plus" size="12"></i> ` + (t2.export_to_calendar || "Export to your calendar") + "</button>" : "";
               const calActions = exportCal + (lessonId && canCheckIn ? `<button type="button" class="btn-primary teacher-accepted-action-btn" onclick="window.markPrivateLessonAttended('` + lessonId + `')">` + (t2.check_in_btn || "Check in") + "</button>" : "") + (lessonId && isPast && lesson.status === "confirmed" && !lesson.credit_deducted ? `<button type="button" class="btn-secondary teacher-accepted-action-btn" onclick="window.markPrivateLessonNoShow('` + lessonId + `')">` + (t2.mark_no_show_btn || "Mark no-show") + "</button>" : "");
-              return '<div class="teacher-accepted-class-row"><i data-lucide="clock" size="16" class="teacher-accepted-class-row-icon"></i><div class="teacher-accepted-class-main"><div class="teacher-accepted-class-name">' + (studentName || "").replace(/</g, "&lt;") + '</div><div class="teacher-accepted-class-meta">' + (timeAndDuration || "").replace(/</g, "&lt;") + (lesson && lesson.status === "attended" ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t2.checked_in || "Checked in") + "</span>" : "") + "</div></div>" + (calActions ? '<div class="teacher-accepted-class-actions">' + calActions + "</div>" : "") + "</div>";
+              return '<div class="teacher-accepted-class-row"><i data-lucide="clock" size="16" class="teacher-accepted-class-row-icon"></i><div class="teacher-accepted-class-main"><div class="teacher-accepted-class-name">' + escapeHtml(studentName) + '</div><div class="teacher-accepted-class-meta">' + escapeHtml(timeAndDuration) + (lesson && lesson.status === "attended" ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t2.checked_in || "Checked in") + "</span>" : "") + "</div></div>" + (calActions ? '<div class="teacher-accepted-class-actions">' + calActions + "</div>" : "") + "</div>";
             }).join("")}
                                     </div>
                                     ` : ""}
@@ -12098,7 +12109,7 @@
         content.innerHTML = `
                 <h2 class="private-classes-title">${t2("private_classes_contact_title")}</h2>
                 <div class="private-classes-avatar"><i data-lucide="user" size="32"></i></div>
-                <p class="private-classes-name">${(data.name || "").replace(/</g, "&lt;")}</p>
+                <p class="private-classes-name">${escapeHtml(data.name)}</p>
                 <p class="private-classes-phone">${(data.phone || "").replace(/</g, "&lt;")}</p>
                 <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="private-classes-whatsapp-btn">
                     <i data-lucide="message-circle" size="22"></i> ${t2("message_whatsapp")}
@@ -13297,7 +13308,7 @@
             const { data: adminRows } = await supabaseClient.from("admins").select("id").eq("user_id", uid).limit(1);
             const isAdminOfAnySchool = adminRows && adminRows.length > 0;
             if (isAdminOfAnySchool) {
-              const schoolName = (state.currentSchool?.name || t2("this_school") || "this school").replace(/</g, "&lt;");
+              const schoolName = escapeHtml(state.currentSchool?.name || t2("this_school") || "this school");
               const msg = (t2("admin_enter_school_confirm") || "Do you want to enter {school} to take classes with them and buy packages?").replace("{school}", schoolName);
               if (!confirm(msg)) {
                 await supabaseClient.auth.signOut();
@@ -16669,7 +16680,6 @@ School: ${schoolName}`)) return;
   };
   window.markdownLikeToHtml = (body) => {
     if (!body || typeof body !== "string") return "";
-    const escapeHtml3 = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     const sanitizeUrl = (url) => {
       const t2 = String(url).trim();
       return t2.startsWith("https://") || t2.startsWith("http://") ? t2 : null;
@@ -16681,7 +16691,7 @@ School: ${schoolName}`)) return;
       if (body.slice(i, i + 2) === "**") {
         const end = body.indexOf("**", i + 2);
         if (end !== -1) {
-          out += "<strong>" + escapeHtml3(body.slice(i + 2, end)) + "</strong>";
+          out += "<strong>" + escapeHtml(body.slice(i + 2, end)) + "</strong>";
           i = end + 2;
           continue;
         }
@@ -16694,7 +16704,7 @@ School: ${schoolName}`)) return;
             const label = body.slice(i + 1, closeB);
             const url = sanitizeUrl(body.slice(closeB + 2, closeP));
             if (url) {
-              out += '<a href="' + escapeHtml3(url) + '">' + escapeHtml3(label) + "</a>";
+              out += '<a href="' + escapeHtml(url) + '">' + escapeHtml(label) + "</a>";
               i = closeP + 1;
               continue;
             }
@@ -16706,7 +16716,7 @@ School: ${schoolName}`)) return;
         i++;
         continue;
       }
-      out += escapeHtml3(body[i]);
+      out += escapeHtml(body[i]);
       i++;
     }
     return out;
@@ -17984,7 +17994,7 @@ School: ${schoolName}`)) return;
     window.parseQueryAndHashForView = parseQueryAndHashForView;
     window.navigateToAdminJackAndJill = navigateToAdminJackAndJill;
     window.navigateToStudentJackAndJill = navigateToStudentJackAndJill;
-    window.escapeHtml = escapeHtml2;
+    window.escapeHtml = escapeHtml;
     window.state = state;
     window.t = t;
     window.updateI18n = updateI18n;

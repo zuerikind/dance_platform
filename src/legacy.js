@@ -1,4 +1,4 @@
-import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID, getPasswordRecoveryRedirectUrl, CALENDLY_FEATURE_ENABLED } from './config.js';
+import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID, getPasswordRecoveryRedirectUrl, CALENDLY_FEATURE_ENABLED, escapeHtml } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering, syncActivePacksFieldSumToTarget } from './utils.js';
@@ -3137,11 +3137,22 @@ window.runActivateFlow = async (token) => {
         const res = await fetch(fnUrl, { method: 'POST', headers, body: JSON.stringify({ token }) });
         const data = await res.json().catch(() => ({}));
         if (data.requires_login) {
-            const schoolName = (data.school_name || '').replace(/</g, '&lt;');
-            const masked = (data.masked_email || '').replace(/</g, '&lt;');
-            const goLogin = "event.preventDefault(); state.activateToken='" + String(token).replace(/'/g, "\\'") + "'; state.discoveryPath='/discovery/login'; history.pushState({},'','/discovery/login'); renderView();";
-            const goRegister = "event.preventDefault(); state.activateToken='" + String(token).replace(/'/g, "\\'") + "'; state.discoveryPath='/discovery/register'; history.pushState({},'','/discovery/register'); renderView();";
-            root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem; max-width: 400px;"><h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${t('activate_title') || 'Link your account'}</h2><p class="text-muted" style="margin-bottom: 1.25rem;">${t('activate_requires_login') || 'Create an account or sign in to link with'}: <strong>${schoolName || 'your school'}</strong>${masked ? ` (${masked})` : ''}.</p><button type="button" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 0.5rem; border-radius: 12px; font-weight: 600;" onclick="${goLogin}">${t('sign_in') || 'Sign in'}</button><button type="button" class="btn-secondary" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600;" onclick="${goRegister}">${t('sign_up') || 'Sign up'}</button></div></div>`;
+            const schoolName = escapeHtml(data.school_name);
+            const masked = escapeHtml(data.masked_email);
+            window._pendingActivateToken = String(token);
+            window._handleActivateLogin = function() {
+                state.activateToken = window._pendingActivateToken;
+                state.discoveryPath = '/discovery/login';
+                history.pushState({}, '', '/discovery/login');
+                renderView();
+            };
+            window._handleActivateRegister = function() {
+                state.activateToken = window._pendingActivateToken;
+                state.discoveryPath = '/discovery/register';
+                history.pushState({}, '', '/discovery/register');
+                renderView();
+            };
+            root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem; max-width: 400px;"><h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${t('activate_title') || 'Link your account'}</h2><p class="text-muted" style="margin-bottom: 1.25rem;">${t('activate_requires_login') || 'Create an account or sign in to link with'}: <strong>${schoolName || 'your school'}</strong>${masked ? ` (${masked})` : ''}.</p><button type="button" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 0.5rem; border-radius: 12px; font-weight: 600;" onclick="window._handleActivateLogin()">${t('sign_in') || 'Sign in'}</button><button type="button" class="btn-secondary" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600;" onclick="window._handleActivateRegister()">${t('sign_up') || 'Sign up'}</button></div></div>`;
             if (window.lucide) window.lucide.createIcons();
             return;
         }
@@ -3151,7 +3162,7 @@ window.runActivateFlow = async (token) => {
             return;
         }
         state.activateToken = null;
-        const schoolName = (data.school?.name || '').replace(/</g, '&lt;');
+        const schoolName = escapeHtml(data.school?.name);
         root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p style="color: var(--system-green); font-weight: 600;">${t('activate_success') || 'Account linked!'}</p><p class="text-muted" style="margin-top: 0.5rem;">${schoolName ? t('activate_success_school') || 'You are now linked with ' + schoolName : ''}</p><a href="/" style="display: inline-block; margin-top: 1rem; color: var(--text-primary); text-decoration: none; font-weight: 600;">${t('activate_go_dashboard') || 'Go to dashboard'}</a></div></div>`;
         if (window.lucide) window.lucide.createIcons();
         window.history.replaceState({}, '', window.location.pathname || '/');
@@ -3369,7 +3380,7 @@ window.fetchProfileMyReviews = async () => {
             return `<div class="review-categories-inline" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);"><div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 6px;">${(t('discovery_review_show_categories') || 'Categories').replace(/</g, '&lt;')}</div>${rows.join('')}</div>`;
         };
         el.innerHTML = avgLine + `<ul class="profile-my-reviews-list" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">${reviews.map(r => {
-            const name = (r.target_name || r.target_id || '').toString().replace(/</g, '&lt;');
+            const name = escapeHtml(r.target_name || r.target_id);
             const date = r.created_at ? new Date(r.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
             const stars = typeof window.renderRatingStars === 'function' ? window.renderRatingStars(r.rating_overall) : r.rating_overall + '/5';
             const statusLabel = r.status === 'flagged' ? (t('reviews_admin_flag_label') || 'Pending review') : (r.status === 'published' ? (t('published') || 'Published') : r.status || '');
@@ -3740,7 +3751,7 @@ window.renderDiscoveryView = (path) => {
         const teacherPhotoUrl = detail.teacher_photo_url || detail.school?.teacher_photo_url || '';
         const locations = detail.discovery_locations || detail.school?.discovery_locations || [];
         const locationsList = Array.isArray(locations) ? locations : [];
-        const displayName = name ? String(name).replace(/</g, '&lt;') : placeholder;
+        const displayName = name ? escapeHtml(name) : placeholder;
         const displayLoc = location ? String(location).replace(/</g, '&lt;') : placeholder;
         const displayDesc = desc ? String(desc).replace(/</g, '&lt;').replace(/\n/g, '<br>') : placeholder;
         const resendLabelDetail = _resendVerificationSending ? (t('resend_sending') || 'Sending…') : (Date.now() >= (_resendVerificationCooldownUntil || 0) ? (t('resend_verification') || 'Resend email') : (t('resend_cooldown') || 'Sent. Wait 60s'));
@@ -5182,7 +5193,7 @@ function _renderViewImpl() {
                             const linked = !!(st.user_id);
                             const schoolName = getSchoolName(st.school_id);
                             return `<div class="ios-list-item" style="padding: 12px 16px; display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; flex-wrap: wrap;">
-                                <div><span style="font-weight: 700;">${(st.name || st.id || '').replace(/</g, '&lt;')}</span><span style="font-size: 11px; color: var(--text-secondary); margin-left: 8px;">${schoolName}</span></div>
+                                <div><span style="font-weight: 700;">${escapeHtml(st.name || st.id)}</span><span style="font-size: 11px; color: var(--text-secondary); margin-left: 8px;">${schoolName}</span></div>
                                 <div style="font-size: 10px; font-family: monospace; color: var(--text-secondary); max-width: 180px; overflow: hidden; text-overflow: ellipsis;">${linked ? (st.user_id || '').substring(0, 8) + '…' : '—'}</div>
                                 <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; ${linked ? 'background: rgba(52, 199, 89, 0.15); color: var(--system-green);' : 'background: rgba(255, 59, 48, 0.15); color: var(--system-red);'}">${linked ? (t.dev_audit_linked || 'Linked') : (t.dev_audit_not_linked || 'Not linked')}</span>
                             </div>`;
@@ -5468,7 +5479,7 @@ function _renderViewImpl() {
                         </div>
                         <div class="platform-school-hero">
                             <div class="platform-school-hero-icon"><i data-lucide="building-2" size="36"></i></div>
-                            <h1 class="platform-school-title">${(school.name || '').replace(/</g, '&lt;')}</h1>
+                            <h1 class="platform-school-title">${escapeHtml(school.name)}</h1>
                             <div class="platform-school-id">${String(schoolId).slice(0, 8)}…</div>
                             <button class="platform-school-enter-btn" onclick="const s=state.platformData.schools.find(x=>x.id==='${school.id}'); state.currentSchool=s||{id:'${school.id}',name:'${school.name}',jack_and_jill_enabled:${jjEnabled},events_packages_enabled:${eventsPkgsEnabled},private_packages_enabled:${privatePkgsEnabled},monthly_registration_enabled:${monthlyRegEnabled},currency:'${(school.currency||'MXN').replace(/'/g,"\\'")}'}; state.isAdmin=true; state.currentView='admin-students'; fetchAllData();">
                                 <i data-lucide="shield-check" size="20"></i> ${t.dev_enter_as_admin}
@@ -5652,7 +5663,7 @@ function _renderViewImpl() {
                 </button>
                 <div>
                     <div style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t.dev_edit_school_info || 'Edit school info'}</div>
-                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${(school.name || '').replace(/</g, '&lt;')}</div>
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${escapeHtml(school.name)}</div>
                 </div>
             </div>
             <div style="padding: 1.2rem;">
@@ -5685,7 +5696,7 @@ function _renderViewImpl() {
                 </button>
                 <div>
                     <div style="font-size: 12px; font-weight: 700; color: var(--system-blue); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${t.dev_edit_discovery_profile || 'Edit discovery profile'}</div>
-                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${(school.name || '').replace(/</g, '&lt;')}</div>
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${escapeHtml(school.name)}</div>
                 </div>
             </div>
             <div style="padding: 0 1.2rem 2rem;">
@@ -5781,7 +5792,7 @@ function _renderViewImpl() {
                 </button>
                 <div>
                     <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);">${t.dev_edit_discovery_profile || 'Edit discovery profile'}</div>
-                    <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${(school.name || '').replace(/</g, '&lt;')}</div>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${escapeHtml(school.name)}</div>
                 </div>
             </div>
             <div style="padding: 0 1.2rem 2rem;">
@@ -6013,7 +6024,7 @@ function _renderViewImpl() {
             </div>`;
     }
     else if (view === 'discovery-admin-auth') {
-        const schoolName = (state.currentSchool?.name || '').replace(/</g, '&lt;');
+        const schoolName = escapeHtml(state.currentSchool?.name);
         html += `
             <div class="auth-page-container" style="max-width: 420px; margin: 0 auto; padding: 2rem 1.25rem;">
                 <button type="button" onclick="state._discoveryOnlyEdit=false; state.currentView='discovery-admin-pick-school'; state.discoveryPath=null; saveState(); renderView();" style="background: none; border: none; padding: 0; font-size: 13px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 1.5rem;">
@@ -7526,7 +7537,7 @@ function _renderViewImpl() {
                                 const lev = s.level || '';
                                 return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
                                     <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || '').charAt(0).toUpperCase()}</div>
-                                    <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${(s.name || s.email || s.id || '').toString().replace(/</g, '&lt;')}</div><div style="font-size: 12px; color: var(--text-secondary);">${(s.email || '').toString().replace(/</g, '&lt;')}</div></div>
+                                    <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${escapeHtml(s.name || s.email || s.id)}</div><div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(s.email)}</div></div>
                                     <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${String(s.id).replace(/'/g, "\\'")}', this.value)">
                                         <option value="" ${lev === '' ? 'selected' : ''}>${t.aure_level_not_set || 'Not set'}</option>
                                         <option value="principiante" ${lev === 'principiante' ? 'selected' : ''}>${t.aure_level_principiante || 'Principiante'}</option>
@@ -7611,7 +7622,7 @@ function _renderViewImpl() {
                         const durationStr = r.duration_minutes != null ? durationLabel(r.duration_minutes) : '';
                         return `<div class="pcr-card">
                             <div class="pcr-card-header">
-                                <span class="pcr-card-name">${(studentName || '').replace(/</g, '&lt;')}</span>
+                                <span class="pcr-card-name">${escapeHtml(studentName)}</span>
                                 <span class="pcr-card-status ${r.status}">${r.status}</span>
                             </div>
                             <div class="pcr-card-detail"><i data-lucide="calendar" size="12" style="vertical-align: middle; opacity: 0.5; margin-right: 4px;"></i> ${r.requested_date} &middot; ${r.requested_time}</div>
@@ -7738,7 +7749,7 @@ function _renderViewImpl() {
                         const pendingActions = isAure && s.status === 'pending'
                             ? `<span class="admin-reg-student-actions"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t.aure_approve || 'Approve'}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t.aure_reject || 'Reject'}</button></span>`
                             : '';
-                        return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${(displayName || '').replace(/</g, '&lt;')}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div>`;
+                        return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${escapeHtml(displayName)}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div>`;
                     };
 
                     return `
@@ -7789,7 +7800,7 @@ function _renderViewImpl() {
                                     return `
                                     <div class="admin-reg-request-card ${isLoading ? 'admin-reg-request-card-loading' : ''}">
                                         <div class="admin-reg-request-main">
-                                            <div class="admin-reg-request-name">${(displayName || '').replace(/</g, '&lt;')}</div>
+                                            <div class="admin-reg-request-name">${escapeHtml(displayName)}</div>
                                             <div class="admin-reg-request-meta"><span class="admin-reg-request-level">${(t.aure_level_label || 'Level')}: ${(levelLabel || '').replace(/</g, '&lt;')}</span></div>
                                             <div class="admin-reg-request-class">${(r.class_name || '').replace(/</g, '&lt;')} · ${dateLabel} · ${r.class_time || ''}</div>
                                         </div>
@@ -7927,7 +7938,7 @@ function _renderViewImpl() {
                                         return '<div class="teacher-accepted-today-row teacher-accepted-today-row--done"><span class="teacher-accepted-today-status"><i data-lucide="check-circle" size="14" style="vertical-align: middle;"></i> ' + (t.checked_in || 'Checked in') + '</span></div>';
                                     }
                                     const actionsToday = exportOneBtn2 + (canCheckIn ? '<button type="button" class="btn-primary teacher-accepted-action-btn" onclick="window.markPrivateLessonAttended(\'' + l.id + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : '') + (isPast && l.status === 'confirmed' ? '<button type="button" class="btn-secondary teacher-accepted-action-btn" onclick="window.markPrivateLessonNoShow(\'' + l.id + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : '');
-                                    return '<div class="teacher-accepted-today-row"><div class="teacher-accepted-today-main"><strong>' + (studentName || '').replace(/</g, '&lt;') + '</strong><div class="teacher-accepted-today-meta">' + timeAndDuration + '</div></div><div class="teacher-accepted-today-actions">' + actionsToday + '</div></div>';
+                                    return '<div class="teacher-accepted-today-row"><div class="teacher-accepted-today-main"><strong>' + escapeHtml(studentName) + '</strong><div class="teacher-accepted-today-meta">' + timeAndDuration + '</div></div><div class="teacher-accepted-today-actions">' + actionsToday + '</div></div>';
                                 }).join('')}
                             </div>
                             ` : ''}
@@ -7956,8 +7967,8 @@ function _renderViewImpl() {
                                 <div class="teacher-accepted-class-row">
                                     <i data-lucide="calendar" size="16" class="teacher-accepted-class-row-icon"></i>
                                     <div class="teacher-accepted-class-main">
-                                        <div class="teacher-accepted-class-name">${(studentName || '').replace(/</g, '&lt;')}</div>
-                                        <div class="teacher-accepted-class-meta">${dateLabel} &middot; ${(timeAndDuration || '').replace(/</g, '&lt;')}${attended ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t.checked_in || 'Checked in') + '</span>' : ''}</div>
+                                        <div class="teacher-accepted-class-name">${escapeHtml(studentName)}</div>
+                                        <div class="teacher-accepted-class-meta">${dateLabel} &middot; ${escapeHtml(timeAndDuration)}${attended ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t.checked_in || 'Checked in') + '</span>' : ''}</div>
                                     </div>
                                     ${listActions ? '<div class="teacher-accepted-class-actions">' + listActions + '</div>' : ''}
                                 </div>`;
@@ -8012,8 +8023,8 @@ function _renderViewImpl() {
                                             const calActions = exportCal + (lessonId && canCheckIn ? '<button type="button" class="btn-primary teacher-accepted-action-btn" onclick="window.markPrivateLessonAttended(\'' + lessonId + '\')">' + (t.check_in_btn || 'Check in') + '</button>' : '') + (lessonId && isPast && lesson.status === 'confirmed' && !lesson.credit_deducted ? '<button type="button" class="btn-secondary teacher-accepted-action-btn" onclick="window.markPrivateLessonNoShow(\'' + lessonId + '\')">' + (t.mark_no_show_btn || 'Mark no-show') + '</button>' : '');
                                             return '<div class="teacher-accepted-class-row">' +
                                                 '<i data-lucide="clock" size="16" class="teacher-accepted-class-row-icon"></i>' +
-                                                '<div class="teacher-accepted-class-main"><div class="teacher-accepted-class-name">' + (studentName || '').replace(/</g, '&lt;') + '</div>' +
-                                                '<div class="teacher-accepted-class-meta">' + (timeAndDuration || '').replace(/</g, '&lt;') + (lesson && lesson.status === 'attended' ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t.checked_in || 'Checked in') + '</span>' : '') + '</div></div>' +
+                                                '<div class="teacher-accepted-class-main"><div class="teacher-accepted-class-name">' + escapeHtml(studentName) + '</div>' +
+                                                '<div class="teacher-accepted-class-meta">' + escapeHtml(timeAndDuration) + (lesson && lesson.status === 'attended' ? ' &middot; <span class="teacher-accepted-inline-ok">' + (t.checked_in || 'Checked in') + '</span>' : '') + '</div></div>' +
                                                 (calActions ? '<div class="teacher-accepted-class-actions">' + calActions + '</div>' : '') +
                                                 '</div>';
                                         }).join('')}
@@ -9717,7 +9728,7 @@ window.openPrivateClassesModal = async () => {
             content.innerHTML = `
                 <h2 class="private-classes-title">${t('private_classes_contact_title')}</h2>
                 <div class="private-classes-avatar"><i data-lucide="user" size="32"></i></div>
-                <p class="private-classes-name">${(data.name || '').replace(/</g, '&lt;')}</p>
+                <p class="private-classes-name">${escapeHtml(data.name)}</p>
                 <p class="private-classes-phone">${(data.phone || '').replace(/</g, '&lt;')}</p>
                 <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="private-classes-whatsapp-btn">
                     <i data-lucide="message-circle" size="22"></i> ${t('message_whatsapp')}
@@ -10948,7 +10959,7 @@ window.loginStudent = async () => {
                     const { data: adminRows } = await supabaseClient.from('admins').select('id').eq('user_id', uid).limit(1);
                     const isAdminOfAnySchool = adminRows && adminRows.length > 0;
                     if (isAdminOfAnySchool) {
-                        const schoolName = (state.currentSchool?.name || t('this_school') || 'this school').replace(/</g, '&lt;');
+                        const schoolName = escapeHtml(state.currentSchool?.name || t('this_school') || 'this school');
                         const msg = (t('admin_enter_school_confirm') || 'Do you want to enter {school} to take classes with them and buy packages?').replace('{school}', schoolName);
                         if (!confirm(msg)) {
                             await supabaseClient.auth.signOut();
@@ -14285,7 +14296,6 @@ window.updateAdminSetting = async (key, value) => {
 // Notifications: body → HTML (same rules as Edge Function)
 window.markdownLikeToHtml = (body) => {
     if (!body || typeof body !== 'string') return '';
-    const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const sanitizeUrl = (url) => { const t = String(url).trim(); return (t.startsWith('https://') || t.startsWith('http://')) ? t : null; };
     let out = '';
     let i = 0;
