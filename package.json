@@ -7,10 +7,15 @@
   },
   "scripts": {
     "start": "serve . -s",
+    "dev": "npm run build:js && serve . -s",
     "build:js": "node build-js.js",
-    "build": "node build-js.js && node build-vercel.js"
+    "build": "node build-js.js && node build-vercel.js",
+    "test:admin-expiry": "node tests/admin-pack-expiry-save.test.mjs",
+    "test:exceptions": "node tests/group-class-exceptions.test.mjs",
+    "test": "node tests/group-class-exceptions.test.mjs && node tests/admin-pack-expiry-save.test.mjs && node tests/ics-format.test.js"
   },
   "devDependencies": {
+    "serve": "^14.2.4",
     "esbuild": "^0.27.3",
     "pg": "^8.20.0",
     "supabase": "^2.76.16"

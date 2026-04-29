@@ -101,7 +101,6 @@ export let state = {
     mockDate: null,
     userProfile: null,
     verifyEmailToken: null,
-    activateToken: null,
     studentActivationStatus: {},
     auth: { session: null, user: null, profile: null, loading: false, error: null },
     afterLogin: null,

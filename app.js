@@ -139,7 +139,6 @@
     mockDate: null,
     userProfile: null,
     verifyEmailToken: null,
-    activateToken: null,
     studentActivationStatus: {},
     auth: { session: null, user: null, profile: null, loading: false, error: null },
     afterLogin: null,
@@ -337,6 +336,28 @@
     }
     return packs;
   }
+  function subscriptionShownToStudents(sub) {
+    return !!(sub && sub.student_visible !== false);
+  }
+  function planCardGhostStyleIfHidden(sub) {
+    if (subscriptionShownToStudents(sub)) return "";
+    return "opacity:0.34;filter:saturate(0.12) brightness(0.88);";
+  }
+  function planVisibilityToggleRow(sub, t2) {
+    const vis = subscriptionShownToStudents(sub);
+    const lab = t2 && t2.package_student_visible_label || "Show in shop";
+    const title = vis ? lab : t2 && t2.package_hidden_from_students_hint || "Hidden from students";
+    const labelColor = vis ? "var(--text-primary)" : "var(--text-secondary)";
+    const trackBg = vis ? "linear-gradient(180deg,#7aefb0 0%,#3ddc7a 38%,#24b55f 100%)" : "linear-gradient(180deg,#4d4d52 0%,#38383c 55%,#2c2c30 100%)";
+    const trackShadow = vis ? "inset 0 1px 0 rgba(255,255,255,0.42),inset 0 -1px 0 rgba(0,0,0,0.12),0 2px 10px rgba(36,181,95,0.38)" : "inset 0 1px 0 rgba(255,255,255,0.08),inset 0 -1px 0 rgba(0,0,0,0.45),0 1px 4px rgba(0,0,0,0.4)";
+    const knobLeft = vis ? "27px" : "3px";
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin-top:6px;padding-top:8px;border-top:1px solid rgba(128,128,140,0.14);">
+      <span style="font-size:12px;font-weight:600;color:${labelColor};line-height:1.3;letter-spacing:-0.01em;opacity:${vis ? "0.95" : "0.72"};">${escapeHtml(lab)}</span>
+      <button type="button" data-field="student_visible_toggle" aria-pressed="${vis}" title="${escapeHtml(title)}" onclick="window.togglePlanStudentVisible('${sub.id}')" style="width:54px;height:30px;border-radius:15px;border:none;cursor:pointer;background:${trackBg};box-shadow:${trackShadow};position:relative;flex-shrink:0;padding:0;outline:none;transition:background 0.26s ease,box-shadow 0.26s ease;">
+        <span aria-hidden="true" style="position:absolute;width:24px;height:24px;border-radius:50%;top:3px;left:${knobLeft};background:radial-gradient(circle at 32% 28%,#ffffff 0%,#f4f4f8 42%,#e4e4ea 100%);box-shadow:0 2px 7px rgba(0,0,0,0.32),inset 0 1px 0 rgba(255,255,255,0.92);border:0.5px solid rgba(0,0,0,0.07);transition:left 0.24s cubic-bezier(0.34,1.35,0.64,1);"></span>
+      </button>
+    </div>`;
+  }
 
   // src/routing.js
   function parseQueryAndHashForView() {
@@ -347,11 +368,6 @@
     if (viewParam === "verify-email") {
       state.currentView = "verify-email";
       state.verifyEmailToken = tokenParam || null;
-      return true;
-    }
-    if (viewParam === "activate") {
-      state.currentView = "activate";
-      state.activateToken = tokenParam || null;
       return true;
     }
     const hash = (window.location.hash || "").replace(/^#/, "");
@@ -377,11 +393,6 @@
     if (segments[0] === "verify-email") {
       state.currentView = "verify-email";
       state.verifyEmailToken = params.get("token") || null;
-      return true;
-    }
-    if (segments[0] === "activate") {
-      state.currentView = "activate";
-      state.activateToken = params.get("token") || null;
       return true;
     }
     if (segments[0] === "dashboard" && segments[1] === "profile") {
@@ -540,6 +551,45 @@
       reason: "ok",
       cta: { label: "", action: "" }
     };
+  }
+
+  // src/studentExpirySave.js
+  function isoEndOfLocalDayFromDateInput(ymd) {
+    if (!ymd || typeof ymd !== "string") return null;
+    const parts = ymd.split("-").map((x) => parseInt(x, 10));
+    if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return null;
+    return new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999).toISOString();
+  }
+  function applyPerPackExpiryFromInputs(packsMut, pairs, formatClassDate) {
+    if (!Array.isArray(packsMut) || !Array.isArray(pairs)) return;
+    for (const { packId, inputYmd: dv } of pairs) {
+      if (!packId) continue;
+      const idx = packsMut.findIndex((p) => String(p.id) === String(packId));
+      if (idx < 0) continue;
+      const cur = packsMut[idx].expires_at;
+      const prevYmd = cur && typeof formatClassDate === "function" ? formatClassDate(new Date(cur)) : "";
+      if (!dv || dv === prevYmd) continue;
+      const iso = isoEndOfLocalDayFromDateInput(dv);
+      if (iso) {
+        packsMut[idx] = { ...packsMut[idx], expires_at: iso };
+      }
+    }
+  }
+  function computePPackageExpiresAtFromPacks(packsMut) {
+    if (!Array.isArray(packsMut) || packsMut.length === 0) return null;
+    let minMs = Infinity;
+    for (const p of packsMut) {
+      if (!p.expires_at) continue;
+      const ms = new Date(p.expires_at).getTime();
+      if (Number.isFinite(ms) && ms < minMs) minMs = ms;
+    }
+    return minMs !== Infinity ? new Date(minMs).toISOString() : null;
+  }
+
+  // src/groupClassExceptionResolve.js
+  function registrationClosedFromExceptionKind(kind) {
+    const k = String(kind || "").trim().toLowerCase();
+    return k === "cancelled" || k === "special";
   }
 
   // src/data.js
@@ -2403,6 +2453,9 @@
       plans_section_private: "Private classes",
       plans_section_mixed: "Mixed classes",
       plans_section_sociales: "Sociales (events)",
+      package_student_visible_label: "Show in shop",
+      package_hidden_from_students_hint: "Hidden from students \u2014 not in shop or discovery",
+      package_not_available: "This package is not available for purchase.",
       limit_classes_label: "Class Limit",
       limit_classes_placeholder: "Classes (0 = Unlimited)",
       offer_private_classes: "Offer private classes",
@@ -3098,7 +3151,7 @@
       class_exception_scope_one_class: "One class",
       class_exception_kind: "Type",
       class_exception_kind_cancelled: "Cancelled / no class",
-      class_exception_kind_info: "Note / announcement (blocks self-serve signup)",
+      class_exception_kind_info: "Note / announcement (shown on schedule; does not block registration)",
       class_exception_kind_special: "Special one-off (blocks registration)",
       schedule_exception_badge_info: "Information",
       schedule_exception_badge_cancelled: "No class",
@@ -3354,6 +3407,9 @@
       plans_section_private: "Clases particulares",
       plans_section_mixed: "Clases mixtas",
       plans_section_sociales: "Sociales (eventos)",
+      package_student_visible_label: "Mostrar en tienda",
+      package_hidden_from_students_hint: "Oculto para alumnos \u2014 no aparece en tienda ni descubrimiento",
+      package_not_available: "Este paquete no est\xE1 disponible para comprar.",
       limit_classes_label: "L\xEDmite de Clases",
       limit_classes_placeholder: "Clases (0 = Ilimitado)",
       offer_private_classes: "Ofrecer clases particulares",
@@ -3953,7 +4009,7 @@
       class_exception_scope_one_class: "Una clase",
       class_exception_kind: "Tipo",
       class_exception_kind_cancelled: "Cancelada / no hay clase",
-      class_exception_kind_info: "Nota / aviso (bloquea inscripci\xF3n del alumno)",
+      class_exception_kind_info: "Nota / aviso (visible en el horario; no bloquea la inscripci\xF3n)",
       class_exception_kind_special: "Clase especial \xFAnica (bloquea inscripci\xF3n)",
       schedule_exception_badge_info: "Informaci\xF3n",
       schedule_exception_badge_cancelled: "Sin clase",
@@ -4274,6 +4330,9 @@
       plans_section_private: "Privatstunden",
       plans_section_mixed: "Gemischt",
       plans_section_sociales: "Sociales (Events)",
+      package_student_visible_label: "Im Shop anzeigen",
+      package_hidden_from_students_hint: "F\xFCr Sch\xFCler ausgeblendet \u2014 nicht im Shop oder Discovery",
+      package_not_available: "Dieses Paket kann nicht gekauft werden.",
       limit_classes_label: "Stundenlimit",
       limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
       offer_private_classes: "Privatunterricht anbieten",
@@ -4849,7 +4908,7 @@
       class_exception_scope_one_class: "Ein Kurs",
       class_exception_kind: "Art",
       class_exception_kind_cancelled: "Entf\xE4llt / keine Stunde",
-      class_exception_kind_info: "Hinweis (keine Selbst-Anmeldung)",
+      class_exception_kind_info: "Hinweis (im Plan sichtbar; blockiert keine Anmeldung)",
       class_exception_kind_special: "Sonderstunde (keine Anmeldung)",
       schedule_exception_badge_info: "Hinweis",
       schedule_exception_badge_cancelled: "F\xE4llt aus",
@@ -5265,15 +5324,6 @@
       state.isAdmin = false;
       setSessionIdentity();
       saveState();
-      if (state.activateToken) {
-        state.currentView = "activate";
-        state.discoveryPath = null;
-        window.history.replaceState({}, "", (window.location.pathname || "/") + "?view=activate&token=" + encodeURIComponent(state.activateToken));
-        await window.fetchUserProfile();
-        renderView();
-        window.scrollTo(0, 0);
-        return;
-      }
       state.discoveryPath = "/discovery";
       history.pushState({ discoveryPath: "/discovery" }, "", "/discovery");
       await window.fetchUserProfile();
@@ -5326,14 +5376,6 @@
         state.auth.profile = profile;
         state.auth.user = user;
         state.auth.session = signInData.session;
-      }
-      if (state.activateToken) {
-        state.currentView = "activate";
-        state.discoveryPath = null;
-        window.history.replaceState({}, "", (window.location.pathname || "/") + "?view=activate&token=" + encodeURIComponent(state.activateToken));
-        renderView();
-        window.scrollTo(0, 0);
-        return;
       }
       if (state.afterLogin) {
         const next = state.afterLogin;
@@ -5398,57 +5440,6 @@
       }, 1500);
     } catch (e) {
       root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${t2("verify_email_invalid_link") || "Invalid or expired link."}</p><a href="/discovery" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back to discovery"}</a></div></div>`;
-    }
-  };
-  window.runActivateFlow = async (token) => {
-    const t2 = (k) => window.t ? window.t(k) : k;
-    const root = document.getElementById("app-root");
-    if (!root || !token) return;
-    const fnUrl = (SUPABASE_URL || "").replace(/\/$/, "") + "/functions/v1/accept_student_activation";
-    const headers = { "Content-Type": "application/json" };
-    const sess = supabaseClient ? (await supabaseClient.auth.getSession()).data?.session : null;
-    if (sess?.access_token) headers["Authorization"] = "Bearer " + sess.access_token;
-    try {
-      const res = await fetch(fnUrl, { method: "POST", headers, body: JSON.stringify({ token }) });
-      const data = await res.json().catch(() => ({}));
-      if (data.requires_login) {
-        const schoolName2 = escapeHtml(data.school_name);
-        const masked = escapeHtml(data.masked_email);
-        window._pendingActivateToken = String(token);
-        window._handleActivateLogin = function() {
-          state.activateToken = window._pendingActivateToken;
-          state.discoveryPath = "/discovery/login";
-          history.pushState({}, "", "/discovery/login");
-          renderView();
-        };
-        window._handleActivateRegister = function() {
-          state.activateToken = window._pendingActivateToken;
-          state.discoveryPath = "/discovery/register";
-          history.pushState({}, "", "/discovery/register");
-          renderView();
-        };
-        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem; max-width: 400px;"><h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${t2("activate_title") || "Link your account"}</h2><p class="text-muted" style="margin-bottom: 1.25rem;">${t2("activate_requires_login") || "Create an account or sign in to link with"}: <strong>${schoolName2 || "your school"}</strong>${masked ? ` (${masked})` : ""}.</p><button type="button" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 0.5rem; border-radius: 12px; font-weight: 600;" onclick="window._handleActivateLogin()">${t2("sign_in") || "Sign in"}</button><button type="button" class="btn-secondary" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600;" onclick="window._handleActivateRegister()">${t2("sign_up") || "Sign up"}</button></div></div>`;
-        if (window.lucide) window.lucide.createIcons();
-        return;
-      }
-      if (!res.ok) {
-        const err = (data.error || "HTTP " + res.status).replace(/</g, "&lt;");
-        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${err}</p><a href="/" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back"}</a></div></div>`;
-        return;
-      }
-      state.activateToken = null;
-      const schoolName = escapeHtml(data.school?.name);
-      root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p style="color: var(--system-green); font-weight: 600;">${t2("activate_success") || "Account linked!"}</p><p class="text-muted" style="margin-top: 0.5rem;">${schoolName ? t2("activate_success_school") || "You are now linked with " + schoolName : ""}</p><a href="/" style="display: inline-block; margin-top: 1rem; color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("activate_go_dashboard") || "Go to dashboard"}</a></div></div>`;
-      if (window.lucide) window.lucide.createIcons();
-      window.history.replaceState({}, "", window.location.pathname || "/");
-      setTimeout(() => {
-        state.currentView = "school-selection";
-        state.currentSchool = data.school ? { id: data.school.id, name: data.school.name } : null;
-        saveState();
-        renderView();
-      }, 2e3);
-    } catch (e) {
-      root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${e && e.message ? String(e.message).replace(/</g, "&lt;") : t2("activate_invalid_link") || "Invalid or expired link."}</p><a href="/" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back"}</a></div></div>`;
     }
   };
   window.renderDashboardProfileView = () => {
@@ -7033,18 +7024,6 @@
       }
       return;
     }
-    if (view === "activate" && root) {
-      const t2 = (k) => window.t ? window.t(k) : k;
-      const token = state.activateToken || new URLSearchParams(window.location.search).get("token");
-      if (!token) {
-        root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p class="text-muted">${t2("activate_invalid_link") || "Invalid or expired link."}</p><a href="/" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">${t2("discovery_back") || "Back"}</a></div></div>`;
-        return;
-      }
-      root.innerHTML = `<div class="container auth-view"><div class="auth-page-container" style="padding: 2rem;"><p>${t2("activate_linking") || "Linking..."}</p><div class="spin" style="margin: 1rem auto;"><i data-lucide="loader-2" size="32"></i></div></div></div>`;
-      if (window.lucide) window.lucide.createIcons();
-      if (typeof window.runActivateFlow === "function") window.runActivateFlow(token);
-      return;
-    }
     if (view === "dashboard-profile" && root) {
       const t2 = (k) => window.t ? window.t(k) : k;
       (async () => {
@@ -8373,11 +8352,12 @@
             return subs.length ? `
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                             ${subs.map((s) => `
-                                <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;">
+                                <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <input type="text" data-field="name" value="${(s.name || "").replace(/"/g, "&quot;")}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; flex: 1; color: var(--text-primary); outline: none; margin-right: 6px;">
                                         <button type="button" onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.5; padding: 4px; cursor: pointer;" aria-label="${(t2.delete_label || "Delete").replace(/"/g, "&quot;")}"><i data-lucide="trash-2" size="14"></i></button>
                                     </div>
+                                    ${planVisibilityToggleRow(s, t2)}
                                     <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                         <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${currencySym}</span>
                                         <input type="number" data-field="price" value="${s.price}" onchange="updateSub('${s.id}', 'price', this.value)" style="background: transparent; border: none; width: 100%; color: var(--text-primary); font-weight: 600; outline: none; font-size: 12px; padding: 0;">
@@ -8587,7 +8567,7 @@
           const teacherImg = school.logo_url || school.teacher_photo_url || "";
           const locations = school.discovery_locations || [];
           const locOptions = locations.length ? locations.map((l) => `<option value="${(l.name || l.address || "").replace(/"/g, "&quot;")}">${(l.name || l.address || "\u2014").replace(/</g, "&lt;")}</option>`).join("") : '<option value="">\u2014</option>';
-          const cheapestSub = (state.subscriptions || []).filter((s) => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+          const cheapestSub = (state.subscriptions || []).filter((s) => subscriptionShownToStudents(s) && s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
           const priceStr = cheapestSub ? typeof window.formatPrice === "function" ? window.formatPrice(cheapestSub.price, school.currency || "MXN") : cheapestSub.price : "\u2014";
           const weekStart = state._teacherBookingWeekStart || (() => {
             const d = getTodayForMonthly();
@@ -8926,7 +8906,7 @@
             displayTime = avail.display_time || null;
             const kindFromAvail = String(occurrenceKind || "").trim().toLowerCase();
             occurrenceKind = kindFromAvail || null;
-            registrationClosed = avail.registration_closed === true || avail.registration_closed === "true" || kindFromAvail === "cancelled" || kindFromAvail === "special" || kindFromAvail === "info";
+            registrationClosed = avail.registration_closed === true || avail.registration_closed === "true" || registrationClosedFromExceptionKind(kindFromAvail);
           } else {
             const ex = typeof window.resolveScheduleGroupException === "function" ? window.resolveScheduleGroupException(classObj.id, dateStr) : null;
             if (ex) {
@@ -8935,14 +8915,16 @@
               occurrenceMessage = ex.message || null;
               displayTitle = ex.display_title || null;
               displayTime = ex.display_time || null;
-              registrationClosed = ek === "cancelled" || ek === "special" || ek === "info";
+              registrationClosed = registrationClosedFromExceptionKind(ek);
             }
           }
           if (typeof window.resolveScheduleGroupException === "function") {
             const exM = window.resolveScheduleGroupException(classObj.id, dateStr);
             const kindM = exM ? String(exM.exception_kind || "").trim().toLowerCase() : "";
-            if (kindM === "cancelled" || kindM === "special" || kindM === "info") {
+            if (registrationClosedFromExceptionKind(kindM)) {
               registrationClosed = true;
+            }
+            if (kindM === "cancelled" || kindM === "special" || kindM === "info") {
               occurrenceKind = occurrenceKind || kindM;
               if (exM.message && !occurrenceMessage) occurrenceMessage = exM.message;
               if (exM.display_title && !displayTitle) displayTitle = exM.display_title;
@@ -9109,7 +9091,7 @@
           const upcomingRegs = (state.studentRegistrations || []).filter((r) => r.status === "registered" || r.status === "pending");
           const locale = state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US";
           const fmtDateShort = (d) => d ? (/* @__PURE__ */ new Date(d + "T00:00:00")).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" }) : "";
-          const canCancelReg = (r) => r.status === "registered" && (/* @__PURE__ */ new Date(r.class_date + "T" + (r.time || "23:59"))).getTime() - getVirtualNow().getTime() > 4 * 60 * 60 * 1e3;
+          const canCancelReg = (r) => (r.status === "registered" || r.status === "pending") && (/* @__PURE__ */ new Date(r.class_date + "T" + (r.time || "23:59"))).getTime() - getVirtualNow().getTime() > 4 * 60 * 60 * 1e3;
           html += `
             <div class="schedule-my-classes" style="margin-bottom: 1.2rem; border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; background: var(--system-gray6);">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: ${upcomingRegs.length > 0 ? "10px" : "0"};">
@@ -9280,7 +9262,7 @@
         const weekLabel = monthNames[wsDate.getMonth()] + " " + wsDate.getDate() + " \u2013 " + monthNames[weDate.getMonth()] + " " + weDate.getDate() + ", " + weDate.getFullYear();
         const locations = [...new Set((state.teacherAvailability || []).map((a) => a.location).filter(Boolean))];
         const selectedLocation = state._bookingLocation || locations[0] || "";
-        const cheapestSub = (state.subscriptions || []).reduce((min, s) => !min || s.price && s.price < min.price ? s : min, null);
+        const cheapestSub = (state.subscriptions || []).filter((s) => subscriptionShownToStudents(s)).reduce((min, s) => !min || s.price && s.price < min.price ? s : min, null);
         const priceLabel = cheapestSub ? (CURRENCY_SYMBOLS[school.currency || "MXN"] || "$") + cheapestSub.price : "";
         html += `
             <div class="ios-header">
@@ -9359,6 +9341,7 @@
         const hasDualShop = schoolHasDualGroupPrivateOffering(state.currentSchool, state.adminSettings);
         const hasEventsEnabledShop = state.currentSchool?.events_packages_enabled !== false && state.adminSettings?.events_offering_enabled === "true";
         const visibleSubsShop = (state.subscriptions || []).filter((s) => {
+          if (!subscriptionShownToStudents(s)) return false;
           if (!hasEventsEnabledShop && hasEventsInPlan(s)) return false;
           if (!isPT && !hasDualShop && hasPrivateInPlan(s)) return false;
           return true;
@@ -9712,7 +9695,7 @@
           const weekLabel = weekStartDate && weekEndDate ? (t2.week_of_short || "Week of {start}").replace("{start}", window.formatShortDate(weekStartDate, state.language)) : t2.upcoming_classes || "Upcoming";
           const canCancelReg = (r) => {
             const classDateTime = /* @__PURE__ */ new Date(r.class_date + "T" + (r.time || "23:59"));
-            return classDateTime.getTime() - getVirtualNow().getTime() > 4 * 60 * 60 * 1e3;
+            return (r.status === "registered" || r.status === "pending") && classDateTime.getTime() - getVirtualNow().getTime() > 4 * 60 * 60 * 1e3;
           };
           return `
                     <div class="qr-registrations-expandable ${regExpanded ? "expanded" : ""}" style="margin-top: 1.5rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; border-top: 1px solid var(--border); padding-top: 1rem;">
@@ -9747,10 +9730,10 @@
                                         </div>
                                         <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${dateLabel} \u2022 ${r.time || ""}</div>
                                         <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
-                                        ${!isPending && canCancel ? `<button type="button" class="reg-cancel-btn" style="font-size: 11px; padding: 4px 10px;" onclick="event.stopPropagation(); window.showCancelConfirmModal('${r.id}')">${t2.cancel_this_class || "Cancel this class"}</button>` : ""}
+                                        ${canCancel ? `<button type="button" class="reg-cancel-btn" style="font-size: 11px; padding: 4px 10px;" onclick="event.stopPropagation(); window.showCancelConfirmModal('${r.id}')">${t2.cancel_this_class || "Cancel this class"}</button>` : ""}
                                         ${showCancelAll ? `<button type="button" class="btn-secondary qr-reg-cancel-all-btn" style="font-size: 11px; padding: 4px 10px;" data-cancel-all-ids="${cancelAllIdsAttr}" onclick="event.stopPropagation(); var ids=this.getAttribute('data-cancel-all-ids'); if(ids) window.showCancelAllConfirmModal(ids.split(','));">${(t2.cancel_all_n_classes || "Cancel all {n} classes").replace("{n}", sameClassCancelableIds.length)}</button>` : ""}
                                         </div>
-                                        ${!isPending && !canCancel && !showCancelAll && r.class_date ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px;">${t2.cannot_cancel_deadline || "Cancellation deadline passed"}</div>` : ""}
+                                        ${!canCancel && !showCancelAll && r.class_date ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px;">${t2.cannot_cancel_deadline || "Cancellation deadline passed"}</div>` : ""}
                                     </div>`;
           }).join("")}
                                 `}
@@ -10851,7 +10834,7 @@
             <div style="padding: 0 1.2rem; margin-top: 0.6rem; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t2.plans_section_group || "Group classes"}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminGroupOnly.map((s) => `
-                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -10861,6 +10844,7 @@
                                 <i data-lucide="trash-2" size="16"></i>
                             </button>
                         </div>
+                        ${planVisibilityToggleRow(s, t2)}
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || "MXN"] || "$").trim()}</span>
@@ -10915,7 +10899,7 @@
             <div style="padding: 0 1.2rem; margin-top: ${adminGroupOnly.length > 0 ? "1.25rem" : "0.6rem"}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t2.plans_section_private || "Private classes"}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminPrivateOnly.map((s) => `
-                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -10925,6 +10909,7 @@
                                 <i data-lucide="trash-2" size="16"></i>
                             </button>
                         </div>
+                        ${planVisibilityToggleRow(s, t2)}
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || "MXN"] || "$").trim()}</span>
@@ -10979,7 +10964,7 @@
             <div style="padding: 0 1.2rem; margin-top: ${adminGroupOnly.length > 0 || adminPrivateOnly.length > 0 ? "1.25rem" : "0.6rem"}; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9;">${t2.plans_section_mixed || "Mixed classes"}</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminMixed.map((s) => `
-                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+                    <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -10989,6 +10974,7 @@
                                 <i data-lucide="trash-2" size="16"></i>
                             </button>
                         </div>
+                        ${planVisibilityToggleRow(s, t2)}
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || "MXN"] || "$").trim()}</span>
@@ -11044,7 +11030,7 @@
                 <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.9; margin-bottom: 0.4rem;">New plan \u2014 edit below</div>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                     ${((s) => {
-          const card = (sub) => `<div class="card ios-list-item" data-plan-block data-sub-id="${sub.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;">
+          const card = (sub) => `<div class="card ios-list-item" data-plan-block data-sub-id="${sub.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(sub)}">
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -11054,6 +11040,7 @@
                                 <i data-lucide="trash-2" size="16"></i>
                             </button>
                         </div>
+                        ${planVisibilityToggleRow(sub, t2)}
                          <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; background: var(--system-gray6); padding: 6px 10px; border-radius: 10px; gap: 4px;">
                                 <span style="color: var(--text-secondary); font-size: 10px; font-weight: 700; opacity: 0.6;">${(CURRENCY_SYMBOLS[state.currentSchool?.currency || "MXN"] || "$").trim()}</span>
@@ -14881,7 +14868,7 @@ School: ${schoolName}`)) return;
     const t2 = DANCE_LOCALES[state.language || "en"];
     const school = state.currentSchool || {};
     const teacherName = school.name || "Teacher";
-    const cheapestSub = (state.subscriptions || []).reduce((min, s) => !min || s.price && s.price < min.price ? s : min, null);
+    const cheapestSub = (state.subscriptions || []).filter((s) => subscriptionShownToStudents(s)).reduce((min, s) => !min || s.price && s.price < min.price ? s : min, null);
     const basePricePerHour = cheapestSub && cheapestSub.price != null ? Number(cheapestSub.price) : null;
     const currency = school.currency || "MXN";
     const durations = slot.availableDurations && slot.availableDurations.length ? slot.availableDurations : [60];
@@ -15072,7 +15059,7 @@ School: ${schoolName}`)) return;
     const details = document.getElementById("teacher-booking-confirm-details");
     const t2 = DANCE_LOCALES[state.language || "en"];
     const school = state.currentSchool;
-    const cheapestSub = (state.subscriptions || []).filter((s) => s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+    const cheapestSub = (state.subscriptions || []).filter((s) => subscriptionShownToStudents(s) && s.price != null).sort((a, b) => (a.price || 0) - (b.price || 0))[0];
     const basePricePerHour = cheapestSub && cheapestSub.price != null ? Number(cheapestSub.price) : null;
     const currency = school?.currency || "MXN";
     const durations = state._teacherBookingConfirm.availableDurations || [60];
@@ -15738,6 +15725,7 @@ School: ${schoolName}`)) return;
   window.openPaymentModal = async (subId) => {
     const sub = state.subscriptions.find((s) => s.id === subId);
     if (!sub) return;
+    if (!state.isAdmin && !subscriptionShownToStudents(sub)) return;
     const t2 = new Proxy(window.t, {
       get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
     });
@@ -15806,6 +15794,10 @@ School: ${schoolName}`)) return;
     const sub = state.subscriptions.find((s) => s.id === subId);
     if (!sub) {
       alert("Error: Plan not found");
+      return;
+    }
+    if (!state.isAdmin && !subscriptionShownToStudents(sub)) {
+      alert(typeof window.t === "function" && window.t("package_not_available") || "This package is not available for purchase.");
       return;
     }
     const t2 = new Proxy(window.t, {
@@ -16410,7 +16402,7 @@ School: ${schoolName}`)) return;
     const logoUrl = (opts.logoUrl || "").trim();
     const teacherUrl = (opts.teacherUrl || "").trim();
     const classes = opts.classes || [];
-    const subscriptions = opts.subscriptions || [];
+    const subscriptions = (opts.subscriptions || []).filter((s) => subscriptionShownToStudents(s));
     const gallery = opts.gallery || [];
     const locations = opts.locations || [];
     const daysOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -17367,6 +17359,8 @@ School: ${schoolName}`)) return;
         if (evVal !== void 0) sub.limit_count_events = evVal === "" ? 0 : parseInt(evVal, 10) || 0;
         const expVal = get("expiry_date");
         if (expVal !== void 0) sub.expiry_date = (expVal || "").trim();
+        const visBtn = block.querySelector('[data-field="student_visible_toggle"]');
+        if (visBtn) sub.student_visible = visBtn.getAttribute("aria-pressed") === "true";
       });
       for (const sub of subs) {
         const promises = [
@@ -17375,7 +17369,8 @@ School: ${schoolName}`)) return;
           window._updateSubNoRender(sub.id, "validity_days", sub.validity_days ?? 30),
           window._updateSubNoRender(sub.id, "limit_count", sub.limit_count ?? 0),
           window._updateSubNoRender(sub.id, "limit_count_private", sub.limit_count_private ?? 0),
-          window._updateSubNoRender(sub.id, "limit_count_events", sub.limit_count_events ?? 0)
+          window._updateSubNoRender(sub.id, "limit_count_events", sub.limit_count_events ?? 0),
+          window._updateSubNoRender(sub.id, "student_visible", sub.student_visible !== false ? "true" : "false")
         ];
         if (sub.expiry_date !== void 0) promises.push(window._updateSubNoRender(sub.id, "expiry_date", sub.expiry_date || ""));
         await Promise.all(promises);
@@ -17401,6 +17396,7 @@ School: ${schoolName}`)) return;
     else if (field === "limit_count_private") val = value === "" ? 0 : parseInt(value, 10) || 0;
     else if (field === "limit_count_events") val = value === "" ? 0 : parseInt(value, 10) || 0;
     else if (field === "validity_days") val = parseInt(value, 10) || 30;
+    else if (field === "student_visible") val = value === true || value === "true" || value === "1";
     else val = value;
     if (supabaseClient) {
       const { error: rpcError } = await supabaseClient.rpc("subscription_update_field", { p_id: String(id), p_field: field, p_value: val !== void 0 && val !== null ? String(val) : "" });
@@ -17418,6 +17414,12 @@ School: ${schoolName}`)) return;
       saveState();
       renderView();
     }
+  };
+  window.togglePlanStudentVisible = async (id) => {
+    const sub = state.subscriptions.find((s) => String(s.id) === String(id));
+    if (!sub) return;
+    const turnOn = sub.student_visible === false;
+    await window.updateSub(id, "student_visible", turnOn ? "true" : "false");
   };
   window.addSubscription = async () => {
     const schoolId = state.currentSchool?.id;
@@ -17443,10 +17445,10 @@ School: ${schoolName}`)) return;
       if (row) {
         const created = typeof row === "object" && !Array.isArray(row) ? row : Array.isArray(row) ? row[0] : null;
         if (created) state.subscriptions.push(created);
-        else state.subscriptions.push({ id: "S" + Date.now(), name: "New Plan", price: 50, limit_count: defaultGroup, limit_count_private: defaultPrivate, limit_count_events: 0, validity_days: 30, school_id: schoolId });
+        else state.subscriptions.push({ id: "S" + Date.now(), name: "New Plan", price: 50, limit_count: defaultGroup, limit_count_private: defaultPrivate, limit_count_events: 0, validity_days: 30, school_id: schoolId, student_visible: true });
       }
     } else {
-      state.subscriptions.push({ id: "S" + Date.now(), name: "New Plan", price: 50, limit_count: defaultGroup, limit_count_private: defaultPrivate, limit_count_events: 0, validity_days: 30, school_id: schoolId });
+      state.subscriptions.push({ id: "S" + Date.now(), name: "New Plan", price: 50, limit_count: defaultGroup, limit_count_private: defaultPrivate, limit_count_events: 0, validity_days: 30, school_id: schoolId, student_visible: true });
     }
     const added = state.subscriptions[state.subscriptions.length - 1];
     state.lastAddedSubscriptionId = added ? added.id : null;
@@ -17604,32 +17606,6 @@ School: ${schoolName}`)) return;
         </div>
     `;
   };
-  window.inviteStudentActivation = async (studentId) => {
-    const t2 = (k) => window.t ? window.t(k) : k;
-    if (!state.currentSchool?.id || !studentId) return;
-    const sess = supabaseClient ? (await supabaseClient.auth.getSession()).data?.session : null;
-    if (!sess?.access_token) {
-      alert(t2("sign_in") || "Sign in required");
-      return;
-    }
-    const fnUrl = (typeof SUPABASE_URL !== "undefined" ? SUPABASE_URL : "").replace(/\/$/, "") + "/functions/v1/invite_student_activation";
-    try {
-      const res = await fetch(fnUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sess.access_token },
-        body: JSON.stringify({ school_id: state.currentSchool.id, school_student_id: studentId })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "HTTP " + res.status);
-      if (!state.studentActivationStatus) state.studentActivationStatus = {};
-      state.studentActivationStatus[studentId] = { linked: false, invited_at: (/* @__PURE__ */ new Date()).toISOString() };
-      if (typeof window.filterStudents === "function") window.filterStudents(state.adminStudentsSearch);
-      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
-      alert(t2("invite_activation_sent") || "Invite sent. The student will receive an email to link their account.");
-    } catch (e) {
-      alert(e && e.message ? e.message : t2("invite_activation_error") || "Failed to send invite");
-    }
-  };
   function getFilteredStudents(query) {
     const q = (query || "").toLowerCase().trim();
     const hasPackFilter = state.adminStudentsFilterHasPack || "all";
@@ -17754,14 +17730,20 @@ School: ${schoolName}`)) return;
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 8px; letter-spacing: 0.05em;">${t2("pack_details_title")}</label>
                     <div style="display: flex; flex-direction: column; gap: 8px; background: ${bgColor}; border-radius: 14px; padding: 4px;">
                         ${(s.active_packs || []).length > 0 ? s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at)).map((p) => `
-                            <div style="padding: 12px; border-bottom: 1px solid rgba(142,142,147,0.3); display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: ${textColor};">${escapeHtml(p.name)}</div>
-                                    <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${p.count == null || p.count === "null" ? "\u221E" : p.count} Clases \u2022 ${t2("expires_label")}: ${new Date(p.expires_at).toLocaleDateString()}</div>
+                            <div style="padding: 12px; border-bottom: 1px solid rgba(142,142,147,0.3); display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                                    <div style="min-width: 0;">
+                                        <div style="font-size: 13px; font-weight: 700; color: ${textColor};">${escapeHtml(p.name)}</div>
+                                        <div style="font-size: 10px; opacity: 0.6; font-weight: 600; text-transform: uppercase; color: ${textColor};">${p.count == null || p.count === "null" ? "\u221E" : p.count} ${t2("classes_label")}</div>
+                                    </div>
+                                    <button type="button" onclick="window.removeStudentPack('${escapeHtml(s.id)}', '${escapeHtml(p.id)}')" style="background: transparent; border: none; color: #ff3b30; padding: 8px; cursor: pointer; opacity: 0.5; flex-shrink: 0;">
+                                        <i data-lucide="minus-circle" size="16"></i>
+                                    </button>
                                 </div>
-                                <button onclick="window.removeStudentPack('${escapeHtml(s.id)}', '${escapeHtml(p.id)}')" style="background: transparent; border: none; color: #ff3b30; padding: 8px; cursor: pointer; opacity: 0.5;">
-                                    <i data-lucide="minus-circle" size="16"></i>
-                                </button>
+                                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 4px; letter-spacing: 0.05em;">${t2("expires_label")}</label>
+                                    <input type="date" class="minimal-input edit-pack-expires-input" data-pack-id="${escapeHtml(p.id)}" value="${p.expires_at ? window.formatClassDate(new Date(p.expires_at)) : ""}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
+                                </div>
                             </div>
                         `).join("") : `<div style="padding: 16px; font-size: 12px; opacity: 0.5; text-align: center; color: ${textColor};">${t2("no_classes_msg")}</div>`}
                     </div>
@@ -17774,10 +17756,12 @@ School: ${schoolName}`)) return;
                     </div>
                 </div>
 
+                ${!s.active_packs || s.active_packs.length === 0 ? `
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
-                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("next_expiry_label")} (Main Timer)</label>
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("next_expiry_label")}</label>
                     <input type="date" id="edit-student-expires" class="minimal-input" value="${s.package_expires_at ? window.formatClassDate(new Date(s.package_expires_at)) : ""}" style="background: ${bgColor}; color: ${textColor}; border: none; width: 100%; box-sizing: border-box;">
                 </div>
+                ` : ""}
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2.5rem;">
@@ -17840,7 +17824,8 @@ School: ${schoolName}`)) return;
     const newPhone = document.getElementById("edit-student-phone").value.trim();
     const newPassword = document.getElementById("edit-student-password")?.value ?? "";
     const balanceVal = document.getElementById("edit-student-balance").value;
-    const expiresVal = document.getElementById("edit-student-expires").value;
+    const legacyExpiresEl = document.getElementById("edit-student-expires");
+    const expiresVal = legacyExpiresEl ? legacyExpiresEl.value : "";
     const balancePrivateEl = document.getElementById("edit-student-balance-private");
     const balanceEventsEl = document.getElementById("edit-student-balance-events");
     const balancePrivateVal = balancePrivateEl ? balancePrivateEl.value : null;
@@ -17880,8 +17865,24 @@ School: ${schoolName}`)) return;
           const ev = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
           packsMut = syncActivePacksFieldSumToTarget(packsMut, "event_count", ev);
         }
+        const packDatePairs = [];
+        document.querySelectorAll("input.edit-pack-expires-input[data-pack-id]").forEach((el) => {
+          const packId = el.getAttribute("data-pack-id");
+          if (packId) packDatePairs.push({ packId, inputYmd: el.value });
+        });
+        applyPerPackExpiryFromInputs(
+          packsMut,
+          packDatePairs,
+          typeof window.formatClassDate === "function" ? window.formatClassDate : null
+        );
       }
       const packsChanged = packsMut.length > 0 && JSON.stringify(packsMut) !== JSON.stringify(origPacks);
+      let pPackageExpiresAt = null;
+      if (packsMut.length > 0) {
+        pPackageExpiresAt = computePPackageExpiresAtFromPacks(packsMut);
+      } else if (expiresVal) {
+        pPackageExpiresAt = isoEndOfLocalDayFromDateInput(expiresVal);
+      }
       const payload = {
         p_student_id: id,
         p_school_id: schoolId,
@@ -17890,7 +17891,7 @@ School: ${schoolName}`)) return;
         p_phone: newPhone,
         p_password: newPassword || null,
         p_balance: parsedBalance,
-        p_package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
+        p_package_expires_at: pPackageExpiresAt
       };
       if (balancePrivateEl) payload.p_balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
       if (balanceEventsEl) payload.p_balance_events = Math.max(0, parseInt(balanceEventsVal, 10) || 0);
@@ -17926,7 +17927,7 @@ School: ${schoolName}`)) return;
           email: newEmail || null,
           phone: newPhone,
           balance: parsedBalance,
-          package_expires_at: expiresVal ? new Date(expiresVal).toISOString() : null
+          package_expires_at: pPackageExpiresAt
         };
         if (packsChanged) updates.active_packs = packsMut;
         if (balancePrivateEl) updates.balance_private = Math.max(0, parseInt(balancePrivateVal, 10) || 0);
@@ -18237,7 +18238,7 @@ School: ${schoolName}`)) return;
         if (saved.currentUser) state.currentUser = saved.currentUser;
         if (saved.isAdmin !== void 0) state.isAdmin = saved.isAdmin;
         if (saved.isPlatformDev !== void 0) state.isPlatformDev = saved.isPlatformDev;
-        if (saved.currentView && state.currentView !== "verify-email" && state.currentView !== "activate" && saved.currentView !== "reset-password") state.currentView = saved.currentView;
+        if (saved.currentView && state.currentView !== "verify-email" && saved.currentView !== "reset-password") state.currentView = saved.currentView;
         if (saved.scheduleView) state.scheduleView = saved.scheduleView;
         if (saved.lastActivity) state.lastActivity = saved.lastActivity;
         if (saved.currentSchool) state.currentSchool = saved.currentSchool;
