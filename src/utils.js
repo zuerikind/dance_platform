@@ -73,8 +73,16 @@ export function syncActivePacksFieldSumToTarget(activePacks, field, targetSum) {
     packs.forEach((p, i) => {
         const v = readVal(p);
         if (field === 'count' && v === null) return;
-        const exp = p.expires_at ? new Date(p.expires_at).getTime() : 0;
-        entries.push({ i, exp });
+        // Match SQL deduct_student_classes: NULL / missing expires_at sorts last (NULLS LAST).
+        let expSort;
+        if (p.expires_at) {
+            const t = new Date(p.expires_at).getTime();
+            expSort = Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+        } else {
+            expSort = Number.POSITIVE_INFINITY;
+        }
+        const ct = p.created_at ? new Date(p.created_at).getTime() : 0;
+        entries.push({ i, expSort, ct });
     });
 
     let sum = 0;
@@ -86,7 +94,7 @@ export function syncActivePacksFieldSumToTarget(activePacks, field, targetSum) {
     let diff = target - sum;
     if (diff === 0) return packs;
 
-    entries.sort((a, b) => a.exp - b.exp);
+    entries.sort((a, b) => (a.expSort !== b.expSort ? a.expSort - b.expSort : a.ct - b.ct));
 
     if (diff > 0) {
         const first = entries[0];

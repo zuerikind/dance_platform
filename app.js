@@ -308,8 +308,15 @@
     packs.forEach((p, i) => {
       const v = readVal(p);
       if (field === "count" && v === null) return;
-      const exp = p.expires_at ? new Date(p.expires_at).getTime() : 0;
-      entries.push({ i, exp });
+      let expSort;
+      if (p.expires_at) {
+        const t2 = new Date(p.expires_at).getTime();
+        expSort = Number.isFinite(t2) ? t2 : Number.POSITIVE_INFINITY;
+      } else {
+        expSort = Number.POSITIVE_INFINITY;
+      }
+      const ct = p.created_at ? new Date(p.created_at).getTime() : 0;
+      entries.push({ i, expSort, ct });
     });
     let sum = 0;
     entries.forEach((e) => {
@@ -318,7 +325,7 @@
     });
     let diff = target - sum;
     if (diff === 0) return packs;
-    entries.sort((a, b) => a.exp - b.exp);
+    entries.sort((a, b) => a.expSort !== b.expSort ? a.expSort - b.expSort : a.ct - b.ct);
     if (diff > 0) {
       const first = entries[0];
       if (!first) return packs;
@@ -2826,6 +2833,12 @@
       full_name_label: "Full Name",
       total_classes_label: "Classes Remaining (Total)",
       pack_details_title: "Package Details",
+      student_detail_deduction_dates_title: "Days classes were deducted (from package)",
+      student_detail_deduction_empty: "No booked classes with a recorded deduction yet. Manual door deductions without a booking may not appear here.",
+      student_detail_deduction_load_error: "Could not load usage history.",
+      student_detail_kind_group: "Group",
+      student_detail_kind_private: "Private",
+      student_detail_private_credits_fmt: "{n} credit(s)",
       reg_date_label: "Registration Date",
       next_expiry_label: "Next Expiry",
       delete_perm_label: "Delete member permanently",
@@ -3683,6 +3696,12 @@
       full_name_label: "Nombre Completo",
       total_classes_label: "Clases Restantes (Total)",
       pack_details_title: "Paquetes Detalles",
+      student_detail_deduction_dates_title: "D\xEDas en que se descontaron clases del paquete",
+      student_detail_deduction_empty: "A\xFAn no hay clases reservadas con descuento registrado. Los descuentos manuales sin reserva pueden no aparecer.",
+      student_detail_deduction_load_error: "No se pudo cargar el historial de uso.",
+      student_detail_kind_group: "Grupal",
+      student_detail_kind_private: "Privada",
+      student_detail_private_credits_fmt: "{n} clase(s)",
       reg_date_label: "Fecha de Registro",
       date_label: "fecha",
       dates_label: "fechas",
@@ -4638,6 +4657,12 @@
       full_name_label: "Vollst\xE4ndiger Name",
       total_classes_label: "Stunden insgesamt",
       pack_details_title: "Paket-Details",
+      student_detail_deduction_dates_title: "Tage mit Paket-Abzug (Klassen)",
+      student_detail_deduction_empty: "Noch keine gebuchten Kurse mit erfasstem Abzug. Manuelle Abz\xFCge ohne Buchung erscheinen ggf. nicht.",
+      student_detail_deduction_load_error: "Nutzungsverlauf konnte nicht geladen werden.",
+      student_detail_kind_group: "Gruppe",
+      student_detail_kind_private: "Privat",
+      student_detail_private_credits_fmt: "{n} Kredit(e)",
       reg_date_label: "Registriert am",
       date_label: "Termin",
       dates_label: "Termine",
@@ -17670,11 +17695,80 @@ School: ${schoolName}`)) return;
         return;
       }
     }
-    const modal = document.getElementById("student-modal");
-    const content = document.getElementById("student-modal-scroll") || document.getElementById("student-modal-content");
     const isDark = document.body.classList.contains("dark-mode");
     const textColor = isDark ? "#ffffff" : "#000000";
     const bgColor = isDark ? "#1c1c1e" : "#f2f2f7";
+    let studentDeductionDatesSection = "";
+    if (supabaseClient && state.currentSchool?.id) {
+      const schoolId = state.currentSchool.id;
+      const studentId = String(s.id);
+      const fmtClassDate = (iso) => {
+        const str = iso == null ? "" : String(iso).slice(0, 10);
+        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(str);
+        if (!m) return str || "\u2014";
+        const y = parseInt(m[1], 10);
+        const mo = parseInt(m[2], 10) - 1;
+        const d = parseInt(m[3], 10);
+        return new Date(y, mo, d).toLocaleDateString(void 0, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+      };
+      const statusLabel = (st) => {
+        if (st === "attended") return t2("attended") || "Attended";
+        if (st === "no_show") return t2("no_show") || "No-show";
+        if (st === "pending") return t2("aure_pending_badge") || "Pending";
+        if (st === "cancelled") return t2("cancelled") || "Cancelled";
+        if (st === "registered") return t2("registered") || "Registered";
+        return String(st || "");
+      };
+      const [grRes, plRes] = await Promise.all([
+        supabaseClient.from("class_registrations").select("class_date, status, class_id").eq("student_id", studentId).eq("school_id", schoolId).eq("deducted", true).order("class_date", { ascending: false }).limit(400),
+        supabaseClient.from("private_lessons").select("start_at_utc, credits_used, status").eq("student_id", studentId).eq("school_id", schoolId).eq("credit_deducted", true).order("start_at_utc", { ascending: false }).limit(400)
+      ]);
+      const classById = {};
+      (state.classes || []).forEach((c) => {
+        classById[c.id] = c;
+      });
+      const rows = [];
+      if (!grRes.error) {
+        (grRes.data || []).forEach((r) => {
+          const cls = classById[r.class_id];
+          const nm = cls?.name || `#${r.class_id}`;
+          const dayStr = r.class_date != null ? fmtClassDate(r.class_date) : "\u2014";
+          const sl = statusLabel(r.status);
+          const tag = t2("student_detail_kind_group") || "Group";
+          rows.push({
+            ts: (/* @__PURE__ */ new Date(String(r.class_date).slice(0, 10) + "T12:00:00")).getTime(),
+            html: `<div style="padding: 10px 12px; border-bottom: 1px solid rgba(142,142,147,0.22); font-size: 13px; color: ${textColor}; display: flex; flex-direction: column; gap: 4px;"><div style="font-weight: 700;">${escapeHtml(dayStr)}</div><div style="opacity: 0.92;"><span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.55; margin-right: 6px;">${escapeHtml(tag)}</span>${escapeHtml(nm)}</div><div style="font-size: 11px; opacity: 0.65;">${escapeHtml(sl)}</div></div>`
+          });
+        });
+      }
+      if (!plRes.error) {
+        (plRes.data || []).forEach((r) => {
+          const d = new Date(r.start_at_utc);
+          const n = Math.max(1, parseInt(r.credits_used, 10) || 1);
+          const creditsFmt = (t2("student_detail_private_credits_fmt") || "{n} credit(s)").replaceAll("{n}", String(n));
+          const dayStr = d.toLocaleDateString(void 0, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+          const timeBit = d.toLocaleTimeString(void 0, { hour: "numeric", minute: "2-digit" });
+          const tag = t2("student_detail_kind_private") || "Private";
+          const sl = statusLabel(r.status);
+          rows.push({
+            ts: d.getTime(),
+            html: `<div style="padding: 10px 12px; border-bottom: 1px solid rgba(142,142,147,0.22); font-size: 13px; color: ${textColor}; display: flex; flex-direction: column; gap: 4px;"><div style="font-weight: 700;">${escapeHtml(dayStr)}</div><div style="opacity: 0.92;"><span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.55; margin-right: 6px;">${escapeHtml(tag)}</span>${escapeHtml(creditsFmt)} \xB7 ${escapeHtml(timeBit)}</div><div style="font-size: 11px; opacity: 0.65;">${escapeHtml(sl)}</div></div>`
+          });
+        });
+      }
+      rows.sort((a, b) => b.ts - a.ts);
+      const loadFailed = !!(grRes.error || plRes.error) && rows.length === 0;
+      const inner = loadFailed ? `<div style="padding: 14px; font-size: 12px; color: #ff3b30; text-align: center;">${escapeHtml(t2("student_detail_deduction_load_error") || "Could not load usage history.")}</div>` : rows.length === 0 ? `<div style="padding: 16px; font-size: 12px; opacity: 0.55; text-align: center; color: ${textColor};">${escapeHtml(t2("student_detail_deduction_empty") || "")}</div>` : rows.map((x) => x.html).join("");
+      studentDeductionDatesSection = `
+                <div class="ios-input-group" style="width: 100%; min-width: 0;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 8px; letter-spacing: 0.05em;">${escapeHtml(t2("student_detail_deduction_dates_title") || "Deduction days")}</label>
+                    <div style="display: flex; flex-direction: column; background: ${bgColor}; border-radius: 14px; overflow: hidden; max-height: 240px; overflow-y: auto;">
+                        ${inner}
+                    </div>
+                </div>`;
+    }
+    const modal = document.getElementById("student-modal");
+    const content = document.getElementById("student-modal-scroll") || document.getElementById("student-modal-content");
     content.innerHTML = `
         <div style="text-align: left; width: 100%; min-width: 280px; color: ${textColor}; box-sizing: border-box;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
@@ -17748,6 +17842,8 @@ School: ${schoolName}`)) return;
                         `).join("") : `<div style="padding: 16px; font-size: 12px; opacity: 0.5; text-align: center; color: ${textColor};">${t2("no_classes_msg")}</div>`}
                     </div>
                 </div>
+
+                ${studentDeductionDatesSection}
 
                 <div class="ios-input-group" style="width: 100%; min-width: 0;">
                     <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; letter-spacing: 0.05em;">${t2("reg_date_label")}</label>
