@@ -38,6 +38,20 @@ export function schoolHasDualGroupPrivateOffering(school, adminSettings) {
 }
 
 /**
+ * Remove pack rows whose expires_at is already in the past.
+ * Keeps packs with missing or empty expires_at (legacy / open-ended).
+ * Prevents expired JSON packs from staying "active" when a new package is purchased or saved.
+ */
+export function filterActivePacksDropExpired(activePacks, nowMs = Date.now()) {
+    if (!Array.isArray(activePacks)) return [];
+    return activePacks.filter((p) => {
+        if (!p || p.expires_at == null || String(p.expires_at).trim() === '') return true;
+        const t = new Date(p.expires_at).getTime();
+        return !Number.isFinite(t) || t > nowMs;
+    });
+}
+
+/**
  * Adjust per-pack numeric fields so their sum matches target. Uses FIFO by expires_at (soonest first),
  * matching how deductions consume packs. Keeps students.balance / balance_* and active_packs aligned so
  * effective balance (max(row, sum(packs))) matches what the admin typed.
@@ -51,6 +65,7 @@ export function syncActivePacksFieldSumToTarget(activePacks, field, targetSum) {
     if (!Number.isFinite(target)) return activePacks.map((p) => ({ ...p }));
 
     const packs = activePacks.map((p) => ({ ...p }));
+    const nowTs = Date.now();
 
     const readVal = (p) => {
         if (field === 'count') {
@@ -71,6 +86,8 @@ export function syncActivePacksFieldSumToTarget(activePacks, field, targetSum) {
 
     const entries = [];
     packs.forEach((p, i) => {
+        const expTs = p.expires_at ? new Date(p.expires_at).getTime() : Number.POSITIVE_INFINITY;
+        if (Number.isFinite(expTs) && expTs <= nowTs) return;
         const v = readVal(p);
         if (field === 'count' && v === null) return;
         // Match SQL deduct_student_classes: NULL / missing expires_at sorts last (NULLS LAST).

@@ -283,11 +283,20 @@
     if (school.profile_type === "private_teacher") return offeringOn;
     return school.private_packages_enabled !== false && offeringOn;
   }
+  function filterActivePacksDropExpired(activePacks, nowMs = Date.now()) {
+    if (!Array.isArray(activePacks)) return [];
+    return activePacks.filter((p) => {
+      if (!p || p.expires_at == null || String(p.expires_at).trim() === "") return true;
+      const t2 = new Date(p.expires_at).getTime();
+      return !Number.isFinite(t2) || t2 > nowMs;
+    });
+  }
   function syncActivePacksFieldSumToTarget(activePacks, field, targetSum) {
     if (!Array.isArray(activePacks)) return [];
     const target = Math.max(0, Math.floor(Number(targetSum)));
     if (!Number.isFinite(target)) return activePacks.map((p) => ({ ...p }));
     const packs = activePacks.map((p) => ({ ...p }));
+    const nowTs = Date.now();
     const readVal = (p) => {
       if (field === "count") {
         if (p.count == null || p.count === "null") return null;
@@ -306,6 +315,8 @@
     };
     const entries = [];
     packs.forEach((p, i) => {
+      const expTs = p.expires_at ? new Date(p.expires_at).getTime() : Number.POSITIVE_INFINITY;
+      if (Number.isFinite(expTs) && expTs <= nowTs) return;
       const v = readVal(p);
       if (field === "count" && v === null) return;
       let expSort;
@@ -597,6 +608,26 @@
   function registrationClosedFromExceptionKind(kind) {
     const k = String(kind || "").trim().toLowerCase();
     return k === "cancelled" || k === "special";
+  }
+  function resolveScheduleGroupExceptionFromRows(classId, occurrenceDate, rows) {
+    if (!Array.isArray(rows) || !occurrenceDate) return null;
+    const want = String(occurrenceDate).slice(0, 10);
+    const idStr = String(classId);
+    const sameDay = (d) => {
+      if (d == null || !want) return false;
+      if (d instanceof Date && !isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}` === want;
+      }
+      const s = String(d).slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s === want;
+      return false;
+    };
+    const forClass = rows.find((e) => e.class_id != null && String(e.class_id) === idStr && sameDay(e.occurrence_date));
+    if (forClass) return forClass;
+    return rows.find((e) => e.class_id == null && sameDay(e.occurrence_date)) || null;
   }
 
   // src/data.js
@@ -2063,7 +2094,8 @@
       const effective = student ? getEffectiveBalances(student, /* @__PURE__ */ new Date()) : null;
       const currentClasses = effective ? isPtSchool && !hasDualScanMode ? String(effective.private ?? 0) : effective.groupUnlimited ? "\u221E" : String(effective.group ?? 0) : "\u2014";
       const latestApprovedTs = req.student_id ? latestApprovedByStudent[String(req.student_id)] : null;
-      const lastApprovedDate = latestApprovedTs ? new Date(latestApprovedTs).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : t2.memberships_never_approved || "Never";
+      const appLocale = state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US";
+      const lastApprovedDate = latestApprovedTs ? new Date(latestApprovedTs).toLocaleDateString(appLocale, { year: "numeric", month: "short", day: "numeric" }) : t2.memberships_never_approved || "Never";
       const payActionId = state.paymentRequestActionId;
       const payActionStatus = state.paymentRequestActionStatus;
       const isThisProcessing = payActionId === req.id;
@@ -2735,6 +2767,8 @@
       monthly_badge: "Monthly",
       monthly_balance_insufficient: "You need at least {n} classes to register for the full month.",
       monthly_registration_success: "Successfully registered for {n} classes this month!",
+      monthly_no_open_dates_title: "No classes to register this month",
+      monthly_no_open_dates_body: "Every matching day in your selection is either in the past, cancelled, or closed for registration. Check the schedule or pick another class.",
       monthly_capacity_full: "Class is full on {date}. Cannot complete monthly registration.",
       fixed_expiry_date_label: "Fixed expiry date (optional)",
       plan_expiry_display_title: "Plan expiry display",
@@ -3598,6 +3632,8 @@
       monthly_badge: "Mensual",
       monthly_balance_insufficient: "Necesitas al menos {n} clases para inscribirte al mes completo.",
       monthly_registration_success: "\xA1Te inscribiste exitosamente a {n} clases este mes!",
+      monthly_no_open_dates_title: "No hay clases disponibles para inscribirte este mes",
+      monthly_no_open_dates_body: "Todas las fechas de tu selecci\xF3n ya pasaron, est\xE1n canceladas o cerradas para inscripci\xF3n. Revisa el calendario o elige otra clase.",
       monthly_capacity_full: "La clase est\xE1 llena el {date}. No se puede completar la inscripci\xF3n mensual.",
       fixed_expiry_date_label: "Fecha de vencimiento fija (opcional)",
       plan_expiry_display_title: "Vencimiento de los planes",
@@ -4527,6 +4563,8 @@
       monthly_badge: "Monatlich",
       monthly_balance_insufficient: "Du brauchst mindestens {n} Kurse, um dich f\xFCr den ganzen Monat anzumelden.",
       monthly_registration_success: "Erfolgreich f\xFCr {n} Kurse diesen Monat angemeldet!",
+      monthly_no_open_dates_title: "Keine anmeldbaren Kurse in diesem Monat",
+      monthly_no_open_dates_body: "Alle passenden Termine liegen in der Vergangenheit, sind ausgefallen oder f\xFCr Selbstanmeldung geschlossen. Bitte Kalender pr\xFCfen oder einen anderen Kurs w\xE4hlen.",
       monthly_capacity_full: "Kurs ist am {date} voll. Monatliche Anmeldung nicht m\xF6glich.",
       fixed_expiry_date_label: "Festes Ablaufdatum (optional)",
       plan_expiry_display_title: "Ablauf-Anzeige der Pakete",
@@ -9667,9 +9705,10 @@
             const effectiveEvEn = Math.max(enrollment.balance_events ?? 0, eventsFromPacksEn);
             const hasEv = effectiveEvEn > 0 || packs.some((p) => (p.event_count || 0) > 0);
             const effEn = getEffectiveBalances(enrollment, now);
-            let enrollLabel = (enrollment.balance === null ? "\u221E" : enrollment.balance ?? 0) + " clases";
+            const groupLabelNum = effEn.groupUnlimited ? "\u221E" : String(effEn.group ?? 0);
+            let enrollLabel = groupLabelNum + " clases";
             if (hasPriv || hasEv) {
-              const g = (t2.group_classes_remaining || "G") + " " + (enrollment.balance === null ? "\u221E" : enrollment.balance ?? 0);
+              const g = (t2.group_classes_remaining || "G") + " " + groupLabelNum;
               const p_ = hasPriv ? " " + (t2.private_classes_remaining || "P") + " " + Math.max(0, effEn.private) : "";
               const e = hasEv ? " " + (t2.events_remaining || "E") + " " + effectiveEvEn : "";
               enrollLabel = g + p_ + e;
@@ -12471,6 +12510,57 @@
     }
     return dates;
   };
+  window.getMonthlyOpenRegistrationDates = async (classId, dayCode, anchorDateOrStr) => {
+    const raw = window.getMonthlyDates(dayCode, anchorDateOrStr);
+    if (!raw.length) return [];
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId || !supabaseClient) return raw;
+    let todayCut;
+    if (state.mockDate) {
+      todayCut = String(state.mockDate).slice(0, 10);
+    } else if (state.currentSchool?.id === AURE_SCHOOL_ID) {
+      todayCut = calendarDateStrInTimeZone(getVirtualNow(), AURE_SCHEDULE_TZ);
+    } else {
+      todayCut = window.formatClassDate(typeof window.getTodayForMonthly === "function" ? window.getTodayForMonthly() : /* @__PURE__ */ new Date());
+    }
+    const sorted = [...raw].sort();
+    const pStart = sorted[0];
+    const pEnd = sorted[sorted.length - 1];
+    let rows = [];
+    try {
+      const { data, error } = await supabaseClient.rpc("get_group_class_exceptions", {
+        p_school_id: schoolId,
+        p_start_date: pStart,
+        p_end_date: pEnd
+      });
+      if (error) throw error;
+      if (data != null) {
+        let rawData = data;
+        if (typeof rawData === "string") {
+          try {
+            rawData = JSON.parse(rawData);
+          } catch (_) {
+            rawData = [];
+          }
+        }
+        if (Array.isArray(rawData)) rows = rawData;
+        else if (rawData && typeof rawData === "object") {
+          rows = Object.values(rawData).filter((x) => x && typeof x === "object");
+        }
+      }
+    } catch (e) {
+      console.warn("getMonthlyOpenRegistrationDates", e);
+      rows = [];
+    }
+    const open = [];
+    for (const dateStr of sorted) {
+      if (dateStr < todayCut) continue;
+      const ex = resolveScheduleGroupExceptionFromRows(classId, dateStr, rows);
+      if (ex && registrationClosedFromExceptionKind(ex.exception_kind)) continue;
+      open.push(dateStr);
+    }
+    return open;
+  };
   window.has4or8Package = (user) => {
     if (!user) return false;
     const packs = Array.isArray(user.active_packs) ? user.active_packs : [];
@@ -12551,8 +12641,16 @@
     const t2 = typeof window.t === "function" ? window.t : (k) => k;
     const classObj = (state.classes || []).find((c) => c.id === classId);
     if (!classObj) return;
-    const dates = window.getMonthlyDates(classObj.day, optionalAnchorDateStr);
-    if (dates.length === 0) return;
+    const dates = await window.getMonthlyOpenRegistrationDates(classId, classObj.day, optionalAnchorDateStr);
+    if (dates.length === 0) {
+      window.showMessageModal({
+        icon: "warning",
+        title: t2("monthly_no_open_dates_title") || "No classes to register",
+        body: t2("monthly_no_open_dates_body") || "",
+        primaryLabel: t2("got_it")
+      });
+      return;
+    }
     try {
       const { data, error } = await supabaseClient.rpc("register_for_class_monthly", {
         p_student_id: String(studentId),
@@ -12598,6 +12696,15 @@
       const levelMustBeSetMatch = /Level must be set by admin\. Use "Request clase suelta" to request (this class|classes)\./i.test(msg);
       if (levelMustBeSetMatch) {
         alert(t2("aure_level_must_be_set") || msg);
+        return;
+      }
+      if (/No classes available on the selected dates/i.test(msg)) {
+        window.showMessageModal({
+          icon: "warning",
+          title: t2("monthly_no_open_dates_title") || "No classes to register",
+          body: t2("monthly_no_open_dates_body") || "",
+          primaryLabel: t2("got_it")
+        });
         return;
       }
       const monthlyMatch = msg.match(/You don['']t have enough classes in your package to sign up for (\d+) more classes\. You have (\d+) left and are already registered for (\d+) classes, so you only have (\d+) classes left\.?/);
@@ -12647,7 +12754,6 @@
         return;
       }
       const dom = (/* @__PURE__ */ new Date(targetDateStr + "T12:00:00")).getDate();
-      const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
       if (dom >= 15 || !aureHasGroupCredits) {
         window.showMessageModal({
           icon: "success",
@@ -12665,29 +12771,41 @@
         });
         return;
       }
-      if (has48 && dom <= 14 && monthlyDates.length > 1) {
-        const dayNames = { "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday" };
-        const dayName = dayNames[classObj.day] || classObj.day;
-        window.showMessageModal({
-          icon: "success",
-          title: className || classObj.name,
-          body: (t2("register_monthly") || "Register for all {n} classes this month").replace("{n}", monthlyDates.length) + " (" + dayName + ")",
-          primaryLabel: (t2("register_monthly") || "Register for all {n} classes this month").replace("{n}", monthlyDates.length),
-          secondaryLabel: t2("clase_suelta_request") || "Request clase suelta",
-          cancelLabel: t2("cancel"),
-          onPrimary: (close) => {
-            close();
-            window.registerForClassMonthly(classId, className, targetDateStr);
-          },
-          onSecondary: (close) => {
-            close();
-            runSuelta();
-          },
-          onCancel: (close) => {
-            close();
-          }
-        });
-        return;
+      if (has48 && dom <= 14) {
+        const monthlyDates = await window.getMonthlyOpenRegistrationDates(classId, classObj.day, targetDateStr);
+        if (monthlyDates.length === 0) {
+          window.showMessageModal({
+            icon: "warning",
+            title: t2("monthly_no_open_dates_title") || "No classes to register",
+            body: t2("monthly_no_open_dates_body") || "",
+            primaryLabel: t2("got_it")
+          });
+          return;
+        }
+        if (monthlyDates.length > 1) {
+          const dayNames = { "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday" };
+          const dayName = dayNames[classObj.day] || classObj.day;
+          window.showMessageModal({
+            icon: "success",
+            title: className || classObj.name,
+            body: (t2("register_monthly") || "Register for all {n} classes this month").replace("{n}", monthlyDates.length) + " (" + dayName + ")",
+            primaryLabel: (t2("register_monthly") || "Register for all {n} classes this month").replace("{n}", monthlyDates.length),
+            secondaryLabel: t2("clase_suelta_request") || "Request clase suelta",
+            cancelLabel: t2("cancel"),
+            onPrimary: (close) => {
+              close();
+              window.registerForClassMonthly(classId, className, targetDateStr);
+            },
+            onSecondary: (close) => {
+              close();
+              runSuelta();
+            },
+            onCancel: (close) => {
+              close();
+            }
+          });
+          return;
+        }
       }
       window.showMessageModal({
         icon: "success",
@@ -12712,7 +12830,16 @@
     }
     const singleClassHandler = () => window.registerForClassSingle(classId, className, targetDateStr);
     if (window.isMonthlyRegistrationAvailable()) {
-      const monthlyDates = window.getMonthlyDates(classObj.day, targetDateStr);
+      const monthlyDates = await window.getMonthlyOpenRegistrationDates(classId, classObj.day, targetDateStr);
+      if (monthlyDates.length === 0) {
+        window.showMessageModal({
+          icon: "warning",
+          title: t2("monthly_no_open_dates_title") || "No classes to register",
+          body: t2("monthly_no_open_dates_body") || "",
+          primaryLabel: t2("got_it")
+        });
+        return;
+      }
       if (monthlyDates.length > 1) {
         const dayNames = { "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday" };
         const dayName = dayNames[classObj.day] || classObj.day;
@@ -13057,15 +13184,6 @@
       let changed = false;
       if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
         const activeOnly = s.active_packs.filter((p) => new Date(p.expires_at) > now);
-        const hasUnlimited = activeOnly.some((p) => p.count == null || p.count === "null");
-        const activeBalance = hasUnlimited ? null : activeOnly.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
-        if (activeOnly.length > 0 && s.balance !== activeBalance) {
-          const wouldOverwriteWithZero = activeBalance === 0 && (s.balance > 0 || s.balance === null || s.balance === void 0);
-          if (!wouldOverwriteWithZero) {
-            s.balance = activeBalance;
-            changed = true;
-          }
-        }
         if (activeOnly.length === 0 && s.paid) {
           s.package = null;
           s.package_expires_at = null;
@@ -15666,19 +15784,29 @@ School: ${schoolName}`)) return;
       if (incomingPrivate <= 0) incomingPrivate = parseInt(pkg?.limit_count, 10) || 1;
     }
     const isUnlimitedGroup = pkg && incomingGroup <= 0 && (incomingPrivate == null || incomingPrivate <= 0) && (incomingEvents == null || incomingEvents <= 0) && !isPT;
+    const keptPacks = filterActivePacksDropExpired(Array.isArray(student.active_packs) ? [...student.active_packs] : []);
+    const sumGroupFromKept = keptPacks.reduce((s, p) => {
+      if (!p || p.count == null || p.count === "null") return s;
+      const n = parseInt(p.count, 10);
+      return s + (Number.isFinite(n) ? n : 0);
+    }, 0);
+    const sumPrivateFromKept = keptPacks.reduce((s, p) => s + Math.max(0, parseInt(p.private_count, 10) || 0), 0);
+    const sumEventsFromKept = keptPacks.reduce((s, p) => s + Math.max(0, parseInt(p.event_count, 10) || 0), 0);
     let newBalance;
-    let newBalancePrivate = (student.balance_private ?? 0) + incomingPrivate;
-    let newBalanceEvents = (student.balance_events ?? 0) + incomingEvents;
+    let newBalancePrivate;
+    let newBalanceEvents;
     if (!pkg) {
       newBalance = student.balance ?? 0;
+      newBalancePrivate = student.balance_private ?? 0;
+      newBalanceEvents = student.balance_events ?? 0;
     } else if (isUnlimitedGroup) {
       newBalance = null;
-    } else if (student.balance === null && incomingGroup > 0) {
-      newBalance = incomingGroup;
-    } else if (student.balance === null) {
-      newBalance = null;
+      newBalancePrivate = sumPrivateFromKept + incomingPrivate;
+      newBalanceEvents = sumEventsFromKept + incomingEvents;
     } else {
-      newBalance = (student.balance || 0) + incomingGroup;
+      newBalance = sumGroupFromKept + incomingGroup;
+      newBalancePrivate = sumPrivateFromKept + incomingPrivate;
+      newBalanceEvents = sumEventsFromKept + incomingEvents;
     }
     let expiry;
     if (pkg && pkg.expiry_date) {
@@ -15697,7 +15825,7 @@ School: ${schoolName}`)) return;
       expires_at: expiry.toISOString(),
       created_at: (/* @__PURE__ */ new Date()).toISOString()
     };
-    const activePacks = Array.isArray(student.active_packs) ? [...student.active_packs] : [];
+    const activePacks = [...keptPacks];
     if (pkg && (incomingGroup > 0 || isUnlimitedGroup || incomingPrivate > 0 || incomingEvents > 0)) activePacks.push(newPack);
     const updates = {
       package: pkg ? pkg.name : null,
@@ -17926,6 +18054,8 @@ School: ${schoolName}`)) return;
     const balanceEventsEl = document.getElementById("edit-student-balance-events");
     const balancePrivateVal = balancePrivateEl ? balancePrivateEl.value : null;
     const balanceEventsVal = balanceEventsEl ? balanceEventsEl.value : null;
+    state._lastSavedStudentId = id;
+    state._lastSavedStudentAt = Date.now();
     const parsedBalance = balanceVal === "" ? null : parseInt(balanceVal, 10);
     if (balanceVal !== "" && !Number.isFinite(parsedBalance)) {
       alert(t2("invalid_price") || "Please enter a valid number.");
@@ -17947,7 +18077,7 @@ School: ${schoolName}`)) return;
     }
     const schoolId = s.school_id || state.currentSchool?.id;
     if (supabaseClient && schoolId) {
-      const origPacks = Array.isArray(s.active_packs) ? s.active_packs : [];
+      const origPacks = filterActivePacksDropExpired(Array.isArray(s.active_packs) ? s.active_packs : []);
       let packsMut = origPacks.length ? JSON.parse(JSON.stringify(origPacks)) : [];
       if (packsMut.length) {
         if (parsedBalance !== null && Number.isFinite(parsedBalance)) {

@@ -35,8 +35,9 @@ export function renderAdminMemberships(t) {
             ? (isPtSchool && !hasDualScanMode ? String(effective.private ?? 0) : (effective.groupUnlimited ? '∞' : String(effective.group ?? 0)))
             : '—';
         const latestApprovedTs = req.student_id ? latestApprovedByStudent[String(req.student_id)] : null;
+        const appLocale = state.language === 'es' ? 'es-ES' : (state.language === 'de' ? 'de-DE' : 'en-US');
         const lastApprovedDate = latestApprovedTs
-            ? new Date(latestApprovedTs).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+            ? new Date(latestApprovedTs).toLocaleDateString(appLocale, { year: 'numeric', month: 'short', day: 'numeric' })
             : (t.memberships_never_approved || 'Never');
         const payActionId = state.paymentRequestActionId;
         const payActionStatus = state.paymentRequestActionStatus;

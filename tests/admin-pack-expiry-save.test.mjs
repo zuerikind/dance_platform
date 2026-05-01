@@ -79,8 +79,9 @@ test('computePPackageExpiresAtFromPacks returns null for empty / no dates', () =
 });
 
 test('syncActivePacksFieldSumToTarget preserves expires_at', () => {
-    const e1 = isoEndOfLocalDayFromDateInput('2026-04-10');
-    const e2 = isoEndOfLocalDayFromDateInput('2026-05-10');
+    // Use future dates so packs are not treated as expired by Date.now() in syncActivePacksFieldSumToTarget.
+    const e1 = isoEndOfLocalDayFromDateInput('2030-04-10');
+    const e2 = isoEndOfLocalDayFromDateInput('2030-05-10');
     const packs = [
         { id: 'A', count: 3, expires_at: e1 },
         { id: 'B', count: 2, expires_at: e2 },
