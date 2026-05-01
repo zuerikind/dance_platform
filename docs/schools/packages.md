@@ -1,30 +1,58 @@
-# Packages and payments
+# Packages and balances
 
-You create packages (e.g. “10 classes”), send payment requests to students, and mark when they’ve paid. This page explains how.
+This document explains exactly how class credits work in production.
 
-## Creating packages
+## Core model
 
-1. Open the **Packages** or **Subscriptions** area (or the section where your school defines package types).
-2. Use **Create package** or **Add package type**.
-3. Enter the name (e.g. “10 classes”), price if relevant, and number of classes or validity. Save.
+- `students.balance` = canonical **group** credits
+- `students.balance_private` = canonical **private** credits
+- `students.balance_events` = canonical **event** credits
+- `active_packs` = package history/provenance (what was bought and when), not the source of available credits
 
-These package types can then be assigned to students (see **[Students](students.md)**).
+When there is a conflict, the `students.balance*` fields are the truth used for deduction and availability.
 
-## Sending a payment request
+## What happens when a package is bought
 
-1. Open the **student** you want to charge (or the Payments / Payment requests area).
-2. Choose **Create payment request** or **Request payment**.
-3. Select the package (or subscription) and amount, and the payment method if asked. Send the request.
+1. A payment request is created and approved.
+2. The student receives credits in the canonical balance fields.
+3. Package metadata is stored in `active_packs` for history and audit.
+4. A balance ledger event is written with before/after values.
 
-The student (and you) will see the payment request in the app. You can track status in the payment requests list.
+## What happens when a class is deducted
 
-## Marking a payment as paid
+1. Deduction reads canonical balance fields.
+2. If enough credits exist, balances are decremented.
+3. A ledger event is written with mutation type and before/after values.
+4. The operation returns server-computed balances immediately.
 
-1. Go to the **Payment requests** list (or the student’s payments).
-2. Find the request for the payment the student made.
-3. Open it and choose **Mark as paid** (or update status to Paid). Save.
+If credits are insufficient, the deduction is rejected safely (no partial mutation).
 
-Once marked paid, the student’s package is updated and the request is marked complete. You can use the same list to see which requests are still pending.
+## Manual admin edits
+
+When an admin edits a student balance:
+
+- The server updates canonical balances atomically.
+- A ledger event is written.
+- Optional stale-write protection can reject outdated edits if another admin changed the same student first.
+
+## Idempotency and duplicate protection
+
+For flows that can be retried (webhooks, scanner taps, retries), idempotency keys are used on canonical mutation RPCs so the same operation does not apply twice.
+
+## Multi-package and expiry behavior
+
+- A student can have multiple package rows in `active_packs`.
+- Expired packages remain useful for history and audit.
+- Availability and deduction still rely on canonical balances, not on summing pack rows.
+
+This avoids race conditions where UI or background jobs recalculate and overwrite admin values.
+
+## Operational rules
+
+- Do not manually \"heal\" balances from package sums in frontend code.
+- All balance mutations must go through server RPCs.
+- Every mutation must be auditable in the balance ledger.
+- School-specific behavior (for example Aure) must remain gated so other schools are unaffected.
 
 ---
 
