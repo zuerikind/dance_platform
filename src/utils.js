@@ -52,9 +52,8 @@ export function filterActivePacksDropExpired(activePacks, nowMs = Date.now()) {
 }
 
 /**
- * Adjust per-pack numeric fields so their sum matches target. Uses FIFO by expires_at (soonest first),
- * matching how deductions consume packs. Keeps students.balance / balance_* and active_packs aligned so
- * effective balance (max(row, sum(packs))) matches what the admin typed.
+ * Adjust per-pack numeric fields so their sum matches target. Uses FIFO by expires_at (soonest first).
+ * Keeps active_packs in line with the balance the admin saved (UI uses row balances; packs stay consistent on save).
  *
  * @param {'count'|'private_count'|'event_count'} field
  * @param {number} targetSum — non-negative integer

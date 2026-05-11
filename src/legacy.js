@@ -12666,7 +12666,7 @@ window.studentHasPackageWithSchool = (schoolId) => {
     return false;
 };
 
-// Effective private class balance for one school. Backend keeps balance_private = sum(non-expired packs' private_count) after deductions, so use max to avoid double-counting (same as getEffectiveBalances).
+// Private credits for UI: students.balance_private (same as canonical deduct); ignore stale row when all packs expired.
 window.getEffectivePrivateBalanceForSchool = (schoolId) => {
     if (!schoolId || !Array.isArray(state.allEnrollments)) return 0;
     const enrollment = state.allEnrollments.find(e => e.school_id === schoolId);
@@ -12680,11 +12680,7 @@ window.getEffectivePrivateBalanceForSchool = (schoolId) => {
     });
     const packsFullyExpired = packs.length > 0 && activePacks.length === 0;
     if (packsFullyExpired) return 0;
-    let sumPrivate = 0;
-    activePacks.forEach(p => {
-        sumPrivate += Number(p.private_count) || 0;
-    });
-    return Math.max(0, Math.max(fromBalance, sumPrivate));
+    return Math.max(0, fromBalance);
 };
 
 // Duration label and class count for private lesson/request (1h, 2h, 3h only)

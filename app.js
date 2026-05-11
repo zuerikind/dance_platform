@@ -1468,19 +1468,17 @@
     const packsFullyExpired = hadAnyPack && !anyActivePack;
     const hasUnlimitedPack = activePacks.some((p) => p.count == null || p.count === "null");
     const groupUnlimited = !packsFullyExpired && (student?.balance === null || student?.balance === void 0 || hasUnlimitedPack);
-    const sumGroup = activePacks.reduce((s, p) => s + (parseInt(p.count, 10) || 0), 0);
     let group;
     if (groupUnlimited) {
       group = null;
     } else if (packsFullyExpired) {
       group = 0;
     } else {
-      group = Math.max(student?.balance ?? 0, sumGroup);
+      const g = Number(student?.balance);
+      group = Number.isFinite(g) ? Math.max(0, g) : 0;
     }
-    const sumPrivate = activePacks.reduce((s, p) => s + (p.private_count || 0), 0);
-    const privateBal = packsFullyExpired ? 0 : Math.max(student?.balance_private ?? 0, sumPrivate);
-    const sumEvents = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-    const eventBal = packsFullyExpired ? 0 : Math.max(student?.balance_events ?? 0, sumEvents);
+    const privateBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_private ?? 0), 10) || 0);
+    const eventBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_events ?? 0), 10) || 0);
     return { group, groupUnlimited, private: privateBal, event: eventBal };
   }
   function studentHasUsableClassCredits(student, now = /* @__PURE__ */ new Date()) {
@@ -15130,11 +15128,7 @@ School: ${schoolName}`)) return;
     });
     const packsFullyExpired = packs.length > 0 && activePacks.length === 0;
     if (packsFullyExpired) return 0;
-    let sumPrivate = 0;
-    activePacks.forEach((p) => {
-      sumPrivate += Number(p.private_count) || 0;
-    });
-    return Math.max(0, Math.max(fromBalance, sumPrivate));
+    return Math.max(0, fromBalance);
   };
   window.privateClassInfoFromItem = (item) => {
     let durationMins = 60;

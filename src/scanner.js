@@ -1,7 +1,7 @@
 /**
  * QR scanner and attendance: startScanner, stopScanner, handleScan, confirmAttendance, updateStickyFooterVisibility.
- * Effective balance logic mirrors backend deduct_student_classes (effective = max(balance, sum(non-expired pack counts))).
- * When every active_packs row is expired, stale mirrored balances on the student row are ignored (treat as 0).
+ * Display balances follow students.balance* (same as canonical_deduct_student_classes / deduct_student_classes on the server).
+ * active_packs is only used for unlimited detection and expiry; we do not max() row vs pack sums (avoids stale pack counts after canonical deduct).
  */
 import { supabaseClient } from './config.js';
 import { escapeHtml } from './config.js';
@@ -91,7 +91,7 @@ function buildManualDeductParts(student, t, ctx, includePrivateLessonBlock) {
 }
 
 /**
- * Compute effective balances for group/private/event to match backend deduct_student_classes.
+ * Balances for UI and client-side credit checks from students.balance* (aligned with canonical server deduct).
  * Returns { group, groupUnlimited, private: number, event: number }.
  * groupUnlimited: true if balance is null or any non-expired pack has null/undefined count.
  */
@@ -108,24 +108,22 @@ export function getEffectiveBalances(student, now = new Date()) {
 
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
     const groupUnlimited = !packsFullyExpired && (student?.balance === null || student?.balance === undefined || hasUnlimitedPack);
-    const sumGroup = activePacks.reduce((s, p) => s + (parseInt(p.count, 10) || 0), 0);
     let group;
     if (groupUnlimited) {
         group = null;
     } else if (packsFullyExpired) {
         group = 0;
     } else {
-        group = Math.max(student?.balance ?? 0, sumGroup);
+        const g = Number(student?.balance);
+        group = Number.isFinite(g) ? Math.max(0, g) : 0;
     }
 
-    const sumPrivate = activePacks.reduce((s, p) => s + (p.private_count || 0), 0);
-    const privateBal = packsFullyExpired ? 0 : Math.max(student?.balance_private ?? 0, sumPrivate);
-    const sumEvents = activePacks.reduce((s, p) => s + (p.event_count || 0), 0);
-    const eventBal = packsFullyExpired ? 0 : Math.max(student?.balance_events ?? 0, sumEvents);
+    const privateBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_private ?? 0), 10) || 0);
+    const eventBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_events ?? 0), 10) || 0);
     return { group, groupUnlimited, private: privateBal, event: eventBal };
 }
 
-/** Mirrors DB student_has_usable_class_credits: paid should be true iff student can consume any class credit. */
+/** True iff student can consume any class credit (uses row balances via getEffectiveBalances; matches canonical deduct). */
 export function studentHasUsableClassCredits(student, now = new Date()) {
     const eff = getEffectiveBalances(student, now);
     if (eff.groupUnlimited) return true;
