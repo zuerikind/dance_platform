@@ -5,27 +5,9 @@ import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPla
 import { isoEndOfLocalDayFromDateInput, applyPerPackExpiryFromInputs, computePPackageExpiresAtFromPacks } from './studentExpirySave.js';
 import { registrationClosedFromExceptionKind, resolveScheduleGroupExceptionFromRows } from './groupClassExceptionResolve.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
-import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth, fetchAdminPendingClassMoves, fetchSchoolKpiSummary } from './data.js';
-import {
-    buildAdminRevenueFilterHash,
-    computeRevenueKpisFromPayments,
-    countAurePendingSueltaInRegs,
-    filterPaymentsForRevenue,
-    getAdminRevenueDateRange,
-    isAureSchool,
-    mergeRpcIntoRevenueKpis,
-    monthStrForRevenueKpiRegistrations
-} from './kpi/revenueKpis.js';
-import {
-    formatRecognizedMonthLabel,
-    getManualPaymentRevenueMonthPreview,
-    isAureSchool as isAureSchoolForRevenue
-} from './kpi/revenueAttribution.js';
+import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth } from './data.js';
 import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmRegisteredScanBatch, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances, studentHasUsableClassCredits } from './scanner.js';
 import { renderAdminMemberships, renderAdminRevenue } from './views/payments.js';
-import { renderAdminRevenueAnalytics, shouldAutoLoadRevenueAnalytics } from './views/revenueAnalytics.js';
-import { mountRevenueAnalyticsCharts, destroyRevenueAnalyticsCharts } from './kpi/revenueChartMount.js';
-import { computeRollingMonthlyRevenueSeries, getRevenueHighlightMonthKey } from './kpi/revenueMonthlySeries.js';
 
 /**
  * Supabase Edge Functions require the anon key in `apikey` plus the user's JWT in Authorization.
@@ -145,19 +127,6 @@ const DANCE_LOCALES = {
         close: "Close",
         nav_revenue: 'Revenue',
         add_manual_payment: 'Add manual payment',
-        manual_payment_revenue_month_preview: 'This payment will count toward revenue in {month}.',
-        revenue_aure_attribution_hint: 'Clase suelta counts in the payment month. Group packages paid in the last 7 days of a month → next month (Mexico City time).',
-        revenue_aure_attribution_tooltip: 'Clase suelta and private packages always use the payment date month. Multi-class group packages shift to the next month when created in the last 7 calendar days of the month.',
-        revenue_aure_attribution_info_label: 'Revenue attribution rules',
-        revenue_filter_months: 'Month',
-        revenue_filter_period: 'Period',
-        revenue_filter_custom_dates: 'Custom dates',
-        revenue_filter_custom_range: 'Custom range',
-        revenue_filter_date_start: 'Start date',
-        revenue_filter_date_end: 'End date',
-        revenue_accounting_badge: 'Acct. {month}',
-        revenue_accounting_badge_tooltip: 'Ganancias month for this payment (Aure rules). Group packages from the last 7 days of a month may differ from the payment date.',
-        revenue_historical_attribution_hint: 'Historical total uses the same revenue month rules as filters.',
         select_student: 'Select student',
         external_student: 'External student',
         external_student_name: 'External student name',
@@ -556,94 +525,6 @@ const DANCE_LOCALES = {
         filter_this_month: "This Month",
         filter_all_time: "All time",
         revenue_total_all_time: "All-time total",
-        revenue_kpi_section_title: "Indicators",
-        revenue_kpi_preset_label: "Indicator",
-        revenue_kpi_preset_summary: "Full summary",
-        revenue_kpi_collected: "Collected revenue",
-        revenue_kpi_pending: "To collect",
-        revenue_kpi_avg_ticket: "Average ticket",
-        revenue_kpi_avg_ticket_hint: "Per approved payment in period",
-        revenue_kpi_payment_mix: "Cash / transfer mix",
-        revenue_kpi_top_packages: "Top packages",
-        revenue_kpi_aure_pending_suelta: "Pending clase suelta requests",
-        revenue_kpi_aure_pending_suelta_hint: "Awaiting approval in period",
-        revenue_kpi_goal_label: "Goal (optional)",
-        revenue_kpi_goal_placeholder: "e.g. Reach target this month",
-        revenue_kpi_analyze: "Analyze",
-        revenue_kpi_analyzing: "Analyzing…",
-        revenue_kpi_hint: "Apply filters above, then analyze to refresh indicators.",
-        revenue_kpi_approved_count: "{count} approved",
-        revenue_kpi_pending_count: "{count} pending",
-        revenue_kpi_payments_in_scope: "{count} payments in scope",
-        revenue_kpi_source_client: "Calculated on device",
-        revenue_kpi_source_rpc: "Server summary",
-        revenue_kpi_error: "Could not refresh indicators. Payment list is unchanged.",
-        revenue_analytics_title: "Revenue indicators",
-        revenue_analytics_subtitle: "Charts update automatically when you change filters.",
-        revenue_analytics_cta: "View indicators dashboard",
-        revenue_analytics_cta_desc: "Charts, mix, top packages, and trends for the selected period.",
-        revenue_analytics_back: "Revenue",
-        revenue_analytics_retry: "Retry",
-        revenue_chart_mix_title: "Payment method mix",
-        revenue_chart_packages_title: "Top packages by revenue",
-        revenue_chart_timeline_title: "Collected revenue over time",
-        revenue_chart_no_data: "No data for this period",
-        revenue_chart_mix_empty: "No payments",
-        revenue_insights_title: "Executive summary",
-        revenue_insight_mom: "Collected revenue {sign}{pct}% vs the previous period ({prev}).",
-        revenue_insight_mom_new: "First collected revenue in this comparison window — no prior period baseline.",
-        revenue_insight_top_package: "Top package \"{name}\" accounts for {pct}% of collected revenue ({amount}).",
-        revenue_insight_pending_risk: "Pending payments are {pct}% of collected + pending ({amount}) — collection exposure.",
-        revenue_insight_dominant_method: "{method} is the dominant payment method ({pct}% of approved volume).",
-        revenue_insight_best_week: "week",
-        revenue_insight_best_month: "month",
-        revenue_insight_best_period: "Best {period} in range: {label} with {amount} ({count} payments).",
-        revenue_insight_approval_rate: "Approval rate {pct}% ({approved} approved, {rejected} rejected in period).",
-        revenue_insight_aure_suelta: "{count} pending clase suelta registration(s) in this period — review before class day.",
-        revenue_insight_aure_suelta_none: "No pending clase suelta registrations in this period.",
-        revenue_insights_bullets: "Key points",
-        revenue_narrative_in_one_sentence: "In one sentence",
-        revenue_narrative_headline_empty: "No collected revenue in this period yet.",
-        revenue_narrative_headline_mom: "You collected {amount} in the period — {sign} {pct}% vs the previous period.",
-        revenue_narrative_headline_first: "You collected {amount} in the period — a new baseline for this window.",
-        revenue_narrative_headline_pending: "{amount} still pending in the period.",
-        revenue_narrative_p_empty: "Adjust the date range or approve pending payments to see trends here.",
-        revenue_narrative_p_mom: "Compared with the previous period ({prev}), net collected revenue moved {sign} {pct}%. That reflects how many payments were approved and their average size.",
-        revenue_narrative_p_first: "There was little or no collected revenue in the immediately prior period, so month-over-month comparison is limited.",
-        revenue_narrative_p_ticket: "Across {count} approved payments, the average ticket was {avg}. Use the monthly chart above to see whether volume or ticket size drove revenue.",
-        revenue_narrative_p_pending: "You still have {amount} pending ({pct}% of collected + pending). Approving those payments will increase collected totals for {period}.",
-        revenue_narrative_p_top: "\"{name}\" led sales with {share}% of collected revenue ({amount}).",
-        revenue_narrative_period_all: "this period",
-        revenue_narrative_period_range: "{start} – {end}",
-        revenue_narrative_up: "up",
-        revenue_narrative_down: "down",
-        revenue_narrative_flat: "unchanged",
-        revenue_chart_monthly_title: "Monthly collected revenue",
-        revenue_chart_monthly_subtitle: "Last 13 months · hover or tap a bar for details",
-        revenue_chart_monthly_collected: "Collected",
-        revenue_chart_monthly_need_more: "Need at least two months of payment history to show trends.",
-        revenue_chart_aure_month_note: "Months follow Aure accounting (recognized month), not payment date.",
-        revenue_chart_mom_title: "Month-over-month change",
-        revenue_chart_mom_na: "—",
-        revenue_chart_mom_new: "No prior month",
-        revenue_chart_tooltip_mom: "MoM: {sign}{pct}%",
-        revenue_chart_tooltip_payments: "{count} payments",
-        revenue_chart_filter_month: "Selected filter month",
-        revenue_chart_volume_title: "Payment volume",
-        revenue_chart_health_title: "Collection health by month",
-        revenue_chart_ytd_title: "Cumulative {year}",
-        revenue_chart_legend_collected: "Collected",
-        revenue_chart_legend_pending: "To collect",
-        revenue_chart_tooltip_approved: "Approved payments: {count}",
-        revenue_chart_tooltip_mom_amount: "This month: {amount}",
-        revenue_chart_tooltip_mom_prev: "Prior month: {amount}",
-        revenue_chart_tooltip_mom_pct: "Change vs prior month: {sign}{pct}%",
-        revenue_chart_desc_monthly: "Approved payment totals grouped by calendar month (last 13 months). Each bar is cash collected that month; hover for payment count and month-over-month change. Use this to spot seasonality and whether revenue is growing.",
-        revenue_chart_desc_mom: "Percent change in collected revenue versus the previous month. Green bars mean growth, orange means decline. Hover for amounts, payment count, and the exact percentage.",
-        revenue_chart_desc_volume: "Number of approved payments per month, independent of amount. Helps separate “more payments” from “bigger tickets” when monthly revenue moves.",
-        revenue_chart_desc_health: "Stacked view of collected (approved) vs still-pending amounts per month. Taller orange segments mean more revenue waiting on approval in that month.",
-        revenue_chart_desc_ytd: "Running total of collected revenue within the selected calendar year, month by month. Useful for annual targets and pacing through the year.",
-        revenue_chart_aure_footnote: "At Aure schools, months use recognized revenue month (class/service period), not the date the payment was recorded. Other schools use payment creation date.",
         filter_status: "Status",
         filter_method: "Method",
         filter_paid: "Paid",
@@ -887,21 +768,6 @@ const DANCE_LOCALES = {
         admin_reg_tab_requested: "Requested",
         no_pending_requests: "No pending requests",
         no_pending_requests_subtitle: "Clase suelta requests will appear here.",
-        admin_move_class_btn_title: "Move to another date",
-        admin_move_modal_title: "Move registration",
-        admin_move_modal_loading: "Loading available dates…",
-        admin_move_modal_empty: "No open spots in the next two months.",
-        admin_move_occupancy: "{n} / {max}",
-        admin_move_occupancy_open: "{n} registered",
-        admin_move_target_btn: "Move here",
-        admin_move_banner_title: "Incomplete class move",
-        admin_move_banner_body: "A registration was cancelled for a move but the student may not have been added to the new date. Register them manually if needed, then dismiss.",
-        admin_move_dismiss: "Dismiss",
-        admin_move_begin_error: "Could not start the move.",
-        admin_move_register_failed: "Could not register on the new date.",
-        admin_move_register_failed_hint: "The old date was already cancelled. Register the student on the new date from their profile or here, then dismiss this reminder.",
-        admin_move_success: "Class moved successfully.",
-        admin_move_full: "Full",
         aure_request_accepted: "Request accepted.",
         aure_request_denied: "Request denied.",
         aure_accepting: "Accepting…",
@@ -1196,19 +1062,6 @@ const DANCE_LOCALES = {
         reject: "Rechazar",
         nav_revenue: 'Ganancias',
         add_manual_payment: 'Agregar pago manual',
-        manual_payment_revenue_month_preview: 'Este ingreso se contabilizará en {month}.',
-        revenue_aure_attribution_hint: 'Clase suelta cuenta en el mes del pago. Paquetes grupales pagados en los últimos 7 días del mes → mes siguiente (hora Ciudad de México).',
-        revenue_aure_attribution_tooltip: 'Clase suelta y paquetes privados usan siempre el mes del pago. Los paquetes grupales de varias clases pasan al mes siguiente si se crean en los últimos 7 días calendario del mes.',
-        revenue_aure_attribution_info_label: 'Reglas de atribución de ingresos',
-        revenue_filter_months: 'Mes',
-        revenue_filter_period: 'Período',
-        revenue_filter_custom_dates: 'Fechas personalizadas',
-        revenue_filter_custom_range: 'Rango personalizado',
-        revenue_filter_date_start: 'Fecha inicio',
-        revenue_filter_date_end: 'Fecha fin',
-        revenue_accounting_badge: 'Contab. {month}',
-        revenue_accounting_badge_tooltip: 'Mes de Ganancias para este pago (reglas Aure). Los paquetes grupales de los últimos 7 días del mes pueden diferir de la fecha de pago.',
-        revenue_historical_attribution_hint: 'El histórico usa las mismas reglas de mes de ingreso que los filtros.',
         select_student: 'Seleccionar alumno',
         external_student: 'Alumno externo',
         external_student_name: 'Nombre del alumno externo',
@@ -1518,94 +1371,6 @@ const DANCE_LOCALES = {
         filter_this_month: "Este mes",
         filter_all_time: "Desde siempre",
         revenue_total_all_time: "Total (desde siempre)",
-        revenue_kpi_section_title: "Indicadores",
-        revenue_kpi_preset_label: "Indicador",
-        revenue_kpi_preset_summary: "Resumen completo",
-        revenue_kpi_collected: "Ingresos cobrados",
-        revenue_kpi_pending: "Por cobrar",
-        revenue_kpi_avg_ticket: "Ticket promedio",
-        revenue_kpi_avg_ticket_hint: "Por pago aprobado en el período",
-        revenue_kpi_payment_mix: "Mix efectivo / transferencia",
-        revenue_kpi_top_packages: "Top paquetes",
-        revenue_kpi_aure_pending_suelta: "Solicitudes clase suelta pendientes",
-        revenue_kpi_aure_pending_suelta_hint: "Por aprobar en el período",
-        revenue_kpi_goal_label: "Meta (opcional)",
-        revenue_kpi_goal_placeholder: "ej. Alcanzar meta del mes",
-        revenue_kpi_analyze: "Analizar",
-        revenue_kpi_analyzing: "Analizando…",
-        revenue_kpi_hint: "Aplica los filtros arriba y pulsa Analizar para actualizar los indicadores.",
-        revenue_kpi_approved_count: "{count} aprobados",
-        revenue_kpi_pending_count: "{count} pendientes",
-        revenue_kpi_payments_in_scope: "{count} pagos en el período",
-        revenue_kpi_source_client: "Calculado en el dispositivo",
-        revenue_kpi_source_rpc: "Resumen del servidor",
-        revenue_kpi_error: "No se pudieron actualizar los indicadores. El historial de pagos no cambió.",
-        revenue_analytics_title: "Indicadores de ganancias",
-        revenue_analytics_subtitle: "Los gráficos se actualizan al cambiar los filtros.",
-        revenue_analytics_cta: "Ver dashboard de indicadores",
-        revenue_analytics_cta_desc: "Gráficos, mix, top paquetes y tendencias del período.",
-        revenue_analytics_back: "Ganancias",
-        revenue_analytics_retry: "Reintentar",
-        revenue_chart_mix_title: "Mix de método de pago",
-        revenue_chart_packages_title: "Top paquetes por ingreso",
-        revenue_chart_timeline_title: "Ingresos cobrados en el tiempo",
-        revenue_chart_no_data: "Sin datos en este periodo",
-        revenue_chart_mix_empty: "Sin pagos",
-        revenue_insights_title: "Resumen ejecutivo",
-        revenue_insight_mom: "Ingresos cobrados {sign}{pct}% vs el periodo anterior ({prev}).",
-        revenue_insight_mom_new: "Primer ingreso cobrado en esta ventana — sin periodo anterior de referencia.",
-        revenue_insight_top_package: "El paquete \"{name}\" concentra el {pct}% de lo cobrado ({amount}).",
-        revenue_insight_pending_risk: "Lo pendiente es el {pct}% de cobrado + pendiente ({amount}) — riesgo de cobranza.",
-        revenue_insight_dominant_method: "{method} es el método dominante ({pct}% del volumen aprobado).",
-        revenue_insight_best_week: "semana",
-        revenue_insight_best_month: "mes",
-        revenue_insight_best_period: "Mejor {period} del rango: {label} con {amount} ({count} pagos).",
-        revenue_insight_approval_rate: "Tasa de aprobación {pct}% ({approved} aprobados, {rejected} rechazados en el periodo).",
-        revenue_insight_aure_suelta: "{count} solicitud(es) de clase suelta pendiente(s) en el periodo — revisar antes del día de clase.",
-        revenue_insight_aure_suelta_none: "Sin solicitudes de clase suelta pendientes en el periodo.",
-        revenue_insights_bullets: "Puntos clave",
-        revenue_narrative_in_one_sentence: "En una frase",
-        revenue_narrative_headline_empty: "Aún no hay ingresos cobrados en este periodo.",
-        revenue_narrative_headline_mom: "Cobraste {amount} en el periodo — {sign} {pct}% vs el periodo anterior.",
-        revenue_narrative_headline_first: "Cobraste {amount} en el periodo — nueva referencia para esta ventana.",
-        revenue_narrative_headline_pending: "Aún hay {amount} pendientes en el periodo.",
-        revenue_narrative_p_empty: "Ajusta las fechas o aprueba pagos pendientes para ver tendencias aquí.",
-        revenue_narrative_p_mom: "Frente al periodo anterior ({prev}), lo cobrado cambió {sign} {pct}%. Eso refleja cuántos pagos se aprobaron y el ticket promedio.",
-        revenue_narrative_p_first: "Hubo poco o ningún cobro en el periodo inmediatamente anterior; la comparación mes a mes es limitada.",
-        revenue_narrative_p_ticket: "En {count} pagos aprobados, el ticket promedio fue {avg}. Usa el gráfico mensual arriba para ver si movió el volumen o el ticket.",
-        revenue_narrative_p_pending: "Sigues con {amount} pendiente ({pct}% de cobrado + pendiente). Al aprobar esos pagos subirá lo cobrado en {period}.",
-        revenue_narrative_p_top: "“{name}” lideró con el {share}% de lo cobrado ({amount}).",
-        revenue_narrative_period_all: "este periodo",
-        revenue_narrative_period_range: "{start} – {end}",
-        revenue_narrative_up: "subió",
-        revenue_narrative_down: "bajó",
-        revenue_narrative_flat: "se mantuvo",
-        revenue_chart_monthly_title: "Ingresos cobrados por mes",
-        revenue_chart_monthly_subtitle: "Últimos 13 meses · pasa el cursor o toca una barra",
-        revenue_chart_monthly_collected: "Cobrado",
-        revenue_chart_monthly_need_more: "Se necesitan al menos dos meses de historial para ver tendencias.",
-        revenue_chart_aure_month_note: "Los meses siguen contabilidad Aure (mes reconocido), no la fecha de pago.",
-        revenue_chart_mom_title: "Cambio mes a mes",
-        revenue_chart_mom_na: "—",
-        revenue_chart_mom_new: "Sin mes anterior",
-        revenue_chart_tooltip_mom: "Mes a mes: {sign}{pct}%",
-        revenue_chart_tooltip_payments: "{count} pagos",
-        revenue_chart_filter_month: "Mes del filtro seleccionado",
-        revenue_chart_volume_title: "Volumen de pagos",
-        revenue_chart_health_title: "Salud de cobranza por mes",
-        revenue_chart_ytd_title: "Acumulado {year}",
-        revenue_chart_legend_collected: "Cobrado",
-        revenue_chart_legend_pending: "Por cobrar",
-        revenue_chart_tooltip_approved: "Pagos aprobados: {count}",
-        revenue_chart_tooltip_mom_amount: "Este mes: {amount}",
-        revenue_chart_tooltip_mom_prev: "Mes anterior: {amount}",
-        revenue_chart_tooltip_mom_pct: "Cambio vs mes anterior: {sign}{pct}%",
-        revenue_chart_desc_monthly: "Totales de pagos aprobados por mes calendario (últimos 13 meses). Cada barra es lo cobrado ese mes; al pasar el cursor verás cantidad de pagos y cambio mes a mes. Sirve para ver estacionalidad y si los ingresos crecen.",
-        revenue_chart_desc_mom: "Porcentaje de cambio en lo cobrado respecto al mes anterior. Verde = crecimiento, naranja = baja. Al pasar el cursor verás montos, número de pagos y el porcentaje exacto.",
-        revenue_chart_desc_volume: "Cantidad de pagos aprobados por mes, sin importar el monto. Ayuda a distinguir si subieron los pagos o el ticket promedio cuando cambia el ingreso mensual.",
-        revenue_chart_desc_health: "Vista apilada de lo cobrado (aprobado) vs lo pendiente por mes. Más naranja = más ingreso esperando aprobación ese mes.",
-        revenue_chart_desc_ytd: "Total acumulado de lo cobrado en el año del filtro, mes a mes. Útil para metas anuales y ritmo de cobro.",
-        revenue_chart_aure_footnote: "En escuelas Aure, los meses usan el mes reconocido (periodo de clase/servicio), no la fecha en que se registró el pago. Otras escuelas usan la fecha de creación del pago.",
         filter_status: "Estado",
         filter_method: "Método",
         filter_paid: "Pagado",
@@ -1851,21 +1616,6 @@ const DANCE_LOCALES = {
         admin_reg_tab_requested: "Solicitados",
         no_pending_requests: "Sin solicitudes pendientes",
         no_pending_requests_subtitle: "Las solicitudes de clase suelta aparecerán aquí.",
-        admin_move_class_btn_title: "Mover a otra fecha",
-        admin_move_modal_title: "Mover inscripción",
-        admin_move_modal_loading: "Cargando fechas disponibles…",
-        admin_move_modal_empty: "Sin plazas en los próximos dos meses.",
-        admin_move_occupancy: "{n} / {max}",
-        admin_move_occupancy_open: "{n} inscritos",
-        admin_move_target_btn: "Mover aquí",
-        admin_move_banner_title: "Cambio de clase incompleto",
-        admin_move_banner_body: "Se canceló una inscripción para un cambio pero el alumno puede no estar aún en la nueva fecha. Complétalo manualmente y luego descarta.",
-        admin_move_dismiss: "Descartar",
-        admin_move_begin_error: "No se pudo iniciar el cambio.",
-        admin_move_register_failed: "No se pudo inscribir en la nueva fecha.",
-        admin_move_register_failed_hint: "La fecha anterior ya se canceló. Inscribe al alumno en la nueva fecha y luego descarta este aviso.",
-        admin_move_success: "Clase movida correctamente.",
-        admin_move_full: "Lleno",
         aure_request_accepted: "Solicitud aceptada.",
         aure_request_denied: "Solicitud rechazada.",
         aure_accepting: "Aceptando…",
@@ -2233,19 +1983,6 @@ const DANCE_LOCALES = {
         reject: "Ablehnen",
         nav_revenue: 'Einnahmen',
         add_manual_payment: 'Manuelle Zahlung erfassen',
-        manual_payment_revenue_month_preview: 'Diese Zahlung wird dem Umsatz in {month} zugeordnet.',
-        revenue_aure_attribution_hint: 'Gruppenpakete, die in den letzten 7 Tagen eines Monats bezahlt werden, zählen im Folgemonat (Zeitzone Mexiko-Stadt).',
-        revenue_aure_attribution_tooltip: 'Clase suelta und Privatpakete nutzen immer den Monat des Zahlungsdatums. Mehrklassen-Gruppenpakete verschieben sich in den Folgemonat, wenn sie in den letzten 7 Kalendertagen des Monats erstellt werden.',
-        revenue_aure_attribution_info_label: 'Umsatz-Zuordnungsregeln',
-        revenue_filter_months: 'Monat',
-        revenue_filter_period: 'Zeitraum',
-        revenue_filter_custom_dates: 'Benutzerdefinierte Daten',
-        revenue_filter_custom_range: 'Eigener Zeitraum',
-        revenue_filter_date_start: 'Startdatum',
-        revenue_filter_date_end: 'Enddatum',
-        revenue_accounting_badge: 'Buch. {month}',
-        revenue_accounting_badge_tooltip: 'Umsatz zählt in diesem Kalendermonat (Gruppenpaket-Regel), nicht im Monat des Zahlungsdatums.',
-        revenue_historical_attribution_hint: 'Der Gesamtverlauf nutzt dieselben Umsatzmonats-Regeln wie die Filter.',
         select_student: 'Schüler/in wählen',
         external_student: 'Externer Schüler / Externe Schülerin',
         external_student_name: 'Name (extern)',
@@ -2555,94 +2292,6 @@ const DANCE_LOCALES = {
         filter_this_month: "Dieser Monat",
         filter_all_time: "Gesamte Zeit",
         revenue_total_all_time: "Gesamtsumme (Zeitraum)",
-        revenue_kpi_section_title: "Kennzahlen",
-        revenue_kpi_preset_label: "Kennzahl",
-        revenue_kpi_preset_summary: "Vollständige Übersicht",
-        revenue_kpi_collected: "Eingenommene Einnahmen",
-        revenue_kpi_pending: "Ausstehend",
-        revenue_kpi_avg_ticket: "Durchschnittlicher Betrag",
-        revenue_kpi_avg_ticket_hint: "Pro genehmigte Zahlung im Zeitraum",
-        revenue_kpi_payment_mix: "Bar / Überweisung",
-        revenue_kpi_top_packages: "Top-Pakete",
-        revenue_kpi_aure_pending_suelta: "Offene Clase-suelta-Anfragen",
-        revenue_kpi_aure_pending_suelta_hint: "Warten auf Freigabe im Zeitraum",
-        revenue_kpi_goal_label: "Ziel (optional)",
-        revenue_kpi_goal_placeholder: "z. B. Monatsziel erreichen",
-        revenue_kpi_analyze: "Analysieren",
-        revenue_kpi_analyzing: "Analysiere…",
-        revenue_kpi_hint: "Filter oben setzen, dann Analysieren für aktuelle Kennzahlen.",
-        revenue_kpi_approved_count: "{count} genehmigt",
-        revenue_kpi_pending_count: "{count} ausstehend",
-        revenue_kpi_payments_in_scope: "{count} Zahlungen im Zeitraum",
-        revenue_kpi_source_client: "Auf dem Gerät berechnet",
-        revenue_kpi_source_rpc: "Server-Zusammenfassung",
-        revenue_kpi_error: "Kennzahlen konnten nicht aktualisiert werden. Die Zahlungsliste ist unverändert.",
-        revenue_analytics_title: "Einnahmen-Kennzahlen",
-        revenue_analytics_subtitle: "Diagramme aktualisieren sich bei Filteränderungen automatisch.",
-        revenue_analytics_cta: "Kennzahlen-Dashboard öffnen",
-        revenue_analytics_cta_desc: "Diagramme, Mix, Top-Pakete und Trends für den Zeitraum.",
-        revenue_analytics_back: "Einnahmen",
-        revenue_analytics_retry: "Erneut versuchen",
-        revenue_chart_mix_title: "Zahlungsmix",
-        revenue_chart_packages_title: "Top-Pakete nach Umsatz",
-        revenue_chart_timeline_title: "Einnahmen im Zeitverlauf",
-        revenue_chart_no_data: "Keine Daten in diesem Zeitraum",
-        revenue_chart_mix_empty: "Keine Zahlungen",
-        revenue_insights_title: "Zusammenfassung",
-        revenue_insight_mom: "Eingenommene Einnahmen {sign}{pct}% vs. vorheriger Zeitraum ({prev}).",
-        revenue_insight_mom_new: "Erste Einnahmen in diesem Vergleichsfenster — kein Vorperioden-Benchmark.",
-        revenue_insight_top_package: "Top-Paket \"{name}\" macht {pct}% der Einnahmen aus ({amount}).",
-        revenue_insight_pending_risk: "Ausstehend sind {pct}% von eingenommen + ausstehend ({amount}) — Inkasso-Risiko.",
-        revenue_insight_dominant_method: "{method} ist die dominante Zahlungsart ({pct}% des genehmigten Volumens).",
-        revenue_insight_best_week: "Woche",
-        revenue_insight_best_month: "Monat",
-        revenue_insight_best_period: "Beste {period} im Zeitraum: {label} mit {amount} ({count} Zahlungen).",
-        revenue_insight_approval_rate: "Genehmigungsrate {pct}% ({approved} genehmigt, {rejected} abgelehnt im Zeitraum).",
-        revenue_insight_aure_suelta: "{count} offene Clase-suelta-Anfrage(n) im Zeitraum — vor dem Kurstag prüfen.",
-        revenue_insight_aure_suelta_none: "Keine offenen Clase-suelta-Anfragen im Zeitraum.",
-        revenue_insights_bullets: "Kernpunkte",
-        revenue_narrative_in_one_sentence: "Kurz gesagt",
-        revenue_narrative_headline_empty: "In diesem Zeitraum noch keine Einnahmen verbucht.",
-        revenue_narrative_headline_mom: "Sie haben {amount} im Zeitraum eingenommen — {sign} {pct}% vs. Vorperiode.",
-        revenue_narrative_headline_first: "Sie haben {amount} im Zeitraum eingenommen — neue Referenz für dieses Fenster.",
-        revenue_narrative_headline_pending: "Noch {amount} ausstehend im Zeitraum.",
-        revenue_narrative_p_empty: "Zeitraum anpassen oder ausstehende Zahlungen genehmigen, um Trends zu sehen.",
-        revenue_narrative_p_mom: "Gegenüber der Vorperiode ({prev}) bewegten sich die Einnahmen {sign} {pct}%. Das spiegelt genehmigte Zahlungen und durchschnittlichen Ticketwert.",
-        revenue_narrative_p_first: "In der unmittelbar vorherigen Periode gab es wenig oder keine Einnahmen — der Monatsvergleich ist begrenzt.",
-        revenue_narrative_p_ticket: "Bei {count} genehmigten Zahlungen lag der Durchschnitt bei {avg}. Das Monatsdiagramm oben zeigt Volumen vs. Ticketgröße.",
-        revenue_narrative_p_pending: "Noch {amount} ausstehend ({pct}% von eingenommen + ausstehend). Nach Genehmigung steigen die Einnahmen für {period}.",
-        revenue_narrative_p_top: "„{name}“ führte mit {share}% der Einnahmen ({amount}).",
-        revenue_narrative_period_all: "diesen Zeitraum",
-        revenue_narrative_period_range: "{start} – {end}",
-        revenue_narrative_up: "gestiegen",
-        revenue_narrative_down: "gesunken",
-        revenue_narrative_flat: "unverändert",
-        revenue_chart_monthly_title: "Monatliche Einnahmen",
-        revenue_chart_monthly_subtitle: "Letzte 13 Monate · Balken für Details berühren",
-        revenue_chart_monthly_collected: "Eingenommen",
-        revenue_chart_monthly_need_more: "Mindestens zwei Monate Zahlungshistorie nötig für Trends.",
-        revenue_chart_aure_month_note: "Monate folgen Aure-Abrechnung (anerkannter Monat), nicht Zahlungsdatum.",
-        revenue_chart_mom_title: "Veränderung Monat zu Monat",
-        revenue_chart_mom_na: "—",
-        revenue_chart_mom_new: "Kein Vormonat",
-        revenue_chart_tooltip_mom: "MoM: {sign}{pct}%",
-        revenue_chart_tooltip_payments: "{count} Zahlungen",
-        revenue_chart_filter_month: "Gewählter Filtermonat",
-        revenue_chart_volume_title: "Zahlungsvolumen",
-        revenue_chart_health_title: "Inkasso-Gesundheit pro Monat",
-        revenue_chart_ytd_title: "Kumuliert {year}",
-        revenue_chart_legend_collected: "Eingenommen",
-        revenue_chart_legend_pending: "Ausstehend",
-        revenue_chart_tooltip_approved: "Genehmigte Zahlungen: {count}",
-        revenue_chart_tooltip_mom_amount: "Dieser Monat: {amount}",
-        revenue_chart_tooltip_mom_prev: "Vormonat: {amount}",
-        revenue_chart_tooltip_mom_pct: "Änderung vs. Vormonat: {sign}{pct}%",
-        revenue_chart_desc_monthly: "Summe genehmigter Zahlungen nach Kalendermonat (letzte 13 Monate). Jeder Balken ist der Einnahmenbetrag; beim Berühren sehen Sie Zahlungsanzahl und Monatsvergleich.",
-        revenue_chart_desc_mom: "Prozentuale Änderung der Einnahmen gegenüber dem Vormonat. Grün = Wachstum, Orange = Rückgang. Details beim Berühren.",
-        revenue_chart_desc_volume: "Anzahl genehmigter Zahlungen pro Monat, unabhängig vom Betrag. Trennt mehr Zahlungen von höheren Tickets.",
-        revenue_chart_desc_health: "Gestapelte Ansicht: eingenommen (genehmigt) vs. ausstehend pro Monat. Mehr Orange = mehr offene Beträge.",
-        revenue_chart_desc_ytd: "Laufende Summe der Einnahmen im gewählten Kalenderjahr, Monat für Monat.",
-        revenue_chart_aure_footnote: "Bei Aure-Schulen gilt der anerkannte Monat (Leistungszeitraum), nicht das Zahlungsdatum. Andere Schulen nutzen das Erstellungsdatum.",
         filter_status: "Status",
         filter_method: "Methode",
         filter_paid: "Bezahlt",
@@ -2864,21 +2513,6 @@ const DANCE_LOCALES = {
         admin_reg_tab_requested: "Anfragen",
         no_pending_requests: "Keine ausstehenden Anfragen",
         no_pending_requests_subtitle: "Anfragen für Einzelstunden erscheinen hier.",
-        admin_move_class_btn_title: "Auf anderes Datum verschieben",
-        admin_move_modal_title: "Anmeldung verschieben",
-        admin_move_modal_loading: "Verfügbare Termine werden geladen…",
-        admin_move_modal_empty: "Keine freien Plätze in den nächsten zwei Monaten.",
-        admin_move_occupancy: "{n} / {max}",
-        admin_move_occupancy_open: "{n} angemeldet",
-        admin_move_target_btn: "Hierher verschieben",
-        admin_move_banner_title: "Unvollständige Verschiebung",
-        admin_move_banner_body: "Eine Anmeldung wurde für einen Wechsel storniert, der Schüler steht aber evtl. noch nicht am neuen Termin. Bitte manuell anmelden und dann ausblenden.",
-        admin_move_dismiss: "Ausblenden",
-        admin_move_begin_error: "Verschiebung konnte nicht gestartet werden.",
-        admin_move_register_failed: "Anmeldung am neuen Termin fehlgeschlagen.",
-        admin_move_register_failed_hint: "Der alte Termin ist bereits storniert. Schüler am neuen Datum anmelden, dann diesen Hinweis ausblenden.",
-        admin_move_success: "Kurs erfolgreich verschoben.",
-        admin_move_full: "Voll",
         aure_request_accepted: "Anfrage angenommen.",
         aure_request_denied: "Anfrage abgelehnt.",
         aure_accepting: "Wird angenommen…",
@@ -8080,11 +7714,7 @@ function _renderViewImpl() {
                         const pendingActions = isAure && s.status === 'pending'
                             ? `<span class="admin-reg-student-actions"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t.aure_approve || 'Approve'}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t.aure_reject || 'Reject'}</button></span>`
                             : '';
-                        const moveOpenTitle = (t.admin_move_class_btn_title || 'Move to another date').replace(/"/g, '&quot;');
-                        const moveActions = (isAure && effectiveStatus === 'registered')
-                            ? `<button type="button" class="admin-reg-move-btn" style="padding:2px 4px;border:none;background:transparent;cursor:pointer;color:var(--text-secondary);opacity:0.85;" title="${moveOpenTitle}" aria-label="${moveOpenTitle}" onclick="event.stopPropagation();window.openAdminMoveClassModal('${s.id}')"><i data-lucide="more-vertical" size="16"></i></button>`
-                            : '';
-                        return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${escapeHtml(displayName)}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}${moveActions}</span></div>`;
+                        return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${escapeHtml(displayName)}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div>`;
                     };
 
                     return `
@@ -8101,26 +7731,6 @@ function _renderViewImpl() {
                             </div>
                         </div>
                         <div id="admin-reg-content" class="admin-reg-content" style="padding: 0.8rem 0; display: ${state.adminRegExpanded ? '' : 'none'};">
-                            ${isAure && Array.isArray(state.adminPendingClassMoves) && state.adminPendingClassMoves.length > 0 ? `
-                            <div class="admin-reg-pending-moves-banner" role="alert" style="margin-bottom:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--system-yellow, #d4a017);background:rgba(214,160,23,0.12);font-size:13px;line-height:1.4;">
-                                <div style="font-weight:700;margin-bottom:6px;color:var(--text-primary);"><i data-lucide="alert-triangle" size="16" style="vertical-align:middle;margin-right:6px;opacity:0.85;"></i>${escapeHtml(t.admin_move_banner_title || '')}</div>
-                                <div style="opacity:0.95;margin-bottom:10px;color:var(--text-secondary);">${escapeHtml(t.admin_move_banner_body || '')}</div>
-                                <div style="display:flex;flex-direction:column;gap:8px;">
-                                    ${state.adminPendingClassMoves.map((p) => {
-        const sn = escapeHtml(p.student_name_snapshot || p.student_id || '');
-        const oldN = escapeHtml(p.old_class_name_snapshot || '');
-        const oldD = escapeHtml(String(p.old_class_date_snapshot || ''));
-        const nn = escapeHtml(p.intended_class_name_snapshot || '');
-        const nd = escapeHtml(String(p.intended_class_date || ''));
-        const nt = escapeHtml(String(p.intended_class_time_snapshot || ''));
-        const pid = String(p.id || '').replace(/'/g, "\\'");
-        return `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 10px;background:var(--system-gray6);border-radius:10px;">
-                                        <div style="min-width:0;"><strong>${sn}</strong><div style="font-size:12px;margin-top:4px;opacity:0.85;">${oldD} · ${oldN} → ${nd} · ${nn} ${nt}</div></div>
-                                        <button type="button" class="btn-secondary" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="event.stopPropagation();window.dismissAdminPendingClassMove('${pid}')">${escapeHtml(t.admin_move_dismiss || 'Dismiss')}</button>
-                                      </div>`;
-    }).join('')}
-                                </div>
-                            </div>` : ''}
                             <div class="admin-reg-month-carousel" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 8px 0;">
                                 <button type="button" onclick="event.stopPropagation(); state.adminRegMonth='${prevMonth}'; renderView();" style="background: var(--system-gray6); border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);" aria-label="${t.previous || 'Previous'}"><i data-lucide="chevron-left" size="20"></i></button>
                                 <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-transform: capitalize;">${monthLabel}</span>
@@ -8462,8 +8072,6 @@ function _renderViewImpl() {
         html += renderAdminMemberships(t);
     } else if (view === 'admin-revenue') {
         html += renderAdminRevenue(t);
-    } else if (view === 'admin-revenue-analytics') {
-        html += renderAdminRevenueAnalytics(t);
     } else if (view === 'admin-scanner') {
         html += `
             <div class="ios-header">
@@ -9573,16 +9181,6 @@ function _renderViewImpl() {
     html += `</div>`;
     root.innerHTML = html;
     if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-    if (view === 'admin-revenue-analytics' && typeof shouldAutoLoadRevenueAnalytics === 'function' && shouldAutoLoadRevenueAnalytics()) {
-        requestAnimationFrame(() => {
-            if (typeof window.refreshAdminRevenueAnalytics === 'function') window.refreshAdminRevenueAnalytics(false);
-        });
-    } else if (view !== 'admin-revenue-analytics') {
-        destroyRevenueAnalyticsCharts();
-    }
-    if (view === 'admin-revenue-analytics') {
-        mountRevenueAnalyticsChartsAfterRender();
-    }
     if (view === 'platform-school-details') window.scrollTo(0, 0);
     // Defer loading Calendly iframe until after paint so the rest of the app (and other views) stay fast
     if (view === 'teacher-booking') {
@@ -10314,193 +9912,6 @@ window.showCancelAllConfirmModal = (registrationIds) => {
             }
         }
     });
-};
-
-/** Auré admin: dismiss incomplete-move banner row */
-window.dismissAdminPendingClassMove = async (auditId) => {
-    if (!supabaseClient || !auditId) return;
-    const t = typeof window.t === 'function' ? window.t : (k) => k;
-    try {
-        const { error } = await supabaseClient.rpc('admin_dismiss_class_move', { p_audit_id: auditId });
-        if (error) throw error;
-        const sid = state.currentSchool?.id;
-        if (sid) await fetchAdminPendingClassMoves(sid);
-        if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
-    } catch (e) {
-        console.error(e);
-        alert((e && e.message) || t('admin_move_begin_error'));
-    }
-};
-
-/**
- * Auré admin: open modal to pick target slot, then admin_begin_class_move → register_for_class → admin_complete_class_move.
- */
-window.openAdminMoveClassModal = (registrationId) => {
-    const t = typeof window.t === 'function' ? window.t : (k) => k;
-    const schoolId = state.currentSchool?.id;
-    if (!schoolId || schoolId !== AURE_SCHOOL_ID || !supabaseClient) return;
-    const viewMonth = state.adminRegMonth || (() => {
-        const n = new Date();
-        return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
-    })();
-    const weekRegs = state.adminWeekRegistrationsByMonth[viewMonth] != null ? state.adminWeekRegistrationsByMonth[viewMonth] : [];
-    const reg = (weekRegs || []).find((r) => String(r.id) === String(registrationId));
-    if (!reg || reg.status !== 'registered') {
-        alert(t('admin_move_begin_error') || 'Could not start the move.');
-        return;
-    }
-    const studentId = reg.student_id;
-    const sourceClassId = reg.class_id;
-    const sourceClassDate = reg.class_date;
-    document.getElementById('admin-move-class-overlay')?.remove();
-    const ov = document.createElement('div');
-    ov.id = 'admin-move-class-overlay';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
-    const card = document.createElement('div');
-    card.style.cssText = 'background:var(--bg-card);color:var(--text-primary);border-radius:16px;max-width:520px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,0.35);border:1px solid var(--border);';
-    card.innerHTML = `<div style="padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:16px;">${escapeHtml(t.admin_move_modal_title || 'Move registration')}</div>
-        <div id="admin-move-class-body" style="padding:16px;overflow:auto;flex:1;font-size:14px;color:var(--text-secondary);">${escapeHtml(t.admin_move_modal_loading || 'Loading…')}</div>
-        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;"><button type="button" class="btn-secondary" id="admin-move-class-close">${escapeHtml(t.go_back || 'Close')}</button></div>`;
-    ov.appendChild(card);
-    document.body.appendChild(ov);
-    const close = () => { ov.remove(); };
-    card.querySelector('#admin-move-class-close')?.addEventListener('click', close);
-    ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
-    const esc = (e) => {
-        if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
-    };
-    document.addEventListener('keydown', esc);
-
-    (async () => {
-        try {
-            const classes = [...(state.classes || [])];
-            const [vyStr, vmStr] = viewMonth.split('-');
-            const vy = parseInt(vyStr, 10);
-            const vmHuman = parseInt(vmStr, 10);
-            const anchorThis = `${vy}-${String(vmHuman).padStart(2, '0')}-01`;
-            const monthLabel = new Date(vy, vmHuman - 1, 1).toLocaleDateString(
-                state.language === 'es' ? 'es-ES' : state.language === 'de' ? 'de-DE' : 'en-US',
-                { month: 'long', year: 'numeric' }
-            );
-            const candidates = [];
-            for (const cls of classes) {
-                if (!cls || cls.id == null) continue;
-                const dates = typeof window.getMonthlyOpenRegistrationDates === 'function'
-                    ? await window.getMonthlyOpenRegistrationDates(cls.id, cls.day, anchorThis)
-                    : [];
-                for (const dateStr of dates) {
-                    if (!String(dateStr).startsWith(viewMonth + '-')) continue;
-                    if (String(dateStr) === String(sourceClassDate) && Number(cls.id) === Number(sourceClassId)) continue;
-                    candidates.push({
-                        class_id: cls.id,
-                        class_date: dateStr,
-                        time: cls.time || '',
-                        max_capacity: cls.max_capacity
-                    });
-                }
-            }
-            const uniqDates = [...new Set(candidates.map((c) => c.class_date))].sort();
-            const dateToRows = {};
-            const chunk = 12;
-            for (let i = 0; i < uniqDates.length; i += chunk) {
-                const part = uniqDates.slice(i, i + chunk);
-                const results = await Promise.all(part.map((d) =>
-                    supabaseClient.rpc('get_class_registrations_for_date', { p_school_id: schoolId, p_class_date: d })
-                ));
-                part.forEach((d, j) => {
-                    const res = results[j];
-                    let arr = [];
-                    if (res && res.data != null) {
-                        arr = Array.isArray(res.data) ? res.data : (typeof res.data === 'string' ? JSON.parse(res.data) : []);
-                    }
-                    dateToRows[d] = arr;
-                });
-            }
-            const rows = [];
-            for (const c of candidates) {
-                const regs = dateToRows[c.class_date] || [];
-                const n = regs.filter((r) => Number(r.class_id) === Number(c.class_id) && (r.status === 'registered' || r.status === 'pending')).length;
-                const max = c.max_capacity;
-                const full = max != null && n >= max;
-                const already = regs.some((r) => String(r.student_id) === String(studentId) && Number(r.class_id) === Number(c.class_id) && String(r.class_date) === String(c.class_date) && (r.status === 'registered' || r.status === 'pending'));
-                if (already) continue;
-                const occLabel = max != null
-                    ? (t.admin_move_occupancy || '{n} / {max}').replace('{n}', String(n)).replace('{max}', String(max))
-                    : (t.admin_move_occupancy_open || '{n} registered').replace('{n}', String(n));
-                rows.push({ ...c, n, max, full, occLabel });
-            }
-            rows.sort((a, b) => String(a.class_date).localeCompare(String(b.class_date)) || String(a.time || '').localeCompare(String(b.time || '')));
-            const body = card.querySelector('#admin-move-class-body');
-            if (!body) return;
-            if (rows.length === 0) {
-                body.textContent = t.admin_move_modal_empty || 'No open spots.';
-                if (window.lucide) window.lucide.createIcons();
-                return;
-            }
-            body.innerHTML = `<div style="margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text-primary);">${escapeHtml((reg.student_name || studentId) + '')}</div>
-                <div style="margin-bottom:12px;font-size:12px;opacity:0.85;">${escapeHtml(monthLabel)}</div>
-                <div style="display:flex;flex-direction:column;gap:6px;">${rows.map((r) => {
-        const dateObj = new Date(r.class_date + 'T00:00:00');
-        const dayLabel = window.formatShortDate ? window.formatShortDate(dateObj, state.language) : r.class_date;
-        const label = `${escapeHtml(dayLabel)} · ${escapeHtml(r.time || '')} · ${escapeHtml(r.occLabel)}${r.full ? ' · ' + escapeHtml(t.admin_move_full || 'Full') : ''}`;
-        const dis = r.full ? 'disabled style="opacity:0.45;cursor:not-allowed;"' : 'style="cursor:pointer;"';
-        return `<button type="button" class="btn-secondary admin-move-pick-row" ${dis} data-cid="${r.class_id}" data-cdate="${String(r.class_date).replace(/"/g, '')}">${label}</button>`;
-    }).join('')}</div>`;
-            body.querySelectorAll('.admin-move-pick-row').forEach((btn) => {
-                if (btn.disabled) return;
-                btn.addEventListener('click', async () => {
-                    const cid = parseInt(btn.getAttribute('data-cid'), 10);
-                    const cdate = btn.getAttribute('data-cdate');
-                    if (!cid || !cdate) return;
-                    const ok = typeof window.confirm === 'function' ? window.confirm((t.admin_move_target_btn || 'Move here') + '?') : true;
-                    if (!ok) return;
-                    btn.disabled = true;
-                    try {
-                        const { data: beginData, error: beginErr } = await supabaseClient.rpc('admin_begin_class_move', {
-                            p_registration_id: registrationId,
-                            p_target_class_id: cid,
-                            p_target_class_date: cdate
-                        });
-                        if (beginErr) throw beginErr;
-                        const auditId = beginData && (beginData.audit_id || beginData.auditId);
-                        if (!auditId) throw new Error('no audit');
-                        const { error: regErr } = await supabaseClient.rpc('register_for_class', {
-                            p_student_id: String(studentId),
-                            p_class_id: cid,
-                            p_school_id: schoolId,
-                            p_class_date: cdate
-                        });
-                        if (regErr) {
-                            await fetchAdminPendingClassMoves(schoolId);
-                            throw regErr;
-                        }
-                        try {
-                            await supabaseClient.rpc('admin_complete_class_move', { p_audit_id: auditId });
-                        } catch (ce) { console.warn('admin_complete_class_move', ce); }
-                        await fetchAdminPendingClassMoves(schoolId);
-                        state.adminWeekRegistrationsByMonth[viewMonth] = undefined;
-                        close();
-                        document.removeEventListener('keydown', esc);
-                        if (typeof window.showMessageModal === 'function') {
-                            window.showMessageModal({ icon: 'success', title: t.admin_move_success || 'Done', body: '', primaryLabel: t.got_it || 'OK' });
-                        }
-                        if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
-                    } catch (e) {
-                        console.error(e);
-                        btn.disabled = false;
-                        const msg = (e && e.message) || '';
-                        alert((msg ? msg + '\n\n' : '') + (t.admin_move_register_failed_hint || t.admin_move_register_failed || ''));
-                        if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
-                    }
-                });
-            });
-            if (window.lucide) window.lucide.createIcons();
-        } catch (e) {
-            console.error(e);
-            const body = card.querySelector('#admin-move-class-body');
-            if (body) body.textContent = (e && e.message) || (t.admin_move_begin_error || 'Error');
-        }
-    })();
 };
 
 function getTodayForMonthly() {
@@ -14220,145 +13631,6 @@ window.removePaymentRequest = async (id) => {
     }
 };
 
-window.buildAdminRevenueFilterHash = buildAdminRevenueFilterHash;
-
-function mountRevenueAnalyticsChartsAfterRender() {
-    if (state.currentView !== 'admin-revenue-analytics') {
-        destroyRevenueAnalyticsCharts();
-        return;
-    }
-    if (state.adminRevenueKpiLoading || !state.adminRevenueKpiResults) {
-        destroyRevenueAnalyticsCharts();
-        return;
-    }
-    const tDict = DANCE_LOCALES[state.language || 'en'] || DANCE_LOCALES.en;
-    const range = getAdminRevenueDateRange();
-    const series = computeRollingMonthlyRevenueSeries(state.paymentRequests || [], {
-        monthCount: 13,
-        lang: state.language,
-        rangeEnd: range.dateEnd,
-        highlightMonthKey: getRevenueHighlightMonthKey(range)
-    });
-    if (series.monthsWithData < 2) {
-        destroyRevenueAnalyticsCharts();
-        return;
-    }
-    const currency = state.currentSchool?.currency || 'MXN';
-    const highlightKey = getRevenueHighlightMonthKey(range);
-    const showYtd = !range.allTime && highlightKey && highlightKey.startsWith(String(series.filterYear));
-    requestAnimationFrame(() => {
-        if (state.currentView !== 'admin-revenue-analytics') return;
-        mountRevenueAnalyticsCharts(tDict, currency, series, { showYtd, filterYear: series.filterYear });
-    });
-}
-
-let _revenueAnalyticsDebounceTimer = null;
-let _revenueAnalyticsLoadGen = 0;
-
-window.onAdminRevenueAnalyticsFilterChange = () => {
-    if (state.currentView !== 'admin-revenue-analytics') return;
-    clearTimeout(_revenueAnalyticsDebounceTimer);
-    _revenueAnalyticsDebounceTimer = setTimeout(() => {
-        if (typeof window.refreshAdminRevenueAnalytics === 'function') window.refreshAdminRevenueAnalytics(true);
-    }, 400);
-};
-
-window.openAdminRevenueAnalytics = () => {
-    state.currentView = 'admin-revenue-analytics';
-    saveState();
-    if (typeof renderView === 'function') renderView();
-    window.scrollTo(0, 0);
-};
-
-window.backToAdminRevenue = () => {
-    state.currentView = 'admin-revenue';
-    saveState();
-    if (typeof renderView === 'function') renderView();
-    window.scrollTo(0, 0);
-};
-
-window.refreshAdminRevenueAnalytics = async (forceRefresh) => {
-    const t = typeof window.t === 'function' ? window.t : (k) => k;
-    const schoolId = state.currentSchool?.id;
-    if (!schoolId || state.currentView !== 'admin-revenue-analytics') return;
-
-    const hash = buildAdminRevenueFilterHash();
-    if (!forceRefresh) {
-        const cached = state.adminRevenueKpiCache && state.adminRevenueKpiCache[hash];
-        if (cached && cached.kpis) {
-            state.adminRevenueKpiResults = cached.kpis;
-            state.adminRevenueKpiError = null;
-            if (typeof renderView === 'function') renderView();
-            return;
-        }
-    }
-
-    const gen = ++_revenueAnalyticsLoadGen;
-    state.adminRevenueKpiLoading = true;
-    state.adminRevenueKpiError = null;
-    if (typeof renderView === 'function') renderView();
-
-    try {
-        const range = getAdminRevenueDateRange();
-        const filtered = filterPaymentsForRevenue(state.paymentRequests || [], range);
-        let kpis = computeRevenueKpisFromPayments(filtered);
-        kpis.source = 'client';
-        kpis.filteredCount = filtered.length;
-        kpis.analyzedAt = new Date().toISOString();
-
-        const aure = isAureSchool(state.currentSchool);
-        const startIso = state.adminRevenueAllTime ? null : (state.adminRevenueDateStart || range.defaultStart || null);
-        const endIso = state.adminRevenueAllTime ? null : (state.adminRevenueDateEnd || range.defaultEnd || null);
-
-        if (aure) {
-            const rpc = await fetchSchoolKpiSummary(schoolId, startIso, endIso, true);
-            if (rpc && rpc.registrations) {
-                kpis.aurePendingSuelta = Number(rpc.registrations.pending_suelta_count) || 0;
-            } else {
-                const monthStr = monthStrForRevenueKpiRegistrations(range);
-                let regs = state.adminWeekRegistrationsByMonth && state.adminWeekRegistrationsByMonth[monthStr];
-                if (regs == null) {
-                    regs = await fetchAdminRegistrationsForMonth(schoolId, monthStr);
-                    if (!state.adminWeekRegistrationsByMonth) state.adminWeekRegistrationsByMonth = {};
-                    state.adminWeekRegistrationsByMonth[monthStr] = regs;
-                }
-                kpis.aurePendingSuelta = countAurePendingSueltaInRegs(regs, range);
-            }
-        }
-
-        const hasExtraFilters = !!(state.adminRevenuePackageFilter || state.adminRevenueStatusFilter || state.adminRevenueMethodFilter);
-        if (!hasExtraFilters) {
-            const rpcFull = await fetchSchoolKpiSummary(schoolId, startIso, endIso, false);
-            if (rpcFull) {
-                kpis = mergeRpcIntoRevenueKpis(kpis, rpcFull);
-                if (aure && kpis.aurePendingSuelta == null && rpcFull.registrations) {
-                    kpis.aurePendingSuelta = Number(rpcFull.registrations.pending_suelta_count) || 0;
-                }
-            }
-        }
-
-        if (gen !== _revenueAnalyticsLoadGen) return;
-
-        if (!state.adminRevenueKpiCache) state.adminRevenueKpiCache = {};
-        state.adminRevenueKpiCache[hash] = { kpis, at: Date.now() };
-        state.adminRevenueKpiResults = kpis;
-        state.adminRevenueKpiError = null;
-    } catch (e) {
-        if (gen !== _revenueAnalyticsLoadGen) return;
-        console.warn('refreshAdminRevenueAnalytics', e);
-        state.adminRevenueKpiError = t('revenue_kpi_error') || 'Could not refresh indicators.';
-    } finally {
-        if (gen !== _revenueAnalyticsLoadGen) return;
-        state.adminRevenueKpiLoading = false;
-        if (typeof renderView === 'function') renderView();
-        if (typeof window.refreshIcons === 'function') window.refreshIcons();
-        mountRevenueAnalyticsChartsAfterRender();
-    }
-};
-
-/** @deprecated Use refreshAdminRevenueAnalytics — kept for any stale onclick references */
-window.analyzeAdminRevenueKpis = () => window.refreshAdminRevenueAnalytics(true);
-
 window.openManualPaymentModal = () => {
     const t = typeof window.t === 'function' ? window.t : (k) => k;
     const schoolId = state.currentSchool?.id;
@@ -14386,9 +13658,8 @@ window.openManualPaymentModal = () => {
         <div id="manual-payment-student-info" style="margin: -0.25rem 0 0.75rem; font-size: 11px; color: var(--text-secondary); display: none;"></div>
         <div class="ios-input-group" style="margin-bottom: 1rem;">
             <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('description_or_plan') || 'Description / Plan name'}</label>
-            <input type="text" id="manual-payment-sub-name" class="minimal-input" placeholder="${t('manual_payment_description_placeholder') || 'e.g. 10 classes pack, Cash payment'}" oninput="window.updateManualPaymentRevenueMonthPreview()" onchange="window.updateManualPaymentRevenueMonthPreview()" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
+            <input type="text" id="manual-payment-sub-name" class="minimal-input" placeholder="${t('manual_payment_description_placeholder') || 'e.g. 10 classes pack, Cash payment'}" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
         </div>
-        <div id="manual-payment-revenue-month-banner" class="manual-payment-revenue-month-banner" style="display: none; margin-bottom: 1rem;" role="status"></div>
         <div class="ios-input-group" style="margin-bottom: 1rem;">
             <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">${t('price') || 'Amount'}</label>
             <input type="number" id="manual-payment-price" class="minimal-input" min="0" step="0.01" placeholder="0" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-primary); box-sizing: border-box;">
@@ -14407,33 +13678,6 @@ window.openManualPaymentModal = () => {
     `;
     document.getElementById('manual-payment-modal').classList.remove('hidden');
     if (window.lucide) window.lucide.createIcons();
-    window.updateManualPaymentRevenueMonthPreview();
-};
-
-window.updateManualPaymentRevenueMonthPreview = () => {
-    try {
-        const banner = document.getElementById('manual-payment-revenue-month-banner');
-        if (!banner) return;
-        const t = typeof window.t === 'function' ? window.t : (k) => k;
-        const school = state.currentSchool;
-        if (!isAureSchoolForRevenue(school)) {
-            banner.style.display = 'none';
-            banner.textContent = '';
-            return;
-        }
-        const subName = (document.getElementById('manual-payment-sub-name')?.value || '').trim();
-        const month = getManualPaymentRevenueMonthPreview(subName, state.subscriptions || [], school, new Date());
-        if (!month) {
-            banner.style.display = 'none';
-            return;
-        }
-        const label = formatRecognizedMonthLabel(month, state.language);
-        const template = t('manual_payment_revenue_month_preview') || 'This payment will count toward revenue in {month}.';
-        banner.textContent = template.replace('{month}', label || month);
-        banner.style.display = 'block';
-    } catch (e) {
-        console.error('updateManualPaymentRevenueMonthPreview error', e);
-    }
 };
 
 window.updateManualPaymentStudentInfo = () => {
