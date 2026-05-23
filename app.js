@@ -19741,6 +19741,19 @@
       admin_reg_tab_requested: "Requested",
       no_pending_requests: "No pending requests",
       no_pending_requests_subtitle: "Clase suelta requests will appear here.",
+      admin_move_class_btn_title: "Move to another date",
+      admin_move_modal_title: "Move registration",
+      admin_move_modal_loading: "Loading available dates\u2026",
+      admin_move_modal_empty: "No open spots in this month.",
+      admin_move_occupancy: "{n} / {max}",
+      admin_move_occupancy_unlimited: "{n} registered",
+      admin_move_slot_full: "Full",
+      admin_move_success: "Registration moved.",
+      admin_move_begin_error: "Could not start the move.",
+      admin_move_register_error: "The old date was cancelled but registration on the new date failed. Check the yellow banner to finish or dismiss.",
+      admin_move_pending_banner_title: "Incomplete class moves",
+      admin_move_pending_row: "{student} was removed from {oldDate} and is not yet registered for {newDate} at {newTime}.",
+      admin_move_dismiss: "Dismiss",
       aure_request_accepted: "Request accepted.",
       aure_request_denied: "Request denied.",
       aure_accepting: "Accepting\u2026",
@@ -20608,6 +20621,19 @@
       admin_reg_tab_requested: "Solicitados",
       no_pending_requests: "Sin solicitudes pendientes",
       no_pending_requests_subtitle: "Las solicitudes de clase suelta aparecer\xE1n aqu\xED.",
+      admin_move_class_btn_title: "Cambiar de fecha",
+      admin_move_modal_title: "Mover inscripci\xF3n",
+      admin_move_modal_loading: "Cargando fechas disponibles\u2026",
+      admin_move_modal_empty: "No hay plazas abiertas este mes.",
+      admin_move_occupancy: "{n} / {max}",
+      admin_move_occupancy_unlimited: "{n} inscritos",
+      admin_move_slot_full: "Lleno",
+      admin_move_success: "Inscripci\xF3n movida.",
+      admin_move_begin_error: "No se pudo iniciar el cambio.",
+      admin_move_register_error: "Se cancel\xF3 la fecha anterior pero no se pudo inscribir en la nueva. Revisa el aviso amarillo para terminar o descartar.",
+      admin_move_pending_banner_title: "Cambios de fecha incompletos",
+      admin_move_pending_row: "{student} fue quitado de {oldDate} y a\xFAn no est\xE1 inscrito el {newDate} a las {newTime}.",
+      admin_move_dismiss: "Descartar",
       aure_request_accepted: "Solicitud aceptada.",
       aure_request_denied: "Solicitud rechazada.",
       aure_accepting: "Aceptando\u2026",
@@ -21515,6 +21541,19 @@
       admin_reg_tab_requested: "Anfragen",
       no_pending_requests: "Keine ausstehenden Anfragen",
       no_pending_requests_subtitle: "Anfragen f\xFCr Einzelstunden erscheinen hier.",
+      admin_move_class_btn_title: "Anderes Datum",
+      admin_move_modal_title: "Anmeldung verschieben",
+      admin_move_modal_loading: "Verf\xFCgbare Termine werden geladen\u2026",
+      admin_move_modal_empty: "Keine offenen Pl\xE4tze in diesem Monat.",
+      admin_move_occupancy: "{n} / {max}",
+      admin_move_occupancy_unlimited: "{n} angemeldet",
+      admin_move_slot_full: "Voll",
+      admin_move_success: "Anmeldung verschoben.",
+      admin_move_begin_error: "Verschieben konnte nicht gestartet werden.",
+      admin_move_register_error: "Der alte Termin wurde storniert, die neue Anmeldung ist fehlgeschlagen. Nutze den gelben Hinweis zum Abschlie\xDFen oder Entfernen.",
+      admin_move_pending_banner_title: "Unvollst\xE4ndige Terminwechsel",
+      admin_move_pending_row: "{student} wurde von {oldDate} entfernt und ist f\xFCr {newDate} um {newTime} noch nicht angemeldet.",
+      admin_move_dismiss: "Ausblenden",
       aure_request_accepted: "Anfrage angenommen.",
       aure_request_denied: "Anfrage abgelehnt.",
       aure_accepting: "Wird angenommen\u2026",
@@ -26844,7 +26883,9 @@
                                 <button type="button" class="admin-reg-attendance-btn ${effectiveStatus === "no_show" ? "btn-primary" : "btn-secondary"}" title="${t2.no_show || "No-show"}" aria-label="${t2.no_show || "No-show"}" onclick="event.stopPropagation(); window.setRegistrationAttendance('${s.id}', false)"><i data-lucide="x" size="12"></i></button>
                             </span>` : "";
             const pendingActions = isAure2 && s.status === "pending" ? `<span class="admin-reg-student-actions"><button type="button" class="btn-primary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.approveClaseSuelta('${s.id}')">${t2.aure_approve || "Approve"}</button> <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.65rem;" onclick="event.stopPropagation(); window.rejectClaseSuelta('${s.id}')">${t2.aure_reject || "Reject"}</button></span>` : "";
-            return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${escapeHtml(displayName)}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}</span></div>`;
+            const moveOpenTitle = (t2.admin_move_class_btn_title || "Move to another date").replace(/"/g, "&quot;");
+            const moveActions = isAure2 && effectiveStatus === "registered" ? `<button type="button" class="admin-reg-move-btn" style="padding:2px 4px;border:none;background:transparent;cursor:pointer;color:var(--text-secondary);opacity:0.85;" title="${moveOpenTitle}" aria-label="${moveOpenTitle}" onclick="event.stopPropagation();window.openAdminMoveClassModal('${s.id}')"><i data-lucide="more-vertical" size="16"></i></button>` : "";
+            return `<div class="admin-reg-student-row${rowStateClass}" style="${rowStyle}"><span class="admin-reg-student-icon">${statusIcon}</span><div class="admin-reg-student-main"><div class="admin-reg-student-top"><span class="admin-reg-student-name">${escapeHtml(displayName)}${monthlyTag}</span></div><span class="admin-reg-student-status">${statusLabel}</span></div><span class="admin-reg-student-controls">${attendanceActions}${pendingActions}${moveActions}</span></div>`;
           };
           return `
                     <div class="admin-reg-section ${state.adminRegExpanded ? "expanded" : ""}" style="padding: 0 1.2rem; margin-bottom: 1rem;">
@@ -26865,6 +26906,19 @@
                                 <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-transform: capitalize;">${monthLabel}</span>
                                 <button type="button" onclick="event.stopPropagation(); state.adminRegMonth='${nextMonth}'; renderView();" style="background: var(--system-gray6); border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);" aria-label="${t2.next || "Next"}"><i data-lucide="chevron-right" size="20"></i></button>
                             </div>
+                            ${isAure2 && Array.isArray(state.adminPendingClassMoves) && state.adminPendingClassMoves.length > 0 ? `
+                            <div class="admin-move-pending-banner" style="margin-bottom:12px;padding:12px 14px;border-radius:12px;background:#fff8e6;border:1px solid #e6c200;color:var(--text-primary);">
+                                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;color:#8a6d00;">${(t2.admin_move_pending_banner_title || "Incomplete class moves").replace(/</g, "&lt;")}</div>
+                                ${state.adminPendingClassMoves.map((m) => {
+            const sn = (m.student_name_snapshot || "").replace(/</g, "&lt;") || "\u2014";
+            const oldD = m.old_class_date_snapshot ? window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(m.old_class_date_snapshot + "T00:00:00"), state.language) : m.old_class_date_snapshot : "\u2014";
+            const newD = m.intended_class_date ? window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(m.intended_class_date + "T00:00:00"), state.language) : m.intended_class_date : "\u2014";
+            const newT = (m.intended_class_time_snapshot || "").replace(/</g, "&lt;");
+            const rowText = (t2.admin_move_pending_row || "{student} was removed from {oldDate} and is not yet registered for {newDate} at {newTime}.").replace("{student}", sn).replace("{oldDate}", oldD).replace("{newDate}", newD).replace("{newTime}", newT);
+            return `<div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between;margin-top:6px;font-size:13px;line-height:1.4;"><span style="flex:1;min-width:0;">${rowText}</span><button type="button" class="btn-secondary" style="flex-shrink:0;padding:4px 10px;font-size:12px;" onclick="event.stopPropagation();window.dismissAdminPendingClassMove('${m.id}')">${t2.admin_move_dismiss || "Dismiss"}</button></div>`;
+          }).join("")}
+                            </div>
+                            ` : ""}
                             ${isAure2 ? `
                             <div class="admin-reg-tabs">
                                 <button type="button" class="admin-reg-tab ${state.adminRegTab === "registered" ? "active" : ""}" onclick="state.adminRegTab='registered'; renderView();">${t2.admin_reg_tab_registered || "Registered"}</button>
@@ -29799,6 +29853,208 @@
       state.adminRegActionType = null;
       if (typeof renderView === "function") renderView();
       alert(e && e.message || t2("register_error"));
+    }
+  };
+  var _findAdminRegistrationById = (registrationId) => {
+    const months = state.adminWeekRegistrationsByMonth || {};
+    for (const key of Object.keys(months)) {
+      const rows = months[key];
+      if (!Array.isArray(rows)) continue;
+      const hit = rows.find((r) => String(r?.id) === String(registrationId));
+      if (hit) return hit;
+    }
+    return null;
+  };
+  var _invalidateAdminRegistrationsCache = () => {
+    const viewMonth = state.adminRegMonth || (() => {
+      const n = /* @__PURE__ */ new Date();
+      return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0");
+    })();
+    state.adminWeekRegistrationsByMonth[viewMonth] = void 0;
+  };
+  window.dismissAdminPendingClassMove = async (auditId) => {
+    if (!supabaseClient || !auditId) return;
+    const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    try {
+      const { error } = await supabaseClient.rpc("admin_dismiss_class_move", { p_audit_id: auditId });
+      if (error) throw error;
+      const sid = state.currentSchool?.id;
+      if (sid) await fetchAdminPendingClassMoves(sid);
+      if (typeof renderView === "function") {
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e && e.message || t2("admin_move_begin_error"));
+    }
+  };
+  window.openAdminMoveClassModal = async (registrationId) => {
+    if (!supabaseClient || state.currentSchool?.id !== AURE_SCHOOL_ID || state.adminMoveInProgress) return;
+    const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    const reg = _findAdminRegistrationById(registrationId);
+    const student = reg ? (state.students || []).find((st) => String(st.id) === String(reg.student_id)) : null;
+    const studentName = student?.name || reg?.student_name || reg?.student_id || "\u2014";
+    const viewMonth = state.adminRegMonth || (() => {
+      const n = /* @__PURE__ */ new Date();
+      return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0");
+    })();
+    const modal = document.getElementById("message-modal");
+    const iconEl = document.getElementById("message-modal-icon");
+    const titleEl = document.getElementById("message-modal-title");
+    const bodyEl = document.getElementById("message-modal-body");
+    const actionsEl = document.getElementById("message-modal-actions");
+    if (!modal || !iconEl || !titleEl || !bodyEl || !actionsEl) return;
+    const closeModal = () => {
+      modal.classList.add("hidden");
+      bodyEl.innerHTML = "";
+      bodyEl.style.display = "";
+      actionsEl.innerHTML = "";
+    };
+    iconEl.className = "message-modal-icon message-modal-icon-warning";
+    iconEl.innerHTML = '<i data-lucide="calendar" size="30"></i>';
+    titleEl.textContent = t2("admin_move_modal_title") || "Move registration";
+    bodyEl.style.display = "";
+    bodyEl.innerHTML = `<p style="margin:0 0 10px;font-size:14px;font-weight:600;">${escapeHtml(studentName)}</p><div id="admin-move-slots" style="font-size:13px;color:var(--text-secondary);">${escapeHtml(t2("admin_move_modal_loading") || "Loading\u2026")}</div>`;
+    actionsEl.innerHTML = `<button type="button" class="btn-secondary" style="width:100%;">${t2("cancel") || "Cancel"}</button>`;
+    actionsEl.querySelector("button").onclick = closeModal;
+    modal.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+    const anchor = viewMonth + "-01";
+    const classes = state.classes || [];
+    const candidates = [];
+    try {
+      const perClass = await Promise.all(classes.map(async (cls) => {
+        const dates = typeof window.getMonthlyOpenRegistrationDates === "function" ? await window.getMonthlyOpenRegistrationDates(cls.id, cls.day, anchor) : window.getMonthlyDates ? window.getMonthlyDates(cls.day, anchor) : [];
+        return { cls, dates: dates || [] };
+      }));
+      perClass.forEach(({ cls, dates }) => {
+        dates.forEach((dateStr) => {
+          if (reg && String(cls.id) === String(reg.class_id) && dateStr === reg.class_date) return;
+          candidates.push({ classId: cls.id, dateStr, time: cls.time || "" });
+        });
+      });
+      candidates.sort((a, b) => (a.dateStr + a.time).localeCompare(b.dateStr + b.time));
+      const uniqueDates = [...new Set(candidates.map((c) => c.dateStr))];
+      const availByKey = {};
+      const schoolId = state.currentSchool.id;
+      await Promise.all(uniqueDates.map(async (dateStr) => {
+        try {
+          const { data, error } = await supabaseClient.rpc("get_class_availability", {
+            p_school_id: schoolId,
+            p_class_date: dateStr
+          });
+          if (error) throw error;
+          const arr = Array.isArray(data) ? data : typeof data === "string" ? JSON.parse(data) : [];
+          arr.forEach((item) => {
+            availByKey[item.class_id + "_" + dateStr] = item;
+          });
+        } catch (e) {
+          console.warn("admin move availability", dateStr, e);
+        }
+      }));
+      const slotsEl = document.getElementById("admin-move-slots");
+      if (!slotsEl) return;
+      if (candidates.length === 0) {
+        slotsEl.textContent = t2("admin_move_modal_empty") || "No open spots in this month.";
+        return;
+      }
+      const escAttr = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+      slotsEl.innerHTML = candidates.map((slot) => {
+        const dateObj = /* @__PURE__ */ new Date(slot.dateStr + "T00:00:00");
+        const dateLabel = window.formatShortDate ? window.formatShortDate(dateObj, state.language) : slot.dateStr;
+        const avail = availByKey[slot.classId + "_" + slot.dateStr];
+        const maxCap = avail?.max_capacity;
+        const taken = avail?.registered_count != null ? avail.registered_count : null;
+        const spotsLeft = avail?.spots_left;
+        const isFull = maxCap != null && spotsLeft === 0;
+        let occLabel;
+        if (maxCap != null && taken != null) {
+          occLabel = (t2.admin_move_occupancy || "{n} / {max}").replace("{n}", String(taken)).replace("{max}", String(maxCap));
+        } else if (taken != null) {
+          occLabel = (t2.admin_move_occupancy_unlimited || "{n} registered").replace("{n}", String(taken));
+        } else {
+          occLabel = "";
+        }
+        const timePart = slot.time ? ` \xB7 ${escAttr(slot.time)}` : "";
+        const fullPart = isFull ? ` \xB7 ${escAttr(t2.admin_move_slot_full || "Full")}` : "";
+        const disabled = isFull ? " disabled" : "";
+        const style = isFull ? "display:block;width:100%;text-align:left;margin:0 0 6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--system-gray6);opacity:0.55;cursor:not-allowed;" : "display:block;width:100%;text-align:left;margin:0 0 6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;color:var(--text-primary);";
+        const regEsc = escAttr(registrationId);
+        const dateEsc = escAttr(slot.dateStr);
+        return `<button type="button" class="admin-move-slot-btn"${disabled} style="${style}" onclick="event.stopPropagation();window.confirmAdminMoveClassSlot('${regEsc}', ${slot.classId}, '${dateEsc}')"><span style="font-weight:600;">${escAttr(dateLabel)}</span>${timePart}${occLabel ? ` \xB7 ${escAttr(occLabel)}` : ""}${fullPart}</button>`;
+      }).join("");
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      console.error("openAdminMoveClassModal", e);
+      const slotsEl = document.getElementById("admin-move-slots");
+      if (slotsEl) slotsEl.textContent = e && e.message || t2("admin_move_begin_error");
+    }
+  };
+  window.confirmAdminMoveClassSlot = async (registrationId, targetClassId, targetDateStr) => {
+    if (!supabaseClient || state.currentSchool?.id !== AURE_SCHOOL_ID || state.adminMoveInProgress) return;
+    const t2 = typeof window.t === "function" ? window.t : (k) => k;
+    const moveModal = document.getElementById("message-modal");
+    if (moveModal) moveModal.classList.add("hidden");
+    state.adminMoveInProgress = true;
+    const schoolId = state.currentSchool.id;
+    try {
+      const { data: beginRaw, error: beginErr } = await supabaseClient.rpc("admin_begin_class_move", {
+        p_registration_id: registrationId,
+        p_target_class_id: targetClassId,
+        p_target_class_date: targetDateStr
+      });
+      if (beginErr) throw beginErr;
+      let begin = beginRaw;
+      if (typeof begin === "string") {
+        try {
+          begin = JSON.parse(begin);
+        } catch (_) {
+          begin = {};
+        }
+      }
+      const auditId = begin?.audit_id;
+      const studentId = begin?.student_id;
+      if (!auditId || !studentId) throw new Error(t2("admin_move_begin_error") || "Could not start move.");
+      const { error: regErr } = await supabaseClient.rpc("register_for_class", {
+        p_student_id: String(studentId),
+        p_class_id: targetClassId,
+        p_school_id: schoolId,
+        p_class_date: targetDateStr
+      });
+      if (regErr) {
+        await fetchAdminPendingClassMoves(schoolId);
+        _invalidateAdminRegistrationsCache();
+        if (typeof renderView === "function") {
+          renderView();
+          if (window.lucide) window.lucide.createIcons();
+        }
+        throw regErr;
+      }
+      try {
+        await supabaseClient.rpc("admin_complete_class_move", { p_audit_id: auditId });
+      } catch (completeErr) {
+        console.warn("admin_complete_class_move", completeErr);
+      }
+      await fetchAdminPendingClassMoves(schoolId);
+      await window.loadClassAvailability?.();
+      _invalidateAdminRegistrationsCache();
+      if (typeof renderView === "function") {
+        renderView();
+        if (window.lucide) window.lucide.createIcons();
+      }
+      window.showMessageModal?.({
+        icon: "success",
+        title: t2("admin_move_success") || "Registration moved.",
+        primaryLabel: t2("got_it") || "OK"
+      });
+    } catch (e) {
+      console.error("confirmAdminMoveClassSlot", e);
+      const msg = e && e.message || "";
+      const incomplete = /cancelled|pending|register/i.test(msg);
+      alert(incomplete ? t2("admin_move_register_error") || msg : msg || t2("admin_move_begin_error"));
+    } finally {
+      state.adminMoveInProgress = false;
     }
   };
   window.updateStudentLevel = async (studentId, level) => {
