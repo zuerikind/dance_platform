@@ -1,7 +1,4 @@
--- =============================================================================
--- Auré admin: finish pending class move (register on new date without student
--- Aure rules that block register_for_class for monthly / non-4-8 packs).
--- =============================================================================
+-- Apply admin_finish_class_move (20260523120000 version slot was taken by school_kpi_summary on remote).
 
 CREATE OR REPLACE FUNCTION public.admin_finish_class_move(p_audit_id uuid)
 RETURNS jsonb
@@ -108,7 +105,6 @@ GRANT EXECUTE ON FUNCTION public.admin_finish_class_move(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_finish_class_move(uuid) TO anon;
 
 
--- Improve student name snapshot on begin (trim id match).
 CREATE OR REPLACE FUNCTION public.admin_begin_class_move(
   p_registration_id uuid,
   p_target_class_id bigint,
