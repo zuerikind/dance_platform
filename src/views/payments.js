@@ -2,6 +2,21 @@ import { escapeHtml } from '../config.js';
 import { state } from '../state.js';
 import { formatPrice, schoolHasDualGroupPrivateOffering } from '../utils.js';
 import { getEffectiveBalances } from '../scanner.js';
+import {
+    aureRevenueMonthDiffersFromPaymentDate,
+    formatRecognizedMonthShort,
+    getRevenueRecognizedMonth
+} from '../kpi/revenueAttribution.js';
+import {
+    filterPaymentsForRevenue,
+    getAdminRevenueDateRange,
+    isAureSchool,
+    sumApprovedHistoricalRevenue
+} from '../kpi/revenueKpis.js';
+import {
+    renderAdminRevenueFilterCard,
+    renderAureRevenueAttributionInfoButton
+} from '../kpi/revenueFiltersUi.js';
 
 export function renderAdminMemberships(t) {
     const pending = state.paymentRequests.filter(r => r.status === 'pending');
@@ -91,7 +106,6 @@ export function renderAdminMemberships(t) {
 }
 
 export function renderAdminRevenue(t) {
-    const now = new Date();
     const allTime = !!state.adminRevenueAllTime;
     const settingsSchoolRev = (state.schools && state.currentSchool?.id && state.schools.find(s => s.id === state.currentSchool.id)) || state.currentSchool;
     const isPTRev = settingsSchoolRev?.profile_type === 'private_teacher';
@@ -116,47 +130,35 @@ export function renderAdminRevenue(t) {
         state.adminRevenuePackageFilter = null;
         pkgFilter = null;
     }
-    let defaultStart;
-    let defaultEnd;
-    let dateStart;
-    let dateEnd;
-    if (allTime) {
-        defaultStart = '';
-        defaultEnd = '';
-        dateStart = new Date(0);
-        dateEnd = new Date();
-        dateEnd.setHours(23, 59, 59, 999);
-    } else {
-        defaultStart = state.adminRevenueDateStart || window.formatClassDate(new Date(now.getFullYear(), now.getMonth(), 1));
-        defaultEnd = state.adminRevenueDateEnd || window.formatClassDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-        dateStart = state.adminRevenueDateStart ? new Date(state.adminRevenueDateStart + 'T00:00:00') : new Date(now.getFullYear(), now.getMonth(), 1);
-        dateEnd = state.adminRevenueDateEnd ? new Date(state.adminRevenueDateEnd + 'T23:59:59.999') : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    }
+    const range = getAdminRevenueDateRange();
+    const { defaultStart, defaultEnd, dateStart, dateEnd } = range;
     const statusFilter = state.adminRevenueStatusFilter;
     const methodFilter = state.adminRevenueMethodFilter;
 
-    let filteredPayments = [...(state.paymentRequests || [])];
-    filteredPayments = filteredPayments.filter(r => {
-        const d = new Date(r.created_at);
-        if (d < dateStart || d > dateEnd) return false;
-        if (pkgFilter && (r.sub_name || '').toLowerCase().trim() !== String(pkgFilter).toLowerCase().trim()) return false;
-        if (statusFilter && r.status !== statusFilter) return false;
-        if (methodFilter && r.payment_method !== methodFilter) return false;
-        return true;
-    });
+    let filteredPayments = filterPaymentsForRevenue(state.paymentRequests || [], range);
     filteredPayments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     const periodTotal = filteredPayments.filter(r => r.status === 'approved').reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
-    const totalHistorical = (state.paymentRequests || []).filter(r => r.status === 'approved').reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+    const totalHistorical = sumApprovedHistoricalRevenue(
+        state.paymentRequests || [],
+        state.currentSchool,
+        state.subscriptions || []
+    );
+    const showAureBadges = isAureSchool(state.currentSchool);
     const isCurrentMonth = !allTime && !state.adminRevenueDateStart && !state.adminRevenueDateEnd;
     const revenueSummaryTitle = allTime
         ? (t.revenue_total_all_time || 'All-time total')
         : (isCurrentMonth && !pkgFilter ? (t.monthly_total || 'This Month Total') : (t.period_total || 'Total for period'));
 
+    const aureAttributionInfo = renderAureRevenueAttributionInfoButton(t);
+
     return `
         <div class="ios-header admin-revenue-header" style="background: transparent;">
             <div class="admin-revenue-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                <div class="ios-large-title">${t.nav_revenue}</div>
+                <div class="admin-revenue-title-wrap">
+                    <div class="ios-large-title">${t.nav_revenue}</div>
+                    ${aureAttributionInfo}
+                </div>
                 <button
                     type="button"
                     class="btn-primary admin-revenue-add-btn"
@@ -169,49 +171,22 @@ export function renderAdminRevenue(t) {
             </div>
         </div>
 
-        <div class="revenue-filters-expandable ${state.adminRevenueFiltersExpanded ? 'expanded' : ''}" style="margin: 0 1.2rem; border-bottom: 1px solid var(--border);">
-            <div class="revenue-filters-header" onclick="toggleExpandableNoRender('revenueFilters')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer;">
-                <span style="text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">${t.filters_label || 'Filters'}</span>
-                <i data-lucide="chevron-down" size="18" class="expandable-chevron" style="opacity: 0.5;"></i>
+        <div class="revenue-filters-expandable ${state.adminRevenueFiltersExpanded ? 'expanded' : ''}">
+            <div class="revenue-filters-header" onclick="toggleExpandableNoRender('revenueFilters')">
+                <span class="revenue-filters-header-label">${t.filters_label || 'Filters'}</span>
+                <i data-lucide="chevron-down" size="18" class="expandable-chevron" aria-hidden="true"></i>
             </div>
-            <div id="revenue-filters-content" style="display: ${state.adminRevenueFiltersExpanded ? '' : 'none'}; padding-bottom: 12px;">
-                <div class="filter-bar">
-                    <input type="date" class="filter-control" id="revenue-date-start" value="${defaultStart}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateStart=this.value||null; renderView();">
-                    <input type="date" class="filter-control" id="revenue-date-end" value="${defaultEnd}" onchange="state.adminRevenueAllTime=false; state.adminRevenueDateEnd=this.value||null; renderView();">
-                    <button type="button" class="filter-btn" onclick="const n=new Date(); state.adminRevenueAllTime=false; state.adminRevenueDateStart=window.formatClassDate(new Date(n.getFullYear(),n.getMonth(),1)); state.adminRevenueDateEnd=window.formatClassDate(new Date(n.getFullYear(),n.getMonth()+1,0)); renderView();">
-                        <i data-lucide="calendar" size="14"></i> ${t.filter_this_month || 'This Month'}
-                    </button>
-                    <button type="button" class="filter-btn" onclick="state.adminRevenueAllTime=true; state.adminRevenueDateStart=null; state.adminRevenueDateEnd=null; renderView();">
-                        <i data-lucide="infinity" size="14"></i> ${t.filter_all_time || 'All time'}
-                    </button>
-                </div>
-                <div class="filter-bar">
-                    <span class="filter-select-wrap">
-                        <select class="filter-control" onchange="state.adminRevenuePackageFilter=this.value||null; renderView();">
-                            <option value="">${t.filter_all || 'All'} ${(t.filter_package_type || 'packages').toLowerCase()}</option>
-                            ${revenueSubs.map(sub => `<option value="${(sub.name || '').replace(/"/g, '&quot;')}" ${String(pkgFilter || '').trim() === String(sub.name || '').trim() ? 'selected' : ''}>${(sub.name || '').replace(/</g, '&lt;')}</option>`).join('')}
-                        </select>
-                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                    </span>
-                    <span class="filter-select-wrap">
-                        <select class="filter-control" onchange="state.adminRevenueStatusFilter=this.value||null; renderView();">
-                            <option value="" ${!statusFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_status || 'status').toLowerCase()}</option>
-                            <option value="approved" ${statusFilter === 'approved' ? 'selected' : ''}>${t.approved}</option>
-                            <option value="rejected" ${statusFilter === 'rejected' ? 'selected' : ''}>${t.rejected}</option>
-                            <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>${t.pending}</option>
-                        </select>
-                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                    </span>
-                    <span class="filter-select-wrap">
-                        <select class="filter-control" onchange="state.adminRevenueMethodFilter=this.value||null; renderView();">
-                            <option value="" ${!methodFilter ? 'selected' : ''}>${t.filter_all || 'All'} ${(t.filter_method || 'method').toLowerCase()}</option>
-                            <option value="transfer" ${methodFilter === 'transfer' ? 'selected' : ''}>${t.transfer}</option>
-                            <option value="cash" ${methodFilter === 'cash' ? 'selected' : ''}>${t.cash}</option>
-                        </select>
-                        <i data-lucide="chevron-down" size="18" class="filter-select-chevron"></i>
-                    </span>
-                    <span class="filter-count">${(t.filter_result_payments || '{count} payments').replace('{count}', filteredPayments.length)}</span>
-                </div>
+            <div id="revenue-filters-content" class="revenue-filters-content" style="display: ${state.adminRevenueFiltersExpanded ? '' : 'none'};">
+                ${renderAdminRevenueFilterCard(t, {
+                    defaultStart,
+                    defaultEnd,
+                    afterChange: 'renderView();',
+                    revenueSubs,
+                    pkgFilter,
+                    statusFilter,
+                    methodFilter,
+                    paymentCount: filteredPayments.length
+                })}
             </div>
         </div>
 
@@ -222,11 +197,29 @@ export function renderAdminRevenue(t) {
                 <div style="opacity: 0.7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">${revenueSummaryTitle}</div>
                 <div class="admin-revenue-summary-total" style="font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 1.5rem;">${formatPrice(periodTotal, state.currentSchool?.currency || 'MXN')}</div>
 
-                <div style="display: flex; align-items: center; gap: 8px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
-                    <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">${t.historical_total_label}: ${formatPrice(totalHistorical, state.currentSchool?.currency || 'MXN')} </span>
+                <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="bar-chart-3" size="14" style="opacity: 0.6;"></i>
+                        <span style="font-size: 13px; font-weight: 500; opacity: 0.8;">${t.historical_total_label}: ${formatPrice(totalHistorical, state.currentSchool?.currency || 'MXN')} </span>
+                    </div>
+                    ${showAureBadges && t.revenue_historical_attribution_hint ? `<span style="font-size: 11px; font-weight: 500; opacity: 0.55; line-height: 1.35;">${escapeHtml(t.revenue_historical_attribution_hint)}</span>` : ''}
                 </div>
             </div>
+        </div>
+
+        <div class="admin-revenue-analytics-cta-wrap" style="padding: 0 1.2rem; margin-bottom: 1.5rem;">
+            <button
+                type="button"
+                class="admin-revenue-analytics-cta"
+                onclick="window.openAdminRevenueAnalytics()"
+            >
+                <span class="admin-revenue-analytics-cta-icon"><i data-lucide="line-chart" size="22"></i></span>
+                <span class="admin-revenue-analytics-cta-text">
+                    <span class="admin-revenue-analytics-cta-title">${t.revenue_analytics_cta || 'View indicators dashboard'}</span>
+                    <span class="admin-revenue-analytics-cta-desc">${t.revenue_analytics_cta_desc || ''}</span>
+                </span>
+                <i data-lucide="chevron-right" size="20" class="admin-revenue-analytics-cta-chevron"></i>
+            </button>
         </div>
 
         <div class="admin-revenue-list-label" style="padding: 0 1.2rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
@@ -242,13 +235,23 @@ export function renderAdminRevenue(t) {
         const studentName = req.external_student_name || (req.students && req.students.name) || (state.students.find(s => s.id === req.student_id)?.name) || t.unknown_student;
         const statusColor = req.status === 'approved' ? 'var(--system-green)' : (req.status === 'rejected' ? 'var(--system-red)' : 'var(--system-blue)');
         const statusLabel = t[req.status] || req.status;
+        const recMonth = showAureBadges
+            ? getRevenueRecognizedMonth(req, state.subscriptions || [], state.currentSchool)
+            : null;
+        const accountingShort = recMonth ? formatRecognizedMonthShort(recMonth, state.language) : '';
+        const accountingShifted = showAureBadges
+            && aureRevenueMonthDiffersFromPaymentDate(req, state.subscriptions || [], state.currentSchool);
+        const accountingBadge = accountingShort
+            ? `<span class="admin-revenue-accounting-badge${accountingShifted ? ' admin-revenue-accounting-badge-shifted' : ''}" title="${escapeHtml(t.revenue_accounting_badge_tooltip || '')}">${escapeHtml((t.revenue_accounting_badge || 'Contab. {month}').replace('{month}', accountingShort))}</span>`
+            : '';
         return `
                     <div class="ios-list-item admin-revenue-item" style="padding: 16px; align-items: center;">
                         <div class="admin-revenue-item-main" style="flex: 1;">
                             <div class="admin-revenue-item-name" style="font-weight: 600; font-size: 17px; margin-bottom: 4px;">${escapeHtml(studentName)}</div>
-                            <div class="admin-revenue-item-meta" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                            <div class="admin-revenue-item-meta" style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                 ${escapeHtml(req.sub_name)} • ${new Date(req.created_at).toLocaleDateString()}
                                 <span style="font-size: 9px; opacity: 0.6; text-transform: uppercase; font-weight: 700; background: var(--system-gray6); padding: 1px 6px; border-radius: 4px;">${t[req.payment_method] || req.payment_method}</span>
+                                ${accountingBadge}
                             </div>
                         </div>
                         <div class="admin-revenue-item-amount-wrap" style="text-align: right; margin-right: 12px;">

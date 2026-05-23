@@ -15,9 +15,10 @@
     "test": "node tests/group-class-exceptions.test.mjs && node tests/admin-pack-expiry-save.test.mjs && node tests/ics-format.test.js"
   },
   "devDependencies": {
-    "serve": "^14.2.4",
+    "chart.js": "^4.4.8",
     "esbuild": "^0.27.3",
     "pg": "^8.20.0",
+    "serve": "^14.2.4",
     "supabase": "^2.76.16"
   }
 }

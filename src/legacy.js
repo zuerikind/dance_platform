@@ -8,6 +8,9 @@ import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJil
 import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth } from './data.js';
 import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmRegisteredScanBatch, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances, studentHasUsableClassCredits } from './scanner.js';
 import { renderAdminMemberships, renderAdminRevenue } from './views/payments.js';
+import { renderAdminRevenueAnalytics } from './views/revenueAnalytics.js';
+import { REVENUE_LOCALES } from './kpi/revenueLocales.js';
+import { attachRevenueAnalyticsNav, afterRevenueAnalyticsRender } from './kpi/revenueAnalyticsNav.js';
 
 /**
  * Supabase Edge Functions require the anon key in `apikey` plus the user's JWT in Authorization.
@@ -2810,6 +2813,9 @@ const DANCE_LOCALES = {
         paywall_feat_students_unlimited: "Über 100 aktive Schüler",
     }
 };
+for (const lang of ['en', 'es', 'de']) {
+    Object.assign(DANCE_LOCALES[lang], REVENUE_LOCALES[lang]);
+}
 setLocalesDict(DANCE_LOCALES);
 
 // Common timezones for teacher availability (IANA ids + readable labels)
@@ -2850,6 +2856,7 @@ window.confirmRegisteredScanBatch = confirmRegisteredScanBatch;
 window.confirmAttendance = confirmAttendance;
 window.handleScannerPrivateCheckIn = handleScannerPrivateCheckIn;
 window.updateStickyFooterVisibility = updateStickyFooterVisibility;
+attachRevenueAnalyticsNav();
 
 window.slugFromName = (name) => {
     if (!name || typeof name !== 'string') return '';
@@ -8072,6 +8079,8 @@ function _renderViewImpl() {
         html += renderAdminMemberships(t);
     } else if (view === 'admin-revenue') {
         html += renderAdminRevenue(t);
+    } else if (view === 'admin-revenue-analytics') {
+        html += renderAdminRevenueAnalytics(t);
     } else if (view === 'admin-scanner') {
         html += `
             <div class="ios-header">
@@ -9181,6 +9190,7 @@ function _renderViewImpl() {
     html += `</div>`;
     root.innerHTML = html;
     if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    afterRevenueAnalyticsRender(view, viewChanged);
     if (view === 'platform-school-details') window.scrollTo(0, 0);
     // Defer loading Calendly iframe until after paint so the rest of the app (and other views) stay fast
     if (view === 'teacher-booking') {

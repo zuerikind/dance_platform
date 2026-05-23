@@ -521,6 +521,13 @@ export async function fetchAllData() {
                     await supabaseClient.rpc('process_expired_registrations', { p_school_id: sid });
                 }
             } catch (e) { console.warn('process_expired_registrations error:', e); }
+            if (state.isAdmin && sid === AURE_SCHOOL_ID) {
+                fetchAdminPendingClassMoves(sid).then(() => {
+                    if (typeof window.renderView === 'function' && state.currentView !== 'auth') window.renderView();
+                }).catch(() => { state.adminPendingClassMoves = []; });
+            } else {
+                state.adminPendingClassMoves = null;
+            }
             // Only load full class availability when the view actually needs it.
             if (isStudent && state.currentUser?.id && state.currentView === 'schedule') {
                 state.classRegLoaded = false;
@@ -578,9 +585,43 @@ export async function fetchAllData() {
 }
 
 /**
- * Fetch class registrations for a single month (lazy-loaded). Used by admin schedule section.
- * Caches result in state.adminWeekRegistrationsByMonth[monthStr].
+ * Auré admin: incomplete class moves (cancel succeeded, register may not have).
+ * Other schools: clears to []. Safe to call anytime.
  */
+export async function fetchAdminPendingClassMoves(schoolId) {
+    if (!supabaseClient || !schoolId) {
+        state.adminPendingClassMoves = [];
+        return [];
+    }
+    if (schoolId !== AURE_SCHOOL_ID) {
+        state.adminPendingClassMoves = [];
+        return [];
+    }
+    try {
+        const { data, error } = await supabaseClient.rpc('admin_list_pending_class_moves', { p_school_id: schoolId });
+        if (error) throw error;
+        let rows = [];
+        if (Array.isArray(data)) rows = data;
+        else if (data != null && typeof data === 'string') {
+            try {
+                const parsed = JSON.parse(data);
+                rows = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? Object.values(parsed) : []);
+            } catch (_) {
+                rows = [];
+            }
+        } else if (data && typeof data === 'object') {
+            rows = Array.isArray(data) ? data : Object.values(data).filter((x) => x && typeof x === 'object');
+        }
+        state.adminPendingClassMoves = rows;
+        return rows;
+    } catch (e) {
+        console.warn('fetchAdminPendingClassMoves', e);
+        state.adminPendingClassMoves = [];
+        return [];
+    }
+}
+
+/** Fetch class registrations for a single month (lazy-loaded). Caches in state.adminWeekRegistrationsByMonth[monthStr]. */
 export async function fetchAdminRegistrationsForMonth(schoolId, monthStr) {
     if (!supabaseClient || !schoolId || !monthStr) return [];
     const [y, m] = monthStr.split('-').map(Number);
@@ -605,6 +646,32 @@ export async function fetchAdminRegistrationsForMonth(schoolId, monthStr) {
         });
     }
     return allWeekRegs;
+}
+
+/**
+ * Server KPI summary for Ganancias (date range only; package/status/method filters stay client-side).
+ * @returns {Promise<object|null>}
+ */
+export async function fetchSchoolKpiSummary(schoolId, startDate, endDate, includeRegistrations = false) {
+    if (!supabaseClient || !schoolId) return null;
+    try {
+        const params = {
+            p_school_id: schoolId,
+            p_include_registrations: !!includeRegistrations
+        };
+        if (startDate) params.p_start = startDate;
+        if (endDate) params.p_end = endDate;
+        const { data, error } = await supabaseClient.rpc('get_school_kpi_summary', params);
+        if (error) throw error;
+        if (data == null) return null;
+        if (typeof data === 'string') {
+            try { return JSON.parse(data); } catch (_) { return null; }
+        }
+        return typeof data === 'object' ? data : null;
+    } catch (e) {
+        console.warn('fetchSchoolKpiSummary', e);
+        return null;
+    }
 }
 
 export async function fetchPlatformData() {

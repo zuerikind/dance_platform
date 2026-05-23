@@ -8,6 +8,10 @@ import { setLocalesDict, t, updateI18n } from './locales.js';
 import { formatPrice, formatClassTime, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering } from './utils.js';
 import { parseHashRoute, parseQueryAndHashForView, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
 import { getCapabilities, bootstrapAuth } from './auth.js';
+import {
+    closeRevenueAttributionPopover,
+    toggleRevenueAttributionPopover
+} from './kpi/revenueFiltersUi.js';
 
 const SCHOOL_THEME_BY_ID = {
     [AURE_SCHOOL_ID]: 'aure'
@@ -59,6 +63,8 @@ if (typeof window !== 'undefined') {
     window.DISCOVERY_COUNTRIES_CITIES = DISCOVERY_COUNTRIES_CITIES;
     window.DISCOVERY_COUNTRIES = DISCOVERY_COUNTRIES;
     window.applySchoolTheme = applySchoolTheme;
+    window.toggleRevenueAttributionPopover = toggleRevenueAttributionPopover;
+    window.closeRevenueAttributionPopover = closeRevenueAttributionPopover;
 }
 
 import './legacy.js';
@@ -518,7 +524,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         }
 
         const isStudent = state.currentUser && state.currentUser.school_id && state.currentUser.role !== 'admin' && state.currentUser.role !== 'platform-dev' && !state.isPlatformDev;
-        const adminViews = ['admin-competition-jack-and-jill', 'admin-students', 'admin-scanner', 'admin-memberships', 'admin-revenue', 'admin-settings'];
+        const adminViews = ['admin-competition-jack-and-jill', 'admin-students', 'admin-scanner', 'admin-memberships', 'admin-revenue', 'admin-revenue-analytics', 'admin-settings'];
         const isAdminView = adminViews.includes(state.currentView) || (state.currentView && state.currentView.startsWith('admin-'));
         if (isStudent && isAdminView) {
             state.isAdmin = false;
