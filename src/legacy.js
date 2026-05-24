@@ -786,6 +786,8 @@ const DANCE_LOCALES = {
         admin_move_dismiss: "Dismiss",
         admin_move_retry_btn: "Register on new date",
         admin_move_retrying: "Registering…",
+        admin_move_already_registered: "This student is already registered for that date. The reminder was cleared.",
+        admin_move_class_full: "Class is full. No spots available.",
         aure_request_accepted: "Request accepted.",
         aure_request_denied: "Request denied.",
         aure_accepting: "Accepting…",
@@ -1649,6 +1651,8 @@ const DANCE_LOCALES = {
         admin_move_dismiss: "Descartar",
         admin_move_retry_btn: "Inscribir en nueva fecha",
         admin_move_retrying: "Inscribiendo…",
+        admin_move_already_registered: "El alumno ya está inscrito en esa fecha. Se quitó el aviso.",
+        admin_move_class_full: "La clase está llena. No hay plazas disponibles.",
         aure_request_accepted: "Solicitud aceptada.",
         aure_request_denied: "Solicitud rechazada.",
         aure_accepting: "Aceptando…",
@@ -2561,6 +2565,8 @@ const DANCE_LOCALES = {
         admin_move_dismiss: "Ausblenden",
         admin_move_retry_btn: "Auf neuem Datum anmelden",
         admin_move_retrying: "Wird angemeldet…",
+        admin_move_already_registered: "Der Schüler ist für diesen Termin bereits angemeldet. Der Hinweis wurde entfernt.",
+        admin_move_class_full: "Der Kurs ist voll. Keine Plätze frei.",
         aure_request_accepted: "Anfrage angenommen.",
         aure_request_denied: "Anfrage abgelehnt.",
         aure_accepting: "Wird angenommen…",
@@ -7794,8 +7800,8 @@ function _renderViewImpl() {
                                 <button type="button" onclick="event.stopPropagation(); state.adminRegMonth='${nextMonth}'; renderView();" style="background: var(--system-gray6); border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);" aria-label="${t.next || 'Next'}"><i data-lucide="chevron-right" size="20"></i></button>
                             </div>
                             ${(isAure && Array.isArray(state.adminPendingClassMoves) && state.adminPendingClassMoves.length > 0) ? `
-                            <div class="admin-move-pending-banner" style="margin-bottom:12px;padding:12px 14px;border-radius:12px;background:#fff8e6;border:1px solid #e6c200;color:var(--text-primary);">
-                                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;color:#8a6d00;">${(t.admin_move_pending_banner_title || 'Incomplete class moves').replace(/</g, '&lt;')}</div>
+                            <div class="admin-move-pending-banner">
+                                <div class="admin-move-pending-banner__title">${(t.admin_move_pending_banner_title || 'Incomplete class moves').replace(/</g, '&lt;')}</div>
                                 ${state.adminPendingClassMoves.map((m) => {
                                     const liveStudent = (state.students || []).find((st) => String(st.id) === String(m.student_id));
                                     const sn = escapeHtml(liveStudent?.name || m.student_name_snapshot || '—');
@@ -7805,7 +7811,7 @@ function _renderViewImpl() {
                                     const rowText = (t.admin_move_pending_row || '{student} was removed from {oldDate} and is not yet registered for {newDate} at {newTime}.')
                                         .replace('{student}', sn).replace('{oldDate}', oldD).replace('{newDate}', newD).replace('{newTime}', newT);
                                     const isRetrying = state.adminMoveRetryId === m.id;
-                                    return `<div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between;margin-top:6px;font-size:13px;line-height:1.4;"><span style="flex:1;min-width:0;">${rowText}</span><span style="display:flex;flex-shrink:0;gap:6px;flex-wrap:wrap;"><button type="button" class="btn-primary" style="padding:4px 10px;font-size:12px;" ${isRetrying ? 'disabled' : ''} onclick="event.stopPropagation();window.retryAdminPendingClassMove('${m.id}')">${isRetrying ? (t.admin_move_retrying || 'Registering…') : (t.admin_move_retry_btn || 'Register on new date')}</button><button type="button" class="btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="event.stopPropagation();window.dismissAdminPendingClassMove('${m.id}')">${t.admin_move_dismiss || 'Dismiss'}</button></span></div>`;
+                                    return `<div class="admin-move-pending-banner__row"><span class="admin-move-pending-banner__text">${rowText}</span><span class="admin-move-pending-banner__actions"><button type="button" class="btn-primary" style="padding:4px 10px;font-size:12px;" ${isRetrying ? 'disabled' : ''} onclick="event.stopPropagation();window.retryAdminPendingClassMove('${m.id}')">${isRetrying ? (t.admin_move_retrying || 'Registering…') : (t.admin_move_retry_btn || 'Register on new date')}</button><button type="button" class="btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="event.stopPropagation();window.dismissAdminPendingClassMove('${m.id}')">${t.admin_move_dismiss || 'Dismiss'}</button></span></div>`;
                                 }).join('')}
                             </div>
                             ` : ''}
@@ -10793,6 +10799,17 @@ const _refreshAfterAdminClassMove = async () => {
     if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
 };
 
+const _adminMoveRpcErrorMessage = (err, t) => {
+    const raw = (err && err.message) ? String(err.message) : '';
+    if (/already registered for this class/i.test(raw)) {
+        return t('admin_move_already_registered') || raw;
+    }
+    if (/class is full|no spots available/i.test(raw)) {
+        return t('admin_move_class_full') || raw;
+    }
+    return raw || t('admin_move_register_error');
+};
+
 /** Auré admin: complete pending move (register on intended date). */
 window.retryAdminPendingClassMove = async (auditId) => {
     if (!supabaseClient || !auditId || state.adminMoveInProgress) return;
@@ -10811,7 +10828,7 @@ window.retryAdminPendingClassMove = async (auditId) => {
         });
     } catch (e) {
         console.error('retryAdminPendingClassMove', e);
-        alert((e && e.message) || t('admin_move_register_error'));
+        alert(_adminMoveRpcErrorMessage(e, t));
         if (typeof renderView === 'function') renderView();
     } finally {
         state.adminMoveInProgress = false;
@@ -10965,8 +10982,7 @@ window.confirmAdminMoveClassSlot = async (registrationId, targetClassId, targetD
         });
     } catch (e) {
         console.error('confirmAdminMoveClassSlot', e);
-        const msg = (e && e.message) || '';
-        alert(msg || t('admin_move_begin_error'));
+        alert(_adminMoveRpcErrorMessage(e, t) || t('admin_move_begin_error'));
     } finally {
         state.adminMoveInProgress = false;
     }
