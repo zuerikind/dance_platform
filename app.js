@@ -29958,22 +29958,40 @@
       return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0");
     })();
     const modal = document.getElementById("message-modal");
+    const modalContent = modal?.querySelector(".message-modal-content");
     const iconEl = document.getElementById("message-modal-icon");
     const titleEl = document.getElementById("message-modal-title");
     const bodyEl = document.getElementById("message-modal-body");
     const actionsEl = document.getElementById("message-modal-actions");
-    if (!modal || !iconEl || !titleEl || !bodyEl || !actionsEl) return;
+    if (!modal || !modalContent || !iconEl || !titleEl || !bodyEl || !actionsEl) return;
     const closeModal = () => {
       modal.classList.add("hidden");
+      modalContent.classList.remove("message-modal-content--admin-move");
+      const closeBtn2 = modalContent.querySelector(".message-modal-close-btn");
+      if (closeBtn2) closeBtn2.remove();
       bodyEl.innerHTML = "";
       bodyEl.style.display = "";
       actionsEl.innerHTML = "";
+    };
+    modalContent.classList.add("message-modal-content--admin-move");
+    let closeBtn = modalContent.querySelector(".message-modal-close-btn");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.className = "message-modal-close-btn";
+      modalContent.insertBefore(closeBtn, modalContent.firstChild);
+    }
+    closeBtn.setAttribute("aria-label", t2("close") || "Close");
+    closeBtn.innerHTML = `<i data-lucide="x" size="22"></i>`;
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      closeModal();
     };
     iconEl.className = "message-modal-icon message-modal-icon-warning";
     iconEl.innerHTML = '<i data-lucide="calendar" size="30"></i>';
     titleEl.textContent = t2("admin_move_modal_title") || "Move registration";
     bodyEl.style.display = "";
-    bodyEl.innerHTML = `<p style="margin:0 0 10px;font-size:14px;font-weight:600;">${escapeHtml(studentName)}</p><div id="admin-move-slots" style="font-size:13px;color:var(--text-secondary);">${escapeHtml(t2("admin_move_modal_loading") || "Loading\u2026")}</div>`;
+    bodyEl.innerHTML = `<p class="admin-move-modal-student">${escapeHtml(studentName)}</p><div class="admin-move-slots-scroll" id="admin-move-slots">${escapeHtml(t2("admin_move_modal_loading") || "Loading\u2026")}</div>`;
     actionsEl.innerHTML = `<button type="button" class="btn-secondary" style="width:100%;">${t2("cancel") || "Cancel"}</button>`;
     actionsEl.querySelector("button").onclick = closeModal;
     modal.classList.remove("hidden");
@@ -30037,10 +30055,9 @@
         const timePart = slot.time ? ` \xB7 ${escAttr(slot.time)}` : "";
         const fullPart = isFull ? ` \xB7 ${escAttr(t2.admin_move_slot_full || "Full")}` : "";
         const disabled = isFull ? " disabled" : "";
-        const style = isFull ? "display:block;width:100%;text-align:left;margin:0 0 6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--system-gray6);opacity:0.55;cursor:not-allowed;" : "display:block;width:100%;text-align:left;margin:0 0 6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;color:var(--text-primary);";
         const regEsc = escAttr(registrationId);
         const dateEsc = escAttr(slot.dateStr);
-        return `<button type="button" class="admin-move-slot-btn"${disabled} style="${style}" onclick="event.stopPropagation();window.confirmAdminMoveClassSlot('${regEsc}', ${slot.classId}, '${dateEsc}')"><span style="font-weight:600;">${escAttr(dateLabel)}</span>${timePart}${occLabel ? ` \xB7 ${escAttr(occLabel)}` : ""}${fullPart}</button>`;
+        return `<button type="button" class="admin-move-slot-btn"${disabled} onclick="event.stopPropagation();window.confirmAdminMoveClassSlot('${regEsc}', ${slot.classId}, '${dateEsc}')"><span style="font-weight:600;">${escAttr(dateLabel)}</span>${timePart}${occLabel ? ` \xB7 ${escAttr(occLabel)}` : ""}${fullPart}</button>`;
       }).join("");
       if (window.lucide) window.lucide.createIcons();
     } catch (e) {

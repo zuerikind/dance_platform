@@ -3295,6 +3295,93 @@ body.dark-mode[data-school-theme="aure"] .scanner-checkin-done-btn,
   justify-content: center;
 }
 
+/* Auré admin: move registration date picker */
+.message-modal-content.message-modal-content--admin-move {
+  text-align: left;
+  max-height: min(92vh, 640px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: 2.25rem;
+}
+.message-modal-content--admin-move .message-modal-icon {
+  margin-bottom: 0.65rem;
+}
+.message-modal-content--admin-move .message-modal-title {
+  text-align: center;
+  padding: 0 2.25rem;
+}
+.message-modal-content--admin-move .message-modal-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  text-align: left;
+}
+.message-modal-content--admin-move .admin-move-modal-student {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+.admin-move-slots-scroll {
+  flex: 1;
+  min-height: 120px;
+  max-height: min(52vh, 380px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding-right: 2px;
+}
+.admin-move-slot-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 0 0 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.admin-move-slot-btn:disabled {
+  background: var(--system-gray6);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.message-modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--system-gray6);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.message-modal-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--border);
+}
+.message-modal-close-btn:active {
+  opacity: 0.85;
+}
+
 /* Platform School Detail - Apple-style professional layout */
 .platform-school-details-page {
     font-family: var(--system-font);
