@@ -5,7 +5,7 @@ import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPla
 import { isoEndOfLocalDayFromDateInput, applyPerPackExpiryFromInputs, computePPackageExpiresAtFromPacks } from './studentExpirySave.js';
 import { registrationClosedFromExceptionKind, resolveScheduleGroupExceptionFromRows } from './groupClassExceptionResolve.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
-import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth, fetchAdminPendingClassMoves } from './data.js';
+import { fetchAllData, fetchPlatformData, fetchDiscoveryData, resetFetchThrottle, refreshSingleStudent, fetchAdminRegistrationsForMonth, fetchAdminPendingClassMoves, fetchAdminPendingSolicitudesCount } from './data.js';
 import { startScanner, stopScanner, handleScan, cancelAttendance, confirmRegisteredAttendance, confirmRegisteredScanBatch, confirmAttendance, handleScannerPrivateCheckIn, updateStickyFooterVisibility, getEffectiveBalances, studentHasUsableClassCredits } from './scanner.js';
 import { renderAdminMemberships, renderAdminRevenue } from './views/payments.js';
 import { renderAdminRevenueAnalytics } from './views/revenueAnalytics.js';
@@ -771,6 +771,8 @@ const DANCE_LOCALES = {
         admin_reg_tab_requested: "Requested",
         no_pending_requests: "No pending requests",
         no_pending_requests_subtitle: "Clase suelta requests will appear here.",
+        admin_pending_solicitudes_banner: "You have {count} solicitudes you haven't approved yet.",
+        admin_pending_solicitudes_cta: "View solicitudes",
         admin_move_class_btn_title: "Move to another date",
         admin_move_modal_title: "Move registration",
         admin_move_modal_loading: "Loading available dates…",
@@ -1636,6 +1638,8 @@ const DANCE_LOCALES = {
         admin_reg_tab_requested: "Solicitados",
         no_pending_requests: "Sin solicitudes pendientes",
         no_pending_requests_subtitle: "Las solicitudes de clase suelta aparecerán aquí.",
+        admin_pending_solicitudes_banner: "Tienes {count} solicitudes que aún no has aprobado.",
+        admin_pending_solicitudes_cta: "Ver solicitudes",
         admin_move_class_btn_title: "Cambiar de fecha",
         admin_move_modal_title: "Mover inscripción",
         admin_move_modal_loading: "Cargando fechas disponibles…",
@@ -2550,6 +2554,8 @@ const DANCE_LOCALES = {
         admin_reg_tab_requested: "Anfragen",
         no_pending_requests: "Keine ausstehenden Anfragen",
         no_pending_requests_subtitle: "Anfragen für Einzelstunden erscheinen hier.",
+        admin_pending_solicitudes_banner: "Du hast {count} Anfragen, die noch nicht genehmigt wurden.",
+        admin_pending_solicitudes_cta: "Anfragen anzeigen",
         admin_move_class_btn_title: "Anderes Datum",
         admin_move_modal_title: "Anmeldung verschieben",
         admin_move_modal_loading: "Verfügbare Termine werden geladen…",
@@ -7556,18 +7562,7 @@ function _renderViewImpl() {
                         const _f = getFilteredStudents(state.adminStudentsSearch || '');
                         setTimeout(() => { const _c = document.getElementById('students-filter-count'); if (_c) _c.textContent = (t.filter_result_students || '{count} students').replace('{count}', _f.length); }, 0);
                         if (isAure && adminStudentsSubtab === 'nivel') {
-                            return _f.map(s => {
-                                const lev = s.level || '';
-                                return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
-                                    <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || '').charAt(0).toUpperCase()}</div>
-                                    <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${escapeHtml(s.name || s.email || s.id)}</div><div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(s.email)}</div></div>
-                                    <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${String(s.id).replace(/'/g, "\\'")}', this.value)">
-                                        <option value="" ${lev === '' ? 'selected' : ''}>${t.aure_level_not_set || 'Not set'}</option>
-                                        <option value="principiante" ${lev === 'principiante' ? 'selected' : ''}>${t.aure_level_principiante || 'Principiante'}</option>
-                                        <option value="avanzada" ${lev === 'avanzada' ? 'selected' : ''}>${t.aure_level_avanzada || 'Avanzada'}</option>
-                                    </select>
-                                </div>`;
-                            }).join('');
+                            return _f.map(s => window.renderAdminStudentLevelRow(s)).join('');
                         }
                         return _f.map(s => renderAdminStudentCard(s)).join('');
                     })()}
@@ -7630,6 +7625,12 @@ function _renderViewImpl() {
                         ` : ''}
                     </div>
                 </div>
+                ${(isAure && state.currentSchool?.class_registration_enabled && state.adminPendingSolicitudesCount > 0) ? `
+                <div class="admin-pending-solicitudes-banner" style="margin: 0 1.2rem 1rem; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(230, 168, 0, 0.45); background: rgba(230, 168, 0, 0.14); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.4; flex: 1; min-width: 200px;">${(t.admin_pending_solicitudes_banner || 'You have {count} solicitudes you haven\'t approved yet.').replace('{count}', String(state.adminPendingSolicitudesCount))}</p>
+                    <button type="button" class="btn-primary" style="padding: 8px 14px; font-size: 13px; font-weight: 700; white-space: nowrap;" onclick="window.openAdminPendingSolicitudes()">${t.admin_pending_solicitudes_cta || 'View solicitudes'}</button>
+                </div>
+                ` : ''}
                 ${state.currentSchool?.profile_type === 'private_teacher' && (!CALENDLY_FEATURE_ENABLED || state.adminSettings?.use_calendly_for_booking === 'false') ? (() => {
                     const allRequests = state.privateClassRequests || [];
                     const pendingRequests = allRequests.filter(r => r.status === 'pending');
@@ -10629,6 +10630,7 @@ window.approveClaseSuelta = async (registrationId) => {
         const viewMonth = state.adminRegMonth || (() => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); })();
         state.adminWeekRegistrationsByMonth[viewMonth] = undefined;
         state.adminRegFeedback = { type: 'accepted', emailNote };
+        if (state.currentSchool?.id) fetchAdminPendingSolicitudesCount(state.currentSchool.id).catch(() => {});
         if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
         setTimeout(() => { state.adminRegFeedback = null; if (typeof renderView === 'function') renderView(); }, emailNote ? 8000 : 3000);
     } catch (e) {
@@ -10745,6 +10747,7 @@ window.rejectClaseSuelta = async (registrationId) => {
         const viewMonth = state.adminRegMonth || (() => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); })();
         state.adminWeekRegistrationsByMonth[viewMonth] = undefined;
         state.adminRegFeedback = { type: 'denied' };
+        if (state.currentSchool?.id) fetchAdminPendingSolicitudesCount(state.currentSchool.id).catch(() => {});
         if (typeof renderView === 'function') { renderView(); if (window.lucide) window.lucide.createIcons(); }
         setTimeout(() => { state.adminRegFeedback = null; if (typeof renderView === 'function') renderView(); }, 3000);
     } catch (e) {
@@ -11170,6 +11173,7 @@ window.signUpStudent = async () => {
         return;
     }
 
+    const isAureSignup = state.currentSchool?.id === AURE_SCHOOL_ID;
     const newStudent = {
         id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
         name,
@@ -11179,7 +11183,8 @@ window.signUpStudent = async () => {
         package: null,
         balance: 0,
         school_id: state.currentSchool.id,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        ...(isAureSignup ? { level: 'principiante' } : {})
     };
 
     let studentCreated = false;
@@ -11223,11 +11228,13 @@ window.signUpStudent = async () => {
                         newStudent.id = created.id;
                         newStudent.email = created.email ?? email;
                         newStudent.user_id = created.user_id;
+                        if (created.level != null && created.level !== '') newStudent.level = created.level;
+                        else if (isAureSignup) newStudent.level = 'principiante';
                         studentCreated = true;
                     }
                 }
                 if (!studentCreated) {
-                    const studentToInsert = { ...newStudent, user_id: authUser.id, ...(state.currentSchool?.id === AURE_SCHOOL_ID ? { level: 'principiante' } : {}) };
+                    const studentToInsert = { ...newStudent, user_id: authUser.id };
                     const { error: insertError } = await supabaseClient.from('students').insert([studentToInsert]);
                     if (!insertError) studentCreated = true;
                 }
@@ -11245,6 +11252,8 @@ window.signUpStudent = async () => {
                     if (created) {
                         newStudent.id = created.id;
                         newStudent.email = created.email ?? email;
+                        if (created.level != null && created.level !== '') newStudent.level = created.level;
+                        else if (isAureSignup) newStudent.level = 'principiante';
                         studentCreated = true;
                         // Link the auth user to the legacy row so the student can log in.
                         // Only possible when auth signup succeeded and a session is active.
@@ -15553,6 +15562,32 @@ window.handleSchoolComboboxKeydown = (e) => {
 // Legacy; kept for compatibility
 window.toggleSchoolDropdown = () => { openSchoolDropdown(); };
 
+window.renderAdminStudentLevelRow = (s) => {
+    const t = (key) => window.t(key);
+    const lev = s.level || '';
+    const idEsc = String(s.id).replace(/'/g, "\\'");
+    return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
+        <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || '').charAt(0).toUpperCase()}</div>
+        <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${escapeHtml(s.name || s.email || s.id)}</div><div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(s.email || '')}</div></div>
+        <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${idEsc}', this.value)">
+            <option value="" ${lev === '' ? 'selected' : ''}>${t('aure_level_not_set') || 'Not set'}</option>
+            <option value="principiante" ${lev === 'principiante' ? 'selected' : ''}>${t('aure_level_principiante') || 'Principiante'}</option>
+            <option value="avanzada" ${lev === 'avanzada' ? 'selected' : ''}>${t('aure_level_avanzada') || 'Avanzada'}</option>
+        </select>
+    </div>`;
+};
+
+window.openAdminPendingSolicitudes = () => {
+    state.adminRegExpanded = true;
+    state.adminRegTab = 'requested';
+    if (typeof saveState === 'function') saveState();
+    if (typeof renderView === 'function') renderView();
+    requestAnimationFrame(() => {
+        const el = document.querySelector('.admin-reg-section');
+        if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+};
+
 window.renderAdminStudentCard = (s) => {
     const t = (key) => window.t(key);
     const statusLabel = s.paid ? t('status_active') : t('status_unpaid');
@@ -15640,7 +15675,9 @@ window.filterStudents = (query) => {
     const q = query !== undefined ? query : (state.adminStudentsSearch || '');
     if (query !== undefined) state.adminStudentsSearch = query;
     const filtered = getFilteredStudents(q);
-    list.innerHTML = filtered.map(s => renderAdminStudentCard(s)).join('');
+    const isAureLevelTab = state.currentSchool?.id === AURE_SCHOOL_ID && (state.adminStudentsSubtab || 'lista') === 'nivel';
+    const renderRow = isAureLevelTab ? window.renderAdminStudentLevelRow : window.renderAdminStudentCard;
+    list.innerHTML = filtered.map(s => renderRow(s)).join('');
     // Update count
     const countEl = document.getElementById('students-filter-count');
     if (countEl) {

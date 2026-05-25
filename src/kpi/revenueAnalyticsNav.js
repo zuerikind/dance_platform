@@ -16,6 +16,7 @@ import {
 } from './revenueKpis.js';
 import { mountRevenueAnalyticsCharts, destroyRevenueAnalyticsCharts } from './revenueChartMount.js';
 import { computeRollingMonthlyRevenueSeries, getRevenueHighlightMonthKey } from './revenueMonthlySeries.js';
+import { computeStudentAnalyticsFallback } from './revenueStudentAnalytics.js';
 
 function revenueAnalyticsErrorMessage() {
     const msg = typeof window !== 'undefined' && typeof window.t === 'function'
@@ -85,6 +86,11 @@ async function refreshAdminRevenueAnalytics(forceRefresh = false) {
             ? await fetchSchoolKpiSummary(schoolId, startDate, endDate, aure)
             : null;
         kpis = mergeRpcIntoRevenueKpis(kpis, rpc);
+
+        if (!kpis.studentAnalytics) {
+            const fallback = computeStudentAnalyticsFallback(filtered, range);
+            if (fallback) kpis.studentAnalytics = fallback;
+        }
 
         if (aure && kpis.aurePendingSuelta == null && schoolId) {
             const monthStr = monthStrForRevenueKpiRegistrations(range);

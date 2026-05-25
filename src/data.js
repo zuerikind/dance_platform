@@ -525,8 +525,12 @@ export async function fetchAllData() {
                 fetchAdminPendingClassMoves(sid).then(() => {
                     if (typeof window.renderView === 'function' && state.currentView !== 'auth') window.renderView();
                 }).catch(() => { state.adminPendingClassMoves = []; });
+                fetchAdminPendingSolicitudesCount(sid).then(() => {
+                    if (typeof window.renderView === 'function' && state.currentView !== 'auth') window.renderView();
+                }).catch(() => { state.adminPendingSolicitudesCount = 0; });
             } else {
                 state.adminPendingClassMoves = null;
+                state.adminPendingSolicitudesCount = null;
             }
             // Only load full class availability when the view actually needs it.
             if (isStudent && state.currentUser?.id && state.currentView === 'schedule') {
@@ -588,6 +592,24 @@ export async function fetchAllData() {
  * Auré admin: incomplete class moves (cancel succeeded, register may not have).
  * Other schools: clears to []. Safe to call anytime.
  */
+/** Auré admin: count pending clase suelta registrations (all dates). Other schools: 0. */
+export async function fetchAdminPendingSolicitudesCount(schoolId) {
+    if (!supabaseClient || !schoolId || schoolId !== AURE_SCHOOL_ID) {
+        state.adminPendingSolicitudesCount = 0;
+        return 0;
+    }
+    try {
+        const summary = await fetchSchoolKpiSummary(schoolId, null, null, true);
+        const count = Number(summary?.registrations?.pending_suelta_count) || 0;
+        state.adminPendingSolicitudesCount = count;
+        return count;
+    } catch (e) {
+        console.warn('fetchAdminPendingSolicitudesCount', e);
+        state.adminPendingSolicitudesCount = 0;
+        return 0;
+    }
+}
+
 export async function fetchAdminPendingClassMoves(schoolId) {
     if (!supabaseClient || !schoolId) {
         state.adminPendingClassMoves = [];

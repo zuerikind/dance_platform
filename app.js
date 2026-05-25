@@ -119,6 +119,8 @@
     adminWeekRegistrationsByMonth: {},
     /** Auré: rows from admin_list_pending_class_moves; [] when none or not loaded for school */
     adminPendingClassMoves: null,
+    /** Auré: pending clase suelta count (null = not loaded yet) */
+    adminPendingSolicitudesCount: null,
     adminRegExpanded: false,
     adminRegMonth: null,
     teacherAcceptedClassesExpanded: true,
@@ -721,6 +723,201 @@
     return rec.slice(0, 7) !== mxYmd.slice(0, 7);
   }
 
+  // src/kpi/revenueStudentAnalytics.js
+  var TOP_LIMIT = 10;
+  function normalizeByLevel(raw) {
+    const src = raw && typeof raw === "object" ? raw : {};
+    return {
+      total: Number(src.total) || 0,
+      principiante: Number(src.principiante) || 0,
+      avanzada: Number(src.avanzada) || 0,
+      unset: Number(src.unset) || 0
+    };
+  }
+  function normalizeLeaderboard(rows, mapRow) {
+    if (!Array.isArray(rows)) return [];
+    return rows.slice(0, TOP_LIMIT).map(mapRow).filter(Boolean);
+  }
+  function mergeStudentAnalyticsIntoKpis(kpis, rpc) {
+    if (!kpis || !rpc?.students || typeof rpc.students !== "object") return kpis;
+    const s = rpc.students;
+    return {
+      ...kpis,
+      studentAnalytics: {
+        byLevel: normalizeByLevel(s.by_level),
+        topPackBuyers: normalizeLeaderboard(s.top_pack_buyers, (r) => ({
+          student_id: r.student_id,
+          name: r.name || r.student_id || "\u2014",
+          purchase_count: Number(r.purchase_count) || 0,
+          total_spent: Number(r.total_spent) || 0
+        })),
+        topNoShows: normalizeLeaderboard(s.top_no_shows, (r) => ({
+          student_id: r.student_id,
+          name: r.name || r.student_id || "\u2014",
+          no_show_count: Number(r.no_show_count) || 0
+        })),
+        source: "rpc"
+      }
+    };
+  }
+  function computeStudentAnalyticsFallback(filtered, range) {
+    const schoolId = state.currentSchool?.id;
+    if (!schoolId) return null;
+    const students = (state.students || []).filter((s) => s.school_id === schoolId || !s.school_id);
+    const byLevel = { total: students.length, principiante: 0, avanzada: 0, unset: 0 };
+    students.forEach((s) => {
+      const lev = (s.level || "").trim();
+      if (lev === "principiante") byLevel.principiante += 1;
+      else if (lev === "avanzada") byLevel.avanzada += 1;
+      else byLevel.unset += 1;
+    });
+    const buyerMap = {};
+    (filtered || []).filter((r) => r.status === "approved" && r.student_id).forEach((r) => {
+      const sid = String(r.student_id);
+      if (!buyerMap[sid]) {
+        const st = students.find((s) => String(s.id) === sid);
+        buyerMap[sid] = {
+          student_id: sid,
+          name: st?.name || sid,
+          purchase_count: 0,
+          total_spent: 0
+        };
+      }
+      buyerMap[sid].purchase_count += 1;
+      buyerMap[sid].total_spent += parseFloat(r.price) || 0;
+    });
+    const topPackBuyers = Object.values(buyerMap).sort((a, b) => b.purchase_count - a.purchase_count || b.total_spent - a.total_spent).slice(0, TOP_LIMIT);
+    return {
+      byLevel,
+      topPackBuyers,
+      topNoShows: [],
+      source: "client"
+    };
+  }
+  function levelLabel(key, t2, aure) {
+    if (key === "principiante") return aure ? t2.aure_level_principiante || "Principiante" : t2.revenue_student_level_beginner || "Beginner";
+    if (key === "avanzada") return aure ? t2.aure_level_avanzada || "Avanzada" : t2.revenue_student_level_advanced || "Advanced";
+    if (key === "unset") return aure ? t2.aure_level_not_set || "Not set" : t2.revenue_student_level_unset || "Not set";
+    return key;
+  }
+  function buildLevelDistributionHtml(byLevel, t2, aure) {
+    const total = byLevel.total || 0;
+    if (total <= 0) {
+      return `<div class="rev-chart-empty" role="status">${escapeHtml(t2.revenue_student_no_roster || t2.no_data_msg || "No students")}</div>`;
+    }
+    const segments = [
+      { key: "principiante", count: byLevel.principiante, className: "principiante" },
+      { key: "avanzada", count: byLevel.avanzada, className: "avanzada" },
+      { key: "unset", count: byLevel.unset, className: "unset" }
+    ].filter((s) => s.count > 0);
+    const stacked = segments.map((seg) => {
+      const pct = Math.round(seg.count / total * 100);
+      return `<div class="rev-student-level-seg rev-student-level-seg--${seg.className}" style="width:${pct}%" title="${escapeHtml(levelLabel(seg.key, t2, aure))}: ${seg.count}"></div>`;
+    }).join("");
+    const legend = segments.map((seg) => {
+      const pct = Math.round(seg.count / total * 100);
+      return `
+            <div class="rev-student-level-legend-item">
+                <span class="rev-student-level-dot rev-student-level-dot--${seg.className}" aria-hidden="true"></span>
+                <span class="rev-student-level-legend-label">${escapeHtml(levelLabel(seg.key, t2, aure))}</span>
+                <span class="rev-student-level-legend-value">${seg.count} \xB7 ${pct}%</span>
+            </div>`;
+    }).join("");
+    return `
+        <div class="rev-student-level-stack" role="img" aria-label="${escapeHtml(t2.revenue_student_level_chart_aria || "Student levels")}">
+            ${stacked || `<div class="rev-student-level-seg rev-student-level-seg--unset" style="width:100%"></div>`}
+        </div>
+        <div class="rev-student-level-legend">${legend}</div>`;
+  }
+  function buildRankedTableHtml(rows, t2, currency, mode) {
+    if (!rows.length) {
+      const emptyKey = mode === "noshow" ? "revenue_student_no_noshows" : "revenue_student_no_buyers";
+      return `<div class="rev-chart-empty" role="status">${escapeHtml(t2[emptyKey] || t2.no_data_msg || "No data")}</div>`;
+    }
+    return `<ol class="rev-student-rank-list">
+        ${rows.map((row, i) => {
+      const rank = i + 1;
+      const name = escapeHtml((row.name || "\u2014").trim());
+      let meta;
+      if (mode === "noshow") {
+        const n = row.no_show_count || 0;
+        meta = escapeHtml(
+          (t2.revenue_student_noshow_meta || "{count} no-shows").replace("{count}", String(n))
+        );
+      } else {
+        const packs = row.purchase_count || 0;
+        const spent = formatPrice(row.total_spent || 0, currency);
+        meta = escapeHtml(
+          (t2.revenue_student_packs_meta || "{count} packs \xB7 {amount}").replace("{count}", String(packs)).replace("{amount}", spent)
+        );
+      }
+      return `
+                <li class="rev-student-rank-row">
+                    <span class="rev-student-rank-num">${rank}</span>
+                    <span class="rev-student-rank-body">
+                        <span class="rev-student-rank-name">${name}</span>
+                        <span class="rev-student-rank-meta">${meta}</span>
+                    </span>
+                </li>`;
+    }).join("")}
+    </ol>`;
+  }
+  function renderRevenueStudentAnalyticsSection(kpis, t2, currency) {
+    const analytics = kpis?.studentAnalytics;
+    if (!analytics) return "";
+    const aure = isAureSchool2(state.currentSchool);
+    const byLevel = analytics.byLevel || { total: 0, principiante: 0, avanzada: 0, unset: 0 };
+    const levelNote = aure ? t2.revenue_student_level_note_aure || "Current roster by Aure level (not filtered by period)." : t2.revenue_student_level_note || "Current roster by assigned level tag.";
+    const periodNote = t2.revenue_student_period_note || "Pack purchases and no-shows use your selected date range.";
+    return `
+        <section class="rev-student-analytics" aria-labelledby="rev-student-analytics-heading">
+            <div class="rev-student-analytics-header">
+                <h2 id="rev-student-analytics-heading" class="rev-section-heading">${escapeHtml(t2.revenue_student_section_title || "Student analysis")}</h2>
+                <p class="rev-student-analytics-sub">${escapeHtml(t2.revenue_student_section_subtitle || "Roster levels, top pack buyers, and attendance risk in this period.")}</p>
+            </div>
+            <div class="rev-student-summary-cards">
+                <div class="rev-stat-card rev-stat-card-student">
+                    <div class="rev-stat-label">${escapeHtml(t2.revenue_student_total || "Students")}</div>
+                    <div class="rev-stat-value">${byLevel.total}</div>
+                    <div class="rev-stat-meta">${escapeHtml(t2.revenue_student_total_hint || "Active roster")}</div>
+                </div>
+                <div class="rev-stat-card rev-stat-card-student">
+                    <div class="rev-stat-label">${escapeHtml(levelLabel("principiante", t2, aure))}</div>
+                    <div class="rev-stat-value">${byLevel.principiante}</div>
+                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round(byLevel.principiante / byLevel.total * 100)}%` : "\u2014"}</div>
+                </div>
+                <div class="rev-stat-card rev-stat-card-student">
+                    <div class="rev-stat-label">${escapeHtml(levelLabel("avanzada", t2, aure))}</div>
+                    <div class="rev-stat-value">${byLevel.avanzada}</div>
+                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round(byLevel.avanzada / byLevel.total * 100)}%` : "\u2014"}</div>
+                </div>
+                <div class="rev-stat-card rev-stat-card-student">
+                    <div class="rev-stat-label">${escapeHtml(levelLabel("unset", t2, aure))}</div>
+                    <div class="rev-stat-value">${byLevel.unset}</div>
+                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round(byLevel.unset / byLevel.total * 100)}%` : "\u2014"}</div>
+                </div>
+            </div>
+            <p class="rev-student-period-note">${escapeHtml(periodNote)}</p>
+            <div class="rev-student-panels">
+                <section class="rev-chart-panel rev-chart-panel-wide">
+                    <h3 class="rev-chart-title">${escapeHtml(t2.revenue_student_level_title || "Level distribution")}</h3>
+                    <p class="rev-chart-desc">${escapeHtml(levelNote)}</p>
+                    <div class="rev-chart-panel-body rev-chart-plot">${buildLevelDistributionHtml(byLevel, t2, aure)}</div>
+                </section>
+                <section class="rev-chart-panel">
+                    <h3 class="rev-chart-title">${escapeHtml(t2.revenue_student_top_buyers_title || "Top pack buyers")}</h3>
+                    <p class="rev-chart-desc">${escapeHtml(t2.revenue_student_top_buyers_desc || "Approved package purchases in the selected period.")}</p>
+                    <div class="rev-chart-panel-body rev-chart-plot">${buildRankedTableHtml(analytics.topPackBuyers || [], t2, currency, "buyers")}</div>
+                </section>
+                <section class="rev-chart-panel">
+                    <h3 class="rev-chart-title">${escapeHtml(t2.revenue_student_top_noshows_title || "Most no-shows")}</h3>
+                    <p class="rev-chart-desc">${escapeHtml(t2.revenue_student_top_noshows_desc || "Class registrations marked no-show in the selected period.")}</p>
+                    <div class="rev-chart-panel-body rev-chart-plot">${buildRankedTableHtml(analytics.topNoShows || [], t2, currency, "noshow")}</div>
+                </section>
+            </div>
+        </section>`;
+  }
+
   // src/kpi/revenueKpis.js
   function isAureSchool2(school) {
     const id = school?.id || state.currentSchool?.id;
@@ -862,6 +1059,9 @@
     }
     if (rpc.registrations && rpc.registrations.pending_suelta_count != null) {
       out.aurePendingSuelta = Number(rpc.registrations.pending_suelta_count) || 0;
+    }
+    if (rpc.students && typeof rpc.students === "object") {
+      return mergeStudentAnalyticsIntoKpis(out, rpc);
     }
     return out;
   }
@@ -2065,8 +2265,14 @@
             }).catch(() => {
               state.adminPendingClassMoves = [];
             });
+            fetchAdminPendingSolicitudesCount(sid).then(() => {
+              if (typeof window.renderView === "function" && state.currentView !== "auth") window.renderView();
+            }).catch(() => {
+              state.adminPendingSolicitudesCount = 0;
+            });
           } else {
             state.adminPendingClassMoves = null;
+            state.adminPendingSolicitudesCount = null;
           }
           if (isStudent && state.currentUser?.id && state.currentView === "schedule") {
             state.classRegLoaded = false;
@@ -2122,6 +2328,22 @@
       _fetchInFlight = null;
     });
     return _fetchInFlight;
+  }
+  async function fetchAdminPendingSolicitudesCount(schoolId) {
+    if (!supabaseClient || !schoolId || schoolId !== AURE_SCHOOL_ID) {
+      state.adminPendingSolicitudesCount = 0;
+      return 0;
+    }
+    try {
+      const summary = await fetchSchoolKpiSummary(schoolId, null, null, true);
+      const count = Number(summary?.registrations?.pending_suelta_count) || 0;
+      state.adminPendingSolicitudesCount = count;
+      return count;
+    } catch (e) {
+      console.warn("fetchAdminPendingSolicitudesCount", e);
+      state.adminPendingSolicitudesCount = 0;
+      return 0;
+    }
   }
   async function fetchAdminPendingClassMoves(schoolId) {
     if (!supabaseClient || !schoolId) {
@@ -3655,6 +3877,7 @@
         </div>
         ${renderMonthlyTrendHero(monthlySeries, range, t2, currency)}
         ${renderRevenueInsightsSection(kpis, filtered, range, t2)}
+        ${renderRevenueStudentAnalyticsSection(kpis, t2, currency)}
         <div class="rev-analytics-charts">
             <section class="rev-chart-panel">
                 <h3 class="rev-chart-title">${escapeHtml(t2.revenue_chart_mix_title || t2.revenue_kpi_payment_mix || "Payment mix")}</h3>
@@ -3692,6 +3915,15 @@
                 <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
                 <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
                 <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
+            </div>
+            <div class="rev-skeleton-student">
+                <div class="rev-skeleton-line wide"></div>
+                <div class="rev-skeleton-hero" style="grid-template-columns:repeat(4,1fr)">
+                    <div class="rev-skeleton-block"></div>
+                    <div class="rev-skeleton-block"></div>
+                    <div class="rev-skeleton-block"></div>
+                    <div class="rev-skeleton-block"></div>
+                </div>
             </div>
             <div class="rev-skeleton-charts">
                 <div class="rev-skeleton-panel"></div>
@@ -3896,7 +4128,29 @@
       revenue_narrative_headline_pending: "{amount} still pending in the period.",
       revenue_narrative_p_ticket: "Across {count} approved payments, the average ticket was {avg}. Use the monthly chart above to see whether volume or ticket size moved revenue.",
       revenue_narrative_p_pending: "You still have {amount} pending ({pct}% of collected + pending). Approving those payments will increase collected totals for {period}.",
-      revenue_narrative_p_top: "\u201C{name}\u201D led sales with {share}% of collected revenue ({amount})."
+      revenue_narrative_p_top: "\u201C{name}\u201D led sales with {share}% of collected revenue ({amount}).",
+      revenue_student_section_title: "Student analysis",
+      revenue_student_section_subtitle: "Roster levels, top pack buyers, and attendance risk in this period.",
+      revenue_student_total: "Students",
+      revenue_student_total_hint: "On roster",
+      revenue_student_level_title: "Level distribution",
+      revenue_student_level_note: "Current roster by assigned level tag.",
+      revenue_student_level_note_aure: "Current roster by Aure level (not filtered by period).",
+      revenue_student_level_chart_aria: "Student levels",
+      revenue_student_level_beginner: "Beginner",
+      revenue_student_level_advanced: "Advanced",
+      revenue_student_level_unset: "Not set",
+      revenue_student_period_note: "Pack purchases and no-shows follow your selected date range; levels reflect the current roster.",
+      revenue_student_top_buyers_title: "Top pack buyers",
+      revenue_student_top_buyers_desc: "Students with the most approved package purchases in the period.",
+      revenue_student_top_noshows_title: "Most no-shows",
+      revenue_student_top_noshows_desc: "Students with the most no-show registrations in the period.",
+      revenue_student_packs_meta: "{count} packs \xB7 {amount}",
+      revenue_student_noshow_meta: "{count} no-shows",
+      revenue_student_no_roster: "No students on roster",
+      revenue_student_no_buyers: "No approved pack purchases in this period",
+      revenue_student_no_noshows: "No no-shows in this period",
+      revenue_student_loading: "Loading student analysis\u2026"
     },
     es: {
       revenue_analytics_cta: "Ver panel de indicadores",
@@ -3991,7 +4245,29 @@
       revenue_narrative_headline_pending: "{amount} a\xFAn pendiente en el periodo.",
       revenue_narrative_p_ticket: "En {count} pagos aprobados, el ticket promedio fue {avg}. Usa la gr\xE1fica mensual arriba para ver si el volumen o el ticket movieron los ingresos.",
       revenue_narrative_p_pending: "A\xFAn tienes {amount} pendiente ({pct}% de cobrado + pendiente). Aprobar esos pagos aumentar\xE1 los totales cobrados para {period}.",
-      revenue_narrative_p_top: "\u201C{name}\u201D lider\xF3 las ventas con {share}% de los ingresos cobrados ({amount})."
+      revenue_narrative_p_top: "\u201C{name}\u201D lider\xF3 las ventas con {share}% de los ingresos cobrados ({amount}).",
+      revenue_student_section_title: "An\xE1lisis de alumnos",
+      revenue_student_section_subtitle: "Niveles del plantel, qui\xE9n compr\xF3 m\xE1s paquetes y riesgo de inasistencia en el periodo.",
+      revenue_student_total: "Alumnos",
+      revenue_student_total_hint: "En plantel",
+      revenue_student_level_title: "Distribuci\xF3n por nivel",
+      revenue_student_level_note: "Plantel actual seg\xFAn etiqueta de nivel.",
+      revenue_student_level_note_aure: "Plantel actual por nivel Aure (no filtrado por periodo).",
+      revenue_student_level_chart_aria: "Niveles de alumnos",
+      revenue_student_level_beginner: "Principiante",
+      revenue_student_level_advanced: "Avanzada",
+      revenue_student_level_unset: "Sin asignar",
+      revenue_student_period_note: "Compras de paquetes e inasistencias usan el rango de fechas seleccionado; los niveles reflejan el plantel actual.",
+      revenue_student_top_buyers_title: "Qui\xE9n compr\xF3 m\xE1s paquetes",
+      revenue_student_top_buyers_desc: "Alumnos con m\xE1s compras de paquete aprobadas en el periodo.",
+      revenue_student_top_noshows_title: "M\xE1s inasistencias",
+      revenue_student_top_noshows_desc: "Alumnos con m\xE1s registros marcados como no-show en el periodo.",
+      revenue_student_packs_meta: "{count} paquetes \xB7 {amount}",
+      revenue_student_noshow_meta: "{count} inasistencias",
+      revenue_student_no_roster: "No hay alumnos en el plantel",
+      revenue_student_no_buyers: "No hay compras de paquete aprobadas en este periodo",
+      revenue_student_no_noshows: "No hay inasistencias en este periodo",
+      revenue_student_loading: "Cargando an\xE1lisis de alumnos\u2026"
     },
     de: {
       revenue_analytics_cta: "Indikatoren-Dashboard anzeigen",
@@ -4086,7 +4362,29 @@
       revenue_narrative_headline_pending: "{amount} noch ausstehend im Zeitraum.",
       revenue_narrative_p_ticket: "Bei {count} genehmigten Zahlungen war der Durchschnittsticket {avg}. Nutze das Monatsdiagramm oben, um Volumen vs Ticketgr\xF6\xDFe zu sehen.",
       revenue_narrative_p_pending: "Du hast noch {amount} ausstehend ({pct}% von eingenommen + ausstehend). Genehmigung erh\xF6ht die eingenommenen Summen f\xFCr {period}.",
-      revenue_narrative_p_top: "\u201E{name}\u201C f\xFChrte mit {share}% der eingenommenen Ums\xE4tze ({amount})."
+      revenue_narrative_p_top: "\u201E{name}\u201C f\xFChrte mit {share}% der eingenommenen Ums\xE4tze ({amount}).",
+      revenue_student_section_title: "Sch\xFCleranalyse",
+      revenue_student_section_subtitle: "Niveaus, Top-Paketk\xE4ufer und Fehlzeiten-Risiko im Zeitraum.",
+      revenue_student_total: "Sch\xFCler",
+      revenue_student_total_hint: "Im Bestand",
+      revenue_student_level_title: "Niveauverteilung",
+      revenue_student_level_note: "Aktueller Bestand nach Niveau-Tag.",
+      revenue_student_level_note_aure: "Aktueller Bestand nach Aure-Niveau (nicht nach Zeitraum gefiltert).",
+      revenue_student_level_chart_aria: "Sch\xFClerniveaus",
+      revenue_student_level_beginner: "Anf\xE4nger",
+      revenue_student_level_advanced: "Fortgeschritten",
+      revenue_student_level_unset: "Nicht gesetzt",
+      revenue_student_period_note: "Paketk\xE4ufe und No-Shows folgen dem gew\xE4hlten Datumsbereich; Niveaus zeigen den aktuellen Bestand.",
+      revenue_student_top_buyers_title: "Top-Paketk\xE4ufer",
+      revenue_student_top_buyers_desc: "Sch\xFCler mit den meisten genehmigten Paketk\xE4ufen im Zeitraum.",
+      revenue_student_top_noshows_title: "Meiste No-Shows",
+      revenue_student_top_noshows_desc: "Sch\xFCler mit den meisten No-Show-Anmeldungen im Zeitraum.",
+      revenue_student_packs_meta: "{count} Pakete \xB7 {amount}",
+      revenue_student_noshow_meta: "{count} No-Shows",
+      revenue_student_no_roster: "Keine Sch\xFCler im Bestand",
+      revenue_student_no_buyers: "Keine genehmigten Paketk\xE4ufe in diesem Zeitraum",
+      revenue_student_no_noshows: "Keine No-Shows in diesem Zeitraum",
+      revenue_student_loading: "Sch\xFCleranalyse wird geladen\u2026"
     }
   };
 
@@ -18929,6 +19227,10 @@
       const aure = isAureSchool2(state.currentSchool);
       const rpc = schoolId ? await fetchSchoolKpiSummary(schoolId, startDate, endDate, aure) : null;
       kpis = mergeRpcIntoRevenueKpis(kpis, rpc);
+      if (!kpis.studentAnalytics) {
+        const fallback = computeStudentAnalyticsFallback(filtered, range);
+        if (fallback) kpis.studentAnalytics = fallback;
+      }
       if (aure && kpis.aurePendingSuelta == null && schoolId) {
         const monthStr = monthStrForRevenueKpiRegistrations(range);
         const regs = await fetchAdminRegistrationsForMonth(schoolId, monthStr);
@@ -19741,6 +20043,8 @@
       admin_reg_tab_requested: "Requested",
       no_pending_requests: "No pending requests",
       no_pending_requests_subtitle: "Clase suelta requests will appear here.",
+      admin_pending_solicitudes_banner: "You have {count} solicitudes you haven't approved yet.",
+      admin_pending_solicitudes_cta: "View solicitudes",
       admin_move_class_btn_title: "Move to another date",
       admin_move_modal_title: "Move registration",
       admin_move_modal_loading: "Loading available dates\u2026",
@@ -20625,6 +20929,8 @@
       admin_reg_tab_requested: "Solicitados",
       no_pending_requests: "Sin solicitudes pendientes",
       no_pending_requests_subtitle: "Las solicitudes de clase suelta aparecer\xE1n aqu\xED.",
+      admin_pending_solicitudes_banner: "Tienes {count} solicitudes que a\xFAn no has aprobado.",
+      admin_pending_solicitudes_cta: "Ver solicitudes",
       admin_move_class_btn_title: "Cambiar de fecha",
       admin_move_modal_title: "Mover inscripci\xF3n",
       admin_move_modal_loading: "Cargando fechas disponibles\u2026",
@@ -21549,6 +21855,8 @@
       admin_reg_tab_requested: "Anfragen",
       no_pending_requests: "Keine ausstehenden Anfragen",
       no_pending_requests_subtitle: "Anfragen f\xFCr Einzelstunden erscheinen hier.",
+      admin_pending_solicitudes_banner: "Du hast {count} Anfragen, die noch nicht genehmigt wurden.",
+      admin_pending_solicitudes_cta: "Anfragen anzeigen",
       admin_move_class_btn_title: "Anderes Datum",
       admin_move_modal_title: "Anmeldung verschieben",
       admin_move_modal_loading: "Verf\xFCgbare Termine werden geladen\u2026",
@@ -26687,18 +26995,7 @@
               if (_c) _c.textContent = (t2.filter_result_students || "{count} students").replace("{count}", _f.length);
             }, 0);
             if (isAure && adminStudentsSubtab === "nivel") {
-              return _f.map((s) => {
-                const lev = s.level || "";
-                return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
-                                    <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || "").charAt(0).toUpperCase()}</div>
-                                    <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${escapeHtml(s.name || s.email || s.id)}</div><div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(s.email)}</div></div>
-                                    <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${String(s.id).replace(/'/g, "\\'")}', this.value)">
-                                        <option value="" ${lev === "" ? "selected" : ""}>${t2.aure_level_not_set || "Not set"}</option>
-                                        <option value="principiante" ${lev === "principiante" ? "selected" : ""}>${t2.aure_level_principiante || "Principiante"}</option>
-                                        <option value="avanzada" ${lev === "avanzada" ? "selected" : ""}>${t2.aure_level_avanzada || "Avanzada"}</option>
-                                    </select>
-                                </div>`;
-              }).join("");
+              return _f.map((s) => window.renderAdminStudentLevelRow(s)).join("");
             }
             return _f.map((s) => renderAdminStudentCard(s)).join("");
           })()}
@@ -26761,6 +27058,12 @@
                         ` : ""}
                     </div>
                 </div>
+                ${isAure && state.currentSchool?.class_registration_enabled && state.adminPendingSolicitudesCount > 0 ? `
+                <div class="admin-pending-solicitudes-banner" style="margin: 0 1.2rem 1rem; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(230, 168, 0, 0.45); background: rgba(230, 168, 0, 0.14); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.4; flex: 1; min-width: 200px;">${(t2.admin_pending_solicitudes_banner || "You have {count} solicitudes you haven't approved yet.").replace("{count}", String(state.adminPendingSolicitudesCount))}</p>
+                    <button type="button" class="btn-primary" style="padding: 8px 14px; font-size: 13px; font-weight: 700; white-space: nowrap;" onclick="window.openAdminPendingSolicitudes()">${t2.admin_pending_solicitudes_cta || "View solicitudes"}</button>
+                </div>
+                ` : ""}
                 ${state.currentSchool?.profile_type === "private_teacher" && (!CALENDLY_FEATURE_ENABLED || state.adminSettings?.use_calendly_for_booking === "false") ? (() => {
           const allRequests = state.privateClassRequests || [];
           const pendingRequests = allRequests.filter((r) => r.status === "pending");
@@ -26952,7 +27255,7 @@
                                 ` : pendingList.map((r) => {
             const student = (state.students || []).find((st) => String(st.id) === String(r.student_id));
             const level = student?.level;
-            const levelLabel = getLevelLabel(level);
+            const levelLabel2 = getLevelLabel(level);
             const displayName = student?.name || r.student_name || r.student_id || "\u2014";
             const dateLabel = r.class_date ? window.formatShortDate ? window.formatShortDate(/* @__PURE__ */ new Date(r.class_date + "T00:00:00"), state.language) : r.class_date : "\u2014";
             const actionId = state.adminRegActionId;
@@ -26963,7 +27266,7 @@
                                     <div class="admin-reg-request-card ${isLoading ? "admin-reg-request-card-loading" : ""}">
                                         <div class="admin-reg-request-main">
                                             <div class="admin-reg-request-name">${escapeHtml(displayName)}</div>
-                                            <div class="admin-reg-request-meta"><span class="admin-reg-request-level">${t2.aure_level_label || "Level"}: ${(levelLabel || "").replace(/</g, "&lt;")}</span></div>
+                                            <div class="admin-reg-request-meta"><span class="admin-reg-request-level">${t2.aure_level_label || "Level"}: ${(levelLabel2 || "").replace(/</g, "&lt;")}</span></div>
                                             <div class="admin-reg-request-class">${(r.class_name || "").replace(/</g, "&lt;")} \xB7 ${dateLabel} \xB7 ${r.class_time || ""}</div>
                                         </div>
                                         <div class="admin-reg-request-actions">
@@ -29727,6 +30030,8 @@
       })();
       state.adminWeekRegistrationsByMonth[viewMonth] = void 0;
       state.adminRegFeedback = { type: "accepted", emailNote };
+      if (state.currentSchool?.id) fetchAdminPendingSolicitudesCount(state.currentSchool.id).catch(() => {
+      });
       if (typeof renderView === "function") {
         renderView();
         if (window.lucide) window.lucide.createIcons();
@@ -29853,6 +30158,8 @@
       })();
       state.adminWeekRegistrationsByMonth[viewMonth] = void 0;
       state.adminRegFeedback = { type: "denied" };
+      if (state.currentSchool?.id) fetchAdminPendingSolicitudesCount(state.currentSchool.id).catch(() => {
+      });
       if (typeof renderView === "function") {
         renderView();
         if (window.lucide) window.lucide.createIcons();
@@ -30258,6 +30565,7 @@
       alert(t2("signup_passwords_dont_match"));
       return;
     }
+    const isAureSignup = state.currentSchool?.id === AURE_SCHOOL_ID;
     const newStudent = {
       id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
       name,
@@ -30267,7 +30575,8 @@
       package: null,
       balance: 0,
       school_id: state.currentSchool.id,
-      created_at: (/* @__PURE__ */ new Date()).toISOString()
+      created_at: (/* @__PURE__ */ new Date()).toISOString(),
+      ...isAureSignup ? { level: "principiante" } : {}
     };
     let studentCreated = false;
     if (supabaseClient) {
@@ -30310,11 +30619,13 @@
               newStudent.id = created.id;
               newStudent.email = created.email ?? email;
               newStudent.user_id = created.user_id;
+              if (created.level != null && created.level !== "") newStudent.level = created.level;
+              else if (isAureSignup) newStudent.level = "principiante";
               studentCreated = true;
             }
           }
           if (!studentCreated) {
-            const studentToInsert = { ...newStudent, user_id: authUser.id, ...state.currentSchool?.id === AURE_SCHOOL_ID ? { level: "principiante" } : {} };
+            const studentToInsert = { ...newStudent, user_id: authUser.id };
             const { error: insertError } = await supabaseClient.from("students").insert([studentToInsert]);
             if (!insertError) studentCreated = true;
           }
@@ -30332,6 +30643,8 @@
             if (created) {
               newStudent.id = created.id;
               newStudent.email = created.email ?? email;
+              if (created.level != null && created.level !== "") newStudent.level = created.level;
+              else if (isAureSignup) newStudent.level = "principiante";
               studentCreated = true;
               if (authUser) {
                 await supabaseClient.rpc("link_student_auth", {
@@ -34691,6 +35004,30 @@ School: ${schoolName}`)) return;
   window.toggleSchoolDropdown = () => {
     openSchoolDropdown();
   };
+  window.renderAdminStudentLevelRow = (s) => {
+    const t2 = (key) => window.t(key);
+    const lev = s.level || "";
+    const idEsc = String(s.id).replace(/'/g, "\\'");
+    return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
+        <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || "").charAt(0).toUpperCase()}</div>
+        <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${escapeHtml(s.name || s.email || s.id)}</div><div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(s.email || "")}</div></div>
+        <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${idEsc}', this.value)">
+            <option value="" ${lev === "" ? "selected" : ""}>${t2("aure_level_not_set") || "Not set"}</option>
+            <option value="principiante" ${lev === "principiante" ? "selected" : ""}>${t2("aure_level_principiante") || "Principiante"}</option>
+            <option value="avanzada" ${lev === "avanzada" ? "selected" : ""}>${t2("aure_level_avanzada") || "Avanzada"}</option>
+        </select>
+    </div>`;
+  };
+  window.openAdminPendingSolicitudes = () => {
+    state.adminRegExpanded = true;
+    state.adminRegTab = "requested";
+    if (typeof saveState === "function") saveState();
+    if (typeof renderView === "function") renderView();
+    requestAnimationFrame(() => {
+      const el = document.querySelector(".admin-reg-section");
+      if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
   window.renderAdminStudentCard = (s) => {
     const t2 = (key) => window.t(key);
     const statusLabel = s.paid ? t2("status_active") : t2("status_unpaid");
@@ -34768,7 +35105,9 @@ School: ${schoolName}`)) return;
     const q = query !== void 0 ? query : state.adminStudentsSearch || "";
     if (query !== void 0) state.adminStudentsSearch = query;
     const filtered = getFilteredStudents(q);
-    list.innerHTML = filtered.map((s) => renderAdminStudentCard(s)).join("");
+    const isAureLevelTab = state.currentSchool?.id === AURE_SCHOOL_ID && (state.adminStudentsSubtab || "lista") === "nivel";
+    const renderRow = isAureLevelTab ? window.renderAdminStudentLevelRow : window.renderAdminStudentCard;
+    list.innerHTML = filtered.map((s) => renderRow(s)).join("");
     const countEl = document.getElementById("students-filter-count");
     if (countEl) {
       const t2 = window.t;

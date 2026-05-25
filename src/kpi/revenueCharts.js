@@ -14,6 +14,7 @@ import {
     computeRollingMonthlyRevenueSeries,
     getRevenueHighlightMonthKey
 } from './revenueMonthlySeries.js';
+import { renderRevenueStudentAnalyticsSection } from './revenueStudentAnalytics.js';
 
 const CHART_ACCENT = 'var(--accent, #4c2f3c)';
 const CHART_ACCENT_SOFT = 'color-mix(in srgb, var(--accent, #4c2f3c) 72%, var(--text-secondary))';
@@ -341,6 +342,7 @@ export function renderRevenueAnalyticsDashboard(kpis, filtered, range, t, curren
         </div>
         ${renderMonthlyTrendHero(monthlySeries, range, t, currency)}
         ${renderRevenueInsightsSection(kpis, filtered, range, t)}
+        ${renderRevenueStudentAnalyticsSection(kpis, t, currency)}
         <div class="rev-analytics-charts">
             <section class="rev-chart-panel">
                 <h3 class="rev-chart-title">${escapeHtml(t.revenue_chart_mix_title || t.revenue_kpi_payment_mix || 'Payment mix')}</h3>
@@ -379,6 +381,15 @@ export function renderRevenueAnalyticsSkeleton(t) {
                 <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
                 <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
                 <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
+            </div>
+            <div class="rev-skeleton-student">
+                <div class="rev-skeleton-line wide"></div>
+                <div class="rev-skeleton-hero" style="grid-template-columns:repeat(4,1fr)">
+                    <div class="rev-skeleton-block"></div>
+                    <div class="rev-skeleton-block"></div>
+                    <div class="rev-skeleton-block"></div>
+                    <div class="rev-skeleton-block"></div>
+                </div>
             </div>
             <div class="rev-skeleton-charts">
                 <div class="rev-skeleton-panel"></div>

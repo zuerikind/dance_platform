@@ -77,6 +77,8 @@ export let state = {
     adminWeekRegistrationsByMonth: {},
     /** Auré: rows from admin_list_pending_class_moves; [] when none or not loaded for school */
     adminPendingClassMoves: null,
+    /** Auré: pending clase suelta count (null = not loaded yet) */
+    adminPendingSolicitudesCount: null,
     adminRegExpanded: false,
     adminRegMonth: null,
     teacherAcceptedClassesExpanded: true,

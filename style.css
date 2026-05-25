@@ -6251,6 +6251,170 @@ body.dark-mode .rev-hbar-fill,
   color: var(--text-primary);
   white-space: nowrap;
 }
+/* Student analysis (revenue analytics) */
+.rev-student-analytics {
+  margin: 20px 0 8px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+.rev-student-analytics-header {
+  margin-bottom: 14px;
+}
+.rev-student-analytics-sub {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--text-primary) 62%, var(--text-secondary));
+}
+.rev-student-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media (min-width: 720px) {
+  .rev-student-summary-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.rev-stat-card-student .rev-stat-value {
+  font-size: 1.65rem;
+}
+.rev-student-period-note {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text-primary) 55%, var(--text-secondary));
+  line-height: 1.4;
+}
+.rev-student-panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 900px) {
+  .rev-student-panels {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rev-student-panels .rev-chart-panel-wide {
+    grid-column: 1 / -1;
+  }
+}
+.rev-student-level-stack {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--system-gray6, #e5e5ea);
+  margin-bottom: 16px;
+}
+.rev-student-level-seg {
+  min-width: 4px;
+  transition: width 0.2s ease;
+}
+.rev-student-level-seg--principiante {
+  background: var(--system-blue, #007aff);
+}
+.rev-student-level-seg--avanzada {
+  background: var(--accent, #4c2f3c);
+}
+.rev-student-level-seg--unset {
+  background: color-mix(in srgb, var(--text-secondary) 45%, var(--system-gray6));
+}
+.rev-student-level-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rev-student-level-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.rev-student-level-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rev-student-level-dot--principiante {
+  background: var(--system-blue, #007aff);
+}
+.rev-student-level-dot--avanzada {
+  background: var(--accent, #4c2f3c);
+}
+.rev-student-level-dot--unset {
+  background: color-mix(in srgb, var(--text-secondary) 50%, var(--system-gray6));
+}
+.rev-student-level-legend-label {
+  flex: 1;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 0;
+}
+.rev-student-level-legend-value {
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text-primary) 65%, var(--text-secondary));
+  white-space: nowrap;
+}
+.rev-student-rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rev-student-rank-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-body) 40%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+.rev-student-rank-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-card));
+  color: var(--text-primary);
+}
+.rev-student-rank-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.rev-student-rank-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rev-student-rank-meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text-primary) 58%, var(--text-secondary));
+}
+.rev-student-analytics--skeleton .rev-skeleton-label {
+  margin-top: 12px;
+}
+
 .rev-analytics-skeleton {
   padding: 0.5rem 0 1rem;
 }

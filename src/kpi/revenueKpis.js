@@ -9,6 +9,7 @@ import {
     isAureSchool as isAureSchoolAttr,
     paymentInRevenueRange
 } from './revenueAttribution.js';
+import { mergeStudentAnalyticsIntoKpis } from './revenueStudentAnalytics.js';
 
 export function isAureSchool(school) {
     const id = school?.id || state.currentSchool?.id;
@@ -176,6 +177,9 @@ export function mergeRpcIntoRevenueKpis(clientKpis, rpc) {
     }
     if (rpc.registrations && rpc.registrations.pending_suelta_count != null) {
         out.aurePendingSuelta = Number(rpc.registrations.pending_suelta_count) || 0;
+    }
+    if (rpc.students && typeof rpc.students === 'object') {
+        return mergeStudentAnalyticsIntoKpis(out, rpc);
     }
     return out;
 }
