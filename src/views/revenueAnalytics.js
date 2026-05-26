@@ -96,6 +96,7 @@ export function renderAdminRevenueAnalytics(t) {
                     methodFilter,
                     paymentCount: filtered.length
                 })}
+                <p class="rev-filter-scope-note">${escapeHtml(t.revenue_filter_scope_note || '')}</p>
             </div>
 
             <div class="rev-analytics-body">

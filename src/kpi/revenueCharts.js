@@ -8,6 +8,8 @@ import {
     buildAnalystNarrative,
     buildRevenueInsights,
     computeRevenueTimeSeries,
+    filterPaymentsForRevenue,
+    getPreviousRevenueRange,
     getRevenueChartLocale
 } from './revenueKpis.js';
 import {
@@ -33,6 +35,140 @@ function escapeSvgText(s) {
 
 function chartEmptyMessage(t) {
     return escapeHtml(t.revenue_chart_no_data || t.no_data_msg || 'No data for this period');
+}
+
+function formatDeltaPct(pct) {
+    if (pct == null || Number.isNaN(Number(pct))) return null;
+    const n = Math.round(Number(pct));
+    if (!Number.isFinite(n)) return null;
+    if (n === 0) return { sign: '', abs: 0, tone: 'neutral' };
+    return { sign: n > 0 ? '+' : '−', abs: Math.abs(n), tone: n > 0 ? 'positive' : 'warning' };
+}
+
+function buildSparklineSvg(values, opts = {}) {
+    const w = opts.w ?? 92;
+    const h = opts.h ?? 28;
+    const pad = opts.pad ?? 2.5;
+    const stroke = opts.stroke ?? 'color-mix(in srgb, var(--accent, #4c2f3c) 70%, var(--text-secondary))';
+    const fill = opts.fill ?? 'color-mix(in srgb, var(--accent, #4c2f3c) 18%, transparent)';
+    const v = Array.isArray(values) ? values.map((x) => Number(x) || 0) : [];
+    if (v.length < 2) {
+        return `<svg class="rev-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"></svg>`;
+    }
+    const min = Math.min(...v);
+    const max = Math.max(...v);
+    const span = Math.max(1e-9, max - min);
+    const innerW = w - pad * 2;
+    const innerH = h - pad * 2;
+    const step = innerW / (v.length - 1);
+    const pts = v.map((val, i) => {
+        const x = pad + i * step;
+        const y = pad + (1 - (val - min) / span) * innerH;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+    }).join(' ');
+    const area = `${pad},${h - pad} ${pts} ${w - pad},${h - pad}`;
+    return `<svg class="rev-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">
+        <polygon points="${area}" fill="${fill}"></polygon>
+        <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"></polyline>
+    </svg>`;
+}
+
+function computePeriodComparison(kpis, range) {
+    const out = {
+        collectedDelta: null,
+        collectedPrev: null,
+        approvedDelta: null,
+        approvedPrev: null,
+        pendingPctOfTotal: null
+    };
+    if (!kpis || !range || range.allTime) return out;
+    const prevRange = getPreviousRevenueRange(range);
+    if (!prevRange || !Array.isArray(state.paymentRequests) || !state.paymentRequests.length) return out;
+
+    const prevFiltered = filterPaymentsForRevenue(state.paymentRequests, prevRange);
+    const prevApproved = prevFiltered.filter((r) => r.status === 'approved');
+    const prevCollected = prevApproved.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+    const prevCount = prevApproved.length;
+
+    const collected = Number(kpis.collected) || 0;
+    const approvedCount = Number(kpis.collectedCount) || 0;
+
+    out.collectedPrev = prevCollected;
+    out.approvedPrev = prevCount;
+    out.collectedDelta = prevCollected > 0 ? ((collected - prevCollected) / prevCollected) * 100 : null;
+    out.approvedDelta = prevCount > 0 ? ((approvedCount - prevCount) / prevCount) * 100 : null;
+
+    const pendingSum = Number(kpis.pendingSum) || 0;
+    const denom = collected + pendingSum;
+    out.pendingPctOfTotal = denom > 0 ? Math.round((pendingSum / denom) * 100) : null;
+    return out;
+}
+
+function renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t) {
+    if (!kpis) return '';
+    const sparkVals = (monthlySeries?.buckets || []).map((b) => Number(b.collected) || 0).slice(-12);
+    const spark = buildSparklineSvg(sparkVals);
+
+    const collectedDelta = formatDeltaPct(compare?.collectedDelta);
+    const approvedDelta = formatDeltaPct(compare?.approvedDelta);
+    const pendingPct = compare?.pendingPctOfTotal;
+    const pendingTone = pendingPct != null && pendingPct >= 35 ? 'warning' : 'neutral';
+
+    const deltaLabel = (tone, text) => {
+        if (!text) return '';
+        return `<span class="rev-delta rev-delta--${tone}">${escapeHtml(text)}</span>`;
+    };
+
+    const vsPrev = t.revenue_vs_previous_period || 'vs previous period';
+    const collectedDeltaText = collectedDelta
+        ? `${collectedDelta.sign}${collectedDelta.abs}% ${vsPrev}`
+        : (compare?.collectedPrev != null && compare.collectedPrev <= 0
+            ? (t.revenue_no_prior_baseline || 'no prior baseline')
+            : '');
+    const approvedDeltaText = approvedDelta ? `${approvedDelta.sign}${approvedDelta.abs}% ${vsPrev}` : '';
+
+    const aureCard = kpis.aurePendingSuelta != null
+        ? `<div class="rev-stat-card rev-stat-card-aure rev-stat-card--exec">
+            <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_aure_pending_suelta || 'Pending clase suelta')}</div>
+            <div class="rev-stat-value">${kpis.aurePendingSuelta ?? 0}</div>
+            <div class="rev-stat-meta">${escapeHtml(t.revenue_kpi_aure_pending_suelta_hint || '')}</div>
+        </div>`
+        : '';
+
+    return `
+        <div class="rev-analytics-hero rev-exec-row">
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_collected || 'Collected')}</div>
+                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
+                <div class="rev-stat-meta rev-stat-meta-row">
+                    <span>${escapeHtml((t.revenue_kpi_approved_count || '{count} approved').replace('{count}', String(kpis.collectedCount || 0)))}</span>
+                    ${deltaLabel(collectedDelta?.tone || 'neutral', collectedDeltaText)}
+                </div>
+                <div class="rev-stat-spark" aria-hidden="true">${spark}</div>
+            </div>
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_pending || 'To collect')}</div>
+                <div class="rev-stat-value rev-stat-value-warn">${escapeHtml(formatPrice(kpis.pendingSum, currency))}</div>
+                <div class="rev-stat-meta rev-stat-meta-row">
+                    <span>${escapeHtml((t.revenue_kpi_pending_count || '{count} pending').replace('{count}', String(kpis.pendingCount || 0)))}</span>
+                    ${pendingPct != null ? deltaLabel(pendingTone, `${pendingPct}% ${t.revenue_pending_of_total || 'of total in scope'}`) : ''}
+                </div>
+            </div>
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_avg_ticket || 'Avg ticket')}</div>
+                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.avgTicket, currency))}</div>
+                <div class="rev-stat-meta">${escapeHtml(t.revenue_kpi_avg_ticket_hint || '')}</div>
+            </div>
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_volume || t.revenue_chart_volume_title || 'Payment volume')}</div>
+                <div class="rev-stat-value">${escapeHtml(String(kpis.collectedCount || 0))}</div>
+                <div class="rev-stat-meta rev-stat-meta-row">
+                    <span>${escapeHtml(t.revenue_kpi_approved_only || 'approved payments')}</span>
+                    ${deltaLabel(approvedDelta?.tone || 'neutral', approvedDeltaText)}
+                </div>
+            </div>
+            ${aureCard}
+        </div>`;
 }
 
 export function buildPaymentMixDonutSvg(mix, t, size = 200) {
@@ -300,14 +436,7 @@ export function renderRevenueAnalyticsDashboard(kpis, filtered, range, t, curren
         rangeEnd: range?.dateEnd,
         highlightMonthKey: getRevenueHighlightMonthKey(range)
     });
-
-    const aureCard = kpis.aurePendingSuelta != null
-        ? `<div class="rev-stat-card rev-stat-card-aure">
-            <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_aure_pending_suelta || 'Pending clase suelta')}</div>
-            <div class="rev-stat-value">${kpis.aurePendingSuelta ?? 0}</div>
-            <div class="rev-stat-meta">${escapeHtml(t.revenue_kpi_aure_pending_suelta_hint || '')}</div>
-        </div>`
-        : '';
+    const compare = computePeriodComparison(kpis, range);
 
     const analyzedAt = kpis.analyzedAt
         ? new Date(kpis.analyzedAt).toLocaleString(getRevenueChartLocale(state.language), { dateStyle: 'short', timeStyle: 'short' })
@@ -317,24 +446,7 @@ export function renderRevenueAnalyticsDashboard(kpis, filtered, range, t, curren
         : (t.revenue_kpi_source_client || 'Calculated on device');
 
     return `
-        <div class="rev-analytics-hero">
-            <div class="rev-stat-card">
-                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_collected || 'Collected')}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml((t.revenue_kpi_approved_count || '{count} approved').replace('{count}', String(kpis.collectedCount || 0)))}</div>
-            </div>
-            <div class="rev-stat-card">
-                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_pending || 'To collect')}</div>
-                <div class="rev-stat-value rev-stat-value-warn">${escapeHtml(formatPrice(kpis.pendingSum, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml((t.revenue_kpi_pending_count || '{count} pending').replace('{count}', String(kpis.pendingCount || 0)))}</div>
-            </div>
-            <div class="rev-stat-card">
-                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_avg_ticket || 'Avg ticket')}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.avgTicket, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml(t.revenue_kpi_avg_ticket_hint || '')}</div>
-            </div>
-            ${aureCard}
-        </div>
+        ${renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t)}
         <div class="rev-analytics-meta">
             <span>${escapeHtml((t.revenue_kpi_payments_in_scope || '{count} payments').replace('{count}', String(kpis.filteredCount || 0)))}</span>
             ${analyzedAt ? `<span> · ${escapeHtml(analyzedAt)}</span>` : ''}

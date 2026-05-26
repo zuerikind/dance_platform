@@ -3732,6 +3732,121 @@
   function chartEmptyMessage(t2) {
     return escapeHtml(t2.revenue_chart_no_data || t2.no_data_msg || "No data for this period");
   }
+  function formatDeltaPct(pct) {
+    if (pct == null || Number.isNaN(Number(pct))) return null;
+    const n = Math.round(Number(pct));
+    if (!Number.isFinite(n)) return null;
+    if (n === 0) return { sign: "", abs: 0, tone: "neutral" };
+    return { sign: n > 0 ? "+" : "\u2212", abs: Math.abs(n), tone: n > 0 ? "positive" : "warning" };
+  }
+  function buildSparklineSvg(values, opts = {}) {
+    const w = opts.w ?? 92;
+    const h = opts.h ?? 28;
+    const pad = opts.pad ?? 2.5;
+    const stroke = opts.stroke ?? "color-mix(in srgb, var(--accent, #4c2f3c) 70%, var(--text-secondary))";
+    const fill2 = opts.fill ?? "color-mix(in srgb, var(--accent, #4c2f3c) 18%, transparent)";
+    const v = Array.isArray(values) ? values.map((x) => Number(x) || 0) : [];
+    if (v.length < 2) {
+      return `<svg class="rev-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"></svg>`;
+    }
+    const min = Math.min(...v);
+    const max = Math.max(...v);
+    const span = Math.max(1e-9, max - min);
+    const innerW = w - pad * 2;
+    const innerH = h - pad * 2;
+    const step = innerW / (v.length - 1);
+    const pts = v.map((val, i) => {
+      const x = pad + i * step;
+      const y = pad + (1 - (val - min) / span) * innerH;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    }).join(" ");
+    const area = `${pad},${h - pad} ${pts} ${w - pad},${h - pad}`;
+    return `<svg class="rev-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">
+        <polygon points="${area}" fill="${fill2}"></polygon>
+        <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"></polyline>
+    </svg>`;
+  }
+  function computePeriodComparison(kpis, range) {
+    const out = {
+      collectedDelta: null,
+      collectedPrev: null,
+      approvedDelta: null,
+      approvedPrev: null,
+      pendingPctOfTotal: null
+    };
+    if (!kpis || !range || range.allTime) return out;
+    const prevRange = getPreviousRevenueRange(range);
+    if (!prevRange || !Array.isArray(state.paymentRequests) || !state.paymentRequests.length) return out;
+    const prevFiltered = filterPaymentsForRevenue(state.paymentRequests, prevRange);
+    const prevApproved = prevFiltered.filter((r) => r.status === "approved");
+    const prevCollected = prevApproved.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+    const prevCount = prevApproved.length;
+    const collected = Number(kpis.collected) || 0;
+    const approvedCount = Number(kpis.collectedCount) || 0;
+    out.collectedPrev = prevCollected;
+    out.approvedPrev = prevCount;
+    out.collectedDelta = prevCollected > 0 ? (collected - prevCollected) / prevCollected * 100 : null;
+    out.approvedDelta = prevCount > 0 ? (approvedCount - prevCount) / prevCount * 100 : null;
+    const pendingSum = Number(kpis.pendingSum) || 0;
+    const denom = collected + pendingSum;
+    out.pendingPctOfTotal = denom > 0 ? Math.round(pendingSum / denom * 100) : null;
+    return out;
+  }
+  function renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t2) {
+    if (!kpis) return "";
+    const sparkVals = (monthlySeries?.buckets || []).map((b) => Number(b.collected) || 0).slice(-12);
+    const spark = buildSparklineSvg(sparkVals);
+    const collectedDelta = formatDeltaPct(compare?.collectedDelta);
+    const approvedDelta = formatDeltaPct(compare?.approvedDelta);
+    const pendingPct = compare?.pendingPctOfTotal;
+    const pendingTone = pendingPct != null && pendingPct >= 35 ? "warning" : "neutral";
+    const deltaLabel = (tone, text) => {
+      if (!text) return "";
+      return `<span class="rev-delta rev-delta--${tone}">${escapeHtml(text)}</span>`;
+    };
+    const vsPrev = t2.revenue_vs_previous_period || "vs previous period";
+    const collectedDeltaText = collectedDelta ? `${collectedDelta.sign}${collectedDelta.abs}% ${vsPrev}` : compare?.collectedPrev != null && compare.collectedPrev <= 0 ? t2.revenue_no_prior_baseline || "no prior baseline" : "";
+    const approvedDeltaText = approvedDelta ? `${approvedDelta.sign}${approvedDelta.abs}% ${vsPrev}` : "";
+    const aureCard = kpis.aurePendingSuelta != null ? `<div class="rev-stat-card rev-stat-card-aure rev-stat-card--exec">
+            <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_aure_pending_suelta || "Pending clase suelta")}</div>
+            <div class="rev-stat-value">${kpis.aurePendingSuelta ?? 0}</div>
+            <div class="rev-stat-meta">${escapeHtml(t2.revenue_kpi_aure_pending_suelta_hint || "")}</div>
+        </div>` : "";
+    return `
+        <div class="rev-analytics-hero rev-exec-row">
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_collected || "Collected")}</div>
+                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
+                <div class="rev-stat-meta rev-stat-meta-row">
+                    <span>${escapeHtml((t2.revenue_kpi_approved_count || "{count} approved").replace("{count}", String(kpis.collectedCount || 0)))}</span>
+                    ${deltaLabel(collectedDelta?.tone || "neutral", collectedDeltaText)}
+                </div>
+                <div class="rev-stat-spark" aria-hidden="true">${spark}</div>
+            </div>
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_pending || "To collect")}</div>
+                <div class="rev-stat-value rev-stat-value-warn">${escapeHtml(formatPrice(kpis.pendingSum, currency))}</div>
+                <div class="rev-stat-meta rev-stat-meta-row">
+                    <span>${escapeHtml((t2.revenue_kpi_pending_count || "{count} pending").replace("{count}", String(kpis.pendingCount || 0)))}</span>
+                    ${pendingPct != null ? deltaLabel(pendingTone, `${pendingPct}% ${t2.revenue_pending_of_total || "of total in scope"}`) : ""}
+                </div>
+            </div>
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_avg_ticket || "Avg ticket")}</div>
+                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.avgTicket, currency))}</div>
+                <div class="rev-stat-meta">${escapeHtml(t2.revenue_kpi_avg_ticket_hint || "")}</div>
+            </div>
+            <div class="rev-stat-card rev-stat-card--exec">
+                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_volume || t2.revenue_chart_volume_title || "Payment volume")}</div>
+                <div class="rev-stat-value">${escapeHtml(String(kpis.collectedCount || 0))}</div>
+                <div class="rev-stat-meta rev-stat-meta-row">
+                    <span>${escapeHtml(t2.revenue_kpi_approved_only || "approved payments")}</span>
+                    ${deltaLabel(approvedDelta?.tone || "neutral", approvedDeltaText)}
+                </div>
+            </div>
+            ${aureCard}
+        </div>`;
+  }
   function buildPaymentMixDonutSvg(mix, t2, size = 200) {
     const cash = Number(mix?.cash) || 0;
     const transfer = Number(mix?.transfer) || 0;
@@ -3968,32 +4083,11 @@
       rangeEnd: range?.dateEnd,
       highlightMonthKey: getRevenueHighlightMonthKey(range)
     });
-    const aureCard = kpis.aurePendingSuelta != null ? `<div class="rev-stat-card rev-stat-card-aure">
-            <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_aure_pending_suelta || "Pending clase suelta")}</div>
-            <div class="rev-stat-value">${kpis.aurePendingSuelta ?? 0}</div>
-            <div class="rev-stat-meta">${escapeHtml(t2.revenue_kpi_aure_pending_suelta_hint || "")}</div>
-        </div>` : "";
+    const compare = computePeriodComparison(kpis, range);
     const analyzedAt = kpis.analyzedAt ? new Date(kpis.analyzedAt).toLocaleString(getRevenueChartLocale(state.language), { dateStyle: "short", timeStyle: "short" }) : "";
     const sourceNote = kpis.source === "rpc" ? t2.revenue_kpi_source_rpc || "Server summary" : t2.revenue_kpi_source_client || "Calculated on device";
     return `
-        <div class="rev-analytics-hero">
-            <div class="rev-stat-card">
-                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_collected || "Collected")}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml((t2.revenue_kpi_approved_count || "{count} approved").replace("{count}", String(kpis.collectedCount || 0)))}</div>
-            </div>
-            <div class="rev-stat-card">
-                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_pending || "To collect")}</div>
-                <div class="rev-stat-value rev-stat-value-warn">${escapeHtml(formatPrice(kpis.pendingSum, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml((t2.revenue_kpi_pending_count || "{count} pending").replace("{count}", String(kpis.pendingCount || 0)))}</div>
-            </div>
-            <div class="rev-stat-card">
-                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_avg_ticket || "Avg ticket")}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.avgTicket, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml(t2.revenue_kpi_avg_ticket_hint || "")}</div>
-            </div>
-            ${aureCard}
-        </div>
+        ${renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t2)}
         <div class="rev-analytics-meta">
             <span>${escapeHtml((t2.revenue_kpi_payments_in_scope || "{count} payments").replace("{count}", String(kpis.filteredCount || 0)))}</span>
             ${analyzedAt ? `<span> \xB7 ${escapeHtml(analyzedAt)}</span>` : ""}
@@ -4137,6 +4231,7 @@
       methodFilter,
       paymentCount: filtered.length
     })}
+                <p class="rev-filter-scope-note">${escapeHtml(t2.revenue_filter_scope_note || "")}</p>
             </div>
 
             <div class="rev-analytics-body">
@@ -4179,6 +4274,7 @@
       revenue_filter_custom_dates: "Custom dates",
       revenue_filter_date_start: "Start",
       revenue_filter_date_end: "End",
+      revenue_filter_scope_note: "Period filters apply to revenue, pack purchases, and no-shows. Student levels reflect the current roster.",
       revenue_kpi_preset_summary: "Full summary",
       revenue_kpi_collected: "Collected revenue",
       revenue_kpi_pending: "To collect",
@@ -4191,6 +4287,12 @@
       revenue_kpi_pending_count: "{count} pending",
       revenue_kpi_avg_ticket_hint: "Per approved payment in period",
       revenue_kpi_payments_in_scope: "{count} payments in scope",
+      revenue_exec_summary_label: "Executive summary",
+      revenue_vs_previous_period: "vs previous period",
+      revenue_no_prior_baseline: "no prior baseline",
+      revenue_pending_of_total: "of total in scope",
+      revenue_kpi_volume: "Approved payments",
+      revenue_kpi_approved_only: "approved payments",
       revenue_kpi_source_rpc: "Server summary",
       revenue_kpi_source_client: "Calculated on device",
       revenue_kpi_analyzing: "Loading\u2026",
@@ -4296,6 +4398,7 @@
       revenue_filter_custom_dates: "Fechas personalizadas",
       revenue_filter_date_start: "Inicio",
       revenue_filter_date_end: "Fin",
+      revenue_filter_scope_note: "Los filtros de periodo aplican a ingresos, compras de paquetes e inasistencias. Los niveles reflejan el plantel actual.",
       revenue_kpi_preset_summary: "Resumen completo",
       revenue_kpi_collected: "Ingresos cobrados",
       revenue_kpi_pending: "Por cobrar",
@@ -4308,6 +4411,12 @@
       revenue_kpi_pending_count: "{count} pendientes",
       revenue_kpi_avg_ticket_hint: "Por pago aprobado en el periodo",
       revenue_kpi_payments_in_scope: "{count} pagos en alcance",
+      revenue_exec_summary_label: "Resumen ejecutivo",
+      revenue_vs_previous_period: "vs periodo anterior",
+      revenue_no_prior_baseline: "sin l\xEDnea base previa",
+      revenue_pending_of_total: "del total en alcance",
+      revenue_kpi_volume: "Pagos aprobados",
+      revenue_kpi_approved_only: "pagos aprobados",
       revenue_kpi_source_rpc: "Resumen del servidor",
       revenue_kpi_source_client: "Calculado en el dispositivo",
       revenue_kpi_analyzing: "Cargando\u2026",
@@ -4413,6 +4522,7 @@
       revenue_filter_custom_dates: "Benutzerdefinierte Daten",
       revenue_filter_date_start: "Start",
       revenue_filter_date_end: "Ende",
+      revenue_filter_scope_note: "Zeitraum-Filter gelten f\xFCr Umsatz, Paketk\xE4ufe und No-Shows. Sch\xFClerniveaus zeigen den aktuellen Bestand.",
       revenue_kpi_preset_summary: "Vollst\xE4ndige Zusammenfassung",
       revenue_kpi_collected: "Eingenommene Ums\xE4tze",
       revenue_kpi_pending: "Noch einzuziehen",
@@ -4425,6 +4535,12 @@
       revenue_kpi_pending_count: "{count} ausstehend",
       revenue_kpi_avg_ticket_hint: "Pro genehmigter Zahlung im Zeitraum",
       revenue_kpi_payments_in_scope: "{count} Zahlungen im Umfang",
+      revenue_exec_summary_label: "Zusammenfassung",
+      revenue_vs_previous_period: "vs vorheriger Zeitraum",
+      revenue_no_prior_baseline: "keine Basis",
+      revenue_pending_of_total: "vom Gesamtwert im Umfang",
+      revenue_kpi_volume: "Genehmigte Zahlungen",
+      revenue_kpi_approved_only: "genehmigt",
       revenue_kpi_source_rpc: "Server-Zusammenfassung",
       revenue_kpi_source_client: "Auf dem Ger\xE4t berechnet",
       revenue_kpi_analyzing: "Wird geladen\u2026",
@@ -20176,6 +20292,7 @@
       admin_move_occupancy: "{n} / {max}",
       admin_move_occupancy_unlimited: "{n} registered",
       admin_move_slot_full: "Full",
+      admin_move_slot_already: "Already registered",
       admin_move_success: "Registration moved.",
       admin_move_begin_error: "Could not start the move.",
       admin_move_register_error: "The old date was cancelled but registration on the new date failed. Check the yellow banner to finish or dismiss.",
@@ -21062,6 +21179,7 @@
       admin_move_occupancy: "{n} / {max}",
       admin_move_occupancy_unlimited: "{n} inscritos",
       admin_move_slot_full: "Lleno",
+      admin_move_slot_already: "Ya inscrito",
       admin_move_success: "Inscripci\xF3n movida.",
       admin_move_begin_error: "No se pudo iniciar el cambio.",
       admin_move_register_error: "Se cancel\xF3 la fecha anterior pero no se pudo inscribir en la nueva. Revisa el aviso amarillo para terminar o descartar.",
@@ -21988,6 +22106,7 @@
       admin_move_occupancy: "{n} / {max}",
       admin_move_occupancy_unlimited: "{n} angemeldet",
       admin_move_slot_full: "Voll",
+      admin_move_slot_already: "Bereits angemeldet",
       admin_move_success: "Anmeldung verschoben.",
       admin_move_begin_error: "Verschieben konnte nicht gestartet werden.",
       admin_move_register_error: "Der alte Termin wurde storniert, die neue Anmeldung ist fehlgeschlagen. Nutze den gelben Hinweis zum Abschlie\xDFen oder Entfernen.",
@@ -30431,6 +30550,24 @@
     const classes = state.classes || [];
     const candidates = [];
     try {
+      const studentId = reg?.student_id != null ? String(reg.student_id) : null;
+      const viewMonthRows = Array.isArray(state.adminWeekRegistrationsByMonth?.[viewMonth]) ? state.adminWeekRegistrationsByMonth[viewMonth] : [];
+      const attendanceDraft = state.adminRegAttendanceDraft || {};
+      const effectiveStatusForRow = (row) => attendanceDraft?.[row?.id] || row?.status;
+      const disablesForExisting = (status) => {
+        const s = String(status || "").trim();
+        return s === "registered" || s === "pending" || s === "attended" || s === "no_show";
+      };
+      const existingSet = /* @__PURE__ */ new Set();
+      if (studentId) {
+        for (const row of viewMonthRows) {
+          if (!row || String(row.student_id) !== studentId) continue;
+          const eff = effectiveStatusForRow(row);
+          if (!disablesForExisting(eff)) continue;
+          if (row.class_id == null || !row.class_date) continue;
+          existingSet.add(String(row.class_id) + "_" + String(row.class_date).slice(0, 10));
+        }
+      }
       const perClass = await Promise.all(classes.map(async (cls) => {
         const dates = typeof window.getMonthlyOpenRegistrationDates === "function" ? await window.getMonthlyOpenRegistrationDates(cls.id, cls.day, anchor) : window.getMonthlyDates ? window.getMonthlyDates(cls.day, anchor) : [];
         return { cls, dates: dates || [] };
@@ -30475,6 +30612,7 @@
         const taken = avail?.registered_count != null ? avail.registered_count : null;
         const spotsLeft = avail?.spots_left;
         const isFull = maxCap != null && spotsLeft === 0;
+        const isAlready = existingSet.has(String(slot.classId) + "_" + String(slot.dateStr).slice(0, 10));
         let occLabel;
         if (maxCap != null && taken != null) {
           occLabel = (t2.admin_move_occupancy || "{n} / {max}").replace("{n}", String(taken)).replace("{max}", String(maxCap));
@@ -30485,10 +30623,12 @@
         }
         const timePart = slot.time ? ` \xB7 ${escAttr(slot.time)}` : "";
         const fullPart = isFull ? ` \xB7 ${escAttr(t2.admin_move_slot_full || "Full")}` : "";
-        const disabled = isFull ? " disabled" : "";
+        const alreadyPart = isAlready ? ` \xB7 ${escAttr(t2.admin_move_slot_already || "Already registered")}` : "";
+        const disabled = isFull || isAlready ? " disabled" : "";
         const regEsc = escAttr(registrationId);
         const dateEsc = escAttr(slot.dateStr);
-        return `<button type="button" class="admin-move-slot-btn"${disabled} onclick="event.stopPropagation();window.confirmAdminMoveClassSlot('${regEsc}', ${slot.classId}, '${dateEsc}')"><span style="font-weight:600;">${escAttr(dateLabel)}</span>${timePart}${occLabel ? ` \xB7 ${escAttr(occLabel)}` : ""}${fullPart}</button>`;
+        const clsMod = isAlready ? " admin-move-slot-btn--already" : "";
+        return `<button type="button" class="admin-move-slot-btn${clsMod}"${disabled} onclick="event.stopPropagation();window.confirmAdminMoveClassSlot('${regEsc}', ${slot.classId}, '${dateEsc}')"><span style="font-weight:600;">${escAttr(dateLabel)}</span>${timePart}${occLabel ? ` \xB7 ${escAttr(occLabel)}` : ""}${fullPart}${alreadyPart}</button>`;
       }).join("");
       if (window.lucide) window.lucide.createIcons();
     } catch (e) {
