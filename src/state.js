@@ -88,6 +88,8 @@ export let state = {
     studentsFilterExpanded: false,
     adminStudentsListExpandedForPrivateTeacher: false,
     adminRevenueFiltersExpanded: false,
+    /** Indicators dashboard: filter panel collapsed by default (independent from Ganancias). */
+    adminRevenueAnalyticsFiltersExpanded: false,
     /** Year tab in revenue period picker (null = derive from selection). */
     adminRevenueFilterViewYear: null,
     adminRevenueCustomRangeExpanded: false,

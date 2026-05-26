@@ -7,6 +7,7 @@ import {
     getAdminRevenueDateRange
 } from '../kpi/revenueKpis.js';
 import {
+    formatRevenueActivePeriodLabel,
     renderAdminRevenueFilterCard,
     renderAureRevenueAttributionInfoButton
 } from '../kpi/revenueFiltersUi.js';
@@ -53,6 +54,8 @@ export function renderAdminRevenueAnalytics(t) {
     const kpis = state.adminRevenueKpiResults;
     const err = state.adminRevenueKpiError;
     const filterChange = 'window.onAdminRevenueAnalyticsFilterChange()';
+    const filtersExpanded = !!state.adminRevenueAnalyticsFiltersExpanded;
+    const periodChip = escapeHtml(formatRevenueActivePeriodLabel(t, state.language));
 
     let body = '';
     if (loading) {
@@ -85,18 +88,25 @@ export function renderAdminRevenueAnalytics(t) {
                 <p class="rev-analytics-subtitle">${t.revenue_analytics_subtitle || ''}</p>
             </div>
 
-            <div class="rev-analytics-filters">
-                ${renderAdminRevenueFilterCard(t, {
-                    defaultStart,
-                    defaultEnd,
-                    afterChange: filterChange,
-                    revenueSubs,
-                    pkgFilter,
-                    statusFilter,
-                    methodFilter,
-                    paymentCount: filtered.length
-                })}
-                <p class="rev-filter-scope-note">${escapeHtml(t.revenue_filter_scope_note || '')}</p>
+            <div class="rev-analytics-filters rev-analytics-filters-expandable ${filtersExpanded ? 'expanded' : ''}">
+                <div class="revenue-filters-header rev-analytics-filters-header" onclick="toggleExpandableNoRender('revenueAnalyticsFilters')">
+                    <span class="revenue-filters-header-label">${escapeHtml(t.filters_label || 'Filters')}</span>
+                    <span class="rev-analytics-period-chip">${periodChip}</span>
+                    <i data-lucide="chevron-down" size="18" class="expandable-chevron" aria-hidden="true"></i>
+                </div>
+                <div id="rev-analytics-filters-content" class="revenue-filters-content" style="display: ${filtersExpanded ? '' : 'none'};">
+                    ${renderAdminRevenueFilterCard(t, {
+                        defaultStart,
+                        defaultEnd,
+                        afterChange: filterChange,
+                        revenueSubs,
+                        pkgFilter,
+                        statusFilter,
+                        methodFilter,
+                        paymentCount: filtered.length
+                    })}
+                    <p class="rev-filter-scope-note">${escapeHtml(t.revenue_filter_scope_note || '')}</p>
+                </div>
             </div>
 
             <div class="rev-analytics-body">

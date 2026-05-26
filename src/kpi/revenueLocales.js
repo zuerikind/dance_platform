@@ -122,7 +122,18 @@ export const REVENUE_LOCALES = {
         revenue_student_no_roster: 'No students on roster',
         revenue_student_no_buyers: 'No approved pack purchases in this period',
         revenue_student_no_noshows: 'No no-shows in this period',
-        revenue_student_loading: 'Loading student analysis…'
+        revenue_student_loading: 'Loading student analysis…',
+        revenue_zone_at_a_glance: 'At a glance',
+        revenue_zone_deep_dive: 'Detailed analysis',
+        revenue_snapshot_revenue_title: 'Revenue this period',
+        revenue_snapshot_revenue_sub: 'Collected for your selected filters',
+        revenue_student_snapshot_title: 'Students',
+        revenue_student_snapshot_sub: 'Roster by level',
+        revenue_scroll_to_charts: 'View detailed charts',
+        revenue_chart_why_label: 'Why this chart?',
+        revenue_narrative_read_more: 'Read full summary',
+        revenue_period_all_time: 'All time',
+        revenue_period_custom: 'Custom range'
     },
     es: {
         revenue_analytics_cta: 'Ver panel de indicadores',
@@ -246,7 +257,18 @@ export const REVENUE_LOCALES = {
         revenue_student_no_roster: 'No hay alumnos en el plantel',
         revenue_student_no_buyers: 'No hay compras de paquete aprobadas en este periodo',
         revenue_student_no_noshows: 'No hay inasistencias en este periodo',
-        revenue_student_loading: 'Cargando análisis de alumnos…'
+        revenue_student_loading: 'Cargando análisis de alumnos…',
+        revenue_zone_at_a_glance: 'Resumen rápido',
+        revenue_zone_deep_dive: 'Análisis detallado',
+        revenue_snapshot_revenue_title: 'Ingresos del periodo',
+        revenue_snapshot_revenue_sub: 'Cobrado según tus filtros',
+        revenue_student_snapshot_title: 'Alumnos',
+        revenue_student_snapshot_sub: 'Plantel por nivel',
+        revenue_scroll_to_charts: 'Ver gráficas detalladas',
+        revenue_chart_why_label: '¿Para qué sirve esta gráfica?',
+        revenue_narrative_read_more: 'Leer resumen completo',
+        revenue_period_all_time: 'Todo el historial',
+        revenue_period_custom: 'Rango personalizado'
     },
     de: {
         revenue_analytics_cta: 'Indikatoren-Dashboard anzeigen',

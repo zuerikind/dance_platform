@@ -254,6 +254,8 @@
     studentsFilterExpanded: false,
     adminStudentsListExpandedForPrivateTeacher: false,
     adminRevenueFiltersExpanded: false,
+    /** Indicators dashboard: filter panel collapsed by default (independent from Ganancias). */
+    adminRevenueAnalyticsFiltersExpanded: false,
     /** Year tab in revenue period picker (null = derive from selection). */
     adminRevenueFilterViewYear: null,
     adminRevenueCustomRangeExpanded: false,
@@ -849,6 +851,14 @@
 
   // src/kpi/revenueStudentAnalytics.js
   var TOP_LIMIT = 10;
+  var LEVEL_COLORS = {
+    principiante: "var(--system-teal, #30b0c7)",
+    avanzada: "var(--system-blue, #007aff)",
+    unset: "var(--system-gray3, #c7c7cc)"
+  };
+  function escapeSvgText(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
   function normalizeByLevel(raw) {
     const src = raw && typeof raw === "object" ? raw : {};
     return {
@@ -924,6 +934,84 @@
     if (key === "unset") return aure ? t2.aure_level_not_set || "Not set" : t2.revenue_student_level_unset || "Not set";
     return key;
   }
+  function buildStudentLevelDonutSvg(byLevel, t2, aure, size = 120) {
+    const total = byLevel.total || 0;
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size * 0.34;
+    const stroke = size * 0.13;
+    const circ = 2 * Math.PI * r;
+    const emptyLabel = escapeSvgText(t2.revenue_student_no_roster || "\u2014");
+    if (total <= 0) {
+      return `<svg class="rev-chart-donut rev-student-snapshot-donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--system-gray6)" stroke-width="${stroke}"/>
+            <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="var(--text-secondary)" font-size="11" font-weight="600">${emptyLabel}</text>
+        </svg>`;
+    }
+    const segments = [
+      { key: "principiante", count: byLevel.principiante, color: LEVEL_COLORS.principiante },
+      { key: "avanzada", count: byLevel.avanzada, color: LEVEL_COLORS.avanzada },
+      { key: "unset", count: byLevel.unset, color: LEVEL_COLORS.unset }
+    ].filter((s) => s.count > 0);
+    let offset = circ * 0.25;
+    const arcs = segments.map((seg) => {
+      const len = seg.count / total * circ;
+      const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${stroke}"
+            stroke-dasharray="${len} ${circ - len}" stroke-dashoffset="${offset}" stroke-linecap="round"/>`;
+      offset -= len;
+      return arc;
+    }).join("");
+    const topSeg = segments.reduce((a, b) => b.count > (a?.count || 0) ? b : a, segments[0]);
+    const topPct = topSeg ? Math.round(topSeg.count / total * 100) : 0;
+    const centerLabel = escapeSvgText(levelLabel(topSeg?.key || "principiante", t2, aure));
+    return `<svg class="rev-chart-donut rev-student-snapshot-donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${escapeSvgText(t2.revenue_student_level_chart_aria || "Student levels")}">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--system-gray6)" stroke-width="${stroke}" opacity="0.35"/>
+        ${arcs}
+        <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="var(--text-primary)" font-size="9" font-weight="700">${centerLabel}</text>
+        <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800">${topPct}%</text>
+    </svg>`;
+  }
+  function buildLevelChipsHtml(byLevel, t2, aure) {
+    const total = byLevel.total || 0;
+    if (total <= 0) return "";
+    const keys = ["principiante", "avanzada", "unset"];
+    return `<div class="rev-student-level-chips">
+        ${keys.map((key) => {
+      const count = byLevel[key] || 0;
+      if (count <= 0) return "";
+      const pct = Math.round(count / total * 100);
+      return `<span class="rev-student-level-chip rev-student-level-chip--${key}">
+                <span class="rev-student-level-dot rev-student-level-dot--${key}" aria-hidden="true"></span>
+                <span class="rev-student-level-chip-label">${escapeHtml(levelLabel(key, t2, aure))}</span>
+                <span class="rev-student-level-chip-value">${count} \xB7 ${pct}%</span>
+            </span>`;
+    }).join("")}
+    </div>`;
+  }
+  function renderStudentRosterSnapshot(analytics, t2) {
+    if (!analytics) return "";
+    const aure = isAureSchool2(state.currentSchool);
+    const byLevel = analytics.byLevel || { total: 0, principiante: 0, avanzada: 0, unset: 0 };
+    const levelNote = aure ? t2.revenue_student_level_note_aure || "Current roster by Aure level (not filtered by period)." : t2.revenue_student_level_note || "Current roster by assigned level tag.";
+    return `
+        <section class="rev-snapshot-card rev-student-snapshot" aria-labelledby="rev-student-snapshot-heading">
+            <div class="rev-snapshot-card-head">
+                <h2 id="rev-student-snapshot-heading" class="rev-snapshot-title">${escapeHtml(t2.revenue_student_snapshot_title || "Students")}</h2>
+                <p class="rev-snapshot-sub">${escapeHtml(t2.revenue_student_snapshot_sub || "Roster by level")}</p>
+            </div>
+            <div class="rev-student-snapshot-body">
+                <div class="rev-student-snapshot-metric">
+                    <span class="rev-student-snapshot-total-label">${escapeHtml(t2.revenue_student_total || "Students")}</span>
+                    <span class="rev-student-snapshot-total-value">${byLevel.total}</span>
+                </div>
+                <div class="rev-student-snapshot-visual">
+                    ${buildStudentLevelDonutSvg(byLevel, t2, aure, 120)}
+                    ${buildLevelChipsHtml(byLevel, t2, aure)}
+                </div>
+            </div>
+            <p class="rev-snapshot-footnote">${escapeHtml(levelNote)}</p>
+        </section>`;
+  }
   function buildLevelDistributionHtml(byLevel, t2, aure) {
     const total = byLevel.total || 0;
     if (total <= 0) {
@@ -986,7 +1074,7 @@
     }).join("")}
     </ol>`;
   }
-  function renderRevenueStudentAnalyticsSection(kpis, t2, currency) {
+  function renderRevenueStudentAnalyticsSection(kpis, t2, currency, opts = {}) {
     const analytics = kpis?.studentAnalytics;
     if (!analytics) return "";
     const aure = isAureSchool2(state.currentSchool);
@@ -998,28 +1086,6 @@
             <div class="rev-student-analytics-header">
                 <h2 id="rev-student-analytics-heading" class="rev-section-heading">${escapeHtml(t2.revenue_student_section_title || "Student analysis")}</h2>
                 <p class="rev-student-analytics-sub">${escapeHtml(t2.revenue_student_section_subtitle || "Roster levels, top pack buyers, and attendance risk in this period.")}</p>
-            </div>
-            <div class="rev-student-summary-cards">
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(t2.revenue_student_total || "Students")}</div>
-                    <div class="rev-stat-value">${byLevel.total}</div>
-                    <div class="rev-stat-meta">${escapeHtml(t2.revenue_student_total_hint || "Active roster")}</div>
-                </div>
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(levelLabel("principiante", t2, aure))}</div>
-                    <div class="rev-stat-value">${byLevel.principiante}</div>
-                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round(byLevel.principiante / byLevel.total * 100)}%` : "\u2014"}</div>
-                </div>
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(levelLabel("avanzada", t2, aure))}</div>
-                    <div class="rev-stat-value">${byLevel.avanzada}</div>
-                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round(byLevel.avanzada / byLevel.total * 100)}%` : "\u2014"}</div>
-                </div>
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(levelLabel("unset", t2, aure))}</div>
-                    <div class="rev-stat-value">${byLevel.unset}</div>
-                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round(byLevel.unset / byLevel.total * 100)}%` : "\u2014"}</div>
-                </div>
             </div>
             <p class="rev-student-period-note">${escapeHtml(periodNote)}</p>
             <div class="rev-student-panels">
@@ -1441,6 +1507,30 @@
       start: fmt(new Date(year, month, 1)),
       end: fmt(new Date(year, month + 1, 0))
     };
+  }
+  function formatRevenueActivePeriodLabel(t2, language) {
+    const locale = getRevenueFilterLocale(language);
+    const sel = getRevenueFilterSelection();
+    if (sel.mode === "allTime") {
+      return t2.revenue_period_all_time || t2.revenue_narrative_period_all || "All time";
+    }
+    if (sel.mode === "month") {
+      const d = new Date(sel.year, sel.month, 1);
+      return d.toLocaleDateString(locale, { month: "long", year: "numeric" });
+    }
+    const start = state.adminRevenueDateStart;
+    const end = state.adminRevenueDateEnd;
+    const fmt = (iso) => {
+      const d = /* @__PURE__ */ new Date(iso + "T00:00:00");
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" });
+    };
+    if (start && end) {
+      if (start === end) return fmt(start);
+      return `${fmt(start)} \u2013 ${fmt(end)}`;
+    }
+    if (start) return fmt(start);
+    return t2.revenue_period_custom || "Custom range";
   }
   function getRevenueFilterSelection() {
     if (state.adminRevenueAllTime) return { mode: "allTime" };
@@ -3726,7 +3816,7 @@
   var CHART_TRANSFER = "var(--system-blue, #007aff)";
   var CHART_MUTED = "var(--text-secondary, #636366)";
   var CHART_AXIS = "color-mix(in srgb, var(--text-primary) 55%, var(--text-secondary))";
-  function escapeSvgText(s) {
+  function escapeSvgText2(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   function chartEmptyMessage(t2) {
@@ -3792,59 +3882,117 @@
     out.pendingPctOfTotal = denom > 0 ? Math.round(pendingSum / denom * 100) : null;
     return out;
   }
-  function renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t2) {
-    if (!kpis) return "";
-    const sparkVals = (monthlySeries?.buckets || []).map((b) => Number(b.collected) || 0).slice(-12);
-    const spark = buildSparklineSvg(sparkVals);
+  function deltaPill(tone, text) {
+    if (!text) return "";
+    return `<span class="rev-delta rev-delta--${tone}">${escapeHtml(text)}</span>`;
+  }
+  function buildPeriodDeltaTexts(compare, t2) {
+    const vsPrev = t2.revenue_vs_previous_period || "vs previous period";
     const collectedDelta = formatDeltaPct(compare?.collectedDelta);
     const approvedDelta = formatDeltaPct(compare?.approvedDelta);
-    const pendingPct = compare?.pendingPctOfTotal;
-    const pendingTone = pendingPct != null && pendingPct >= 35 ? "warning" : "neutral";
-    const deltaLabel = (tone, text) => {
-      if (!text) return "";
-      return `<span class="rev-delta rev-delta--${tone}">${escapeHtml(text)}</span>`;
-    };
-    const vsPrev = t2.revenue_vs_previous_period || "vs previous period";
     const collectedDeltaText = collectedDelta ? `${collectedDelta.sign}${collectedDelta.abs}% ${vsPrev}` : compare?.collectedPrev != null && compare.collectedPrev <= 0 ? t2.revenue_no_prior_baseline || "no prior baseline" : "";
     const approvedDeltaText = approvedDelta ? `${approvedDelta.sign}${approvedDelta.abs}% ${vsPrev}` : "";
-    const aureCard = kpis.aurePendingSuelta != null ? `<div class="rev-stat-card rev-stat-card-aure rev-stat-card--exec">
-            <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_aure_pending_suelta || "Pending clase suelta")}</div>
-            <div class="rev-stat-value">${kpis.aurePendingSuelta ?? 0}</div>
-            <div class="rev-stat-meta">${escapeHtml(t2.revenue_kpi_aure_pending_suelta_hint || "")}</div>
-        </div>` : "";
+    return { collectedDelta, approvedDelta, collectedDeltaText, approvedDeltaText };
+  }
+  function renderMetricCard({ icon, label, value, meta, deltaTone, deltaText, valueClass = "" }) {
     return `
-        <div class="rev-analytics-hero rev-exec-row">
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_collected || "Collected")}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
-                <div class="rev-stat-meta rev-stat-meta-row">
-                    <span>${escapeHtml((t2.revenue_kpi_approved_count || "{count} approved").replace("{count}", String(kpis.collectedCount || 0)))}</span>
-                    ${deltaLabel(collectedDelta?.tone || "neutral", collectedDeltaText)}
+        <div class="rev-metric-card">
+            <span class="rev-metric-icon" aria-hidden="true"><i data-lucide="${escapeHtml(icon)}" size="20"></i></span>
+            <div class="rev-metric-label">${escapeHtml(label)}</div>
+            <div class="rev-metric-value${valueClass ? ` ${valueClass}` : ""}">${value}</div>
+            ${meta || deltaText ? `<div class="rev-metric-meta">${meta ? `<span>${meta}</span>` : ""}${deltaPill(deltaTone || "neutral", deltaText)}</div>` : ""}
+        </div>`;
+  }
+  function renderAtAGlanceMetrics(kpis, compare, analytics, currency, t2) {
+    if (!kpis) return "";
+    const { collectedDelta, approvedDelta, collectedDeltaText, approvedDeltaText } = buildPeriodDeltaTexts(compare, t2);
+    const pendingPct = compare?.pendingPctOfTotal;
+    const pendingTone = pendingPct != null && pendingPct >= 35 ? "warning" : "neutral";
+    const studentTotal = analytics?.byLevel?.total ?? 0;
+    const cards = [
+      renderMetricCard({
+        icon: "wallet",
+        label: t2.revenue_kpi_collected || "Collected",
+        value: escapeHtml(formatPrice(kpis.collected, currency)),
+        meta: escapeHtml((t2.revenue_kpi_approved_count || "{count} approved").replace("{count}", String(kpis.collectedCount || 0))),
+        deltaTone: collectedDelta?.tone || "neutral",
+        deltaText: collectedDeltaText
+      }),
+      renderMetricCard({
+        icon: "clock",
+        label: t2.revenue_kpi_pending || "To collect",
+        value: escapeHtml(formatPrice(kpis.pendingSum, currency)),
+        meta: escapeHtml((t2.revenue_kpi_pending_count || "{count} pending").replace("{count}", String(kpis.pendingCount || 0))),
+        deltaTone: pendingTone,
+        deltaText: pendingPct != null ? `${pendingPct}% ${t2.revenue_pending_of_total || "of total in scope"}` : "",
+        valueClass: "rev-metric-value-warn"
+      }),
+      renderMetricCard({
+        icon: "users",
+        label: t2.revenue_student_total || "Students",
+        value: escapeHtml(String(studentTotal)),
+        meta: escapeHtml(t2.revenue_student_total_hint || "On roster")
+      }),
+      renderMetricCard({
+        icon: "receipt",
+        label: t2.revenue_kpi_avg_ticket || "Avg ticket",
+        value: escapeHtml(formatPrice(kpis.avgTicket, currency)),
+        meta: escapeHtml(t2.revenue_kpi_avg_ticket_hint || "")
+      }),
+      renderMetricCard({
+        icon: "bar-chart-2",
+        label: t2.revenue_kpi_volume || t2.revenue_chart_volume_title || "Payment volume",
+        value: escapeHtml(String(kpis.collectedCount || 0)),
+        meta: escapeHtml(t2.revenue_kpi_approved_only || "approved payments"),
+        deltaTone: approvedDelta?.tone || "neutral",
+        deltaText: approvedDeltaText
+      })
+    ];
+    if (kpis.aurePendingSuelta != null) {
+      cards.push(renderMetricCard({
+        icon: "calendar-clock",
+        label: t2.revenue_kpi_aure_pending_suelta || "Pending clase suelta",
+        value: escapeHtml(String(kpis.aurePendingSuelta ?? 0)),
+        meta: escapeHtml(t2.revenue_kpi_aure_pending_suelta_hint || "")
+      }));
+    }
+    return `
+        <section class="rev-zone-at-a-glance" aria-labelledby="rev-at-a-glance-heading">
+            <h2 id="rev-at-a-glance-heading" class="rev-zone-heading">${escapeHtml(t2.revenue_zone_at_a_glance || "At a glance")}</h2>
+            <div class="rev-at-a-glance">${cards.join("")}</div>
+        </section>`;
+  }
+  function renderRevenuePeriodSnapshot(kpis, compare, monthlySeries, narrativeHeadline, t2, currency) {
+    if (!kpis) return "";
+    const sparkVals = (monthlySeries?.buckets || []).map((b) => Number(b.collected) || 0).slice(-12);
+    const spark = buildSparklineSvg(sparkVals, { w: 120, h: 32 });
+    const { collectedDelta, collectedDeltaText } = buildPeriodDeltaTexts(compare, t2);
+    const momPill = collectedDelta && collectedDelta.abs > 0 ? deltaPill(collectedDelta.tone, `${collectedDelta.sign}${collectedDelta.abs}%`) : collectedDelta && collectedDelta.abs === 0 ? deltaPill("neutral", t2.revenue_narrative_flat || "unchanged") : "";
+    const insightLine = narrativeHeadline ? `<p class="rev-snapshot-insight">${escapeHtml(narrativeHeadline)}</p>` : "";
+    return `
+        <section class="rev-snapshot-card rev-revenue-snapshot" aria-labelledby="rev-revenue-snapshot-heading">
+            <div class="rev-snapshot-card-head">
+                <h2 id="rev-revenue-snapshot-heading" class="rev-snapshot-title">${escapeHtml(t2.revenue_snapshot_revenue_title || "Revenue this period")}</h2>
+                <p class="rev-snapshot-sub">${escapeHtml(t2.revenue_snapshot_revenue_sub || "Collected for your selected filters")}</p>
+            </div>
+            <div class="rev-revenue-snapshot-row">
+                <div class="rev-revenue-snapshot-main">
+                    <div class="rev-revenue-snapshot-amount">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
+                    <div class="rev-revenue-snapshot-pills">
+                        ${momPill}
+                        ${!collectedDelta && collectedDeltaText ? deltaPill("neutral", collectedDeltaText) : ""}
+                    </div>
                 </div>
-                <div class="rev-stat-spark" aria-hidden="true">${spark}</div>
+                <div class="rev-revenue-snapshot-spark" aria-hidden="true">${spark}</div>
             </div>
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_pending || "To collect")}</div>
-                <div class="rev-stat-value rev-stat-value-warn">${escapeHtml(formatPrice(kpis.pendingSum, currency))}</div>
-                <div class="rev-stat-meta rev-stat-meta-row">
-                    <span>${escapeHtml((t2.revenue_kpi_pending_count || "{count} pending").replace("{count}", String(kpis.pendingCount || 0)))}</span>
-                    ${pendingPct != null ? deltaLabel(pendingTone, `${pendingPct}% ${t2.revenue_pending_of_total || "of total in scope"}`) : ""}
-                </div>
-            </div>
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_avg_ticket || "Avg ticket")}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.avgTicket, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml(t2.revenue_kpi_avg_ticket_hint || "")}</div>
-            </div>
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t2.revenue_kpi_volume || t2.revenue_chart_volume_title || "Payment volume")}</div>
-                <div class="rev-stat-value">${escapeHtml(String(kpis.collectedCount || 0))}</div>
-                <div class="rev-stat-meta rev-stat-meta-row">
-                    <span>${escapeHtml(t2.revenue_kpi_approved_only || "approved payments")}</span>
-                    ${deltaLabel(approvedDelta?.tone || "neutral", approvedDeltaText)}
-                </div>
-            </div>
-            ${aureCard}
+            ${insightLine}
+            <a class="rev-snapshot-jump" href="#rev-deep-dive">${escapeHtml(t2.revenue_scroll_to_charts || "View detailed charts")}</a>
+        </section>`;
+  }
+  function renderZoneDivider(t2) {
+    return `
+        <div id="rev-deep-dive" class="rev-zone-divider" role="separator" aria-label="${escapeHtml(t2.revenue_zone_deep_dive || "Detailed analysis")}">
+            <span class="rev-zone-divider-text">${escapeHtml(t2.revenue_zone_deep_dive || "Detailed analysis")}</span>
         </div>`;
   }
   function buildPaymentMixDonutSvg(mix, t2, size = 200) {
@@ -3856,7 +4004,7 @@
     const r = size * 0.34;
     const stroke = size * 0.13;
     const circ = 2 * Math.PI * r;
-    const emptyLabel = escapeSvgText(t2.revenue_chart_mix_empty || "\u2014");
+    const emptyLabel = escapeSvgText2(t2.revenue_chart_mix_empty || "\u2014");
     if (total <= 0) {
       return `<svg class="rev-chart-donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
             <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--system-gray6)" stroke-width="${stroke}"/>
@@ -3868,13 +4016,13 @@
     const transferPct = 100 - cashPct;
     const centerLabel = cashPct >= transferPct ? t2.cash || "Cash" : t2.transfer || "Transfer";
     const centerPct = Math.max(cashPct, transferPct);
-    return `<svg class="rev-chart-donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${escapeSvgText(centerLabel)} ${centerPct}%">
+    return `<svg class="rev-chart-donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${escapeSvgText2(centerLabel)} ${centerPct}%">
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--system-gray6)" stroke-width="${stroke}" opacity="0.4"/>
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${CHART_CASH}" stroke-width="${stroke}"
             stroke-dasharray="${cashLen} ${circ - cashLen}" stroke-dashoffset="${circ * 0.25}" stroke-linecap="round"/>
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${CHART_TRANSFER}" stroke-width="${stroke}"
             stroke-dasharray="${circ - cashLen} ${cashLen}" stroke-dashoffset="${circ * 0.25 - cashLen}" stroke-linecap="round"/>
-        <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="var(--text-primary)" font-size="11" font-weight="700">${escapeSvgText(centerLabel)}</text>
+        <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="var(--text-primary)" font-size="11" font-weight="700">${escapeSvgText2(centerLabel)}</text>
         <text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="var(--text-primary)" font-size="20" font-weight="800">${centerPct}%</text>
     </svg>`;
   }
@@ -3953,10 +4101,10 @@
       const bh = Math.max(val > 0 ? 6 : 2, val / maxVal * (chartH - 12));
       const x = 14 + i * (barW + gap);
       const y = originY - bh;
-      const label = escapeSvgText(b.label || "");
-      const tip = escapeSvgText(`${b.title || b.label || ""}: ${formatPrice(val, currency)} (${b.count || 0})`);
+      const label = escapeSvgText2(b.label || "");
+      const tip = escapeSvgText2(`${b.title || b.label || ""}: ${formatPrice(val, currency)} (${b.count || 0})`);
       const showVal = val > 0 && bh >= 22;
-      const valLabel = escapeSvgText(formatPrice(val, currency));
+      const valLabel = escapeSvgText2(formatPrice(val, currency));
       return `
             <g class="rev-ts-bar-group">
                 <title>${tip}</title>
@@ -3966,7 +4114,7 @@
                 <text x="${x + barW / 2}" y="${originY + 22}" text-anchor="middle" fill="${CHART_AXIS}" font-size="10" font-weight="600">${label}</text>
             </g>`;
     }).join("");
-    return `<svg class="rev-chart-timeseries" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="${escapeSvgText(t2.revenue_chart_timeline_title || "Revenue over time")}">
+    return `<svg class="rev-chart-timeseries" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="${escapeSvgText2(t2.revenue_chart_timeline_title || "Revenue over time")}">
         ${gridLines}
         <line x1="14" y1="${originY}" x2="${w - 14}" y2="${originY}" stroke="var(--border)" stroke-width="1.5"/>
         ${bars}
@@ -3983,12 +4131,11 @@
       range,
       paymentRequests: state.paymentRequests || []
     }, t2);
-    const narrativeBlock = narrative.headline ? `
-        <div class="rev-narrative">
-            <p class="rev-narrative-headline-label">${escapeHtml(t2.revenue_narrative_in_one_sentence || "In one sentence")}</p>
-            <p class="rev-narrative-headline">${escapeHtml(narrative.headline)}</p>
-            ${(narrative.paragraphs || []).map((p) => `<p class="rev-narrative-p">${escapeHtml(p)}</p>`).join("")}
-        </div>` : "";
+    const paragraphs = (narrative.paragraphs || []).filter(Boolean);
+    const narrativeExpand = paragraphs.length ? `<details class="rev-narrative-expand">
+            <summary class="rev-narrative-expand-summary">${escapeHtml(t2.revenue_narrative_read_more || "Read full summary")}</summary>
+            ${paragraphs.map((p) => `<p class="rev-narrative-p">${escapeHtml(p)}</p>`).join("")}
+        </details>` : "";
     const items = insights.map((ins) => {
       const tone = ins.tone || "neutral";
       const icon = ins.icon || "lightbulb";
@@ -3999,18 +4146,22 @@
             </li>`;
     }).join("");
     const bulletsBlock = insights.length ? `<ul class="rev-insights-list">${items}</ul>` : "";
-    if (!narrativeBlock && !bulletsBlock) return "";
+    if (!bulletsBlock && !narrativeExpand) return "";
     return `
         <section class="rev-insights-panel" aria-labelledby="rev-insights-heading">
             <h2 id="rev-insights-heading" class="rev-section-heading">${escapeHtml(t2.revenue_insights_title || t2.revenue_kpi_preset_summary || "Executive summary")}</h2>
-            ${narrativeBlock}
             ${bulletsBlock ? `<h3 class="rev-insights-bullets-label">${escapeHtml(t2.revenue_insights_bullets || "Key points")}</h3>${bulletsBlock}` : ""}
+            ${narrativeExpand}
         </section>`;
   }
-  function chartDescHtml(t2, key, fallback) {
+  function chartDescDetailsHtml(t2, key, fallback) {
     const text = t2[key] || fallback;
     if (!text) return "";
-    return `<p class="rev-chart-desc">${escapeHtml(text)}</p>`;
+    const summary = t2.revenue_chart_why_label || "Why this chart?";
+    return `<details class="rev-chart-desc-details">
+        <summary class="rev-chart-desc-summary">${escapeHtml(summary)}</summary>
+        <p class="rev-chart-desc">${escapeHtml(text)}</p>
+    </details>`;
   }
   function renderMonthlyTrendHero(series, range, t2, currency) {
     const monthsWithData = series?.monthsWithData ?? 0;
@@ -4030,7 +4181,7 @@
     const ytdSection = showYtd ? `
             <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-ytd-heading">
                 <h3 id="rev-ytd-heading" class="rev-chart-title">${escapeHtml((t2.revenue_chart_ytd_title || "Cumulative {year}").replace("{year}", String(series.filterYear)))}</h3>
-                ${chartDescHtml(t2, "revenue_chart_desc_ytd", "Running total of collected revenue within the selected calendar year.")}
+                ${chartDescDetailsHtml(t2, "revenue_chart_desc_ytd", "Running total of collected revenue within the selected calendar year.")}
                 <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                     <div class="rev-canvas-wrap"><canvas id="rev-chart-ytd-cumulative" aria-label="${escapeHtml(t2.revenue_chart_ytd_title || "YTD")}"></canvas></div>
                 </div>
@@ -4039,7 +4190,7 @@
         <div class="rev-analytics-monthly-block">
             <section class="rev-chart-panel rev-chart-panel-hero" aria-labelledby="rev-monthly-trend-heading">
                 <h3 id="rev-monthly-trend-heading" class="rev-chart-title">${escapeHtml(t2.revenue_chart_monthly_title || "Monthly collected revenue")}</h3>
-                ${chartDescHtml(t2, "revenue_chart_desc_monthly", "Approved payment totals by month for the last 13 months. Each bar is collected revenue; hover for payment count and change vs the prior month.")}
+                ${chartDescDetailsHtml(t2, "revenue_chart_desc_monthly", "Approved payment totals by month for the last 13 months. Each bar is collected revenue; hover for payment count and change vs the prior month.")}
                 <p class="rev-chart-subtitle">${escapeHtml(t2.revenue_chart_monthly_subtitle || "Last 13 months \xB7 hover or tap a bar for details")}</p>
                 <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas rev-chart-plot--hero">
                     <div class="rev-canvas-wrap rev-canvas-wrap--hero"><canvas id="rev-chart-monthly-trend" aria-label="${escapeHtml(t2.revenue_chart_monthly_title || "Monthly revenue")}"></canvas></div>
@@ -4049,26 +4200,51 @@
             <div class="rev-analytics-secondary-charts">
                 <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-mom-heading">
                     <h3 id="rev-mom-heading" class="rev-chart-title">${escapeHtml(t2.revenue_chart_mom_title || "Month-over-month change")}</h3>
-                    ${chartDescHtml(t2, "revenue_chart_desc_mom", "Percent change in collected revenue vs the previous month. Green is growth, orange is decline.")}
+                    ${chartDescDetailsHtml(t2, "revenue_chart_desc_mom", "Percent change in collected revenue vs the previous month. Green is growth, orange is decline.")}
                     <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                         <div class="rev-canvas-wrap"><canvas id="rev-chart-mom-delta" aria-label="${escapeHtml(t2.revenue_chart_mom_title || "MoM")}"></canvas></div>
                     </div>
                 </section>
                 <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-volume-heading">
                     <h3 id="rev-volume-heading" class="rev-chart-title">${escapeHtml(t2.revenue_chart_volume_title || "Payment volume")}</h3>
-                    ${chartDescHtml(t2, "revenue_chart_desc_volume", "Number of approved payments per month, regardless of amount.")}
+                    ${chartDescDetailsHtml(t2, "revenue_chart_desc_volume", "Number of approved payments per month, regardless of amount.")}
                     <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                         <div class="rev-canvas-wrap"><canvas id="rev-chart-payment-volume" aria-label="${escapeHtml(t2.revenue_chart_volume_title || "Volume")}"></canvas></div>
                     </div>
                 </section>
                 <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-health-heading">
                     <h3 id="rev-health-heading" class="rev-chart-title">${escapeHtml(t2.revenue_chart_health_title || "Collection health by month")}</h3>
-                    ${chartDescHtml(t2, "revenue_chart_desc_health", "Stacked collected (approved) vs pending amounts per month.")}
+                    ${chartDescDetailsHtml(t2, "revenue_chart_desc_health", "Stacked collected (approved) vs pending amounts per month.")}
                     <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                         <div class="rev-canvas-wrap"><canvas id="rev-chart-collection-health" aria-label="${escapeHtml(t2.revenue_chart_health_title || "Health")}"></canvas></div>
                     </div>
                 </section>
                 ${ytdSection}
+            </div>
+        </div>`;
+  }
+  function renderDeepDiveSection(kpis, filtered, range, monthlySeries, mix, topPackages, timeSeries, t2, currency) {
+    return `
+        <div class="rev-deep-dive">
+            ${renderMonthlyTrendHero(monthlySeries, range, t2, currency)}
+            ${renderRevenueInsightsSection(kpis, filtered, range, t2)}
+            ${renderRevenueStudentAnalyticsSection(kpis, t2, currency)}
+            <div class="rev-analytics-charts">
+                <section class="rev-chart-panel">
+                    <h3 class="rev-chart-title">${escapeHtml(t2.revenue_chart_mix_title || t2.revenue_kpi_payment_mix || "Payment mix")}</h3>
+                    <div class="rev-chart-panel-body rev-chart-mix-body rev-chart-plot">
+                        ${buildPaymentMixDonutSvg(mix, t2)}
+                        ${buildPaymentMixLegendHtml(mix, currency, t2)}
+                    </div>
+                </section>
+                <section class="rev-chart-panel">
+                    <h3 class="rev-chart-title">${escapeHtml(t2.revenue_chart_packages_title || t2.revenue_kpi_top_packages || "Top packages")}</h3>
+                    <div class="rev-chart-panel-body rev-chart-plot">${buildHorizontalBarChartHtml(topPackages, currency, t2)}</div>
+                </section>
+                <section class="rev-chart-panel rev-chart-panel-wide">
+                    <h3 class="rev-chart-title">${escapeHtml(t2.revenue_chart_timeline_title || "Revenue over time")}</h3>
+                    <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--timeline">${buildTimeSeriesBarSvg(timeSeries, currency, t2)}</div>
+                </section>
             </div>
         </div>`;
   }
@@ -4084,44 +4260,45 @@
       highlightMonthKey: getRevenueHighlightMonthKey(range)
     });
     const compare = computePeriodComparison(kpis, range);
+    const analytics = kpis.studentAnalytics || null;
+    const narrative = buildAnalystNarrative(kpis, {
+      filtered,
+      range,
+      paymentRequests: state.paymentRequests || []
+    }, t2);
     const analyzedAt = kpis.analyzedAt ? new Date(kpis.analyzedAt).toLocaleString(getRevenueChartLocale(state.language), { dateStyle: "short", timeStyle: "short" }) : "";
     const sourceNote = kpis.source === "rpc" ? t2.revenue_kpi_source_rpc || "Server summary" : t2.revenue_kpi_source_client || "Calculated on device";
+    const snapshotsRow = `
+        <div class="rev-snapshots-row">
+            ${renderRevenuePeriodSnapshot(kpis, compare, monthlySeries, narrative.headline, t2, currency)}
+            ${renderStudentRosterSnapshot(analytics, t2)}
+        </div>`;
     return `
-        ${renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t2)}
+        ${renderAtAGlanceMetrics(kpis, compare, analytics, currency, t2)}
         <div class="rev-analytics-meta">
             <span>${escapeHtml((t2.revenue_kpi_payments_in_scope || "{count} payments").replace("{count}", String(kpis.filteredCount || 0)))}</span>
             ${analyzedAt ? `<span> \xB7 ${escapeHtml(analyzedAt)}</span>` : ""}
             <span class="rev-analytics-source">${escapeHtml(sourceNote)}</span>
         </div>
-        ${renderMonthlyTrendHero(monthlySeries, range, t2, currency)}
-        ${renderRevenueInsightsSection(kpis, filtered, range, t2)}
-        ${renderRevenueStudentAnalyticsSection(kpis, t2, currency)}
-        <div class="rev-analytics-charts">
-            <section class="rev-chart-panel">
-                <h3 class="rev-chart-title">${escapeHtml(t2.revenue_chart_mix_title || t2.revenue_kpi_payment_mix || "Payment mix")}</h3>
-                <div class="rev-chart-panel-body rev-chart-mix-body rev-chart-plot">
-                    ${buildPaymentMixDonutSvg(mix, t2)}
-                    ${buildPaymentMixLegendHtml(mix, currency, t2)}
-                </div>
-            </section>
-            <section class="rev-chart-panel">
-                <h3 class="rev-chart-title">${escapeHtml(t2.revenue_chart_packages_title || t2.revenue_kpi_top_packages || "Top packages")}</h3>
-                <div class="rev-chart-panel-body rev-chart-plot">${buildHorizontalBarChartHtml(topPackages, currency, t2)}</div>
-            </section>
-            <section class="rev-chart-panel rev-chart-panel-wide">
-                <h3 class="rev-chart-title">${escapeHtml(t2.revenue_chart_timeline_title || "Revenue over time")}</h3>
-                <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--timeline">${buildTimeSeriesBarSvg(timeSeries, currency, t2)}</div>
-            </section>
-        </div>`;
+        ${snapshotsRow}
+        ${renderZoneDivider(t2)}
+        ${renderDeepDiveSection(kpis, filtered, range, monthlySeries, mix, topPackages, timeSeries, t2, currency)}`;
   }
   function renderRevenueAnalyticsSkeleton(t2) {
     return `
         <div class="rev-analytics-skeleton" aria-busy="true" aria-live="polite">
-            <div class="rev-skeleton-hero">
+            <div class="rev-skeleton-zone-label"></div>
+            <div class="rev-skeleton-at-a-glance">
+                <div class="rev-skeleton-block"></div>
                 <div class="rev-skeleton-block"></div>
                 <div class="rev-skeleton-block"></div>
                 <div class="rev-skeleton-block"></div>
             </div>
+            <div class="rev-skeleton-snapshots">
+                <div class="rev-skeleton-panel"></div>
+                <div class="rev-skeleton-panel"></div>
+            </div>
+            <div class="rev-skeleton-divider"></div>
             <div class="rev-skeleton-monthly">
                 <div class="rev-skeleton-panel rev-skeleton-panel-hero"></div>
                 <div class="rev-skeleton-secondary">
@@ -4129,24 +4306,12 @@
                     <div class="rev-skeleton-panel"></div>
                 </div>
             </div>
-            <div class="rev-skeleton-insights">
-                <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
-                <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
-                <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
-            </div>
             <div class="rev-skeleton-student">
                 <div class="rev-skeleton-line wide"></div>
-                <div class="rev-skeleton-hero" style="grid-template-columns:repeat(4,1fr)">
-                    <div class="rev-skeleton-block"></div>
-                    <div class="rev-skeleton-block"></div>
-                    <div class="rev-skeleton-block"></div>
-                    <div class="rev-skeleton-block"></div>
+                <div class="rev-student-panels">
+                    <div class="rev-skeleton-panel wide"></div>
+                    <div class="rev-skeleton-panel"></div>
                 </div>
-            </div>
-            <div class="rev-skeleton-charts">
-                <div class="rev-skeleton-panel"></div>
-                <div class="rev-skeleton-panel"></div>
-                <div class="rev-skeleton-panel wide"></div>
             </div>
             <p class="rev-skeleton-label"><i data-lucide="loader-2" size="18" class="spin"></i> ${escapeHtml(t2.revenue_kpi_analyzing || "Loading\u2026")}</p>
         </div>`;
@@ -4190,6 +4355,8 @@
     const kpis = state.adminRevenueKpiResults;
     const err = state.adminRevenueKpiError;
     const filterChange = "window.onAdminRevenueAnalyticsFilterChange()";
+    const filtersExpanded = !!state.adminRevenueAnalyticsFiltersExpanded;
+    const periodChip = escapeHtml(formatRevenueActivePeriodLabel(t2, state.language));
     let body = "";
     if (loading) {
       body = renderRevenueAnalyticsSkeleton(t2);
@@ -4220,8 +4387,14 @@
                 <p class="rev-analytics-subtitle">${t2.revenue_analytics_subtitle || ""}</p>
             </div>
 
-            <div class="rev-analytics-filters">
-                ${renderAdminRevenueFilterCard(t2, {
+            <div class="rev-analytics-filters rev-analytics-filters-expandable ${filtersExpanded ? "expanded" : ""}">
+                <div class="revenue-filters-header rev-analytics-filters-header" onclick="toggleExpandableNoRender('revenueAnalyticsFilters')">
+                    <span class="revenue-filters-header-label">${escapeHtml(t2.filters_label || "Filters")}</span>
+                    <span class="rev-analytics-period-chip">${periodChip}</span>
+                    <i data-lucide="chevron-down" size="18" class="expandable-chevron" aria-hidden="true"></i>
+                </div>
+                <div id="rev-analytics-filters-content" class="revenue-filters-content" style="display: ${filtersExpanded ? "" : "none"};">
+                    ${renderAdminRevenueFilterCard(t2, {
       defaultStart,
       defaultEnd,
       afterChange: filterChange,
@@ -4231,7 +4404,8 @@
       methodFilter,
       paymentCount: filtered.length
     })}
-                <p class="rev-filter-scope-note">${escapeHtml(t2.revenue_filter_scope_note || "")}</p>
+                    <p class="rev-filter-scope-note">${escapeHtml(t2.revenue_filter_scope_note || "")}</p>
+                </div>
             </div>
 
             <div class="rev-analytics-body">
@@ -4376,7 +4550,18 @@
       revenue_student_no_roster: "No students on roster",
       revenue_student_no_buyers: "No approved pack purchases in this period",
       revenue_student_no_noshows: "No no-shows in this period",
-      revenue_student_loading: "Loading student analysis\u2026"
+      revenue_student_loading: "Loading student analysis\u2026",
+      revenue_zone_at_a_glance: "At a glance",
+      revenue_zone_deep_dive: "Detailed analysis",
+      revenue_snapshot_revenue_title: "Revenue this period",
+      revenue_snapshot_revenue_sub: "Collected for your selected filters",
+      revenue_student_snapshot_title: "Students",
+      revenue_student_snapshot_sub: "Roster by level",
+      revenue_scroll_to_charts: "View detailed charts",
+      revenue_chart_why_label: "Why this chart?",
+      revenue_narrative_read_more: "Read full summary",
+      revenue_period_all_time: "All time",
+      revenue_period_custom: "Custom range"
     },
     es: {
       revenue_analytics_cta: "Ver panel de indicadores",
@@ -4500,7 +4685,18 @@
       revenue_student_no_roster: "No hay alumnos en el plantel",
       revenue_student_no_buyers: "No hay compras de paquete aprobadas en este periodo",
       revenue_student_no_noshows: "No hay inasistencias en este periodo",
-      revenue_student_loading: "Cargando an\xE1lisis de alumnos\u2026"
+      revenue_student_loading: "Cargando an\xE1lisis de alumnos\u2026",
+      revenue_zone_at_a_glance: "Resumen r\xE1pido",
+      revenue_zone_deep_dive: "An\xE1lisis detallado",
+      revenue_snapshot_revenue_title: "Ingresos del periodo",
+      revenue_snapshot_revenue_sub: "Cobrado seg\xFAn tus filtros",
+      revenue_student_snapshot_title: "Alumnos",
+      revenue_student_snapshot_sub: "Plantel por nivel",
+      revenue_scroll_to_charts: "Ver gr\xE1ficas detalladas",
+      revenue_chart_why_label: "\xBFPara qu\xE9 sirve esta gr\xE1fica?",
+      revenue_narrative_read_more: "Leer resumen completo",
+      revenue_period_all_time: "Todo el historial",
+      revenue_period_custom: "Rango personalizado"
     },
     de: {
       revenue_analytics_cta: "Indikatoren-Dashboard anzeigen",
@@ -20292,7 +20488,6 @@
       admin_move_occupancy: "{n} / {max}",
       admin_move_occupancy_unlimited: "{n} registered",
       admin_move_slot_full: "Full",
-      admin_move_slot_already: "Already registered",
       admin_move_success: "Registration moved.",
       admin_move_begin_error: "Could not start the move.",
       admin_move_register_error: "The old date was cancelled but registration on the new date failed. Check the yellow banner to finish or dismiss.",
@@ -21179,7 +21374,6 @@
       admin_move_occupancy: "{n} / {max}",
       admin_move_occupancy_unlimited: "{n} inscritos",
       admin_move_slot_full: "Lleno",
-      admin_move_slot_already: "Ya inscrito",
       admin_move_success: "Inscripci\xF3n movida.",
       admin_move_begin_error: "No se pudo iniciar el cambio.",
       admin_move_register_error: "Se cancel\xF3 la fecha anterior pero no se pudo inscribir en la nueva. Revisa el aviso amarillo para terminar o descartar.",
@@ -22106,7 +22300,6 @@
       admin_move_occupancy: "{n} / {max}",
       admin_move_occupancy_unlimited: "{n} angemeldet",
       admin_move_slot_full: "Voll",
-      admin_move_slot_already: "Bereits angemeldet",
       admin_move_success: "Anmeldung verschoben.",
       admin_move_begin_error: "Verschieben konnte nicht gestartet werden.",
       admin_move_register_error: "Der alte Termin wurde storniert, die neue Anmeldung ist fehlgeschlagen. Nutze den gelben Hinweis zum Abschlie\xDFen oder Entfernen.",
@@ -24207,6 +24400,7 @@
       "qrRegistrations": ["qrRegistrationsExpanded", "qr-registrations-content", "qr-registrations-expandable"],
       "additionalFeatures": ["additionalFeaturesExpanded", "additional-features-content", "expandable-section"],
       "revenueFilters": ["adminRevenueFiltersExpanded", "revenue-filters-content", "revenue-filters-expandable"],
+      "revenueAnalyticsFilters": ["adminRevenueAnalyticsFiltersExpanded", "rev-analytics-filters-content", "rev-analytics-filters-expandable"],
       "settingsAdvanced": ["settingsAdvancedExpanded", "settings-advanced-content", "settings-advanced-expandable"],
       "settingsNotifications": ["settingsNotificationsExpanded", "settings-notifications-content", "settings-notifications-expandable"],
       "teacherAcceptedClasses": ["teacherAcceptedClassesExpanded", "teacher-accepted-classes-content", "teacher-accepted-classes-expandable"]
@@ -30550,24 +30744,6 @@
     const classes = state.classes || [];
     const candidates = [];
     try {
-      const studentId = reg?.student_id != null ? String(reg.student_id) : null;
-      const viewMonthRows = Array.isArray(state.adminWeekRegistrationsByMonth?.[viewMonth]) ? state.adminWeekRegistrationsByMonth[viewMonth] : [];
-      const attendanceDraft = state.adminRegAttendanceDraft || {};
-      const effectiveStatusForRow = (row) => attendanceDraft?.[row?.id] || row?.status;
-      const disablesForExisting = (status) => {
-        const s = String(status || "").trim();
-        return s === "registered" || s === "pending" || s === "attended" || s === "no_show";
-      };
-      const existingSet = /* @__PURE__ */ new Set();
-      if (studentId) {
-        for (const row of viewMonthRows) {
-          if (!row || String(row.student_id) !== studentId) continue;
-          const eff = effectiveStatusForRow(row);
-          if (!disablesForExisting(eff)) continue;
-          if (row.class_id == null || !row.class_date) continue;
-          existingSet.add(String(row.class_id) + "_" + String(row.class_date).slice(0, 10));
-        }
-      }
       const perClass = await Promise.all(classes.map(async (cls) => {
         const dates = typeof window.getMonthlyOpenRegistrationDates === "function" ? await window.getMonthlyOpenRegistrationDates(cls.id, cls.day, anchor) : window.getMonthlyDates ? window.getMonthlyDates(cls.day, anchor) : [];
         return { cls, dates: dates || [] };
@@ -30612,7 +30788,6 @@
         const taken = avail?.registered_count != null ? avail.registered_count : null;
         const spotsLeft = avail?.spots_left;
         const isFull = maxCap != null && spotsLeft === 0;
-        const isAlready = existingSet.has(String(slot.classId) + "_" + String(slot.dateStr).slice(0, 10));
         let occLabel;
         if (maxCap != null && taken != null) {
           occLabel = (t2.admin_move_occupancy || "{n} / {max}").replace("{n}", String(taken)).replace("{max}", String(maxCap));
@@ -30623,12 +30798,10 @@
         }
         const timePart = slot.time ? ` \xB7 ${escAttr(slot.time)}` : "";
         const fullPart = isFull ? ` \xB7 ${escAttr(t2.admin_move_slot_full || "Full")}` : "";
-        const alreadyPart = isAlready ? ` \xB7 ${escAttr(t2.admin_move_slot_already || "Already registered")}` : "";
-        const disabled = isFull || isAlready ? " disabled" : "";
+        const disabled = isFull ? " disabled" : "";
         const regEsc = escAttr(registrationId);
         const dateEsc = escAttr(slot.dateStr);
-        const clsMod = isAlready ? " admin-move-slot-btn--already" : "";
-        return `<button type="button" class="admin-move-slot-btn${clsMod}"${disabled} onclick="event.stopPropagation();window.confirmAdminMoveClassSlot('${regEsc}', ${slot.classId}, '${dateEsc}')"><span style="font-weight:600;">${escAttr(dateLabel)}</span>${timePart}${occLabel ? ` \xB7 ${escAttr(occLabel)}` : ""}${fullPart}${alreadyPart}</button>`;
+        return `<button type="button" class="admin-move-slot-btn"${disabled} onclick="event.stopPropagation();window.confirmAdminMoveClassSlot('${regEsc}', ${slot.classId}, '${dateEsc}')"><span style="font-weight:600;">${escAttr(dateLabel)}</span>${timePart}${occLabel ? ` \xB7 ${escAttr(occLabel)}` : ""}${fullPart}</button>`;
       }).join("");
       if (window.lucide) window.lucide.createIcons();
     } catch (e) {

@@ -4488,6 +4488,7 @@ window.toggleExpandableNoRender = (key) => {
         'qrRegistrations': ['qrRegistrationsExpanded', 'qr-registrations-content', 'qr-registrations-expandable'],
         'additionalFeatures': ['additionalFeaturesExpanded', 'additional-features-content', 'expandable-section'],
         'revenueFilters': ['adminRevenueFiltersExpanded', 'revenue-filters-content', 'revenue-filters-expandable'],
+        'revenueAnalyticsFilters': ['adminRevenueAnalyticsFiltersExpanded', 'rev-analytics-filters-content', 'rev-analytics-filters-expandable'],
         'settingsAdvanced': ['settingsAdvancedExpanded', 'settings-advanced-content', 'settings-advanced-expandable'],
         'settingsNotifications': ['settingsNotificationsExpanded', 'settings-notifications-content', 'settings-notifications-expandable'],
         'teacherAcceptedClasses': ['teacherAcceptedClassesExpanded', 'teacher-accepted-classes-content', 'teacher-accepted-classes-expandable']

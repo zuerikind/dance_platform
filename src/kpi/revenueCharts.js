@@ -16,7 +16,10 @@ import {
     computeRollingMonthlyRevenueSeries,
     getRevenueHighlightMonthKey
 } from './revenueMonthlySeries.js';
-import { renderRevenueStudentAnalyticsSection } from './revenueStudentAnalytics.js';
+import {
+    renderRevenueStudentAnalyticsSection,
+    renderStudentRosterSnapshot
+} from './revenueStudentAnalytics.js';
 
 const CHART_ACCENT = 'var(--accent, #4c2f3c)';
 const CHART_ACCENT_SOFT = 'color-mix(in srgb, var(--accent, #4c2f3c) 72%, var(--text-secondary))';
@@ -104,70 +107,137 @@ function computePeriodComparison(kpis, range) {
     return out;
 }
 
-function renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t) {
-    if (!kpis) return '';
-    const sparkVals = (monthlySeries?.buckets || []).map((b) => Number(b.collected) || 0).slice(-12);
-    const spark = buildSparklineSvg(sparkVals);
+function deltaPill(tone, text) {
+    if (!text) return '';
+    return `<span class="rev-delta rev-delta--${tone}">${escapeHtml(text)}</span>`;
+}
 
+function buildPeriodDeltaTexts(compare, t) {
+    const vsPrev = t.revenue_vs_previous_period || 'vs previous period';
     const collectedDelta = formatDeltaPct(compare?.collectedDelta);
     const approvedDelta = formatDeltaPct(compare?.approvedDelta);
-    const pendingPct = compare?.pendingPctOfTotal;
-    const pendingTone = pendingPct != null && pendingPct >= 35 ? 'warning' : 'neutral';
-
-    const deltaLabel = (tone, text) => {
-        if (!text) return '';
-        return `<span class="rev-delta rev-delta--${tone}">${escapeHtml(text)}</span>`;
-    };
-
-    const vsPrev = t.revenue_vs_previous_period || 'vs previous period';
     const collectedDeltaText = collectedDelta
         ? `${collectedDelta.sign}${collectedDelta.abs}% ${vsPrev}`
         : (compare?.collectedPrev != null && compare.collectedPrev <= 0
             ? (t.revenue_no_prior_baseline || 'no prior baseline')
             : '');
     const approvedDeltaText = approvedDelta ? `${approvedDelta.sign}${approvedDelta.abs}% ${vsPrev}` : '';
+    return { collectedDelta, approvedDelta, collectedDeltaText, approvedDeltaText };
+}
 
-    const aureCard = kpis.aurePendingSuelta != null
-        ? `<div class="rev-stat-card rev-stat-card-aure rev-stat-card--exec">
-            <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_aure_pending_suelta || 'Pending clase suelta')}</div>
-            <div class="rev-stat-value">${kpis.aurePendingSuelta ?? 0}</div>
-            <div class="rev-stat-meta">${escapeHtml(t.revenue_kpi_aure_pending_suelta_hint || '')}</div>
-        </div>`
+function renderMetricCard({ icon, label, value, meta, deltaTone, deltaText, valueClass = '' }) {
+    return `
+        <div class="rev-metric-card">
+            <span class="rev-metric-icon" aria-hidden="true"><i data-lucide="${escapeHtml(icon)}" size="20"></i></span>
+            <div class="rev-metric-label">${escapeHtml(label)}</div>
+            <div class="rev-metric-value${valueClass ? ` ${valueClass}` : ''}">${value}</div>
+            ${meta || deltaText ? `<div class="rev-metric-meta">${meta ? `<span>${meta}</span>` : ''}${deltaPill(deltaTone || 'neutral', deltaText)}</div>` : ''}
+        </div>`;
+}
+
+function renderAtAGlanceMetrics(kpis, compare, analytics, currency, t) {
+    if (!kpis) return '';
+    const { collectedDelta, approvedDelta, collectedDeltaText, approvedDeltaText } = buildPeriodDeltaTexts(compare, t);
+    const pendingPct = compare?.pendingPctOfTotal;
+    const pendingTone = pendingPct != null && pendingPct >= 35 ? 'warning' : 'neutral';
+    const studentTotal = analytics?.byLevel?.total ?? 0;
+
+    const cards = [
+        renderMetricCard({
+            icon: 'wallet',
+            label: t.revenue_kpi_collected || 'Collected',
+            value: escapeHtml(formatPrice(kpis.collected, currency)),
+            meta: escapeHtml((t.revenue_kpi_approved_count || '{count} approved').replace('{count}', String(kpis.collectedCount || 0))),
+            deltaTone: collectedDelta?.tone || 'neutral',
+            deltaText: collectedDeltaText
+        }),
+        renderMetricCard({
+            icon: 'clock',
+            label: t.revenue_kpi_pending || 'To collect',
+            value: escapeHtml(formatPrice(kpis.pendingSum, currency)),
+            meta: escapeHtml((t.revenue_kpi_pending_count || '{count} pending').replace('{count}', String(kpis.pendingCount || 0))),
+            deltaTone: pendingTone,
+            deltaText: pendingPct != null ? `${pendingPct}% ${t.revenue_pending_of_total || 'of total in scope'}` : '',
+            valueClass: 'rev-metric-value-warn'
+        }),
+        renderMetricCard({
+            icon: 'users',
+            label: t.revenue_student_total || 'Students',
+            value: escapeHtml(String(studentTotal)),
+            meta: escapeHtml(t.revenue_student_total_hint || 'On roster')
+        }),
+        renderMetricCard({
+            icon: 'receipt',
+            label: t.revenue_kpi_avg_ticket || 'Avg ticket',
+            value: escapeHtml(formatPrice(kpis.avgTicket, currency)),
+            meta: escapeHtml(t.revenue_kpi_avg_ticket_hint || '')
+        }),
+        renderMetricCard({
+            icon: 'bar-chart-2',
+            label: t.revenue_kpi_volume || t.revenue_chart_volume_title || 'Payment volume',
+            value: escapeHtml(String(kpis.collectedCount || 0)),
+            meta: escapeHtml(t.revenue_kpi_approved_only || 'approved payments'),
+            deltaTone: approvedDelta?.tone || 'neutral',
+            deltaText: approvedDeltaText
+        })
+    ];
+
+    if (kpis.aurePendingSuelta != null) {
+        cards.push(renderMetricCard({
+            icon: 'calendar-clock',
+            label: t.revenue_kpi_aure_pending_suelta || 'Pending clase suelta',
+            value: escapeHtml(String(kpis.aurePendingSuelta ?? 0)),
+            meta: escapeHtml(t.revenue_kpi_aure_pending_suelta_hint || '')
+        }));
+    }
+
+    return `
+        <section class="rev-zone-at-a-glance" aria-labelledby="rev-at-a-glance-heading">
+            <h2 id="rev-at-a-glance-heading" class="rev-zone-heading">${escapeHtml(t.revenue_zone_at_a_glance || 'At a glance')}</h2>
+            <div class="rev-at-a-glance">${cards.join('')}</div>
+        </section>`;
+}
+
+function renderRevenuePeriodSnapshot(kpis, compare, monthlySeries, narrativeHeadline, t, currency) {
+    if (!kpis) return '';
+    const sparkVals = (monthlySeries?.buckets || []).map((b) => Number(b.collected) || 0).slice(-12);
+    const spark = buildSparklineSvg(sparkVals, { w: 120, h: 32 });
+    const { collectedDelta, collectedDeltaText } = buildPeriodDeltaTexts(compare, t);
+    const momPill = collectedDelta && collectedDelta.abs > 0
+        ? deltaPill(collectedDelta.tone, `${collectedDelta.sign}${collectedDelta.abs}%`)
+        : (collectedDelta && collectedDelta.abs === 0
+            ? deltaPill('neutral', t.revenue_narrative_flat || 'unchanged')
+            : '');
+
+    const insightLine = narrativeHeadline
+        ? `<p class="rev-snapshot-insight">${escapeHtml(narrativeHeadline)}</p>`
         : '';
 
     return `
-        <div class="rev-analytics-hero rev-exec-row">
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_collected || 'Collected')}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
-                <div class="rev-stat-meta rev-stat-meta-row">
-                    <span>${escapeHtml((t.revenue_kpi_approved_count || '{count} approved').replace('{count}', String(kpis.collectedCount || 0)))}</span>
-                    ${deltaLabel(collectedDelta?.tone || 'neutral', collectedDeltaText)}
+        <section class="rev-snapshot-card rev-revenue-snapshot" aria-labelledby="rev-revenue-snapshot-heading">
+            <div class="rev-snapshot-card-head">
+                <h2 id="rev-revenue-snapshot-heading" class="rev-snapshot-title">${escapeHtml(t.revenue_snapshot_revenue_title || 'Revenue this period')}</h2>
+                <p class="rev-snapshot-sub">${escapeHtml(t.revenue_snapshot_revenue_sub || 'Collected for your selected filters')}</p>
+            </div>
+            <div class="rev-revenue-snapshot-row">
+                <div class="rev-revenue-snapshot-main">
+                    <div class="rev-revenue-snapshot-amount">${escapeHtml(formatPrice(kpis.collected, currency))}</div>
+                    <div class="rev-revenue-snapshot-pills">
+                        ${momPill}
+                        ${!collectedDelta && collectedDeltaText ? deltaPill('neutral', collectedDeltaText) : ''}
+                    </div>
                 </div>
-                <div class="rev-stat-spark" aria-hidden="true">${spark}</div>
+                <div class="rev-revenue-snapshot-spark" aria-hidden="true">${spark}</div>
             </div>
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_pending || 'To collect')}</div>
-                <div class="rev-stat-value rev-stat-value-warn">${escapeHtml(formatPrice(kpis.pendingSum, currency))}</div>
-                <div class="rev-stat-meta rev-stat-meta-row">
-                    <span>${escapeHtml((t.revenue_kpi_pending_count || '{count} pending').replace('{count}', String(kpis.pendingCount || 0)))}</span>
-                    ${pendingPct != null ? deltaLabel(pendingTone, `${pendingPct}% ${t.revenue_pending_of_total || 'of total in scope'}`) : ''}
-                </div>
-            </div>
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_avg_ticket || 'Avg ticket')}</div>
-                <div class="rev-stat-value">${escapeHtml(formatPrice(kpis.avgTicket, currency))}</div>
-                <div class="rev-stat-meta">${escapeHtml(t.revenue_kpi_avg_ticket_hint || '')}</div>
-            </div>
-            <div class="rev-stat-card rev-stat-card--exec">
-                <div class="rev-stat-label">${escapeHtml(t.revenue_kpi_volume || t.revenue_chart_volume_title || 'Payment volume')}</div>
-                <div class="rev-stat-value">${escapeHtml(String(kpis.collectedCount || 0))}</div>
-                <div class="rev-stat-meta rev-stat-meta-row">
-                    <span>${escapeHtml(t.revenue_kpi_approved_only || 'approved payments')}</span>
-                    ${deltaLabel(approvedDelta?.tone || 'neutral', approvedDeltaText)}
-                </div>
-            </div>
-            ${aureCard}
+            ${insightLine}
+            <a class="rev-snapshot-jump" href="#rev-deep-dive">${escapeHtml(t.revenue_scroll_to_charts || 'View detailed charts')}</a>
+        </section>`;
+}
+
+function renderZoneDivider(t) {
+    return `
+        <div id="rev-deep-dive" class="rev-zone-divider" role="separator" aria-label="${escapeHtml(t.revenue_zone_deep_dive || 'Detailed analysis')}">
+            <span class="rev-zone-divider-text">${escapeHtml(t.revenue_zone_deep_dive || 'Detailed analysis')}</span>
         </div>`;
 }
 
@@ -322,12 +392,13 @@ function renderRevenueInsightsSection(kpis, filtered, range, t) {
         paymentRequests: state.paymentRequests || []
     }, t);
 
-    const narrativeBlock = narrative.headline ? `
-        <div class="rev-narrative">
-            <p class="rev-narrative-headline-label">${escapeHtml(t.revenue_narrative_in_one_sentence || 'In one sentence')}</p>
-            <p class="rev-narrative-headline">${escapeHtml(narrative.headline)}</p>
-            ${(narrative.paragraphs || []).map((p) => `<p class="rev-narrative-p">${escapeHtml(p)}</p>`).join('')}
-        </div>` : '';
+    const paragraphs = (narrative.paragraphs || []).filter(Boolean);
+    const narrativeExpand = paragraphs.length
+        ? `<details class="rev-narrative-expand">
+            <summary class="rev-narrative-expand-summary">${escapeHtml(t.revenue_narrative_read_more || 'Read full summary')}</summary>
+            ${paragraphs.map((p) => `<p class="rev-narrative-p">${escapeHtml(p)}</p>`).join('')}
+        </details>`
+        : '';
 
     const items = insights.map((ins) => {
         const tone = ins.tone || 'neutral';
@@ -343,20 +414,24 @@ function renderRevenueInsightsSection(kpis, filtered, range, t) {
         ? `<ul class="rev-insights-list">${items}</ul>`
         : '';
 
-    if (!narrativeBlock && !bulletsBlock) return '';
+    if (!bulletsBlock && !narrativeExpand) return '';
 
     return `
         <section class="rev-insights-panel" aria-labelledby="rev-insights-heading">
             <h2 id="rev-insights-heading" class="rev-section-heading">${escapeHtml(t.revenue_insights_title || t.revenue_kpi_preset_summary || 'Executive summary')}</h2>
-            ${narrativeBlock}
             ${bulletsBlock ? `<h3 class="rev-insights-bullets-label">${escapeHtml(t.revenue_insights_bullets || 'Key points')}</h3>${bulletsBlock}` : ''}
+            ${narrativeExpand}
         </section>`;
 }
 
-function chartDescHtml(t, key, fallback) {
+function chartDescDetailsHtml(t, key, fallback) {
     const text = t[key] || fallback;
     if (!text) return '';
-    return `<p class="rev-chart-desc">${escapeHtml(text)}</p>`;
+    const summary = t.revenue_chart_why_label || 'Why this chart?';
+    return `<details class="rev-chart-desc-details">
+        <summary class="rev-chart-desc-summary">${escapeHtml(summary)}</summary>
+        <p class="rev-chart-desc">${escapeHtml(text)}</p>
+    </details>`;
 }
 
 function renderMonthlyTrendHero(series, range, t, currency) {
@@ -381,7 +456,7 @@ function renderMonthlyTrendHero(series, range, t, currency) {
     const ytdSection = showYtd ? `
             <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-ytd-heading">
                 <h3 id="rev-ytd-heading" class="rev-chart-title">${escapeHtml((t.revenue_chart_ytd_title || 'Cumulative {year}').replace('{year}', String(series.filterYear)))}</h3>
-                ${chartDescHtml(t, 'revenue_chart_desc_ytd', 'Running total of collected revenue within the selected calendar year.')}
+                ${chartDescDetailsHtml(t, 'revenue_chart_desc_ytd', 'Running total of collected revenue within the selected calendar year.')}
                 <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                     <div class="rev-canvas-wrap"><canvas id="rev-chart-ytd-cumulative" aria-label="${escapeHtml(t.revenue_chart_ytd_title || 'YTD')}"></canvas></div>
                 </div>
@@ -391,7 +466,7 @@ function renderMonthlyTrendHero(series, range, t, currency) {
         <div class="rev-analytics-monthly-block">
             <section class="rev-chart-panel rev-chart-panel-hero" aria-labelledby="rev-monthly-trend-heading">
                 <h3 id="rev-monthly-trend-heading" class="rev-chart-title">${escapeHtml(t.revenue_chart_monthly_title || 'Monthly collected revenue')}</h3>
-                ${chartDescHtml(t, 'revenue_chart_desc_monthly', 'Approved payment totals by month for the last 13 months. Each bar is collected revenue; hover for payment count and change vs the prior month.')}
+                ${chartDescDetailsHtml(t, 'revenue_chart_desc_monthly', 'Approved payment totals by month for the last 13 months. Each bar is collected revenue; hover for payment count and change vs the prior month.')}
                 <p class="rev-chart-subtitle">${escapeHtml(t.revenue_chart_monthly_subtitle || 'Last 13 months · hover or tap a bar for details')}</p>
                 <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas rev-chart-plot--hero">
                     <div class="rev-canvas-wrap rev-canvas-wrap--hero"><canvas id="rev-chart-monthly-trend" aria-label="${escapeHtml(t.revenue_chart_monthly_title || 'Monthly revenue')}"></canvas></div>
@@ -401,26 +476,52 @@ function renderMonthlyTrendHero(series, range, t, currency) {
             <div class="rev-analytics-secondary-charts">
                 <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-mom-heading">
                     <h3 id="rev-mom-heading" class="rev-chart-title">${escapeHtml(t.revenue_chart_mom_title || 'Month-over-month change')}</h3>
-                    ${chartDescHtml(t, 'revenue_chart_desc_mom', 'Percent change in collected revenue vs the previous month. Green is growth, orange is decline.')}
+                    ${chartDescDetailsHtml(t, 'revenue_chart_desc_mom', 'Percent change in collected revenue vs the previous month. Green is growth, orange is decline.')}
                     <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                         <div class="rev-canvas-wrap"><canvas id="rev-chart-mom-delta" aria-label="${escapeHtml(t.revenue_chart_mom_title || 'MoM')}"></canvas></div>
                     </div>
                 </section>
                 <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-volume-heading">
                     <h3 id="rev-volume-heading" class="rev-chart-title">${escapeHtml(t.revenue_chart_volume_title || 'Payment volume')}</h3>
-                    ${chartDescHtml(t, 'revenue_chart_desc_volume', 'Number of approved payments per month, regardless of amount.')}
+                    ${chartDescDetailsHtml(t, 'revenue_chart_desc_volume', 'Number of approved payments per month, regardless of amount.')}
                     <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                         <div class="rev-canvas-wrap"><canvas id="rev-chart-payment-volume" aria-label="${escapeHtml(t.revenue_chart_volume_title || 'Volume')}"></canvas></div>
                     </div>
                 </section>
                 <section class="rev-chart-panel rev-chart-panel-half" aria-labelledby="rev-health-heading">
                     <h3 id="rev-health-heading" class="rev-chart-title">${escapeHtml(t.revenue_chart_health_title || 'Collection health by month')}</h3>
-                    ${chartDescHtml(t, 'revenue_chart_desc_health', 'Stacked collected (approved) vs pending amounts per month.')}
+                    ${chartDescDetailsHtml(t, 'revenue_chart_desc_health', 'Stacked collected (approved) vs pending amounts per month.')}
                     <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--canvas">
                         <div class="rev-canvas-wrap"><canvas id="rev-chart-collection-health" aria-label="${escapeHtml(t.revenue_chart_health_title || 'Health')}"></canvas></div>
                     </div>
                 </section>
                 ${ytdSection}
+            </div>
+        </div>`;
+}
+
+function renderDeepDiveSection(kpis, filtered, range, monthlySeries, mix, topPackages, timeSeries, t, currency) {
+    return `
+        <div class="rev-deep-dive">
+            ${renderMonthlyTrendHero(monthlySeries, range, t, currency)}
+            ${renderRevenueInsightsSection(kpis, filtered, range, t)}
+            ${renderRevenueStudentAnalyticsSection(kpis, t, currency)}
+            <div class="rev-analytics-charts">
+                <section class="rev-chart-panel">
+                    <h3 class="rev-chart-title">${escapeHtml(t.revenue_chart_mix_title || t.revenue_kpi_payment_mix || 'Payment mix')}</h3>
+                    <div class="rev-chart-panel-body rev-chart-mix-body rev-chart-plot">
+                        ${buildPaymentMixDonutSvg(mix, t)}
+                        ${buildPaymentMixLegendHtml(mix, currency, t)}
+                    </div>
+                </section>
+                <section class="rev-chart-panel">
+                    <h3 class="rev-chart-title">${escapeHtml(t.revenue_chart_packages_title || t.revenue_kpi_top_packages || 'Top packages')}</h3>
+                    <div class="rev-chart-panel-body rev-chart-plot">${buildHorizontalBarChartHtml(topPackages, currency, t)}</div>
+                </section>
+                <section class="rev-chart-panel rev-chart-panel-wide">
+                    <h3 class="rev-chart-title">${escapeHtml(t.revenue_chart_timeline_title || 'Revenue over time')}</h3>
+                    <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--timeline">${buildTimeSeriesBarSvg(timeSeries, currency, t)}</div>
+                </section>
             </div>
         </div>`;
 }
@@ -437,6 +538,13 @@ export function renderRevenueAnalyticsDashboard(kpis, filtered, range, t, curren
         highlightMonthKey: getRevenueHighlightMonthKey(range)
     });
     const compare = computePeriodComparison(kpis, range);
+    const analytics = kpis.studentAnalytics || null;
+
+    const narrative = buildAnalystNarrative(kpis, {
+        filtered,
+        range,
+        paymentRequests: state.paymentRequests || []
+    }, t);
 
     const analyzedAt = kpis.analyzedAt
         ? new Date(kpis.analyzedAt).toLocaleString(getRevenueChartLocale(state.language), { dateStyle: 'short', timeStyle: 'short' })
@@ -445,43 +553,39 @@ export function renderRevenueAnalyticsDashboard(kpis, filtered, range, t, curren
         ? (t.revenue_kpi_source_rpc || 'Server summary')
         : (t.revenue_kpi_source_client || 'Calculated on device');
 
+    const snapshotsRow = `
+        <div class="rev-snapshots-row">
+            ${renderRevenuePeriodSnapshot(kpis, compare, monthlySeries, narrative.headline, t, currency)}
+            ${renderStudentRosterSnapshot(analytics, t)}
+        </div>`;
+
     return `
-        ${renderExecutiveSummaryRow(kpis, compare, monthlySeries, currency, t)}
+        ${renderAtAGlanceMetrics(kpis, compare, analytics, currency, t)}
         <div class="rev-analytics-meta">
             <span>${escapeHtml((t.revenue_kpi_payments_in_scope || '{count} payments').replace('{count}', String(kpis.filteredCount || 0)))}</span>
             ${analyzedAt ? `<span> · ${escapeHtml(analyzedAt)}</span>` : ''}
             <span class="rev-analytics-source">${escapeHtml(sourceNote)}</span>
         </div>
-        ${renderMonthlyTrendHero(monthlySeries, range, t, currency)}
-        ${renderRevenueInsightsSection(kpis, filtered, range, t)}
-        ${renderRevenueStudentAnalyticsSection(kpis, t, currency)}
-        <div class="rev-analytics-charts">
-            <section class="rev-chart-panel">
-                <h3 class="rev-chart-title">${escapeHtml(t.revenue_chart_mix_title || t.revenue_kpi_payment_mix || 'Payment mix')}</h3>
-                <div class="rev-chart-panel-body rev-chart-mix-body rev-chart-plot">
-                    ${buildPaymentMixDonutSvg(mix, t)}
-                    ${buildPaymentMixLegendHtml(mix, currency, t)}
-                </div>
-            </section>
-            <section class="rev-chart-panel">
-                <h3 class="rev-chart-title">${escapeHtml(t.revenue_chart_packages_title || t.revenue_kpi_top_packages || 'Top packages')}</h3>
-                <div class="rev-chart-panel-body rev-chart-plot">${buildHorizontalBarChartHtml(topPackages, currency, t)}</div>
-            </section>
-            <section class="rev-chart-panel rev-chart-panel-wide">
-                <h3 class="rev-chart-title">${escapeHtml(t.revenue_chart_timeline_title || 'Revenue over time')}</h3>
-                <div class="rev-chart-panel-body rev-chart-plot rev-chart-plot--timeline">${buildTimeSeriesBarSvg(timeSeries, currency, t)}</div>
-            </section>
-        </div>`;
+        ${snapshotsRow}
+        ${renderZoneDivider(t)}
+        ${renderDeepDiveSection(kpis, filtered, range, monthlySeries, mix, topPackages, timeSeries, t, currency)}`;
 }
 
 export function renderRevenueAnalyticsSkeleton(t) {
     return `
         <div class="rev-analytics-skeleton" aria-busy="true" aria-live="polite">
-            <div class="rev-skeleton-hero">
+            <div class="rev-skeleton-zone-label"></div>
+            <div class="rev-skeleton-at-a-glance">
+                <div class="rev-skeleton-block"></div>
                 <div class="rev-skeleton-block"></div>
                 <div class="rev-skeleton-block"></div>
                 <div class="rev-skeleton-block"></div>
             </div>
+            <div class="rev-skeleton-snapshots">
+                <div class="rev-skeleton-panel"></div>
+                <div class="rev-skeleton-panel"></div>
+            </div>
+            <div class="rev-skeleton-divider"></div>
             <div class="rev-skeleton-monthly">
                 <div class="rev-skeleton-panel rev-skeleton-panel-hero"></div>
                 <div class="rev-skeleton-secondary">
@@ -489,24 +593,12 @@ export function renderRevenueAnalyticsSkeleton(t) {
                     <div class="rev-skeleton-panel"></div>
                 </div>
             </div>
-            <div class="rev-skeleton-insights">
-                <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
-                <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
-                <div class="rev-skeleton-insight-card"><div class="rev-skeleton-line wide"></div><div class="rev-skeleton-line"></div></div>
-            </div>
             <div class="rev-skeleton-student">
                 <div class="rev-skeleton-line wide"></div>
-                <div class="rev-skeleton-hero" style="grid-template-columns:repeat(4,1fr)">
-                    <div class="rev-skeleton-block"></div>
-                    <div class="rev-skeleton-block"></div>
-                    <div class="rev-skeleton-block"></div>
-                    <div class="rev-skeleton-block"></div>
+                <div class="rev-student-panels">
+                    <div class="rev-skeleton-panel wide"></div>
+                    <div class="rev-skeleton-panel"></div>
                 </div>
-            </div>
-            <div class="rev-skeleton-charts">
-                <div class="rev-skeleton-panel"></div>
-                <div class="rev-skeleton-panel"></div>
-                <div class="rev-skeleton-panel wide"></div>
             </div>
             <p class="rev-skeleton-label"><i data-lucide="loader-2" size="18" class="spin"></i> ${escapeHtml(t.revenue_kpi_analyzing || 'Loading…')}</p>
         </div>`;

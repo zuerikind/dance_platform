@@ -7,6 +7,19 @@ import { formatPrice } from '../utils.js';
 import { isAureSchool } from './revenueKpis.js';
 
 const TOP_LIMIT = 10;
+const LEVEL_COLORS = {
+    principiante: 'var(--system-teal, #30b0c7)',
+    avanzada: 'var(--system-blue, #007aff)',
+    unset: 'var(--system-gray3, #c7c7cc)'
+};
+
+function escapeSvgText(s) {
+    return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
 
 function normalizeByLevel(raw) {
     const src = raw && typeof raw === 'object' ? raw : {};
@@ -98,6 +111,96 @@ function levelLabel(key, t, aure) {
     return key;
 }
 
+export function buildStudentLevelDonutSvg(byLevel, t, aure, size = 120) {
+    const total = byLevel.total || 0;
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size * 0.34;
+    const stroke = size * 0.13;
+    const circ = 2 * Math.PI * r;
+    const emptyLabel = escapeSvgText(t.revenue_student_no_roster || '—');
+
+    if (total <= 0) {
+        return `<svg class="rev-chart-donut rev-student-snapshot-donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--system-gray6)" stroke-width="${stroke}"/>
+            <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="var(--text-secondary)" font-size="11" font-weight="600">${emptyLabel}</text>
+        </svg>`;
+    }
+
+    const segments = [
+        { key: 'principiante', count: byLevel.principiante, color: LEVEL_COLORS.principiante },
+        { key: 'avanzada', count: byLevel.avanzada, color: LEVEL_COLORS.avanzada },
+        { key: 'unset', count: byLevel.unset, color: LEVEL_COLORS.unset }
+    ].filter((s) => s.count > 0);
+
+    let offset = circ * 0.25;
+    const arcs = segments.map((seg) => {
+        const len = (seg.count / total) * circ;
+        const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${stroke}"
+            stroke-dasharray="${len} ${circ - len}" stroke-dashoffset="${offset}" stroke-linecap="round"/>`;
+        offset -= len;
+        return arc;
+    }).join('');
+
+    const topSeg = segments.reduce((a, b) => (b.count > (a?.count || 0) ? b : a), segments[0]);
+    const topPct = topSeg ? Math.round((topSeg.count / total) * 100) : 0;
+    const centerLabel = escapeSvgText(levelLabel(topSeg?.key || 'principiante', t, aure));
+
+    return `<svg class="rev-chart-donut rev-student-snapshot-donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${escapeSvgText(t.revenue_student_level_chart_aria || 'Student levels')}">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--system-gray6)" stroke-width="${stroke}" opacity="0.35"/>
+        ${arcs}
+        <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="var(--text-primary)" font-size="9" font-weight="700">${centerLabel}</text>
+        <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="800">${topPct}%</text>
+    </svg>`;
+}
+
+function buildLevelChipsHtml(byLevel, t, aure) {
+    const total = byLevel.total || 0;
+    if (total <= 0) return '';
+    const keys = ['principiante', 'avanzada', 'unset'];
+    return `<div class="rev-student-level-chips">
+        ${keys.map((key) => {
+            const count = byLevel[key] || 0;
+            if (count <= 0) return '';
+            const pct = Math.round((count / total) * 100);
+            return `<span class="rev-student-level-chip rev-student-level-chip--${key}">
+                <span class="rev-student-level-dot rev-student-level-dot--${key}" aria-hidden="true"></span>
+                <span class="rev-student-level-chip-label">${escapeHtml(levelLabel(key, t, aure))}</span>
+                <span class="rev-student-level-chip-value">${count} · ${pct}%</span>
+            </span>`;
+        }).join('')}
+    </div>`;
+}
+
+/** Compact roster snapshot for the top of the indicators dashboard. */
+export function renderStudentRosterSnapshot(analytics, t) {
+    if (!analytics) return '';
+    const aure = isAureSchool(state.currentSchool);
+    const byLevel = analytics.byLevel || { total: 0, principiante: 0, avanzada: 0, unset: 0 };
+    const levelNote = aure
+        ? (t.revenue_student_level_note_aure || 'Current roster by Aure level (not filtered by period).')
+        : (t.revenue_student_level_note || 'Current roster by assigned level tag.');
+
+    return `
+        <section class="rev-snapshot-card rev-student-snapshot" aria-labelledby="rev-student-snapshot-heading">
+            <div class="rev-snapshot-card-head">
+                <h2 id="rev-student-snapshot-heading" class="rev-snapshot-title">${escapeHtml(t.revenue_student_snapshot_title || 'Students')}</h2>
+                <p class="rev-snapshot-sub">${escapeHtml(t.revenue_student_snapshot_sub || 'Roster by level')}</p>
+            </div>
+            <div class="rev-student-snapshot-body">
+                <div class="rev-student-snapshot-metric">
+                    <span class="rev-student-snapshot-total-label">${escapeHtml(t.revenue_student_total || 'Students')}</span>
+                    <span class="rev-student-snapshot-total-value">${byLevel.total}</span>
+                </div>
+                <div class="rev-student-snapshot-visual">
+                    ${buildStudentLevelDonutSvg(byLevel, t, aure, 120)}
+                    ${buildLevelChipsHtml(byLevel, t, aure)}
+                </div>
+            </div>
+            <p class="rev-snapshot-footnote">${escapeHtml(levelNote)}</p>
+        </section>`;
+}
+
 function buildLevelDistributionHtml(byLevel, t, aure) {
     const total = byLevel.total || 0;
     if (total <= 0) {
@@ -171,7 +274,8 @@ function buildRankedTableHtml(rows, t, currency, mode) {
     </ol>`;
 }
 
-export function renderRevenueStudentAnalyticsSection(kpis, t, currency) {
+/** Deep-dive student panels (no duplicate summary stat cards). */
+export function renderRevenueStudentAnalyticsSection(kpis, t, currency, opts = {}) {
     const analytics = kpis?.studentAnalytics;
     if (!analytics) return '';
 
@@ -188,28 +292,6 @@ export function renderRevenueStudentAnalyticsSection(kpis, t, currency) {
             <div class="rev-student-analytics-header">
                 <h2 id="rev-student-analytics-heading" class="rev-section-heading">${escapeHtml(t.revenue_student_section_title || 'Student analysis')}</h2>
                 <p class="rev-student-analytics-sub">${escapeHtml(t.revenue_student_section_subtitle || 'Roster levels, top pack buyers, and attendance risk in this period.')}</p>
-            </div>
-            <div class="rev-student-summary-cards">
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(t.revenue_student_total || 'Students')}</div>
-                    <div class="rev-stat-value">${byLevel.total}</div>
-                    <div class="rev-stat-meta">${escapeHtml(t.revenue_student_total_hint || 'Active roster')}</div>
-                </div>
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(levelLabel('principiante', t, aure))}</div>
-                    <div class="rev-stat-value">${byLevel.principiante}</div>
-                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round((byLevel.principiante / byLevel.total) * 100)}%` : '—'}</div>
-                </div>
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(levelLabel('avanzada', t, aure))}</div>
-                    <div class="rev-stat-value">${byLevel.avanzada}</div>
-                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round((byLevel.avanzada / byLevel.total) * 100)}%` : '—'}</div>
-                </div>
-                <div class="rev-stat-card rev-stat-card-student">
-                    <div class="rev-stat-label">${escapeHtml(levelLabel('unset', t, aure))}</div>
-                    <div class="rev-stat-value">${byLevel.unset}</div>
-                    <div class="rev-stat-meta">${byLevel.total ? `${Math.round((byLevel.unset / byLevel.total) * 100)}%` : '—'}</div>
-                </div>
             </div>
             <p class="rev-student-period-note">${escapeHtml(periodNote)}</p>
             <div class="rev-student-panels">
@@ -236,12 +318,6 @@ export function renderRevenueStudentAnalyticsSkeleton(t) {
     return `
         <section class="rev-student-analytics rev-student-analytics--skeleton" aria-busy="true">
             <div class="rev-skeleton-line wide" style="height:18px;margin-bottom:8px"></div>
-            <div class="rev-student-summary-cards">
-                <div class="rev-skeleton-block"></div>
-                <div class="rev-skeleton-block"></div>
-                <div class="rev-skeleton-block"></div>
-                <div class="rev-skeleton-block"></div>
-            </div>
             <div class="rev-student-panels">
                 <div class="rev-skeleton-panel wide"></div>
                 <div class="rev-skeleton-panel"></div>

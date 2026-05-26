@@ -66,6 +66,32 @@ function monthRangeIso(year, month) {
 
 
 
+/** Human-readable label for the active revenue period (filters chip). */
+export function formatRevenueActivePeriodLabel(t, language) {
+    const locale = getRevenueFilterLocale(language);
+    const sel = getRevenueFilterSelection();
+    if (sel.mode === 'allTime') {
+        return t.revenue_period_all_time || t.revenue_narrative_period_all || 'All time';
+    }
+    if (sel.mode === 'month') {
+        const d = new Date(sel.year, sel.month, 1);
+        return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    }
+    const start = state.adminRevenueDateStart;
+    const end = state.adminRevenueDateEnd;
+    const fmt = (iso) => {
+        const d = new Date(iso + 'T00:00:00');
+        if (Number.isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+    if (start && end) {
+        if (start === end) return fmt(start);
+        return `${fmt(start)} – ${fmt(end)}`;
+    }
+    if (start) return fmt(start);
+    return t.revenue_period_custom || 'Custom range';
+}
+
 /** @returns {{ mode: 'allTime' } | { mode: 'month', year: number, month: number } | { mode: 'custom' }} */
 
 export function getRevenueFilterSelection() {
