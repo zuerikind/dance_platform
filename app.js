@@ -3,6 +3,130 @@
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // node_modules/@vercel/analytics/dist/index.mjs
+  var initQueue = () => {
+    if (window.va) return;
+    window.va = function a(...params) {
+      if (!window.vaq) window.vaq = [];
+      window.vaq.push(params);
+    };
+  };
+  var name = "@vercel/analytics";
+  var version = "2.0.1";
+  function isBrowser() {
+    return typeof window !== "undefined";
+  }
+  function detectEnvironment() {
+    try {
+      const env = "development";
+      if (env === "development" || env === "test") {
+        return "development";
+      }
+    } catch {
+    }
+    return "production";
+  }
+  function setMode(mode = "auto") {
+    if (mode === "auto") {
+      window.vam = detectEnvironment();
+      return;
+    }
+    window.vam = mode;
+  }
+  function getMode() {
+    const mode = isBrowser() ? window.vam : detectEnvironment();
+    return mode || "production";
+  }
+  function isDevelopment() {
+    return getMode() === "development";
+  }
+  function getScriptSrc(props) {
+    if (props.scriptSrc) {
+      return makeAbsolute(props.scriptSrc);
+    }
+    if (isDevelopment()) {
+      return "https://va.vercel-scripts.com/v1/script.debug.js";
+    }
+    if (props.basePath) {
+      return makeAbsolute(`${props.basePath}/insights/script.js`);
+    }
+    return "/_vercel/insights/script.js";
+  }
+  function loadProps(explicitProps, confString) {
+    var _a;
+    let props = explicitProps;
+    if (confString) {
+      try {
+        props = {
+          ...(_a = JSON.parse(confString)) == null ? void 0 : _a.analytics,
+          ...explicitProps
+        };
+      } catch {
+      }
+    }
+    setMode(props.mode);
+    const dataset = {
+      sdkn: name + (props.framework ? `/${props.framework}` : ""),
+      sdkv: version
+    };
+    if (props.disableAutoTrack) {
+      dataset.disableAutoTrack = "1";
+    }
+    if (props.viewEndpoint) {
+      dataset.viewEndpoint = makeAbsolute(props.viewEndpoint);
+    }
+    if (props.eventEndpoint) {
+      dataset.eventEndpoint = makeAbsolute(props.eventEndpoint);
+    }
+    if (props.sessionEndpoint) {
+      dataset.sessionEndpoint = makeAbsolute(props.sessionEndpoint);
+    }
+    if (isDevelopment() && props.debug === false) {
+      dataset.debug = "false";
+    }
+    if (props.dsn) {
+      dataset.dsn = props.dsn;
+    }
+    if (props.endpoint) {
+      dataset.endpoint = props.endpoint;
+    } else if (props.basePath) {
+      dataset.endpoint = makeAbsolute(`${props.basePath}/insights`);
+    }
+    return {
+      beforeSend: props.beforeSend,
+      src: getScriptSrc(props),
+      dataset
+    };
+  }
+  function makeAbsolute(url) {
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/") ? url : `/${url}`;
+  }
+  function inject(props = {
+    debug: true
+  }, confString) {
+    var _a;
+    if (!isBrowser()) return;
+    const { beforeSend, src, dataset } = loadProps(props, confString);
+    initQueue();
+    if (beforeSend) {
+      (_a = window.va) == null ? void 0 : _a.call(window, "beforeSend", beforeSend);
+    }
+    if (document.head.querySelector(`script[src*="${src}"]`)) return;
+    const script = document.createElement("script");
+    script.src = src;
+    for (const [key, value] of Object.entries(dataset)) {
+      script.dataset[key] = value;
+    }
+    script.defer = true;
+    script.onerror = () => {
+      const errorMessage = isDevelopment() ? "Please check if any ad blockers are enabled and try again." : "Be sure to enable Web Analytics for your project and deploy again. See https://vercel.com/docs/analytics/quickstart for more information.";
+      console.log(
+        `[Vercel Web Analytics] Failed to load script from ${src}. ${errorMessage}`
+      );
+    };
+    document.head.appendChild(script);
+  }
+
   // src/config.js
   var AURE_SCHOOL_ID = "38e570f9-5ca0-435e-8e99-70ebb5ae3b64";
   var CALENDLY_FEATURE_ENABLED = false;
@@ -623,9 +747,9 @@
       const byId = subs.find((s) => String(s.id) === String(payment.sub_id));
       if (byId) return byId;
     }
-    const name = (payment.sub_name || "").trim().toLowerCase();
-    if (!name) return null;
-    return subs.find((s) => (s.name || "").trim().toLowerCase() === name) || null;
+    const name2 = (payment.sub_name || "").trim().toLowerCase();
+    if (!name2) return null;
+    return subs.find((s) => (s.name || "").trim().toLowerCase() === name2) || null;
   }
   function isClaseSueltaSubscription(sub, subName) {
     if (sub && sub.limit_count === 1) return true;
@@ -837,7 +961,7 @@
     return `<ol class="rev-student-rank-list">
         ${rows.map((row, i) => {
       const rank = i + 1;
-      const name = escapeHtml((row.name || "\u2014").trim());
+      const name2 = escapeHtml((row.name || "\u2014").trim());
       let meta;
       if (mode === "noshow") {
         const n = row.no_show_count || 0;
@@ -855,7 +979,7 @@
                 <li class="rev-student-rank-row">
                     <span class="rev-student-rank-num">${rank}</span>
                     <span class="rev-student-rank-body">
-                        <span class="rev-student-rank-name">${name}</span>
+                        <span class="rev-student-rank-name">${name2}</span>
                         <span class="rev-student-rank-meta">${meta}</span>
                     </span>
                 </li>`;
@@ -999,9 +1123,9 @@
     };
     const pkgMap = {};
     approved.forEach((r) => {
-      const name = (r.sub_name || "").trim() || "\u2014";
-      const key = name.toLowerCase();
-      if (!pkgMap[key]) pkgMap[key] = { sub_name: name, total: 0, count: 0 };
+      const name2 = (r.sub_name || "").trim() || "\u2014";
+      const key = name2.toLowerCase();
+      if (!pkgMap[key]) pkgMap[key] = { sub_name: name2, total: 0, count: 0 };
       pkgMap[key].total += parseFloat(r.price) || 0;
       pkgMap[key].count += 1;
     });
@@ -3672,12 +3796,12 @@
         ${rows.map((row) => {
       const val = Number(row.total) || 0;
       const pct = Math.round(val / maxVal * 100);
-      const name = escapeHtml((row.sub_name || "\u2014").trim());
+      const name2 = escapeHtml((row.sub_name || "\u2014").trim());
       const amt = escapeHtml(formatPrice(val, currency));
       const title = `${(row.sub_name || "\u2014").trim()} \u2014 ${formatPrice(val, currency)}`;
       return `
             <div class="rev-hbar-row" role="listitem" title="${escapeHtml(title)}">
-                <div class="rev-hbar-label" title="${escapeHtml(title)}">${name}</div>
+                <div class="rev-hbar-label" title="${escapeHtml(title)}">${name2}</div>
                 <div class="rev-hbar-track-wrap">
                     <div class="rev-hbar-track">
                         <div class="rev-hbar-fill" style="width:${pct}%"></div>
@@ -5568,7 +5692,7 @@
     defaults2.describe("animation", {
       _fallback: false,
       _indexable: false,
-      _scriptable: (name) => name !== "onProgress" && name !== "onComplete" && name !== "fn"
+      _scriptable: (name2) => name2 !== "onProgress" && name2 !== "onComplete" && name2 !== "fn"
     });
     defaults2.set("animations", {
       colors: {
@@ -5760,15 +5884,15 @@
     defaults2.route("scale.title", "color", "", "color");
     defaults2.describe("scale", {
       _fallback: false,
-      _scriptable: (name) => !name.startsWith("before") && !name.startsWith("after") && name !== "callback" && name !== "parser",
-      _indexable: (name) => name !== "borderDash" && name !== "tickBorderDash" && name !== "dash"
+      _scriptable: (name2) => !name2.startsWith("before") && !name2.startsWith("after") && name2 !== "callback" && name2 !== "parser",
+      _indexable: (name2) => name2 !== "borderDash" && name2 !== "tickBorderDash" && name2 !== "dash"
     });
     defaults2.describe("scales", {
       _fallback: "scale"
     });
     defaults2.describe("scale.ticks", {
-      _scriptable: (name) => name !== "backdropPadding" && name !== "callback",
-      _indexable: (name) => name !== "backdropPadding"
+      _scriptable: (name2) => name2 !== "backdropPadding" && name2 !== "callback",
+      _indexable: (name2) => name2 !== "backdropPadding"
     });
   }
   var overrides = /* @__PURE__ */ Object.create(null);
@@ -5848,16 +5972,16 @@
     override(scope, values) {
       return set(overrides, scope, values);
     }
-    route(scope, name, targetScope, targetName) {
+    route(scope, name2, targetScope, targetName) {
       const scopeObject = getScope$1(this, scope);
       const targetScopeObject = getScope$1(this, targetScope);
-      const privateName = "_" + name;
+      const privateName = "_" + name2;
       Object.defineProperties(scopeObject, {
         [privateName]: {
-          value: scopeObject[name],
+          value: scopeObject[name2],
           writable: true
         },
-        [name]: {
+        [name2]: {
           enumerable: true,
           get() {
             const local = this[privateName];
@@ -5878,8 +6002,8 @@
     }
   };
   var defaults = /* @__PURE__ */ new Defaults({
-    _scriptable: (name) => !name.startsWith("on"),
-    _indexable: (name) => name !== "events",
+    _scriptable: (name2) => !name2.startsWith("on"),
+    _indexable: (name2) => name2 !== "events",
     hover: {
       _fallback: "interaction"
     },
@@ -6458,7 +6582,7 @@
       isIndexable: isFunction(_indexable) ? _indexable : () => _indexable
     };
   }
-  var readKey = (prefix, name) => prefix ? prefix + _capitalize(name) : name;
+  var readKey = (prefix, name2) => prefix ? prefix + _capitalize(name2) : name2;
   var needsSubResolver = (prop, value) => isObject(value) && prop !== "adapters" && (Object.getPrototypeOf(value) === null || value.constructor === Object);
   function _cached(target, prop, resolve2) {
     if (Object.prototype.hasOwnProperty.call(target, prop) || prop === "constructor") {
@@ -8808,9 +8932,9 @@
     _getStackCount(index2) {
       return this._getStacks(void 0, index2).length;
     }
-    _getStackIndex(datasetIndex, name, dataIndex) {
+    _getStackIndex(datasetIndex, name2, dataIndex) {
       const stacks = this._getStacks(datasetIndex, dataIndex);
-      const index2 = name !== void 0 ? stacks.indexOf(name) : -1;
+      const index2 = name2 !== void 0 ? stacks.indexOf(name2) : -1;
       return index2 === -1 ? stacks.length - 1 : index2;
     }
     _getRuler() {
@@ -9342,8 +9466,8 @@
     indexAxis: "r"
   });
   __publicField(DoughnutController, "descriptors", {
-    _scriptable: (name) => name !== "spacing",
-    _indexable: (name) => name !== "spacing" && !name.startsWith("borderDash") && !name.startsWith("hoverBorderDash")
+    _scriptable: (name2) => name2 !== "spacing",
+    _indexable: (name2) => name2 !== "spacing" && !name2.startsWith("borderDash") && !name2.startsWith("hoverBorderDash")
   });
   __publicField(DoughnutController, "overrides", {
     aspectRatio: 1,
@@ -11276,9 +11400,9 @@
         this
       ]);
     }
-    _callHooks(name) {
-      this.chart.notifyPlugins(name, this.getContext());
-      callback(this.options[name], [
+    _callHooks(name2) {
+      this.chart.notifyPlugins(name2, this.getContext());
+      callback(this.options[name2], [
         this
       ]);
     }
@@ -12832,7 +12956,7 @@
     }
     return false;
   }
-  var version = "4.4.8";
+  var version2 = "4.4.8";
   var KNOWN_POSITIONS = [
     "top",
     "bottom",
@@ -13741,7 +13865,7 @@
   __publicField(Chart, "instances", instances);
   __publicField(Chart, "overrides", overrides);
   __publicField(Chart, "registry", registry);
-  __publicField(Chart, "version", version);
+  __publicField(Chart, "version", version2);
   __publicField(Chart, "getChart", getChart);
   function invalidatePlugins() {
     return each(Chart.instances, (chart) => chart._plugins.invalidate());
@@ -14010,7 +14134,7 @@
   });
   __publicField(ArcElement, "descriptors", {
     _scriptable: true,
-    _indexable: (name) => name !== "borderDash"
+    _indexable: (name2) => name2 !== "borderDash"
   });
   function setStyle(ctx, options, style = options) {
     ctx.lineCap = valueOrDefault(style.borderCapStyle, options.borderCapStyle);
@@ -14295,7 +14419,7 @@
   });
   __publicField(LineElement, "descriptors", {
     _scriptable: true,
-    _indexable: (name) => name !== "borderDash" && name !== "fill"
+    _indexable: (name2) => name2 !== "borderDash" && name2 !== "fill"
   });
   function inRange$1(el, pos, axis, useFinalPosition) {
     const options = el.options;
@@ -15967,13 +16091,13 @@
       }
     },
     descriptors: {
-      _scriptable: (name) => !name.startsWith("on"),
+      _scriptable: (name2) => !name2.startsWith("on"),
       labels: {
-        _scriptable: (name) => ![
+        _scriptable: (name2) => ![
           "generateLabels",
           "filter",
           "sort"
-        ].includes(name)
+        ].includes(name2)
       }
     }
   };
@@ -16463,10 +16587,10 @@
     footer: noop,
     afterFooter: noop
   };
-  function invokeCallbackWithFallback(callbacks, name, ctx, arg) {
-    const result = callbacks[name].call(ctx, arg);
+  function invokeCallbackWithFallback(callbacks, name2, ctx, arg) {
+    const result = callbacks[name2].call(ctx, arg);
     if (typeof result === "undefined") {
-      return defaultCallbacks[name].call(ctx, arg);
+      return defaultCallbacks[name2].call(ctx, arg);
     }
     return result;
   }
@@ -17120,7 +17244,7 @@
       titleFont: "font"
     },
     descriptors: {
-      _scriptable: (name) => name !== "filter" && name !== "itemSort" && name !== "external",
+      _scriptable: (name2) => name2 !== "filter" && name2 !== "itemSort" && name2 !== "external",
       _indexable: false,
       callbacks: {
         _scriptable: false,
@@ -18731,10 +18855,10 @@
     if (typeof document === "undefined") return null;
     return document.body || document.documentElement;
   }
-  function readCssVar(name, fallback) {
+  function readCssVar(name2, fallback) {
     const el = cssThemeEl();
     if (!el) return fallback;
-    const v = getComputedStyle(el).getPropertyValue(name).trim();
+    const v = getComputedStyle(el).getPropertyValue(name2).trim();
     return v || fallback;
   }
   function isDarkChartTheme() {
@@ -22215,9 +22339,9 @@
   window.handleScannerPrivateCheckIn = handleScannerPrivateCheckIn;
   window.updateStickyFooterVisibility = updateStickyFooterVisibility;
   attachRevenueAnalyticsNav();
-  window.slugFromName = (name) => {
-    if (!name || typeof name !== "string") return "";
-    const s = String(name).trim().toLowerCase().replace(/[^a-z0-9\s\-]/g, "").replace(/\s+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+  window.slugFromName = (name2) => {
+    if (!name2 || typeof name2 !== "string") return "";
+    const s = String(name2).trim().toLowerCase().replace(/[^a-z0-9\s\-]/g, "").replace(/\s+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
     return s || "";
   };
   window.renderRatingStars = (rating) => {
@@ -22743,7 +22867,7 @@
         return `<div class="review-categories-inline" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);"><div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 6px;">${(t2("discovery_review_show_categories") || "Categories").replace(/</g, "&lt;")}</div>${rows.join("")}</div>`;
       };
       el.innerHTML = avgLine + `<ul class="profile-my-reviews-list" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">${reviews.map((r) => {
-        const name = escapeHtml(r.target_name || r.target_id);
+        const name2 = escapeHtml(r.target_name || r.target_id);
         const date = r.created_at ? new Date(r.created_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "";
         const stars = typeof window.renderRatingStars === "function" ? window.renderRatingStars(r.rating_overall) : r.rating_overall + "/5";
         const statusLabel = r.status === "flagged" ? t2("reviews_admin_flag_label") || "Pending review" : r.status === "published" ? t2("published") || "Published" : r.status || "";
@@ -22752,7 +22876,7 @@
         const categoriesBlock = profileCategoryStarsHtml(r);
         return `<li><details class="profile-review-details" style="border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden;">
                 <summary style="padding: 12px 14px; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; -webkit-tap-highlight-color: transparent;">
-                    <strong style="font-size: 0.95rem;">${name}</strong>
+                    <strong style="font-size: 0.95rem;">${name2}</strong>
                     <span style="display: inline-flex; align-items: center; gap: 4px;">${stars}<span style="font-size: 0.8rem; color: var(--text-secondary);">\xB7 ${statusLabel}</span></span>
                 </summary>
                 <div style="padding: 0 14px 12px; border-top: 1px solid var(--border);">
@@ -22831,7 +22955,7 @@
   window.submitListingSuggestion = async () => {
     if (!supabaseClient) return;
     const t2 = (k) => window.t ? window.t(k) : k;
-    const name = (document.getElementById("listing-suggest-name") || {}).value?.trim() || "";
+    const name2 = (document.getElementById("listing-suggest-name") || {}).value?.trim() || "";
     const suggestedType = (document.getElementById("listing-suggest-type") || {}).value === "teacher" ? "teacher" : "school";
     const city = (document.getElementById("listing-suggest-city") || {}).value?.trim() || null;
     const country = (document.getElementById("listing-suggest-country") || {}).value?.trim() || null;
@@ -22850,7 +22974,7 @@
       dupEl.style.display = "none";
       dupEl.textContent = "";
     }
-    if (!name) {
+    if (!name2) {
       if (errEl) {
         errEl.textContent = t2("enter_school_name") || "Name required";
         errEl.style.display = "block";
@@ -22869,7 +22993,7 @@
     const res = await fetch(fnUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sess.session.access_token },
-      body: JSON.stringify({ suggested_type: suggestedType, name, city, country, dance_styles, instagram: instagram || void 0, website: website || void 0, notes: notes || void 0 })
+      body: JSON.stringify({ suggested_type: suggestedType, name: name2, city, country, dance_styles, instagram: instagram || void 0, website: website || void 0, notes: notes || void 0 })
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 403) {
@@ -23159,7 +23283,7 @@
             </div>`;
       }
       const placeholder = t2("discovery_placeholder_upload_soon");
-      const name = detail.name || detail.school?.name || "";
+      const name2 = detail.name || detail.school?.name || "";
       const desc = detail.discovery_description || detail.school?.discovery_description || "";
       const country = detail.country || detail.school?.country || "";
       const city = detail.city || detail.school?.city || "";
@@ -23173,7 +23297,7 @@
       const teacherPhotoUrl = detail.teacher_photo_url || detail.school?.teacher_photo_url || "";
       const locations = detail.discovery_locations || detail.school?.discovery_locations || [];
       const locationsList = Array.isArray(locations) ? locations : [];
-      const displayName = name ? escapeHtml(name) : placeholder;
+      const displayName = name2 ? escapeHtml(name2) : placeholder;
       const displayLoc = location ? String(location).replace(/</g, "&lt;") : placeholder;
       const displayDesc = desc ? String(desc).replace(/</g, "&lt;").replace(/\n/g, "<br>") : placeholder;
       const resendLabelDetail = _resendVerificationSending ? t2("resend_sending") || "Sending\u2026" : Date.now() >= (_resendVerificationCooldownUntil || 0) ? t2("resend_verification") || "Resend email" : t2("resend_cooldown") || "Sent. Wait 60s";
@@ -23409,7 +23533,7 @@
       const rawSlug = (s.discovery_slug || s.slug || "").trim();
       const effectiveSlug = rawSlug || (window.slugFromName ? window.slugFromName(s.name || "") : "");
       const path2 = effectiveSlug ? "/discovery/" + encodeURIComponent(effectiveSlug) : "/discovery/id/" + encodeURIComponent(s.id || "");
-      const name = (s.name || "").trim();
+      const name2 = (s.name || "").trim();
       const city = (s.city || "").trim();
       const loc = [city, country].filter(Boolean).join(", ");
       const logo = s.logo_url || "";
@@ -23423,7 +23547,7 @@
       return `<a href="#" class="discovery-card" onclick="event.preventDefault(); window.navigateDiscovery('${path2.replace(/'/g, "\\'")}');">
                         <div class="discovery-card-media">${logo ? `<img src="${String(logo).replace(/"/g, "&quot;")}" alt="" class="discovery-card-logo" />` : `<div class="discovery-card-no-logo"><i data-lucide="image" size="32"></i></div>`}</div>
                         <div class="discovery-card-body">
-                            <span class="discovery-card-name">${name ? String(name).replace(/</g, "&lt;") : placeholder}</span>
+                            <span class="discovery-card-name">${name2 ? String(name2).replace(/</g, "&lt;") : placeholder}</span>
                             <span class="discovery-card-loc">${loc ? String(loc).replace(/</g, "&lt;") : placeholder}</span>
                             ${reviewsLine}
                         </div>
@@ -23550,11 +23674,11 @@
       setStatus(window.t("competition_session_expired") || "Session expired. Link your admin account or log in again.", true);
       return;
     }
-    const name = (document.getElementById("comp-name") || {}).value?.trim() || "";
+    const name2 = (document.getElementById("comp-name") || {}).value?.trim() || "";
     const date = (document.getElementById("comp-date") || {}).value || "";
     const time = (document.getElementById("comp-time") || {}).value || "19:00";
     const id = (document.getElementById("comp-id") || {}).value || "";
-    if (!id && (!name || !date)) {
+    if (!id && (!name2 || !date)) {
       setStatus("", false);
       return;
     }
@@ -23570,7 +23694,7 @@
         const videoPrompt = (document.getElementById("comp-video-prompt") || {}).value?.trim() || "";
         const { data: res, error } = await supabaseClient.rpc("competition_update", {
           p_competition_id: id,
-          p_name: name || (cur.name || "Event"),
+          p_name: name2 || (cur.name || "Event"),
           p_starts_at: startsAt,
           p_questions: questions,
           p_next_steps_text: nextSteps,
@@ -23603,7 +23727,7 @@
         const videoPrompt = (document.getElementById("comp-video-prompt") || {}).value?.trim() || "";
         const { data: res, error } = await supabaseClient.rpc("competition_create", {
           p_school_id: schoolId,
-          p_name: name || "New Event",
+          p_name: name2 || "New Event",
           p_starts_at: startsAt,
           p_questions: questions,
           p_next_steps_text: nextSteps,
@@ -24302,16 +24426,16 @@
         const needsReview = [];
         list.forEach((r) => {
           const key = (r.target_id || "").toString();
-          const name = (r.target_name || r.target_id || key || "\u2014").toString().replace(/</g, "&lt;");
-          if (!bySchool[key]) bySchool[key] = { name, reviews: [] };
+          const name2 = (r.target_name || r.target_id || key || "\u2014").toString().replace(/</g, "&lt;");
+          if (!bySchool[key]) bySchool[key] = { name: name2, reviews: [] };
           bySchool[key].reviews.push(r);
           if (r.status === "flagged" || r.status === "hidden") needsReview.push(r);
         });
         const needsReviewBySchool = {};
         needsReview.forEach((r) => {
           const key = (r.target_id || "").toString();
-          const name = (r.target_name || r.target_id || key || "\u2014").toString().replace(/</g, "&lt;");
-          if (!needsReviewBySchool[key]) needsReviewBySchool[key] = { name, reviews: [] };
+          const name2 = (r.target_name || r.target_id || key || "\u2014").toString().replace(/</g, "&lt;");
+          if (!needsReviewBySchool[key]) needsReviewBySchool[key] = { name: name2, reviews: [] };
           needsReviewBySchool[key].reviews.push(r);
         });
         const sectionCss = "margin-bottom: 1.25rem;";
@@ -25512,13 +25636,13 @@
             <div style="padding: 1.2rem 1.2rem 2rem;">
                 <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 1.25rem;">${(t2("discovery_pick_school_to_signin") || "Choose your studio to sign in and edit your discovery profile.").replace(/</g, "&lt;")}</p>
                 ${list.length ? `<div style="display: flex; flex-direction: column; gap: 0.75rem;">${list.map((s) => {
-          const name = (s.name || "").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+          const name2 = (s.name || "").replace(/</g, "&lt;").replace(/"/g, "&quot;");
           const loc = [s.city, s.country].filter(Boolean).join(", ");
           const idEsc = String(s.id).replace(/'/g, "\\'");
           const nameEsc = (s.name || "").replace(/'/g, "\\'").replace(/\\/g, "\\\\");
           const currencyEsc = (s.currency || "MXN").replace(/'/g, "\\'");
           return `<button type="button" onclick="state.currentSchool={id:'${idEsc}',name:'${nameEsc}',currency:'${currencyEsc}'}; state.currentView='discovery-admin-auth'; saveState(); renderView();" style="width: 100%; padding: 1rem 1.25rem; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-                        <span>${name}</span>${loc ? `<span style="font-size: 13px; color: var(--text-secondary); font-weight: 400;">${loc.replace(/</g, "&lt;")}</span>` : ""}
+                        <span>${name2}</span>${loc ? `<span style="font-size: 13px; color: var(--text-secondary); font-weight: 400;">${loc.replace(/</g, "&lt;")}</span>` : ""}
                     </button>`;
         }).join("")}</div>` : `<p style="color: var(--text-muted); margin-bottom: 1rem;">${(t2("discovery_no_schools") || "No studios listed.").replace(/</g, "&lt;")}</p><button type="button" class="btn-primary" onclick="state._discoveryOnlyEdit=false; state.discoveryPath='/discovery'; history.pushState({},'','/discovery'); window.fetchDiscoveryData().then(function(){ state.currentView=null; renderView(); });">${(t2("discovery_back") || "Back to discovery").replace(/</g, "&lt;")}</button>`}
             </div>`;
@@ -25855,10 +25979,10 @@
                     <div class="calendly-embed-wrap" style="margin: 0 18px 18px; min-height: 630px; border-radius: 16px; overflow: hidden; background: var(--system-gray6,#f2f2f7);">
                         ${(() => {
             const u = (state.teacherCalendlySelectionForBooking || {}).scheduling_url || "";
-            const name = state.currentUser && state.currentUser.name || "";
+            const name2 = state.currentUser && state.currentUser.name || "";
             const email = state.currentUser && state.currentUser.email || "";
             const sep = u.indexOf("?") >= 0 ? "&" : "?";
-            const q = [name && "name=" + encodeURIComponent(name), email && "email=" + encodeURIComponent(email)].filter(Boolean).join("&");
+            const q = [name2 && "name=" + encodeURIComponent(name2), email && "email=" + encodeURIComponent(email)].filter(Boolean).join("&");
             const iframeUrl = u ? q ? u + sep + q : u : "";
             return iframeUrl ? `<iframe id="calendly-inline-iframe" data-src="${iframeUrl.replace(/"/g, "&quot;")}" style="width: 100%; height: 630px; border: none;" title="${(t22.calendly_book || "Book a session").replace(/"/g, "&quot;")}"></iframe>` : `<div style="padding: 2rem; text-align: center; color: var(--text-secondary); font-size: 14px;">${t22.calendly_loading || "Loading..."}</div>`;
           })()}
@@ -26417,8 +26541,8 @@
         }
       } else if (view === "shop") {
         const planSortKey = (s) => {
-          const name = (s.name || "").toLowerCase();
-          if (name.includes("ilimitad") || name.includes("unlimited") || s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0) || s.limit_count == null && !(s.name || "").match(/\d+/)) return 1e9;
+          const name2 = (s.name || "").toLowerCase();
+          if (name2.includes("ilimitad") || name2.includes("unlimited") || s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0) || s.limit_count == null && !(s.name || "").match(/\d+/)) return 1e9;
           const n = parseInt(s.limit_count, 10);
           if (!isNaN(n)) return n;
           const m = (s.name || "").match(/\d+/);
@@ -27608,8 +27732,8 @@
         const daysOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
         const classesList = [...Array.isArray(state.classes) ? state.classes : []].sort((a, b) => (a.id || 0) - (b.id || 0));
         const planSortKey = (s) => {
-          const name = (s.name || "").toLowerCase();
-          if (name.includes("ilimitad") || name.includes("unlimited") || s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0) || s.limit_count == null && !(s.name || "").match(/\d+/)) return 1e9;
+          const name2 = (s.name || "").toLowerCase();
+          if (name2.includes("ilimitad") || name2.includes("unlimited") || s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0) || s.limit_count == null && !(s.name || "").match(/\d+/)) return 1e9;
           const n = parseInt(s.limit_count, 10);
           if (!isNaN(n)) return n;
           const m = (s.name || "").match(/\d+/);
@@ -30550,14 +30674,14 @@
   };
   window.signUpStudent = async () => {
     const t2 = new Proxy(window.t, { get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop] });
-    const name = document.getElementById("auth-name").value.trim();
+    const name2 = document.getElementById("auth-name").value.trim();
     const emailEl = document.getElementById("auth-email");
     const email = emailEl ? emailEl.value.trim().toLowerCase() : "";
     const phone = document.getElementById("auth-phone").value.trim();
     const pass = document.getElementById("auth-pass").value.trim();
     const passConfirmEl = document.getElementById("auth-pass-confirm");
     const passConfirm = passConfirmEl ? passConfirmEl.value.trim() : "";
-    if (!name || !email || !pass || !phone) {
+    if (!name2 || !email || !pass || !phone) {
       alert(t2("signup_require_fields"));
       return;
     }
@@ -30568,7 +30692,7 @@
     const isAureSignup = state.currentSchool?.id === AURE_SCHOOL_ID;
     const newStudent = {
       id: "STUD-" + Math.random().toString(36).substr(2, 4).toUpperCase(),
-      name,
+      name: name2,
       email: email || null,
       phone,
       paid: false,
@@ -30607,7 +30731,7 @@
           }
           const { data: authRpcRow, error: authRpcError } = await supabaseClient.rpc("create_student_with_auth", {
             p_user_id: authUser.id,
-            p_name: name,
+            p_name: name2,
             p_email: email || null,
             p_phone: phone || null,
             p_password: pass,
@@ -30632,7 +30756,7 @@
         }
         if (!studentCreated) {
           const { data: rpcRow, error: rpcError } = await supabaseClient.rpc("create_student_legacy", {
-            p_name: name,
+            p_name: name2,
             p_email: email || null,
             p_phone: phone || null,
             p_password: pass,
@@ -30665,7 +30789,7 @@
         let fallbackCatchErr = null;
         try {
           const { data: rpcRow, error: rpcError } = await supabaseClient.rpc("create_student_legacy", {
-            p_name: name,
+            p_name: name2,
             p_email: email || null,
             p_phone: phone || null,
             p_password: pass,
@@ -31404,11 +31528,11 @@ Use one of these:
     try {
       const nameEl = document.getElementById("dev-edit-school-name");
       const addressEl = document.getElementById("dev-edit-school-address");
-      const name = (nameEl?.value ?? "").trim() || null;
+      const name2 = (nameEl?.value ?? "").trim() || null;
       const address = (addressEl?.value ?? "").trim();
       const { data, error } = await supabaseClient.rpc("school_update_info_by_platform", {
         p_school_id: schoolId,
-        p_name: name,
+        p_name: name2,
         p_address: address || null
       });
       if (error) {
@@ -31748,10 +31872,10 @@ School: ${schoolName}`)) return;
     const t2 = new Proxy(window.t, {
       get: (target, prop) => typeof prop === "string" ? target(prop) : target[prop]
     });
-    const name = prompt(t2("enter_school_name"));
-    if (!name) return;
+    const name2 = prompt(t2("enter_school_name"));
+    if (!name2) return;
     if (supabaseClient) {
-      const { error } = await supabaseClient.from("schools").insert([{ name }]);
+      const { error } = await supabaseClient.from("schools").insert([{ name: name2 }]);
       if (error) {
         alert("Error: " + error.message);
         return;
@@ -32208,7 +32332,7 @@ School: ${schoolName}`)) return;
     const sel = document.getElementById("calendly-event-type-select");
     if (!sel || !supabaseClient || !state.currentSchool?.id) return;
     const uri = sel.value;
-    const name = sel.options[sel.selectedIndex]?.getAttribute("data-name") || "";
+    const name2 = sel.options[sel.selectedIndex]?.getAttribute("data-name") || "";
     const url = sel.options[sel.selectedIndex]?.getAttribute("data-url") || "";
     if (!uri) {
       alert("Please select an event type.");
@@ -32218,11 +32342,11 @@ School: ${schoolName}`)) return;
       const { error } = await supabaseClient.rpc("upsert_calendly_event_type_selection", {
         p_school_id: state.currentSchool.id,
         p_calendly_event_type_uri: uri,
-        p_calendly_event_type_name: name || null,
+        p_calendly_event_type_name: name2 || null,
         p_scheduling_url: url || null
       });
       if (error) throw error;
-      state.calendlyEventTypeSelection = { calendly_event_type_uri: uri, calendly_event_type_name: name, scheduling_url: url };
+      state.calendlyEventTypeSelection = { calendly_event_type_uri: uri, calendly_event_type_name: name2, scheduling_url: url };
       renderView();
       if (window.lucide) window.lucide.createIcons();
     } catch (e) {
@@ -32830,14 +32954,14 @@ School: ${schoolName}`)) return;
         });
         const studentNames = state.students || [];
         lessons.forEach(function(l) {
-          const name = studentNames.find(function(s) {
+          const name2 = studentNames.find(function(s) {
             return String(s.id) === String(l.student_id);
           })?.name || "Student";
           events.push({
             uid: "private-lesson-" + l.id + "@bailadmin",
             start: new Date(l.start_at_utc),
             end: new Date(l.end_at_utc),
-            summary: "Private lesson with " + name
+            summary: "Private lesson with " + name2
           });
         });
         var lessonRequestIds = {};
@@ -32847,14 +32971,14 @@ School: ${schoolName}`)) return;
         (state.privateClassRequests || []).filter(function(r) {
           return r.status === "accepted" && r.start_at_utc && r.end_at_utc && !lessonRequestIds[r.id];
         }).forEach(function(r) {
-          var name = studentNames.find(function(s) {
+          var name2 = studentNames.find(function(s) {
             return String(s.id) === String(r.student_id);
           })?.name || "Student";
           events.push({
             uid: "private-request-" + r.id + "@bailadmin",
             start: new Date(r.start_at_utc),
             end: new Date(r.end_at_utc),
-            summary: "Private lesson with " + name
+            summary: "Private lesson with " + name2
           });
         });
       }
@@ -33838,7 +33962,7 @@ School: ${schoolName}`)) return;
   };
   window.getDiscoveryPreviewFullHtml = (opts) => {
     const t2 = (k) => window.t ? window.t(k) : k;
-    const name = (opts.name || "").replace(/</g, "&lt;");
+    const name2 = (opts.name || "").replace(/</g, "&lt;");
     const loc = (opts.loc || "\u2014").replace(/</g, "&lt;");
     const desc = (opts.desc || "").replace(/</g, "&lt;").replace(/\n/g, "<br>");
     const tags = (opts.genres || "").replace(/</g, "&lt;");
@@ -33877,8 +34001,8 @@ School: ${schoolName}`)) return;
     }).join("")}</div>` : `<div class="discovery-detail-placeholder-block"><i data-lucide="calendar" size="24"></i><span>${placeholder}</span></div>`;
     const currency = opts.currency || "MXN";
     const planSortKey = (s) => {
-      const name2 = (s.name || "").toLowerCase();
-      if (name2.includes("ilimitad") || name2.includes("unlimited") || s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0) || s.limit_count == null && !(s.name || "").match(/\d+/)) return 1e9;
+      const name3 = (s.name || "").toLowerCase();
+      if (name3.includes("ilimitad") || name3.includes("unlimited") || s.limit_count === 0 && (s.limit_count_private == null || s.limit_count_private === 0) || s.limit_count == null && !(s.name || "").match(/\d+/)) return 1e9;
       const n = parseInt(s.limit_count, 10);
       if (!isNaN(n)) return n;
       const m = (s.name || "").match(/\d+/);
@@ -33912,7 +34036,7 @@ School: ${schoolName}`)) return;
             <div class="discovery-detail-hero">
                 <div class="discovery-detail-logo-wrap">${logoUrl ? `<img src="${String(logoUrl).replace(/"/g, "&quot;")}" alt="">` : `<div class="discovery-detail-logo-placeholder"><i data-lucide="image" size="40"></i></div>`}</div>
                 <div class="discovery-detail-info">
-                    <h1 class="discovery-detail-title">${name || "\u2014"}</h1>
+                    <h1 class="discovery-detail-title">${name2 || "\u2014"}</h1>
                     <p class="discovery-detail-loc"><i data-lucide="map-pin" size="14"></i> ${loc}</p>
                     <p class="discovery-detail-tags">${tags || placeholder}</p>
                 </div>
@@ -33928,7 +34052,7 @@ School: ${schoolName}`)) return;
     const inner = document.getElementById("discovery-preview-inner");
     if (!inner) return;
     const slug = (document.getElementById("discovery-slug")?.value || "").trim();
-    const name = (state.currentSchool?.name || "").replace(/</g, "&lt;");
+    const name2 = (state.currentSchool?.name || "").replace(/</g, "&lt;");
     const country = (document.getElementById("discovery-country")?.value || "").trim();
     const city = (document.getElementById("discovery-city")?.value || "").trim();
     const loc = [city, country].filter(Boolean).join(", ") || "\u2014";
@@ -34061,7 +34185,7 @@ School: ${schoolName}`)) return;
   };
   window.saveBankSettings = async (btn) => {
     const t2 = typeof window.t === "function" ? window.t : (k) => k;
-    const name = document.getElementById("set-bank-name").value;
+    const name2 = document.getElementById("set-bank-name").value;
     const cbu = document.getElementById("set-bank-cbu").value;
     const alias = document.getElementById("set-bank-alias").value;
     const holder = document.getElementById("set-bank-holder").value;
@@ -34072,7 +34196,7 @@ School: ${schoolName}`)) return;
       if (window.lucide) lucide.createIcons();
     }
     try {
-      await window.updateAdminSetting("bank_name", name);
+      await window.updateAdminSetting("bank_name", name2);
       await window.updateAdminSetting("bank_cbu", cbu);
       await window.updateAdminSetting("bank_alias", alias);
       await window.updateAdminSetting("bank_holder", holder);
@@ -34970,8 +35094,8 @@ School: ${schoolName}`)) return;
     const visibleBySection = { schools: 0, teachers: 0 };
     const visibleByCountry = {};
     items.forEach((item) => {
-      const name = (item.dataset.schoolName || "").toLowerCase();
-      const show = !q || name.includes(q);
+      const name2 = (item.dataset.schoolName || "").toLowerCase();
+      const show = !q || name2.includes(q);
       item.style.display = show ? "" : "none";
       if (show) {
         visibleCount++;
@@ -35509,6 +35633,11 @@ School: ${schoolName}`)) return;
   };
 
   // src/main.js
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const isLocalHost = host === "localhost" || host === "127.0.0.1";
+    inject({ mode: isLocalHost ? "development" : "production" });
+  }
   var SCHOOL_THEME_BY_ID = {
     [AURE_SCHOOL_ID]: "aure"
   };

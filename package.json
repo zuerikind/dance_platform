@@ -20,5 +20,8 @@
     "pg": "^8.20.0",
     "serve": "^14.2.4",
     "supabase": "^2.76.16"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }

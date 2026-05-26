@@ -2,6 +2,7 @@
  * Entry point. Bundled to app.js so index.html keeps one script tag.
  * Attaches core modules to window for HTML and legacy, runs legacy, then init and event listeners.
  */
+import { inject } from '@vercel/analytics';
 import { escapeHtml, supabaseClient, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID, CALENDLY_FEATURE_ENABLED } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
@@ -12,6 +13,12 @@ import {
     closeRevenueAttributionPopover,
     toggleRevenueAttributionPopover
 } from './kpi/revenueFiltersUi.js';
+
+if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+    inject({ mode: isLocalHost ? 'development' : 'production' });
+}
 
 const SCHOOL_THEME_BY_ID = {
     [AURE_SCHOOL_ID]: 'aure'
