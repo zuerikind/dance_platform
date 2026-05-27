@@ -21,13 +21,20 @@ function escapeSvgText(s) {
         .replace(/"/g, '&quot;');
 }
 
-function normalizeByLevel(raw) {
+function normalizeByLevel(raw, aure = false) {
     const src = raw && typeof raw === 'object' ? raw : {};
+    let principiante = Number(src.principiante) || 0;
+    let avanzada = Number(src.avanzada) || 0;
+    let unset = Number(src.unset) || 0;
+    if (aure && unset > 0) {
+        principiante += unset;
+        unset = 0;
+    }
     return {
         total: Number(src.total) || 0,
-        principiante: Number(src.principiante) || 0,
-        avanzada: Number(src.avanzada) || 0,
-        unset: Number(src.unset) || 0
+        principiante,
+        avanzada,
+        unset
     };
 }
 
@@ -43,7 +50,7 @@ export function mergeStudentAnalyticsIntoKpis(kpis, rpc) {
     return {
         ...kpis,
         studentAnalytics: {
-            byLevel: normalizeByLevel(s.by_level),
+            byLevel: normalizeByLevel(s.by_level, isAureSchool(state.currentSchool)),
             topPackBuyers: normalizeLeaderboard(s.top_pack_buyers, (r) => ({
                 student_id: r.student_id,
                 name: r.name || r.student_id || '—',
@@ -66,11 +73,13 @@ export function computeStudentAnalyticsFallback(filtered, range) {
     if (!schoolId) return null;
 
     const students = (state.students || []).filter((s) => s.school_id === schoolId || !s.school_id);
+    const aure = isAureSchool(state.currentSchool);
     const byLevel = { total: students.length, principiante: 0, avanzada: 0, unset: 0 };
     students.forEach((s) => {
         const lev = (s.level || '').trim();
-        if (lev === 'principiante') byLevel.principiante += 1;
+        if (lev === 'principiante' || (aure && !lev)) byLevel.principiante += 1;
         else if (lev === 'avanzada') byLevel.avanzada += 1;
+        else if (aure) byLevel.principiante += 1;
         else byLevel.unset += 1;
     });
 
@@ -127,11 +136,12 @@ export function buildStudentLevelDonutSvg(byLevel, t, aure, size = 120) {
         </svg>`;
     }
 
-    const segments = [
+    const segmentDefs = [
         { key: 'principiante', count: byLevel.principiante, color: LEVEL_COLORS.principiante },
         { key: 'avanzada', count: byLevel.avanzada, color: LEVEL_COLORS.avanzada },
-        { key: 'unset', count: byLevel.unset, color: LEVEL_COLORS.unset }
-    ].filter((s) => s.count > 0);
+        ...(aure ? [] : [{ key: 'unset', count: byLevel.unset, color: LEVEL_COLORS.unset }])
+    ];
+    const segments = segmentDefs.filter((s) => s.count > 0);
 
     let offset = circ * 0.25;
     const arcs = segments.map((seg) => {
@@ -157,7 +167,7 @@ export function buildStudentLevelDonutSvg(byLevel, t, aure, size = 120) {
 function buildLevelChipsHtml(byLevel, t, aure) {
     const total = byLevel.total || 0;
     if (total <= 0) return '';
-    const keys = ['principiante', 'avanzada', 'unset'];
+    const keys = aure ? ['principiante', 'avanzada'] : ['principiante', 'avanzada', 'unset'];
     return `<div class="rev-student-level-chips">
         ${keys.map((key) => {
             const count = byLevel[key] || 0;
@@ -176,7 +186,7 @@ function buildLevelChipsHtml(byLevel, t, aure) {
 export function renderStudentRosterSnapshot(analytics, t) {
     if (!analytics) return '';
     const aure = isAureSchool(state.currentSchool);
-    const byLevel = analytics.byLevel || { total: 0, principiante: 0, avanzada: 0, unset: 0 };
+    const byLevel = normalizeByLevel(analytics.byLevel, aure);
     const levelNote = aure
         ? (t.revenue_student_level_note_aure || 'Current roster by Aure level (not filtered by period).')
         : (t.revenue_student_level_note || 'Current roster by assigned level tag.');
@@ -207,11 +217,12 @@ function buildLevelDistributionHtml(byLevel, t, aure) {
         return `<div class="rev-chart-empty" role="status">${escapeHtml(t.revenue_student_no_roster || t.no_data_msg || 'No students')}</div>`;
     }
 
-    const segments = [
+    const segmentDefs = [
         { key: 'principiante', count: byLevel.principiante, className: 'principiante' },
         { key: 'avanzada', count: byLevel.avanzada, className: 'avanzada' },
-        { key: 'unset', count: byLevel.unset, className: 'unset' }
-    ].filter((s) => s.count > 0);
+        ...(aure ? [] : [{ key: 'unset', count: byLevel.unset, className: 'unset' }])
+    ];
+    const segments = segmentDefs.filter((s) => s.count > 0);
 
     const stacked = segments.map((seg) => {
         const pct = Math.round((seg.count / total) * 100);
@@ -280,7 +291,7 @@ export function renderRevenueStudentAnalyticsSection(kpis, t, currency, opts = {
     if (!analytics) return '';
 
     const aure = isAureSchool(state.currentSchool);
-    const byLevel = analytics.byLevel || { total: 0, principiante: 0, avanzada: 0, unset: 0 };
+    const byLevel = normalizeByLevel(analytics.byLevel, aure);
     const levelNote = aure
         ? (t.revenue_student_level_note_aure || 'Current roster by Aure level (not filtered by period).')
         : (t.revenue_student_level_note || 'Current roster by assigned level tag.');

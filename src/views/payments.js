@@ -18,8 +18,22 @@ import {
     renderAureRevenueAttributionInfoButton
 } from '../kpi/revenueFiltersUi.js';
 
+function formatMembershipDate(iso, locale) {
+    const ts = iso ? Date.parse(iso) : NaN;
+    return Number.isFinite(ts)
+        ? new Date(ts).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })
+        : '—';
+}
+
+function aureLevelLabel(level, t) {
+    const lev = (level || '').trim() || 'principiante';
+    if (lev === 'avanzada') return t.aure_level_avanzada || 'Avanzada';
+    return t.aure_level_principiante || 'Principiante';
+}
+
 export function renderAdminMemberships(t) {
     const pending = state.paymentRequests.filter(r => r.status === 'pending');
+    const showAureLevel = isAureSchool(state.currentSchool);
     const latestApprovedByStudent = (state.paymentRequests || []).reduce((acc, r) => {
         if (r.status !== 'approved' || !r.student_id || !r.created_at) return acc;
         const key = String(r.student_id);
@@ -51,9 +65,15 @@ export function renderAdminMemberships(t) {
             : '—';
         const latestApprovedTs = req.student_id ? latestApprovedByStudent[String(req.student_id)] : null;
         const appLocale = state.language === 'es' ? 'es-ES' : (state.language === 'de' ? 'de-DE' : 'en-US');
+        const requestDate = formatMembershipDate(req.created_at, appLocale);
         const lastApprovedDate = latestApprovedTs
-            ? new Date(latestApprovedTs).toLocaleDateString(appLocale, { year: 'numeric', month: 'short', day: 'numeric' })
+            ? formatMembershipDate(new Date(latestApprovedTs).toISOString(), appLocale)
             : (t.memberships_never_approved || 'Never');
+        const levelBadgeHtml = showAureLevel && student
+            ? `<div style="font-size: 10px; background: rgba(48, 176, 199, 0.15); padding: 2px 8px; border-radius: 6px; color: var(--system-teal, #30b0c7); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                                        ${escapeHtml(aureLevelLabel(student.level, t))}
+                                    </div>`
+            : '';
         const payActionId = state.paymentRequestActionId;
         const payActionStatus = state.paymentRequestActionStatus;
         const isThisProcessing = payActionId === req.id;
@@ -73,13 +93,18 @@ export function renderAdminMemberships(t) {
                                     <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
                                         <i data-lucide="${req.payment_method === 'cash' ? 'banknote' : 'send'}" size="10"></i> ${t[req.payment_method] || req.payment_method}
                                     </div>
+                                    ${levelBadgeHtml}
                                 </div>
                             </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--system-gray6); border-radius: 10px; padding: 10px 12px;">
+                        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; background: var(--system-gray6); border-radius: 10px; padding: 10px 12px;">
                             <div style="min-width: 0;">
                                 <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t.memberships_current_classes || 'Current classes'}</div>
                                 <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${currentClasses}</div>
+                            </div>
+                            <div style="min-width: 0;">
+                                <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t.memberships_requested_date || 'Requested'}</div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${requestDate}</div>
                             </div>
                             <div style="min-width: 0;">
                                 <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t.memberships_last_approved_date || 'Last approved'}</div>

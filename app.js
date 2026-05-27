@@ -859,13 +859,20 @@
   function escapeSvgText(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
-  function normalizeByLevel(raw) {
+  function normalizeByLevel(raw, aure = false) {
     const src = raw && typeof raw === "object" ? raw : {};
+    let principiante = Number(src.principiante) || 0;
+    let avanzada = Number(src.avanzada) || 0;
+    let unset = Number(src.unset) || 0;
+    if (aure && unset > 0) {
+      principiante += unset;
+      unset = 0;
+    }
     return {
       total: Number(src.total) || 0,
-      principiante: Number(src.principiante) || 0,
-      avanzada: Number(src.avanzada) || 0,
-      unset: Number(src.unset) || 0
+      principiante,
+      avanzada,
+      unset
     };
   }
   function normalizeLeaderboard(rows, mapRow) {
@@ -878,7 +885,7 @@
     return {
       ...kpis,
       studentAnalytics: {
-        byLevel: normalizeByLevel(s.by_level),
+        byLevel: normalizeByLevel(s.by_level, isAureSchool2(state.currentSchool)),
         topPackBuyers: normalizeLeaderboard(s.top_pack_buyers, (r) => ({
           student_id: r.student_id,
           name: r.name || r.student_id || "\u2014",
@@ -898,11 +905,13 @@
     const schoolId = state.currentSchool?.id;
     if (!schoolId) return null;
     const students = (state.students || []).filter((s) => s.school_id === schoolId || !s.school_id);
+    const aure = isAureSchool2(state.currentSchool);
     const byLevel = { total: students.length, principiante: 0, avanzada: 0, unset: 0 };
     students.forEach((s) => {
       const lev = (s.level || "").trim();
-      if (lev === "principiante") byLevel.principiante += 1;
+      if (lev === "principiante" || aure && !lev) byLevel.principiante += 1;
       else if (lev === "avanzada") byLevel.avanzada += 1;
+      else if (aure) byLevel.principiante += 1;
       else byLevel.unset += 1;
     });
     const buyerMap = {};
@@ -948,11 +957,12 @@
             <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="var(--text-secondary)" font-size="11" font-weight="600">${emptyLabel}</text>
         </svg>`;
     }
-    const segments = [
+    const segmentDefs = [
       { key: "principiante", count: byLevel.principiante, color: LEVEL_COLORS.principiante },
       { key: "avanzada", count: byLevel.avanzada, color: LEVEL_COLORS.avanzada },
-      { key: "unset", count: byLevel.unset, color: LEVEL_COLORS.unset }
-    ].filter((s) => s.count > 0);
+      ...aure ? [] : [{ key: "unset", count: byLevel.unset, color: LEVEL_COLORS.unset }]
+    ];
+    const segments = segmentDefs.filter((s) => s.count > 0);
     let offset = circ * 0.25;
     const arcs = segments.map((seg) => {
       const len = seg.count / total * circ;
@@ -974,7 +984,7 @@
   function buildLevelChipsHtml(byLevel, t2, aure) {
     const total = byLevel.total || 0;
     if (total <= 0) return "";
-    const keys = ["principiante", "avanzada", "unset"];
+    const keys = aure ? ["principiante", "avanzada"] : ["principiante", "avanzada", "unset"];
     return `<div class="rev-student-level-chips">
         ${keys.map((key) => {
       const count = byLevel[key] || 0;
@@ -991,7 +1001,7 @@
   function renderStudentRosterSnapshot(analytics, t2) {
     if (!analytics) return "";
     const aure = isAureSchool2(state.currentSchool);
-    const byLevel = analytics.byLevel || { total: 0, principiante: 0, avanzada: 0, unset: 0 };
+    const byLevel = normalizeByLevel(analytics.byLevel, aure);
     const levelNote = aure ? t2.revenue_student_level_note_aure || "Current roster by Aure level (not filtered by period)." : t2.revenue_student_level_note || "Current roster by assigned level tag.";
     return `
         <section class="rev-snapshot-card rev-student-snapshot" aria-labelledby="rev-student-snapshot-heading">
@@ -1017,11 +1027,12 @@
     if (total <= 0) {
       return `<div class="rev-chart-empty" role="status">${escapeHtml(t2.revenue_student_no_roster || t2.no_data_msg || "No students")}</div>`;
     }
-    const segments = [
+    const segmentDefs = [
       { key: "principiante", count: byLevel.principiante, className: "principiante" },
       { key: "avanzada", count: byLevel.avanzada, className: "avanzada" },
-      { key: "unset", count: byLevel.unset, className: "unset" }
-    ].filter((s) => s.count > 0);
+      ...aure ? [] : [{ key: "unset", count: byLevel.unset, className: "unset" }]
+    ];
+    const segments = segmentDefs.filter((s) => s.count > 0);
     const stacked = segments.map((seg) => {
       const pct = Math.round(seg.count / total * 100);
       return `<div class="rev-student-level-seg rev-student-level-seg--${seg.className}" style="width:${pct}%" title="${escapeHtml(levelLabel(seg.key, t2, aure))}: ${seg.count}"></div>`;
@@ -1078,7 +1089,7 @@
     const analytics = kpis?.studentAnalytics;
     if (!analytics) return "";
     const aure = isAureSchool2(state.currentSchool);
-    const byLevel = analytics.byLevel || { total: 0, principiante: 0, avanzada: 0, unset: 0 };
+    const byLevel = normalizeByLevel(analytics.byLevel, aure);
     const levelNote = aure ? t2.revenue_student_level_note_aure || "Current roster by Aure level (not filtered by period)." : t2.revenue_student_level_note || "Current roster by assigned level tag.";
     const periodNote = t2.revenue_student_period_note || "Pack purchases and no-shows use your selected date range.";
     return `
@@ -3468,8 +3479,18 @@
   }
 
   // src/views/payments.js
+  function formatMembershipDate(iso, locale) {
+    const ts = iso ? Date.parse(iso) : NaN;
+    return Number.isFinite(ts) ? new Date(ts).toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" }) : "\u2014";
+  }
+  function aureLevelLabel(level, t2) {
+    const lev = (level || "").trim() || "principiante";
+    if (lev === "avanzada") return t2.aure_level_avanzada || "Avanzada";
+    return t2.aure_level_principiante || "Principiante";
+  }
   function renderAdminMemberships(t2) {
     const pending = state.paymentRequests.filter((r) => r.status === "pending");
+    const showAureLevel = isAureSchool2(state.currentSchool);
     const latestApprovedByStudent = (state.paymentRequests || []).reduce((acc, r) => {
       if (r.status !== "approved" || !r.student_id || !r.created_at) return acc;
       const key = String(r.student_id);
@@ -3499,7 +3520,11 @@
       const currentClasses = effective ? isPtSchool && !hasDualScanMode ? String(effective.private ?? 0) : effective.groupUnlimited ? "\u221E" : String(effective.group ?? 0) : "\u2014";
       const latestApprovedTs = req.student_id ? latestApprovedByStudent[String(req.student_id)] : null;
       const appLocale = state.language === "es" ? "es-ES" : state.language === "de" ? "de-DE" : "en-US";
-      const lastApprovedDate = latestApprovedTs ? new Date(latestApprovedTs).toLocaleDateString(appLocale, { year: "numeric", month: "short", day: "numeric" }) : t2.memberships_never_approved || "Never";
+      const requestDate = formatMembershipDate(req.created_at, appLocale);
+      const lastApprovedDate = latestApprovedTs ? formatMembershipDate(new Date(latestApprovedTs).toISOString(), appLocale) : t2.memberships_never_approved || "Never";
+      const levelBadgeHtml = showAureLevel && student ? `<div style="font-size: 10px; background: rgba(48, 176, 199, 0.15); padding: 2px 8px; border-radius: 6px; color: var(--system-teal, #30b0c7); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                                        ${escapeHtml(aureLevelLabel(student.level, t2))}
+                                    </div>` : "";
       const payActionId = state.paymentRequestActionId;
       const payActionStatus = state.paymentRequestActionStatus;
       const isThisProcessing = payActionId === req.id;
@@ -3519,13 +3544,18 @@
                                     <div style="font-size: 10px; background: var(--system-gray6); padding: 2px 8px; border-radius: 6px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
                                         <i data-lucide="${req.payment_method === "cash" ? "banknote" : "send"}" size="10"></i> ${t2[req.payment_method] || req.payment_method}
                                     </div>
+                                    ${levelBadgeHtml}
                                 </div>
                             </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--system-gray6); border-radius: 10px; padding: 10px 12px;">
+                        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; background: var(--system-gray6); border-radius: 10px; padding: 10px 12px;">
                             <div style="min-width: 0;">
                                 <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t2.memberships_current_classes || "Current classes"}</div>
                                 <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${currentClasses}</div>
+                            </div>
+                            <div style="min-width: 0;">
+                                <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t2.memberships_requested_date || "Requested"}</div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${requestDate}</div>
                             </div>
                             <div style="min-width: 0;">
                                 <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">${t2.memberships_last_approved_date || "Last approved"}</div>
@@ -19826,6 +19856,7 @@
       nav_memberships: "Memberships",
       pending_payments: "Pending Payments",
       memberships_current_classes: "Current classes",
+      memberships_requested_date: "Requested",
       memberships_last_approved_date: "Last approved",
       memberships_never_approved: "Never",
       approve: "Approve",
@@ -20807,6 +20838,7 @@
       nav_memberships: "Membres\xEDas",
       pending_payments: "Pagos Pendientes",
       memberships_current_classes: "Clases actuales",
+      memberships_requested_date: "Fecha solicitud",
       memberships_last_approved_date: "\xDAltima aprobaci\xF3n",
       memberships_never_approved: "Nunca",
       approve: "Aprobar",
@@ -21757,6 +21789,7 @@
       nav_memberships: "Mitgliedschaften",
       pending_payments: "Ausstehende Zahlungen",
       memberships_current_classes: "Aktuelle Klassen",
+      memberships_requested_date: "Angefragt am",
       memberships_last_approved_date: "Letzte Genehmigung",
       memberships_never_approved: "Noch nie",
       approve: "Best\xE4tigen",
@@ -27620,7 +27653,12 @@
           const filteredRegCount = groupedArr.reduce((sum, g) => sum + g.students.filter((s) => countsTowardRegistradosLine({ ...s, status: getEffectiveAttendanceStatus(s) })).length, 0);
           state.adminRegTab = state.adminRegTab || "registered";
           const pendingList = (weekRegs || []).filter((r) => r.status === "pending").sort((a, b) => (a.class_date || "").localeCompare(b.class_date || "") || (a.class_time || "").localeCompare(b.class_time || "") || (a.student_name || "").localeCompare(b.student_name || ""));
-          const getLevelLabel = (lev) => !lev || lev === "" ? t2.aure_level_not_set || "Not set" : lev === "principiante" ? t2.aure_level_principiante || "Principiante" : lev === "avanzada" ? t2.aure_level_avanzada || "Avanzada" : lev;
+          const getLevelLabel = (lev) => {
+            const effective = (lev || "").trim() || "principiante";
+            if (effective === "principiante") return t2.aure_level_principiante || "Principiante";
+            if (effective === "avanzada") return t2.aure_level_avanzada || "Avanzada";
+            return effective;
+          };
           const renderStudentRow = (s) => {
             const effectiveStatus = getEffectiveAttendanceStatus(s);
             const statusIcon = effectiveStatus === "attended" ? '<i data-lucide="check-circle" size="12" style="color: var(--secondary);"></i>' : effectiveStatus === "no_show" ? '<i data-lucide="user-x" size="12" style="opacity: 0.4;"></i>' : effectiveStatus === "cancelled" ? '<i data-lucide="x-circle" size="12" style="opacity: 0.4;"></i>' : effectiveStatus === "pending" ? '<i data-lucide="clock" size="12" style="color: #e6a800;"></i>' : '<i data-lucide="clock" size="12" style="opacity: 0.4;"></i>';
@@ -30222,7 +30260,8 @@
     }
     const isAure = state.currentSchool?.id === AURE_SCHOOL_ID;
     const has48 = typeof window.has4or8Package === "function" && window.has4or8Package(state.currentUser);
-    const levelOk = !!(state.currentUser?.level || "").trim();
+    const rawLevel = (state.currentUser?.level || "").trim();
+    const levelOk = isAure ? rawLevel === "principiante" || rawLevel === "avanzada" || rawLevel === "" : !!rawLevel;
     const runSuelta = () => window.requestClaseSuelta(classId, className, targetDateStr);
     const aureEff = isAure ? getEffectiveBalances(state.currentUser, /* @__PURE__ */ new Date()) : null;
     const aureHasGroupCredits = !!(aureEff && (aureEff.groupUnlimited || (aureEff.group ?? 0) > 0));
@@ -35443,13 +35482,12 @@ School: ${schoolName}`)) return;
   };
   window.renderAdminStudentLevelRow = (s) => {
     const t2 = (key) => window.t(key);
-    const lev = s.level || "";
+    const lev = (s.level || "").trim() || "principiante";
     const idEsc = String(s.id).replace(/'/g, "\\'");
     return `<div class="student-card" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
         <div class="student-card-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--system-gray6); display: flex; align-items: center; justify-content: center; font-weight: 700;">${(s.name || "").charAt(0).toUpperCase()}</div>
         <div style="flex: 1; min-width: 0;"><div style="font-weight: 600;">${escapeHtml(s.name || s.email || s.id)}</div><div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(s.email || "")}</div></div>
         <select class="student-level-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;" onchange="window.updateStudentLevel('${idEsc}', this.value)">
-            <option value="" ${lev === "" ? "selected" : ""}>${t2("aure_level_not_set") || "Not set"}</option>
             <option value="principiante" ${lev === "principiante" ? "selected" : ""}>${t2("aure_level_principiante") || "Principiante"}</option>
             <option value="avanzada" ${lev === "avanzada" ? "selected" : ""}>${t2("aure_level_avanzada") || "Avanzada"}</option>
         </select>
