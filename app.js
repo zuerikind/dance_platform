@@ -2883,19 +2883,37 @@
     const hadAnyPack = packs.length > 0;
     const anyActivePack = activePacks.length > 0;
     const packsFullyExpired = hadAnyPack && !anyActivePack;
+    const sumPackField = (list, key) => list.reduce((acc, p) => {
+      const raw = p?.[key];
+      if (raw == null || raw === "null") return acc;
+      const n = parseInt(String(raw), 10);
+      return acc + (Number.isFinite(n) ? n : 0);
+    }, 0);
     const hasUnlimitedPack = activePacks.some((p) => p.count == null || p.count === "null");
     const groupUnlimited = !packsFullyExpired && (student?.balance === null || student?.balance === void 0 || hasUnlimitedPack);
     let group;
     if (groupUnlimited) {
       group = null;
-    } else if (packsFullyExpired) {
+    } else if (anyActivePack) {
+      group = Math.max(0, sumPackField(activePacks, "count"));
+    } else if (hadAnyPack) {
       group = 0;
     } else {
       const g = Number(student?.balance);
       group = Number.isFinite(g) ? Math.max(0, g) : 0;
     }
-    const privateBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_private ?? 0), 10) || 0);
-    const eventBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_events ?? 0), 10) || 0);
+    let privateBal;
+    let eventBal;
+    if (anyActivePack) {
+      privateBal = Math.max(0, sumPackField(activePacks, "private_count"));
+      eventBal = Math.max(0, sumPackField(activePacks, "event_count"));
+    } else if (hadAnyPack) {
+      privateBal = 0;
+      eventBal = 0;
+    } else {
+      privateBal = Math.max(0, parseInt(String(student?.balance_private ?? 0), 10) || 0);
+      eventBal = Math.max(0, parseInt(String(student?.balance_events ?? 0), 10) || 0);
+    }
     return { group, groupUnlimited, private: privateBal, event: eventBal };
   }
   function studentHasUsableClassCredits(student, now = /* @__PURE__ */ new Date()) {
@@ -2999,6 +3017,14 @@
     }
     const schoolId = state.currentSchool?.id;
     if (schoolId && supabaseClient) {
+      try {
+        await supabaseClient.rpc("reconcile_student_balance_from_active_packs", {
+          p_student_id: String(student.id),
+          p_school_id: schoolId
+        });
+      } catch (e) {
+        console.warn("reconcile_student_balance_from_active_packs:", e);
+      }
       await refreshSingleStudent(student.id, schoolId);
       student = state.students.find((s) => String(s.id) === String(student.id)) || student;
     }

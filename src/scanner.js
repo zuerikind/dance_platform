@@ -91,7 +91,17 @@ function buildManualDeductParts(student, t, ctx, includePrivateLessonBlock) {
 }
 
 /**
- * Balances for UI and client-side credit checks from students.balance* (aligned with canonical server deduct).
+ * Balances for UI and client-side credit checks.
+ *
+ * System invariant: when a student holds packs, students.balance* equals the sum of NON-expired pack counts.
+ * Every write path maintains it — activate sums non-expired packs, canonical deduct decrements balance + pack
+ * counts (FIFO), and admin edits re-sync non-expired pack counts to the saved balance. The one thing nothing
+ * updates is time-based expiry: when a pack simply crosses expires_at, balance is not re-derived.
+ *
+ * So we read the effective credits straight from the NON-expired packs (which excludes a lapsed pack the instant
+ * it expires, with no server round-trip). Students with no packs at all fall back to the stored balance* columns
+ * (legacy / manually-granted credit with no backing pack).
+ *
  * Returns { group, groupUnlimited, private: number, event: number }.
  * groupUnlimited: true if balance is null or any non-expired pack has null/undefined count.
  */
@@ -103,23 +113,45 @@ export function getEffectiveBalances(student, now = new Date()) {
     });
     const hadAnyPack = packs.length > 0;
     const anyActivePack = activePacks.length > 0;
-    /** All pack rows expired: do not use stale students.balance / balance_* still mirrored from old packs. */
+    /** All pack rows expired: nothing usable remains regardless of stale students.balance*. */
     const packsFullyExpired = hadAnyPack && !anyActivePack;
+
+    /** Sum of a numeric pack field across the given packs ('null'/undefined/unlimited counts treated as 0). */
+    const sumPackField = (list, key) => list.reduce((acc, p) => {
+        const raw = p?.[key];
+        if (raw == null || raw === 'null') return acc;
+        const n = parseInt(String(raw), 10);
+        return acc + (Number.isFinite(n) ? n : 0);
+    }, 0);
 
     const hasUnlimitedPack = activePacks.some(p => p.count == null || p.count === 'null');
     const groupUnlimited = !packsFullyExpired && (student?.balance === null || student?.balance === undefined || hasUnlimitedPack);
+
     let group;
     if (groupUnlimited) {
         group = null;
-    } else if (packsFullyExpired) {
-        group = 0;
+    } else if (anyActivePack) {
+        // Packs are the source of truth for usable credits; expired packs are excluded above.
+        group = Math.max(0, sumPackField(activePacks, 'count'));
+    } else if (hadAnyPack) {
+        group = 0; // every pack expired
     } else {
-        const g = Number(student?.balance);
+        const g = Number(student?.balance); // no packs: legacy / manual credit
         group = Number.isFinite(g) ? Math.max(0, g) : 0;
     }
 
-    const privateBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_private ?? 0), 10) || 0);
-    const eventBal = packsFullyExpired ? 0 : Math.max(0, parseInt(String(student?.balance_events ?? 0), 10) || 0);
+    let privateBal;
+    let eventBal;
+    if (anyActivePack) {
+        privateBal = Math.max(0, sumPackField(activePacks, 'private_count'));
+        eventBal = Math.max(0, sumPackField(activePacks, 'event_count'));
+    } else if (hadAnyPack) {
+        privateBal = 0;
+        eventBal = 0;
+    } else {
+        privateBal = Math.max(0, parseInt(String(student?.balance_private ?? 0), 10) || 0);
+        eventBal = Math.max(0, parseInt(String(student?.balance_events ?? 0), 10) || 0);
+    }
     return { group, groupUnlimited, private: privateBal, event: eventBal };
 }
 
@@ -234,6 +266,14 @@ export async function handleScan(scannedId) {
 
     const schoolId = state.currentSchool?.id;
     if (schoolId && supabaseClient) {
+        // Drop credits tied to now-expired packs before reading/deducting, so the server's
+        // insufficiency check uses the same self-healed balance the UI shows.
+        try {
+            await supabaseClient.rpc('reconcile_student_balance_from_active_packs', {
+                p_student_id: String(student.id),
+                p_school_id: schoolId
+            });
+        } catch (e) { console.warn('reconcile_student_balance_from_active_packs:', e); }
         await refreshSingleStudent(student.id, schoolId);
         student = state.students.find(s => String(s.id) === String(student.id)) || student;
     }
