@@ -8226,10 +8226,37 @@ function _renderViewImpl() {
             discoveryPreviewInnerHtml = window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || '', loc, desc: (sc?.discovery_description || '').toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(' · ') : '', logoUrl: (sc?.logo_url || '').trim(), teacherUrl: (sc?.teacher_photo_url || '').trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : (Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : []), currency: sc?.currency || 'MXN', classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t.discovery_placeholder_upload_soon || 'Will be uploaded soon.' }) : '';
         }
 
+        const subStatusColorMap = { active: 'var(--system-green)', trialing: 'var(--system-green)', past_due: 'var(--system-orange,#ff9500)', payment_failed: 'var(--system-red)', canceled: 'var(--system-red)', unpaid: 'var(--system-orange,#ff9500)' };
+        const subStatusColor = subStatusColorMap[settingsSchool?.billing_status] || 'var(--system-gray3)';
+        const subStatusLabel = settingsSchool?.billing_status ? settingsSchool.billing_status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
+        const subPlanLabel = settingsSchool?.billing_plan_key ? (t['paywall_plan_' + settingsSchool.billing_plan_key] || settingsSchool.billing_plan_key) : '';
+        const fmtSubDate = (d) => d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+        const subPeriodStart = fmtSubDate(settingsSchool?.billing_current_period_start);
+        const subPeriodEnd = fmtSubDate(settingsSchool?.billing_current_period_end);
+
         html += `
             <div class="ios-header">
                 <div class="ios-large-title">${t.nav_settings}</div>
             </div>
+
+            ${settingsSchool?.billing_status ? `
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t.settings_subscription_title || 'Subscription'}
+            </div>
+            <div class="ios-list">
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700;">${subPlanLabel}</span>
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${subStatusColor}; flex-shrink: 0;"></span>
+                            <span style="font-weight: 600; font-size: 13px; color: ${subStatusColor};">${subStatusLabel}</span>
+                        </span>
+                    </div>
+                    ${subPeriodStart ? `<div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary);"><span>${t.settings_active_since || 'Active since'}</span><span>${subPeriodStart}</span></div>` : ''}
+                    ${subPeriodEnd ? `<div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary);"><span>${settingsSchool.billing_cancel_at_period_end ? (t.settings_cancels_on || 'Cancels on') : (t.settings_renews_on || 'Renews on')}</span><span>${subPeriodEnd}</span></div>` : ''}
+                </div>
+            </div>
+            ` : ''}
 
             ${isPT ? `
             <!-- TEACHER AVAILABILITY -->

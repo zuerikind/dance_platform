@@ -6,7 +6,7 @@
  *
  * Handled events:
  *   checkout.session.completed  → save customer/subscription/plan IDs
- *   invoice.paid                → billing_status = active, update period end
+ *   invoice.paid                → billing_status = active, update period start/end
  *   invoice.payment_failed      → billing_status = payment_failed
  *   customer.subscription.updated → sync status, period end, cancel flag, price
  *   customer.subscription.deleted → billing_status = canceled
@@ -45,6 +45,7 @@ interface BillingUpdate {
   billing_plan_key?: string;
   billing_currency?: string;
   billing_stripe_price_id?: string;
+  billing_current_period_start?: string; // ISO-8601 UTC
   billing_current_period_end?: string;   // ISO-8601 UTC
   billing_cancel_at_period_end?: boolean;
 }
@@ -161,6 +162,7 @@ async function handleCheckoutSessionCompleted(
       const priceId = sub.items?.data?.[0]?.price?.id;
       if (priceId) update.billing_stripe_price_id = priceId;
       update.billing_status = mapSubStatus(sub.status);
+      update.billing_current_period_start = tsToIso(sub.current_period_start);
       update.billing_current_period_end = tsToIso(sub.current_period_end);
       update.billing_cancel_at_period_end = sub.cancel_at_period_end;
     } catch (err) {
@@ -194,9 +196,10 @@ async function handleInvoicePaid(
 
   const update: BillingUpdate = { billing_status: 'active' };
 
-  // period_end lives on the subscription lines
-  const periodEnd = (invoice.lines?.data?.[0] as { period?: { end?: number } } | undefined)?.period?.end;
-  if (periodEnd) update.billing_current_period_end = tsToIso(periodEnd);
+  // period start/end live on the subscription lines
+  const period = (invoice.lines?.data?.[0] as { period?: { start?: number; end?: number } } | undefined)?.period;
+  if (period?.start) update.billing_current_period_start = tsToIso(period.start);
+  if (period?.end) update.billing_current_period_end = tsToIso(period.end);
 
   await updateSchoolBilling(
     serviceClient,
@@ -232,6 +235,7 @@ async function handleSubscriptionUpdated(
 
   const update: BillingUpdate = {
     billing_status: mapSubStatus(sub.status),
+    billing_current_period_start: tsToIso(sub.current_period_start),
     billing_current_period_end: tsToIso(sub.current_period_end),
     billing_cancel_at_period_end: sub.cancel_at_period_end,
   };
