@@ -5334,6 +5334,8 @@ function _renderViewImpl() {
                                         ${s.billing_status ? `<span style="font-weight: 600; margin-left: 4px; color: ${s.billing_status === 'active' || s.billing_status === 'trialing' ? 'var(--system-green)' : 'var(--system-orange, #ff9500)'};">${s.billing_status}</span>` : '<span style="opacity: 0.4; margin-left: 4px;">no subscription</span>'}
                                         ${s.billing_plan_key ? `<span style="margin-left: 8px; font-weight: 600; opacity: 0.8;">${s.billing_plan_key}</span>` : ''}
                                         ${s.billing_currency ? `<span style="margin-left: 4px; opacity: 0.5;">${s.billing_currency}</span>` : ''}
+                                        ${s.billing_current_period_start ? `<span style="margin-left: 8px; opacity: 0.6;">since ${new Date(s.billing_current_period_start).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>` : ''}
+                                        ${s.billing_current_period_end ? `<span style="margin-left: 8px; opacity: 0.6;">${s.billing_cancel_at_period_end ? 'cancels' : 'renews'} ${new Date(s.billing_current_period_end).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>` : ''}
                                         ${s.paywall_enabled ? `<span style="margin-left: 8px; font-size: 10px; font-weight: 700; color: var(--system-orange, #ff9500); background: rgba(255,149,0,0.12); padding: 1px 6px; border-radius: 6px;">PAYWALL ON</span>` : ''}
                                     </div>
                                 </div>
