@@ -1,7 +1,7 @@
 import { supabaseClient, SUPABASE_URL, SUPABASE_KEY, DISCOVERY_COUNTRIES_CITIES, DISCOVERY_COUNTRIES, AURE_SCHOOL_ID, getPasswordRecoveryRedirectUrl, CALENDLY_FEATURE_ENABLED, escapeHtml } from './config.js';
 import { state, saveState, setSessionIdentity, clearSessionIdentity, sessionIdentityMatches, resetInactivityTimer, checkInactivity } from './state.js';
 import { setLocalesDict, t, updateI18n } from './locales.js';
-import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering, filterActivePacksDropExpired, syncActivePacksFieldSumToTarget, subscriptionShownToStudents, planCardGhostStyleIfHidden, planVisibilityToggleRow } from './utils.js';
+import { formatPrice, formatClassTime, CURRENCY_LABELS, CURRENCY_SYMBOLS, getPlanExpiryUseFixedDate, schoolHasDualGroupPrivateOffering, filterActivePacksDropExpired, syncActivePacksFieldSumToTarget, subscriptionShownToStudents, planCardGhostStyleIfHidden, planVisibilityToggleRow, planIsUnlimited, planUnlimitedBadge } from './utils.js';
 import { isoEndOfLocalDayFromDateInput, applyPerPackExpiryFromInputs, computePPackageExpiresAtFromPacks } from './studentExpirySave.js';
 import { registrationClosedFromExceptionKind, resolveScheduleGroupExceptionFromRows } from './groupClassExceptionResolve.js';
 import { parseHashRoute, navigateToAdminJackAndJill, navigateToStudentJackAndJill } from './routing.js';
@@ -189,6 +189,8 @@ const DANCE_LOCALES = {
         package_not_available: "This package is not available for purchase.",
         limit_classes_label: "Class Limit",
         limit_classes_placeholder: "Classes (0 = Unlimited)",
+        plan_unlimited_badge: "Unlimited",
+        plan_zero_unlimited_confirm: "Setting this package to 0 classes makes it UNLIMITED classes. Do you really want to continue?",
         offer_private_classes: "Offer private classes",
         offer_private_classes_desc: "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.",
         offer_group_classes_pt: "Offer group class packages",
@@ -1152,6 +1154,8 @@ const DANCE_LOCALES = {
         package_not_available: "Este paquete no está disponible para comprar.",
         limit_classes_label: "Límite de Clases",
         limit_classes_placeholder: "Clases (0 = Ilimitado)",
+        plan_unlimited_badge: "Ilimitado",
+        plan_zero_unlimited_confirm: "Poner 0 clases en este paquete lo hace ILIMITADO. ¿Seguro que quieres continuar?",
         offer_private_classes: "Ofrecer clases particulares",
         offer_private_classes_desc: "Permite que los alumnos compren y usen paquetes de clases particulares. Cuando está activo, los planes pueden incluir clases en grupo, particulares o ambas.",
         offer_group_classes_pt: "Ofrecer paquetes de clases grupales",
@@ -2093,6 +2097,8 @@ const DANCE_LOCALES = {
         package_not_available: "Dieses Paket kann nicht gekauft werden.",
         limit_classes_label: "Stundenlimit",
         limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
+        plan_unlimited_badge: "Unbegrenzt",
+        plan_zero_unlimited_confirm: "Wenn du dieses Paket auf 0 Stunden setzt, wird es UNBEGRENZT. Möchtest du wirklich fortfahren?",
         offer_private_classes: "Privatunterricht anbieten",
         offer_private_classes_desc: "Ermöglicht Schülern den Kauf und die Nutzung von Privatstunden-Paketen. Wenn aktiv, können Pläne Gruppen-, Privatstunden oder beides enthalten.",
         offer_group_classes_pt: "Gruppenstunden-Pakete anbieten",
@@ -5977,6 +5983,7 @@ function _renderViewImpl() {
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                             ${subs.map(s => `
                                 <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                                    ${planUnlimitedBadge(s, state.currentSchool, t)}
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <input type="text" data-field="name" value="${(s.name || '').replace(/"/g, '&quot;')}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; flex: 1; color: var(--text-primary); outline: none; margin-right: 6px;">
                                         <button type="button" onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.5; padding: 4px; cursor: pointer;" aria-label="${(t.delete_label || 'Delete').replace(/"/g, '&quot;')}"><i data-lucide="trash-2" size="14"></i></button>
@@ -8539,6 +8546,7 @@ function _renderViewImpl() {
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminGroupOnly.map(s => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                        ${planUnlimitedBadge(s, state.currentSchool, t)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -8604,6 +8612,7 @@ function _renderViewImpl() {
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminPrivateOnly.map(s => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                        ${planUnlimitedBadge(s, state.currentSchool, t)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -8669,6 +8678,7 @@ function _renderViewImpl() {
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminMixed.map(s => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                        ${planUnlimitedBadge(s, state.currentSchool, t)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -8735,6 +8745,7 @@ function _renderViewImpl() {
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                     ${(s => {
                         const card = (sub) => `<div class="card ios-list-item" data-plan-block data-sub-id="${sub.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(sub)}">
+                            ${planUnlimitedBadge(sub, state.currentSchool, t)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -11106,16 +11117,22 @@ window.checkExpirations = async () => {
         // Do not auto-normalize balance from packs here, because this background job can race with
         // admin manual edits and overwrite freshly saved values.
         if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
-            const activeOnly = s.active_packs.filter(p => new Date(p.expires_at) > now);
+            // Keep packs with no/empty expires_at (open-ended), same as filterActivePacksDropExpired
+            // and the server. The old `new Date(p.expires_at) > now` produced Invalid Date for
+            // open-ended packs and treated them as expired, wrongly clearing a paid student's package.
+            const activeOnly = filterActivePacksDropExpired(s.active_packs, now.getTime());
             if (activeOnly.length === 0 && s.paid) {
                 s.package = null;
                 s.package_expires_at = null;
                 changed = true;
             } else if (activeOnly.length > 0) {
-                const nextExp = activeOnly.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
-                if (s.package_expires_at !== nextExp) {
-                    s.package_expires_at = nextExp;
-                    changed = true;
+                const datedPacks = activeOnly.filter(p => p.expires_at != null && String(p.expires_at).trim() !== '');
+                if (datedPacks.length > 0) {
+                    const nextExp = datedPacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
+                    if (s.package_expires_at !== nextExp) {
+                        s.package_expires_at = nextExp;
+                        changed = true;
+                    }
                 }
             }
         } else if (s.paid && s.package != null && s.package_expires_at && s.balance > 0) {
@@ -15369,6 +15386,9 @@ window.saveAllPlans = async () => {
     if (window.renderView) renderView();
     if (window.lucide) window.lucide.createIcons();
     try {
+        // Snapshot pre-edit state so we can detect (and revert) plans that get turned into "unlimited".
+        const wasUnlimited = new Map(subs.map(s => [String(s.id), planIsUnlimited(s, state.currentSchool)]));
+        const countsBefore = new Map(subs.map(s => [String(s.id), { g: s.limit_count, p: s.limit_count_private, e: s.limit_count_events }]));
         // Flush current form values from DOM into state so we save what the user sees (onchange may not have fired if they didn't blur)
         document.querySelectorAll('[data-plan-block]').forEach(block => {
             const id = block.getAttribute('data-sub-id');
@@ -15388,6 +15408,18 @@ window.saveAllPlans = async () => {
             const visBtn = block.querySelector('[data-field="student_visible_toggle"]');
             if (visBtn) sub.student_visible = visBtn.getAttribute('aria-pressed') === 'true';
         });
+        // Confirm once if any plan just became "unlimited" (0/0/0). On decline, revert those counts and abort.
+        const newlyUnlimited = subs.filter(s => !wasUnlimited.get(String(s.id)) && planIsUnlimited(s, state.currentSchool));
+        if (newlyUnlimited.length > 0) {
+            const msg = (typeof window.t === 'function' && window.t('plan_zero_unlimited_confirm')) || 'Setting this to 0 makes the package UNLIMITED classes. Continue?';
+            if (!window.confirm(msg)) {
+                for (const s of subs) {
+                    const b = countsBefore.get(String(s.id));
+                    if (b) { s.limit_count = b.g; s.limit_count_private = b.p; s.limit_count_events = b.e; }
+                }
+                return;
+            }
+        }
         for (const sub of subs) {
             const promises = [
                 window._updateSubNoRender(sub.id, 'name', sub.name),
@@ -15436,6 +15468,24 @@ window._updateSubNoRender = async (id, field, value) => {
 };
 
 window.updateSub = async (id, field, value) => {
+    const subBefore = state.subscriptions.find(s => s.id === id);
+    // Warn when an edit turns a plan into "unlimited" (group+private+events all 0, non-private-teacher).
+    if (subBefore && (field === 'limit_count' || field === 'limit_count_private' || field === 'limit_count_events')) {
+        const parsed = value === '' ? 0 : (parseInt(value, 10) || 0);
+        const prospective = {
+            limit_count: field === 'limit_count' ? parsed : (parseInt(subBefore.limit_count, 10) || 0),
+            limit_count_private: field === 'limit_count_private' ? parsed : (parseInt(subBefore.limit_count_private, 10) || 0),
+            limit_count_events: field === 'limit_count_events' ? parsed : (parseInt(subBefore.limit_count_events, 10) || 0),
+        };
+        if (!planIsUnlimited(subBefore, state.currentSchool) && planIsUnlimited(prospective, state.currentSchool)) {
+            const msg = (typeof window.t === 'function' && window.t('plan_zero_unlimited_confirm')) || 'Setting this to 0 makes the package UNLIMITED classes. Continue?';
+            if (!window.confirm(msg)) {
+                renderView(); // revert the input back to the stored value
+                if (window.lucide) window.lucide.createIcons();
+                return;
+            }
+        }
+    }
     await window._updateSubNoRender(id, field, value);
     const sub = state.subscriptions.find(s => s.id === id);
     if (sub) {
@@ -15950,17 +16000,35 @@ window.removeStudentPack = async (studentId, packId) => {
     const s = state.students.find(x => x.id === studentId);
     if (!s || !Array.isArray(s.active_packs)) return;
 
-    // Filter out the pack
-    s.active_packs = s.active_packs.filter(p => p.id !== packId);
+    const newPacks = s.active_packs.filter(p => p.id !== packId);
 
-    // Recalculate balance
-    s.balance = s.active_packs.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
+    // Derive balances from the remaining packs (mirrors getEffectiveBalances / the server reconcile):
+    // unlimited stays unlimited, and private/event balances are recomputed too. The old
+    // `sum(parseInt(count)||0)` turned an unlimited student finite and never adjusted private/event.
+    let newBalance, newBalancePrivate, newBalanceEvents;
+    if (newPacks.length === 0) {
+        newBalance = 0;
+        newBalancePrivate = 0;
+        newBalanceEvents = 0;
+    } else {
+        const eff = getEffectiveBalances({ ...s, active_packs: newPacks }, new Date());
+        newBalance = eff.groupUnlimited ? null : (eff.group ?? 0);
+        newBalancePrivate = eff.private ?? 0;
+        newBalanceEvents = eff.event ?? 0;
+    }
 
-    if (s.active_packs.length === 0) {
+    s.active_packs = newPacks;
+    s.balance = newBalance;
+    s.balance_private = newBalancePrivate;
+    s.balance_events = newBalanceEvents;
+    if (newPacks.length === 0) {
         s.package = null;
         s.package_expires_at = null;
     } else {
-        s.package_expires_at = s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
+        const datedPacks = newPacks.filter(p => p.expires_at != null && String(p.expires_at).trim() !== '');
+        s.package_expires_at = datedPacks.length > 0
+            ? datedPacks.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at
+            : null;
     }
     s.paid = studentHasUsableClassCredits(s);
 
@@ -15970,6 +16038,8 @@ window.removeStudentPack = async (studentId, packId) => {
             .update({
                 active_packs: s.active_packs,
                 balance: s.balance,
+                balance_private: s.balance_private,
+                balance_events: s.balance_events,
                 paid: s.paid,
                 package: s.package,
                 package_expires_at: s.package_expires_at

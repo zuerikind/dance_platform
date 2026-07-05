@@ -143,6 +143,28 @@ export function planCardGhostStyleIfHidden(sub) {
 }
 
 /**
+ * True when a plan grants UNLIMITED group classes: a non-private-teacher plan whose
+ * group + private + event counts are all 0. Mirrors the server rule in
+ * activate_package_for_student ("all-zero => unlimited group"). Private-teacher plans
+ * are private-based and never unlimited here.
+ */
+export function planIsUnlimited(sub, school) {
+    if (!sub) return false;
+    if (school && school.profile_type === 'private_teacher') return false;
+    const g = parseInt(sub.limit_count, 10) || 0;
+    const p = parseInt(sub.limit_count_private, 10) || 0;
+    const e = parseInt(sub.limit_count_events, 10) || 0;
+    return g === 0 && p === 0 && e === 0;
+}
+
+/** Small "∞ Unlimited" pill for admin plan cards when the plan grants unlimited classes. `t` is a locale object. */
+export function planUnlimitedBadge(sub, school, t) {
+    if (!planIsUnlimited(sub, school)) return '';
+    const label = (t && t.plan_unlimited_badge) || 'Unlimited';
+    return `<div style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;background:linear-gradient(180deg,#7aa2ff 0%,#5b7cff 100%);color:#fff;font-size:10px;font-weight:700;letter-spacing:0.02em;padding:2px 8px;border-radius:9px;">&#8734; ${escapeHtml(label)}</div>`;
+}
+
+/**
  * Admin plan card: label + pill toggle (glossy track + knob). `t` is a locale object (e.g. DANCE_LOCALES.en).
  */
 export function planVisibilityToggleRow(sub, t) {

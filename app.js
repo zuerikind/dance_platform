@@ -505,6 +505,19 @@
     if (subscriptionShownToStudents(sub)) return "";
     return "opacity:0.34;filter:saturate(0.12) brightness(0.88);";
   }
+  function planIsUnlimited(sub, school) {
+    if (!sub) return false;
+    if (school && school.profile_type === "private_teacher") return false;
+    const g = parseInt(sub.limit_count, 10) || 0;
+    const p = parseInt(sub.limit_count_private, 10) || 0;
+    const e = parseInt(sub.limit_count_events, 10) || 0;
+    return g === 0 && p === 0 && e === 0;
+  }
+  function planUnlimitedBadge(sub, school, t2) {
+    if (!planIsUnlimited(sub, school)) return "";
+    const label = t2 && t2.plan_unlimited_badge || "Unlimited";
+    return `<div style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;background:linear-gradient(180deg,#7aa2ff 0%,#5b7cff 100%);color:#fff;font-size:10px;font-weight:700;letter-spacing:0.02em;padding:2px 8px;border-radius:9px;">&#8734; ${escapeHtml(label)}</div>`;
+  }
   function planVisibilityToggleRow(sub, t2) {
     const vis = subscriptionShownToStudents(sub);
     const lab = t2 && t2.package_student_visible_label || "Show in shop";
@@ -19955,6 +19968,8 @@
       package_not_available: "This package is not available for purchase.",
       limit_classes_label: "Class Limit",
       limit_classes_placeholder: "Classes (0 = Unlimited)",
+      plan_unlimited_badge: "Unlimited",
+      plan_zero_unlimited_confirm: "Setting this package to 0 classes makes it UNLIMITED classes. Do you really want to continue?",
       offer_private_classes: "Offer private classes",
       offer_private_classes_desc: "Allow students to buy and use private class packages. When enabled, plans can include group classes, private classes, or both.",
       offer_group_classes_pt: "Offer group class packages",
@@ -20937,6 +20952,8 @@
       package_not_available: "Este paquete no est\xE1 disponible para comprar.",
       limit_classes_label: "L\xEDmite de Clases",
       limit_classes_placeholder: "Clases (0 = Ilimitado)",
+      plan_unlimited_badge: "Ilimitado",
+      plan_zero_unlimited_confirm: "Poner 0 clases en este paquete lo hace ILIMITADO. \xBFSeguro que quieres continuar?",
       offer_private_classes: "Ofrecer clases particulares",
       offer_private_classes_desc: "Permite que los alumnos compren y usen paquetes de clases particulares. Cuando est\xE1 activo, los planes pueden incluir clases en grupo, particulares o ambas.",
       offer_group_classes_pt: "Ofrecer paquetes de clases grupales",
@@ -21888,6 +21905,8 @@
       package_not_available: "Dieses Paket kann nicht gekauft werden.",
       limit_classes_label: "Stundenlimit",
       limit_classes_placeholder: "Stunden (0 = Unbegrenzt)",
+      plan_unlimited_badge: "Unbegrenzt",
+      plan_zero_unlimited_confirm: "Wenn du dieses Paket auf 0 Stunden setzt, wird es UNBEGRENZT. M\xF6chtest du wirklich fortfahren?",
       offer_private_classes: "Privatunterricht anbieten",
       offer_private_classes_desc: "Erm\xF6glicht Sch\xFClern den Kauf und die Nutzung von Privatstunden-Paketen. Wenn aktiv, k\xF6nnen Pl\xE4ne Gruppen-, Privatstunden oder beides enthalten.",
       offer_group_classes_pt: "Gruppenstunden-Pakete anbieten",
@@ -25259,6 +25278,8 @@
                                         ${s.billing_status ? `<span style="font-weight: 600; margin-left: 4px; color: ${s.billing_status === "active" || s.billing_status === "trialing" ? "var(--system-green)" : "var(--system-orange, #ff9500)"};">${s.billing_status}</span>` : '<span style="opacity: 0.4; margin-left: 4px;">no subscription</span>'}
                                         ${s.billing_plan_key ? `<span style="margin-left: 8px; font-weight: 600; opacity: 0.8;">${s.billing_plan_key}</span>` : ""}
                                         ${s.billing_currency ? `<span style="margin-left: 4px; opacity: 0.5;">${s.billing_currency}</span>` : ""}
+                                        ${s.billing_current_period_start ? `<span style="margin-left: 8px; opacity: 0.6;">since ${new Date(s.billing_current_period_start).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" })}</span>` : ""}
+                                        ${s.billing_current_period_end ? `<span style="margin-left: 8px; opacity: 0.6;">${s.billing_cancel_at_period_end ? "cancels" : "renews"} ${new Date(s.billing_current_period_end).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" })}</span>` : ""}
                                         ${s.paywall_enabled ? `<span style="margin-left: 8px; font-size: 10px; font-weight: 700; color: var(--system-orange, #ff9500); background: rgba(255,149,0,0.12); padding: 1px 6px; border-radius: 6px;">PAYWALL ON</span>` : ""}
                                     </div>
                                 </div>
@@ -25938,6 +25959,7 @@
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                             ${subs.map((s) => `
                                 <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                                    ${planUnlimitedBadge(s, state.currentSchool, t2)}
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <input type="text" data-field="name" value="${(s.name || "").replace(/"/g, "&quot;")}" onchange="updateSub('${s.id}', 'name', this.value)" style="border: none; background: transparent; font-size: 14px; font-weight: 600; flex: 1; color: var(--text-primary); outline: none; margin-right: 6px;">
                                         <button type="button" onclick="removeSubscription('${s.id}')" style="background: none; border: none; color: var(--text-secondary); opacity: 0.5; padding: 4px; cursor: pointer;" aria-label="${(t2.delete_label || "Delete").replace(/"/g, "&quot;")}"><i data-lucide="trash-2" size="14"></i></button>
@@ -28146,10 +28168,36 @@
           const gallery = Array.isArray(sc?.gallery_urls) ? sc.gallery_urls : typeof sc?.gallery_urls === "string" ? sc.gallery_urls.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
           discoveryPreviewInnerHtml = window.getDiscoveryPreviewFullHtml ? window.getDiscoveryPreviewFullHtml({ name: sc?.name || "", loc, desc: (sc?.discovery_description || "").toString(), genres: Array.isArray(sc?.discovery_genres) ? sc.discovery_genres.join(" \xB7 ") : "", logoUrl: (sc?.logo_url || "").trim(), teacherUrl: (sc?.teacher_photo_url || "").trim(), gallery: [], locations: Array.isArray(state.discoveryLocations) ? state.discoveryLocations : Array.isArray(sc?.discovery_locations) ? sc.discovery_locations : [], currency: sc?.currency || "MXN", classes: state.classes || [], subscriptions: state.subscriptions || [], placeholder: t2.discovery_placeholder_upload_soon || "Will be uploaded soon." }) : "";
         }
+        const subStatusColorMap = { active: "var(--system-green)", trialing: "var(--system-green)", past_due: "var(--system-orange,#ff9500)", payment_failed: "var(--system-red)", canceled: "var(--system-red)", unpaid: "var(--system-orange,#ff9500)" };
+        const subStatusColor = subStatusColorMap[settingsSchool?.billing_status] || "var(--system-gray3)";
+        const subStatusLabel = settingsSchool?.billing_status ? settingsSchool.billing_status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
+        const subPlanLabel = settingsSchool?.billing_plan_key ? t2["paywall_plan_" + settingsSchool.billing_plan_key] || settingsSchool.billing_plan_key : "";
+        const fmtSubDate = (d) => d ? new Date(d).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "";
+        const subPeriodStart = fmtSubDate(settingsSchool?.billing_current_period_start);
+        const subPeriodEnd = fmtSubDate(settingsSchool?.billing_current_period_end);
         html += `
             <div class="ios-header">
                 <div class="ios-large-title">${t2.nav_settings}</div>
             </div>
+
+            ${settingsSchool?.billing_status ? `
+            <div style="padding: 0 1.2rem; margin-top: 1.5rem; text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary);">
+                ${t2.settings_subscription_title || "Subscription"}
+            </div>
+            <div class="ios-list">
+                <div class="ios-list-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700;">${subPlanLabel}</span>
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${subStatusColor}; flex-shrink: 0;"></span>
+                            <span style="font-weight: 600; font-size: 13px; color: ${subStatusColor};">${subStatusLabel}</span>
+                        </span>
+                    </div>
+                    ${subPeriodStart ? `<div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary);"><span>${t2.settings_active_since || "Active since"}</span><span>${subPeriodStart}</span></div>` : ""}
+                    ${subPeriodEnd ? `<div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary);"><span>${settingsSchool.billing_cancel_at_period_end ? t2.settings_cancels_on || "Cancels on" : t2.settings_renews_on || "Renews on"}</span><span>${subPeriodEnd}</span></div>` : ""}
+                </div>
+            </div>
+            ` : ""}
 
             ${isPT ? `
             <!-- TEACHER AVAILABILITY -->
@@ -28440,6 +28488,7 @@
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminGroupOnly.map((s) => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                        ${planUnlimitedBadge(s, state.currentSchool, t2)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -28505,6 +28554,7 @@
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminPrivateOnly.map((s) => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                        ${planUnlimitedBadge(s, state.currentSchool, t2)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -28570,6 +28620,7 @@
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 1.2rem; margin-top: 0.25rem;">
                 ${adminMixed.map((s) => `
                     <div class="card ios-list-item" data-plan-block data-sub-id="${s.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(s)}">
+                        ${planUnlimitedBadge(s, state.currentSchool, t2)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -28636,6 +28687,7 @@
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                     ${((s) => {
           const card = (sub) => `<div class="card ios-list-item" data-plan-block data-sub-id="${sub.id}" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px;${planCardGhostStyleIfHidden(sub)}">
+                            ${planUnlimitedBadge(sub, state.currentSchool, t2)}
                          <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <i data-lucide="credit-card" size="14" style="opacity: 0.3; flex-shrink: 0;"></i>
@@ -30974,16 +31026,19 @@
       if (skipRecentlySaved && String(s.id) === String(justSavedId)) continue;
       let changed = false;
       if (Array.isArray(s.active_packs) && s.active_packs.length > 0) {
-        const activeOnly = s.active_packs.filter((p) => new Date(p.expires_at) > now);
+        const activeOnly = filterActivePacksDropExpired(s.active_packs, now.getTime());
         if (activeOnly.length === 0 && s.paid) {
           s.package = null;
           s.package_expires_at = null;
           changed = true;
         } else if (activeOnly.length > 0) {
-          const nextExp = activeOnly.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
-          if (s.package_expires_at !== nextExp) {
-            s.package_expires_at = nextExp;
-            changed = true;
+          const datedPacks = activeOnly.filter((p) => p.expires_at != null && String(p.expires_at).trim() !== "");
+          if (datedPacks.length > 0) {
+            const nextExp = datedPacks.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
+            if (s.package_expires_at !== nextExp) {
+              s.package_expires_at = nextExp;
+              changed = true;
+            }
           }
         }
       } else if (s.paid && s.package != null && s.package_expires_at && s.balance > 0) {
@@ -35283,6 +35338,8 @@ School: ${schoolName}`)) return;
     if (window.renderView) renderView();
     if (window.lucide) window.lucide.createIcons();
     try {
+      const wasUnlimited = new Map(subs.map((s) => [String(s.id), planIsUnlimited(s, state.currentSchool)]));
+      const countsBefore = new Map(subs.map((s) => [String(s.id), { g: s.limit_count, p: s.limit_count_private, e: s.limit_count_events }]));
       document.querySelectorAll("[data-plan-block]").forEach((block) => {
         const id = block.getAttribute("data-sub-id");
         const sub = subs.find((s) => String(s.id) === id);
@@ -35308,6 +35365,21 @@ School: ${schoolName}`)) return;
         const visBtn = block.querySelector('[data-field="student_visible_toggle"]');
         if (visBtn) sub.student_visible = visBtn.getAttribute("aria-pressed") === "true";
       });
+      const newlyUnlimited = subs.filter((s) => !wasUnlimited.get(String(s.id)) && planIsUnlimited(s, state.currentSchool));
+      if (newlyUnlimited.length > 0) {
+        const msg = typeof window.t === "function" && window.t("plan_zero_unlimited_confirm") || "Setting this to 0 makes the package UNLIMITED classes. Continue?";
+        if (!window.confirm(msg)) {
+          for (const s of subs) {
+            const b = countsBefore.get(String(s.id));
+            if (b) {
+              s.limit_count = b.g;
+              s.limit_count_private = b.p;
+              s.limit_count_events = b.e;
+            }
+          }
+          return;
+        }
+      }
       for (const sub of subs) {
         const promises = [
           window._updateSubNoRender(sub.id, "name", sub.name),
@@ -35354,6 +35426,23 @@ School: ${schoolName}`)) return;
     sub[field] = val;
   };
   window.updateSub = async (id, field, value) => {
+    const subBefore = state.subscriptions.find((s) => s.id === id);
+    if (subBefore && (field === "limit_count" || field === "limit_count_private" || field === "limit_count_events")) {
+      const parsed = value === "" ? 0 : parseInt(value, 10) || 0;
+      const prospective = {
+        limit_count: field === "limit_count" ? parsed : parseInt(subBefore.limit_count, 10) || 0,
+        limit_count_private: field === "limit_count_private" ? parsed : parseInt(subBefore.limit_count_private, 10) || 0,
+        limit_count_events: field === "limit_count_events" ? parsed : parseInt(subBefore.limit_count_events, 10) || 0
+      };
+      if (!planIsUnlimited(subBefore, state.currentSchool) && planIsUnlimited(prospective, state.currentSchool)) {
+        const msg = typeof window.t === "function" && window.t("plan_zero_unlimited_confirm") || "Setting this to 0 makes the package UNLIMITED classes. Continue?";
+        if (!window.confirm(msg)) {
+          renderView();
+          if (window.lucide) window.lucide.createIcons();
+          return;
+        }
+      }
+    }
     await window._updateSubNoRender(id, field, value);
     const sub = state.subscriptions.find((s) => s.id === id);
     if (sub) {
@@ -35825,19 +35914,36 @@ School: ${schoolName}`)) return;
     if (!confirm("\xBFEliminar este paquete? La balanza total se ajustar\xE1.")) return;
     const s = state.students.find((x) => x.id === studentId);
     if (!s || !Array.isArray(s.active_packs)) return;
-    s.active_packs = s.active_packs.filter((p) => p.id !== packId);
-    s.balance = s.active_packs.reduce((sum, p) => sum + (parseInt(p.count) || 0), 0);
-    if (s.active_packs.length === 0) {
+    const newPacks = s.active_packs.filter((p) => p.id !== packId);
+    let newBalance, newBalancePrivate, newBalanceEvents;
+    if (newPacks.length === 0) {
+      newBalance = 0;
+      newBalancePrivate = 0;
+      newBalanceEvents = 0;
+    } else {
+      const eff = getEffectiveBalances({ ...s, active_packs: newPacks }, /* @__PURE__ */ new Date());
+      newBalance = eff.groupUnlimited ? null : eff.group ?? 0;
+      newBalancePrivate = eff.private ?? 0;
+      newBalanceEvents = eff.event ?? 0;
+    }
+    s.active_packs = newPacks;
+    s.balance = newBalance;
+    s.balance_private = newBalancePrivate;
+    s.balance_events = newBalanceEvents;
+    if (newPacks.length === 0) {
       s.package = null;
       s.package_expires_at = null;
     } else {
-      s.package_expires_at = s.active_packs.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at;
+      const datedPacks = newPacks.filter((p) => p.expires_at != null && String(p.expires_at).trim() !== "");
+      s.package_expires_at = datedPacks.length > 0 ? datedPacks.slice().sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at))[0].expires_at : null;
     }
     s.paid = studentHasUsableClassCredits(s);
     if (supabaseClient) {
       const { error } = await supabaseClient.from("students").update({
         active_packs: s.active_packs,
         balance: s.balance,
+        balance_private: s.balance_private,
+        balance_events: s.balance_events,
         paid: s.paid,
         package: s.package,
         package_expires_at: s.package_expires_at
